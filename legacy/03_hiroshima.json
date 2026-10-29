@@ -1,0 +1,932 @@
+{
+  "_meta": {
+    "trip": "Viaje a Japón 2027",
+    "trip_dates": "2026-12-15/2027-01-12",
+    "travelers": [
+      "Reynaldo",
+      "Karla"
+    ],
+    "schema_version": "1.2",
+    "last_updated": "2026-10-28",
+    "version": "V3",
+    "source": "V2 plan + Claude suggestions",
+    "status_values": [
+      "planned",
+      "unassigned",
+      "suggested",
+      "optional",
+      "unavailable"
+    ],
+    "source_values": [
+      "wanderlog",
+      "claude",
+      "user"
+    ],
+    "notes": "Hiroshima is the third stay (Dec 27 to 30, 3 nights). No hotel booking for these dates yet. Dreamination and Miyajima winter-light dates are unconfirmed. Year-end closures can start Dec 28 to 30; verify every opening day. Items with source claude are suggestions from general knowledge, not live lookups.",
+    "fx_jpy_to_usd": 0.00633,
+    "fx_note": "Estimate used by the page: JPY 1,000 = USD 6.33. Change here to update every USD amount.",
+    "dining_note": "dining items belong to one day (day) and are grouped by type: sushi, ramen, sweets, coffee, other. kind: r = named place, s = local specialty, q = map search. They are never part of the route links.",
+    "nearby_note": "itinerary days carry 'nearby': bonus ideas near that day's area, hidden in the page by default. All entries are Claude suggestions (source claude) from general knowledge, not live lookups: verify opening days and hours before going. kind r = named place (directions), q = map search.",
+    "checklist_note": "checklist entries: book = needs a booking or confirmation; verify = check hours or dates; decide = choose between options; gap = not in the plan yet; assume = an assumption the plan depends on. Delete an entry when it is done.",
+    "privacy_note": "Confirmation numbers and full names were removed before committing to the public repo."
+  },
+  "city": "Hiroshima",
+  "leg": 3,
+  "leg_label": "Hiroshima and Miyajima",
+  "dates": {
+    "arrive": "2026-12-27",
+    "depart": "2026-12-30",
+    "nights": 3
+  },
+  "lodging": {
+    "name": "Hotel Kuretakeso Hiroshima-otemachi",
+    "address": "3-chome-7-3 Ōtemachi, Naka Ward, Hiroshima, 730-0051, Japan",
+    "check_in": "2026-12-27",
+    "check_out": "2026-12-30",
+    "confirmation": "",
+    "booked_under": "Reynaldo",
+    "price_jpy": null,
+    "notes": "NOT booked for these dates yet. The V1 booking was Dec 28 to Jan 2 (confirmation removed) and the V2 dates were Dec 24 to 27. Rebook here or choose another hotel."
+  },
+  "transport": {
+    "in": "Shinkansen Nagoya to Hiroshima on Dec 27 (about 2 h 45 min via Shin-Osaka; reserve seats)",
+    "out": "Shinkansen Hiroshima to Shin-Osaka on Dec 30 (about 1 h 20 min). Himeji Castle is on the way: you can stop with bags in a locker (verify)",
+    "local": "Hiroshima trams (Hiroden) and JR Sanyo line; ferry to Miyajima (JR Miyajimaguchi)"
+  },
+  "places": [
+    {
+      "id": "h-hondori",
+      "name": "Hondori Shopping Street",
+      "category": "shopping",
+      "area": "Hondori",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-27",
+      "book_ahead": false,
+      "tags": [
+        "arcade",
+        "souvenirs",
+        "lights"
+      ],
+      "notes": "Dreamination lights nearby"
+    },
+    {
+      "id": "h-okonomimura",
+      "name": "Okonomimura",
+      "category": "restaurant",
+      "area": "Shintenchi",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-27",
+      "book_ahead": false,
+      "tags": [
+        "okonomiyaki",
+        "local-specialty"
+      ],
+      "notes": "Multi-floor okonomiyaki stalls; peak queue at dinner"
+    },
+    {
+      "id": "h-peace-museum",
+      "name": "Hiroshima Peace Memorial Museum",
+      "category": "museum",
+      "area": "Naka",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-28",
+      "book_ahead": false,
+      "tags": [
+        "museum",
+        "history"
+      ],
+      "notes": "Closes early in winter; go first on Dec 28"
+    },
+    {
+      "id": "h-peace-park",
+      "name": "Peace Memorial Park - Hiroshima",
+      "category": "sightseeing",
+      "area": "Naka",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-28",
+      "book_ahead": false,
+      "tags": [
+        "memorial",
+        "park"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "h-a-bomb-dome",
+      "name": "Atomic Bomb Dome",
+      "category": "sightseeing",
+      "area": "Naka",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-28",
+      "book_ahead": false,
+      "tags": [
+        "memorial",
+        "night-lit"
+      ],
+      "notes": "Lit at night; go at dusk"
+    },
+    {
+      "id": "h-orizuru-tower",
+      "name": "Hiroshima Orizuru Tower",
+      "category": "attraction",
+      "area": "Naka",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-28",
+      "book_ahead": false,
+      "tags": [
+        "view",
+        "paper-cranes"
+      ],
+      "notes": "Next to the dome"
+    },
+    {
+      "id": "h-shukkeien",
+      "name": "Shukkeien Garden",
+      "category": "garden",
+      "area": "Naka",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-28",
+      "book_ahead": false,
+      "tags": [
+        "garden"
+      ],
+      "notes": "Winter garden; short visit"
+    },
+    {
+      "id": "h-otorii",
+      "maps_query": "Itsukushima Shrine Great Torii, Miyajima",
+      "name": "Otorii (Itsukushima floating torii)",
+      "category": "sightseeing",
+      "area": "Miyajima",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-29",
+      "book_ahead": false,
+      "tags": [
+        "miyajima",
+        "photo",
+        "night-lit"
+      ],
+      "notes": "Check tide times for the walk-up vs floating view; lit at night"
+    },
+    {
+      "id": "h-miyajima-omotesando",
+      "name": "Miyajima Omotesando Shopping Street",
+      "category": "shopping",
+      "area": "Miyajima",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-29",
+      "book_ahead": false,
+      "tags": [
+        "souvenirs",
+        "momiji-manju",
+        "oysters"
+      ],
+      "notes": "Core of the Miyajima shopping and food"
+    },
+    {
+      "id": "h-miyajima-ropeway",
+      "name": "Miyajima Ropeway",
+      "category": "attraction",
+      "area": "Miyajima",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-29",
+      "book_ahead": false,
+      "tags": [
+        "view"
+      ],
+      "notes": "Can pause for wind; skippable"
+    }
+  ],
+  "doesnt_fit": [
+    {
+      "id": "h-df-castle",
+      "name": "Hiroshima Castle",
+      "category": "attraction",
+      "area": "Naka",
+      "status": "optional",
+      "source": "wanderlog",
+      "book_ahead": false,
+      "tags": [
+        "castle"
+      ],
+      "notes": "Typically closed around Dec 29 to 31; verify. Moved out of Dec 28 to keep that day lighter"
+    },
+    {
+      "id": "h-df-iwakuni",
+      "name": "Iwakuni (Kintai Bridge and castle ropeway)",
+      "category": "sightseeing",
+      "area": "Yamaguchi",
+      "status": "suggested",
+      "source": "wanderlog",
+      "book_ahead": false,
+      "tags": [
+        "bridge",
+        "castle",
+        "day-trip"
+      ],
+      "notes": "Half-day out of Hiroshima; could replace Miyajima"
+    },
+    {
+      "id": "h-df-daishoin",
+      "name": "Daishoin (Miyajima temple)",
+      "category": "temple",
+      "area": "Miyajima",
+      "status": "optional",
+      "source": "wanderlog",
+      "book_ahead": false,
+      "tags": [
+        "temple"
+      ],
+      "notes": "Skippable"
+    },
+    {
+      "id": "h-df-gokoku",
+      "name": "Hiroshima Gokoku Shrine",
+      "category": "shrine",
+      "area": "Naka",
+      "status": "optional",
+      "source": "wanderlog",
+      "book_ahead": false,
+      "tags": [
+        "shrine"
+      ],
+      "notes": "Skippable"
+    },
+    {
+      "id": "h-df-aeon",
+      "name": "AEON MALL Hiroshima Fuchu",
+      "category": "mall",
+      "area": "Fuchu",
+      "status": "optional",
+      "source": "wanderlog",
+      "book_ahead": false,
+      "tags": [
+        "shopping"
+      ],
+      "notes": "Malls often reduce hours at New Year; verify"
+    },
+    {
+      "id": "h-df-mazda",
+      "name": "MAZDA Museum",
+      "category": "museum",
+      "area": "Fuchu",
+      "status": "optional",
+      "source": "wanderlog",
+      "book_ahead": true,
+      "tags": [
+        "cars",
+        "tour"
+      ],
+      "notes": "Reservation required; likely closed during the New Year break, so probably cannot fit"
+    }
+  ],
+  "winter_lights": [
+    {
+      "id": "h-wl-dreamination",
+      "name": "Hiroshima Dreamination (Peace Blvd / Hondori area)",
+      "area": "Naka",
+      "window": "typically mid-Nov to early Jan (2026-27 dates unconfirmed)",
+      "verified": false,
+      "status": "suggested",
+      "source": "claude",
+      "day": "2026-12-27",
+      "notes": "Peace Blvd. Dec 27 evening is the first chance; Dec 28 is the second",
+      "days": [
+        "2026-12-27",
+        "2026-12-28"
+      ]
+    },
+    {
+      "id": "h-wl-dome",
+      "name": "Atomic Bomb Dome at night / Orizuru Tower",
+      "area": "Naka",
+      "window": "nightly",
+      "verified": false,
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-28",
+      "notes": "Dusk at the dome"
+    },
+    {
+      "id": "h-wl-otorii",
+      "name": "Otorii night lighting",
+      "area": "Miyajima",
+      "window": "nightly",
+      "verified": false,
+      "status": "suggested",
+      "source": "claude",
+      "day": "2026-12-29",
+      "notes": "Stay until after dark on Dec 29; check the ferry schedule"
+    }
+  ],
+  "dining": [
+    {
+      "id": "h-f-1227-1",
+      "name": "Okonomiyaki Mitchan Sohonten",
+      "type": "other",
+      "kind": "r",
+      "day": "2026-12-27",
+      "maps_query": "Mitchan Sohonten Hiroshima",
+      "notes": "Verify branch",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1227-2",
+      "name": "Okonomiyaki Nagataya",
+      "type": "other",
+      "kind": "r",
+      "day": "2026-12-27",
+      "maps_query": "Nagataya Hiroshima",
+      "notes": "Verify branch",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1227-3",
+      "name": "Kakifune Kanawa (oysters)",
+      "type": "other",
+      "kind": "r",
+      "day": "2026-12-27",
+      "maps_query": "Kakifune Kanawa Hiroshima",
+      "notes": "Oyster boat; reserve",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1227-4",
+      "name": "Bakudanya (tsukemen)",
+      "type": "ramen",
+      "kind": "r",
+      "day": "2026-12-27",
+      "maps_query": "Bakudanya Hiroshima",
+      "notes": "Spicy tsukemen",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1227-5",
+      "name": "Hondori sweets",
+      "type": "sweets",
+      "kind": "q",
+      "day": "2026-12-27",
+      "maps_query": "Hondori Hiroshima sweets",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1227-6",
+      "name": "Cafes near Hondori",
+      "type": "coffee",
+      "kind": "q",
+      "day": "2026-12-27",
+      "maps_query": "cafe Hondori Hiroshima",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1227-7",
+      "name": "Sushi near Hondori",
+      "type": "sushi",
+      "kind": "q",
+      "day": "2026-12-27",
+      "maps_query": "sushi Hondori Hiroshima",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1228-1",
+      "name": "Oysters (winter)",
+      "type": "other",
+      "kind": "q",
+      "day": "2026-12-28",
+      "maps_query": "oysters Hiroshima",
+      "notes": "Verify holiday hours",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1228-2",
+      "name": "Hiroshima ramen",
+      "type": "ramen",
+      "kind": "q",
+      "day": "2026-12-28",
+      "maps_query": "ramen Hiroshima Castle",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1228-3",
+      "name": "Setouchi lemon sweets",
+      "type": "sweets",
+      "kind": "q",
+      "day": "2026-12-28",
+      "maps_query": "Hiroshima lemon sweets",
+      "notes": "Souvenir",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1228-4",
+      "name": "Cafes near Shukkeien",
+      "type": "coffee",
+      "kind": "q",
+      "day": "2026-12-28",
+      "maps_query": "cafe Shukkeien Hiroshima",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1228-5",
+      "name": "Sushi in Hatchobori",
+      "type": "sushi",
+      "kind": "q",
+      "day": "2026-12-28",
+      "maps_query": "sushi Hiroshima Hatchobori",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1229-1",
+      "name": "Anago-meshi Ueno (Miyajima)",
+      "type": "other",
+      "kind": "r",
+      "day": "2026-12-29",
+      "maps_query": "Anago-meshi Ueno Miyajima",
+      "notes": "Conger eel rice; queue",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1229-2",
+      "name": "Grilled oysters",
+      "type": "other",
+      "kind": "s",
+      "day": "2026-12-29",
+      "maps_query": "grilled oysters Miyajima Omotesando",
+      "notes": "Winter specialty",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1229-3",
+      "name": "Fried momiji manju",
+      "type": "sweets",
+      "kind": "s",
+      "day": "2026-12-29",
+      "maps_query": "Momijido Miyajima",
+      "notes": "Souvenir snack",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1229-4",
+      "name": "Cafes on Omotesando",
+      "type": "coffee",
+      "kind": "q",
+      "day": "2026-12-29",
+      "maps_query": "cafe Miyajima Omotesando",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1229-5",
+      "name": "Ramen near Miyajimaguchi",
+      "type": "ramen",
+      "kind": "q",
+      "day": "2026-12-29",
+      "maps_query": "ramen Miyajimaguchi",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1230-1",
+      "name": "Ekiben at Hiroshima Station",
+      "type": "other",
+      "kind": "q",
+      "day": "2026-12-30",
+      "maps_query": "ekiben Hiroshima Station",
+      "notes": "Lunch for the Shinkansen to Osaka",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1230-2",
+      "name": "Hiroshima Station cafes",
+      "type": "coffee",
+      "kind": "q",
+      "day": "2026-12-30",
+      "maps_query": "cafe Hiroshima Station",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "h-f-1230-3",
+      "name": "Hiroshima Station sweets",
+      "type": "sweets",
+      "kind": "q",
+      "day": "2026-12-30",
+      "maps_query": "Hiroshima Station sweets",
+      "notes": "Last souvenirs before leaving",
+      "source": "claude",
+      "status": "suggested"
+    }
+  ],
+  "day_trip_options": [
+    {
+      "id": "h-d-iwakuni",
+      "name": "Iwakuni (Kintai Bridge)",
+      "status": "suggested",
+      "source": "claude",
+      "notes": "Half-day out of Hiroshima; could replace Miyajima"
+    },
+    {
+      "id": "h-d-okunoshima",
+      "name": "Okunoshima (rabbit island)",
+      "status": "suggested",
+      "source": "claude",
+      "notes": "Alternative to Miyajima on Dec 29"
+    },
+    {
+      "id": "h-d-onomichi",
+      "name": "Onomichi (retro shopping arcades, ramen)",
+      "status": "suggested",
+      "source": "claude",
+      "notes": "Relaxed, shopping-friendly"
+    },
+    {
+      "id": "h-d-kure",
+      "name": "Kure (Yamato Museum)",
+      "status": "suggested",
+      "source": "claude",
+      "notes": "Only if interested in ships and history"
+    },
+    {
+      "id": "h-d-himeji",
+      "name": "Himeji Castle stop on Dec 30",
+      "status": "suggested",
+      "source": "claude",
+      "notes": "On the Shinkansen to Osaka; castle, not temple. Verify Dec 30 opening"
+    }
+  ],
+  "itinerary": [
+    {
+      "date": "2026-12-27",
+      "weekday": "Sun",
+      "title": "Nagoya to Hiroshima, Dreamination lights",
+      "status": "planned",
+      "load": "medium",
+      "stops": [
+        "h-hondori",
+        "h-okonomimura"
+      ],
+      "route": [
+        "h-hondori",
+        "h-okonomimura"
+      ],
+      "notes": "Arrive in the afternoon from Nagoya. Evening on Peace Boulevard and Hondori.",
+      "claude_suggestion": "Check in, Dreamination lights on Peace Blvd, okonomiyaki dinner at Okonomimura. Dome at dusk if time allows.",
+      "nearby": [
+        {
+          "name": "Hiroshima Museum of Art",
+          "category": "museum",
+          "area": "Naka",
+          "kind": "r",
+          "maps_query": "Hiroshima Museum of Art",
+          "notes": "Modern art by the river; verify hours",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Hiroshima Prefectural Art Museum",
+          "category": "museum",
+          "area": "Naka",
+          "kind": "r",
+          "maps_query": "Hiroshima Prefectural Art Museum",
+          "notes": "Check exhibitions and closing day",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Hiroshima Station ekiben",
+          "category": "food",
+          "area": "Hiroshima Station",
+          "kind": "q",
+          "maps_query": "ekiben Hiroshima Station",
+          "notes": "Lunch for the Shinkansen",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Motoyasu River walk",
+          "category": "sightseeing",
+          "area": "Naka",
+          "kind": "q",
+          "maps_query": "Motoyasu River Hiroshima",
+          "notes": "Riverside walk toward the dome",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Hiroshima Station cafes",
+          "category": "coffee",
+          "area": "Hiroshima Station",
+          "kind": "q",
+          "maps_query": "cafe Hiroshima Station",
+          "notes": "Coffee near the hotel route",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    },
+    {
+      "date": "2026-12-28",
+      "weekday": "Mon",
+      "title": "Peace Museum, Peace Park, Dome, Orizuru Tower, Shukkeien",
+      "status": "planned",
+      "load": "heavy",
+      "stops": [
+        "h-peace-museum",
+        "h-peace-park",
+        "h-a-bomb-dome",
+        "h-orizuru-tower",
+        "h-shukkeien"
+      ],
+      "route": [
+        "h-peace-museum",
+        "h-peace-park",
+        "h-a-bomb-dome",
+        "h-orizuru-tower",
+        "h-shukkeien"
+      ],
+      "notes": "The museum comes first; it closes early in winter. Hiroshima Castle moved to Doesn't fit.",
+      "claude_suggestion": "Museum and Peace Park in the morning, Shukkeien garden in the afternoon, the Dome and Orizuru Tower at dusk.",
+      "nearby": [
+        {
+          "name": "Mazda Zoom-Zoom Stadium",
+          "category": "attraction",
+          "area": "Minami-ku",
+          "kind": "r",
+          "maps_query": "Mazda Zoom-Zoom Stadium Hiroshima",
+          "notes": "Stadium visit if open; verify holiday hours",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Peace Memorial Park in the evening",
+          "category": "sightseeing",
+          "area": "Naka",
+          "kind": "q",
+          "maps_query": "Peace Memorial Park Hiroshima",
+          "notes": "Calm at dusk",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Hondori cafes",
+          "category": "coffee",
+          "area": "Hondori",
+          "kind": "q",
+          "maps_query": "cafe Hondori Hiroshima",
+          "notes": "Cafes on the covered shopping street",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Okonomiyaki near Shintenchi",
+          "category": "other",
+          "area": "Shintenchi",
+          "kind": "q",
+          "maps_query": "okonomiyaki Shintenchi Hiroshima",
+          "notes": "Check holiday hours",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Ramen near Hiroshima Station",
+          "category": "ramen",
+          "area": "Hiroshima Station",
+          "kind": "q",
+          "maps_query": "ramen Hiroshima Station",
+          "notes": "Quick late dinner option",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    },
+    {
+      "date": "2026-12-29",
+      "weekday": "Tue",
+      "title": "Miyajima",
+      "status": "planned",
+      "load": "medium",
+      "stops": [
+        "h-otorii",
+        "h-miyajima-omotesando",
+        "h-miyajima-ropeway"
+      ],
+      "route": [
+        "h-miyajima-omotesando",
+        "h-otorii",
+        "h-miyajima-ropeway"
+      ],
+      "wanderlog_route": "1h40, 52 km",
+      "notes": "Lighter than a weekend. Go early; check ferry and ropeway winter hours.",
+      "claude_suggestion": "Skip Daishoin; stay for the Otorii night light.",
+      "nearby": [
+        {
+          "name": "Mount Misen",
+          "category": "attraction",
+          "area": "Miyajima",
+          "kind": "r",
+          "maps_query": "Mount Misen Miyajima",
+          "notes": "Hike or ropeway to the summit; check ropeway hours",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Senjokaku",
+          "category": "attraction",
+          "area": "Miyajima",
+          "kind": "r",
+          "maps_query": "Senjokaku Miyajima",
+          "notes": "Hall of a Thousand Tatami",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Momijidani Park",
+          "category": "park",
+          "area": "Miyajima",
+          "kind": "r",
+          "maps_query": "Momijidani Park Miyajima",
+          "notes": "Quiet walk and waterfall",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Itsukushima Shrine",
+          "category": "shrine",
+          "area": "Miyajima",
+          "kind": "r",
+          "maps_query": "Itsukushima Shrine",
+          "notes": "Shrine with the floating torii; optional",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Miyajima sweets",
+          "category": "sweets",
+          "area": "Miyajima",
+          "kind": "q",
+          "maps_query": "momiji manju Miyajima",
+          "notes": "Momiji manju and local snacks",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    },
+    {
+      "date": "2026-12-30",
+      "weekday": "Wed",
+      "title": "Check out, Shinkansen to Osaka (Himeji stop optional)",
+      "status": "planned",
+      "load": "travel",
+      "stops": [],
+      "notes": "Continue in 04_osaka.json. Optional stop at Himeji Castle on the way (store bags in a locker).",
+      "nearby": [
+        {
+          "name": "Himeji Castle",
+          "category": "attraction",
+          "area": "Himeji",
+          "kind": "r",
+          "maps_query": "Himeji Castle",
+          "notes": "Optional stop on the way to Osaka; verify Dec 30 opening",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Shin-Osaka Station ekiben",
+          "category": "food",
+          "area": "Shin-Osaka",
+          "kind": "q",
+          "maps_query": "ekiben Shin-Osaka Station",
+          "notes": "Lunch for the arrival in Osaka",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Hiroshima Station sweets",
+          "category": "sweets",
+          "area": "Hiroshima Station",
+          "kind": "q",
+          "maps_query": "Hiroshima Station sweets",
+          "notes": "Last souvenirs before leaving",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Hiroshima Station cafes",
+          "category": "coffee",
+          "area": "Hiroshima Station",
+          "kind": "q",
+          "maps_query": "cafe Hiroshima Station",
+          "notes": "Coffee before the train",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Fukuya Hatchobori",
+          "category": "department-store",
+          "area": "Hatchobori",
+          "kind": "r",
+          "maps_query": "Fukuya Hatchobori Hiroshima",
+          "notes": "Department store; check year-end hours and lucky bags",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ],
+      "shopping": [
+        {
+          "id": "h-s-ekie",
+          "name": "Hiroshima Station Ekie / ASSE",
+          "area": "Hiroshima Station",
+          "category": "station-mall",
+          "kind": "r",
+          "maps_query": "Hiroshima Station ASSE",
+          "notes": "Often open when other shops are closed",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    }
+  ],
+  "checklist": [
+    {
+      "id": "h-c-01",
+      "kind": "book",
+      "text": "Hotel for Dec 27 to 30 in Hiroshima: not booked yet (Kuretakeso dates were changed in V2).",
+      "source": "claude"
+    },
+    {
+      "id": "h-c-02",
+      "kind": "book",
+      "text": "Shinkansen Hiroshima to Shin-Osaka on Dec 30: reserve seats.",
+      "source": "claude"
+    },
+    {
+      "id": "h-c-03",
+      "kind": "verify",
+      "text": "Peace Memorial Museum hours on Mon Dec 28: it closes early in winter.",
+      "source": "claude"
+    },
+    {
+      "id": "h-c-04",
+      "kind": "verify",
+      "text": "Hiroshima Dreamination 2026-27 dates: typically mid-Nov to early Jan, unconfirmed.",
+      "source": "claude"
+    },
+    {
+      "id": "h-c-05",
+      "kind": "verify",
+      "text": "Miyajima ferry and ropeway winter hours for Tue Dec 29.",
+      "source": "claude"
+    },
+    {
+      "id": "h-c-06",
+      "kind": "verify",
+      "text": "Year-end closures from Dec 28 to 30: Hiroshima Castle, Shukkeien and shops.",
+      "source": "claude"
+    },
+    {
+      "id": "h-c-07",
+      "kind": "gap",
+      "text": "MAZDA Museum is marked book ahead but is not on a day; probably closed during the New Year break.",
+      "source": "claude"
+    }
+  ],
+  "open_questions": [
+    "Dec 28 is heavy: keep Shukkeien or drop it?",
+    "Himeji Castle stop on Dec 30 on the way to Osaka?",
+    "Okunoshima (rabbit island) instead of Miyajima on Dec 29?"
+  ]
+}

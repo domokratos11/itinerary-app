@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#171d3a">
+<title>Viaje a Japón 2027 · V3</title>
+<style>
+/* Design tokens. Light = snow paper, dark = night platform. City colours are the "line colours" of the trip. */
+:root{--bg:#f1f4f9;--card:#fff;--ink:#141a2e;--mut:#556078;--line:#d9dfea;--sg:#fff2c4;--hero:#171d3a;--lamp:#f2b01e;--r:14px;
+--f:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1220;--card:#171c30;--ink:#eceff7;--mut:#9ba5bd;--line:#272e46;--sg:#34310f;--hero:#0a0d1a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1220;--card:#171c30;--ink:#eceff7;--mut:#9ba5bd;--line:#272e46;--sg:#34310f;--hero:#0a0d1a;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:72px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--f);padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:40}
+:focus-visible{outline:3px solid var(--c,#2f7fe0);outline-offset:2px}
+button,select,summary,a{touch-action:manipulation}
+
+/* Hero: the coloured line along its bottom edge is the trip's route, one segment per stay, sized by nights */
+.hero{background:var(--hero);color:#f4f6ff;padding:28px 20px 0}
+.hero-in{max-width:1100px;margin:0 auto;padding-bottom:22px}
+.hero h1{margin:0;font-size:clamp(2rem,9vw,3.4rem);font-weight:800;letter-spacing:-.03em;line-height:1.02}
+.hero p{margin:10px 0 0;color:#b8c1dc;font-size:.98rem}
+.hero p.left{margin-top:4px;color:#fff;font-weight:700}
+#strip{display:flex;height:7px}#strip i{display:block;background:var(--c)}
+
+/* Sticky context bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;display:flex;align-items:center;gap:8px;padding:8px 14px;background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+#where{flex:1;min-width:0;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar select,.tg{min-height:40px;font:inherit;font-size:16px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:0 12px}
+.tg{display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;font-size:.9rem}
+.tg input{width:18px;height:18px;margin:0;accent-color:var(--lamp)}
+@media(max-width:420px){.lng{display:none}}
+
+/* City tabs: bottom bar, reachable with a thumb */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:35;display:flex;gap:4px;overflow-x:auto;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--line);scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{position:relative;flex:1 0 auto;min-width:66px;min-height:50px;border:0;background:transparent;color:var(--mut);border-radius:12px;font:inherit;font-size:.8rem;font-weight:800;line-height:1.2;padding:8px 10px 6px;cursor:pointer}
+nav button::before{content:"";position:absolute;left:14px;right:14px;top:0;height:4px;border-radius:0 0 4px 4px;background:var(--c)}
+nav button.on{background:color-mix(in srgb,var(--c) 17%,var(--card));color:var(--ink)}
+nav small{display:block;font-weight:500;font-size:.7rem;color:var(--mut)}
+@media(min-width:860px){nav{left:50%;right:auto;transform:translateX(-50%);bottom:14px;max-width:94vw;border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 34px rgb(0 0 0/.18)}}
+
+main{max-width:1100px;margin:0 auto;padding:18px 16px 24px}
+h2{margin:0;font-size:1.65rem;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+h3{margin:32px 0 12px;font-size:1.1rem;font-weight:800}
+h3 em{font-style:normal;color:var(--mut);font-weight:500;font-size:.88rem;margin-left:4px}
+
+/* Overview */
+.today{display:block;width:100%;text-align:left;font:inherit;color:#161616;background:var(--lamp);border:0;border-radius:var(--r);padding:14px 16px;margin:0 0 6px;cursor:pointer;min-height:56px}
+.today b{display:block}.today span{font-size:.9rem}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;margin:0 0 4px}
+.fc{padding:11px 0;border-bottom:1px solid var(--line)}.fc b{display:block;font-size:1.2rem;line-height:1.25}.fc span{color:var(--mut);font-size:.86rem}
+@media(min-width:760px){.facts{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.route{max-width:720px}
+.rt{position:relative;display:block;width:calc(100% - 32px);margin:0 0 14px 32px;text-align:left;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;cursor:pointer;min-height:56px}
+.rt::before{content:"";position:absolute;left:-32px;top:15px;width:20px;height:20px;border-radius:50%;background:var(--card);border:6px solid var(--c);z-index:1}
+.rt:not(:last-child)::after{content:"";position:absolute;left:-26px;top:35px;bottom:-29px;width:8px;background:var(--c)}
+.rt b{font-size:1.12rem}.rt small{display:block;color:var(--mut);font-size:.88rem}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.wd{text-align:center;font-size:.76rem;color:var(--mut);padding-bottom:2px}
+.cd{min-height:58px;background:var(--card);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:10px;padding:5px 6px;cursor:pointer;color:inherit;text-align:left;font:inherit;position:relative;overflow:hidden}
+.cd.e{visibility:hidden}.cd i{font-style:normal;font-weight:800}.cd span{display:none;font-size:.7rem;line-height:1.2;color:var(--mut);margin-top:2px}
+.cd u{position:absolute;right:6px;bottom:6px;width:10px;height:10px;border-radius:50%;background:var(--lc,#bbb)}
+.cd.now{outline:3px solid var(--ink);outline-offset:1px}
+@media(min-width:620px){.cd{min-height:92px}.cd span{display:block}.cd u{top:8px;bottom:auto}}
+.light{--lc:#2fa66a}.medium{--lc:#e0a100}.heavy{--lc:#e5484d}.travel{--lc:#8a93a8}.open{--lc:#6f76e6}
+.lg{display:flex;flex-wrap:wrap;gap:6px 8px;margin:6px 0 12px;font-size:.84rem;color:var(--mut);align-items:center}
+.b{display:inline-block;font-size:.72rem;border-radius:999px;padding:1px 9px;margin-left:6px;background:color-mix(in srgb,var(--lc,#888) 24%,transparent);color:var(--ink);vertical-align:middle;font-weight:700}
+.lg .b{margin-left:0}
+.b.bk{--lc:#2f7fe0}.b.vf{--lc:#e0a100}.b.un{--lc:#e5484d}
+
+/* City page */
+.ch{margin:0 0 14px;padding-top:14px;border-top:7px solid var(--c)}.ch p{margin:4px 0 0;color:var(--mut)}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.lo{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:var(--r);padding:13px 14px}.lo small,.lo a{color:var(--mut);font-size:.88rem}.lo b{font-size:1.05rem}.lo a{display:inline-block;padding:4px 0;overflow-wrap:anywhere}
+.tr{margin:14px 0 0;font-size:.92rem;color:var(--mut)}.tr div{padding:4px 0}.tr b{color:var(--ink)}
+
+/* Days */
+.days{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px}
+.day{background:var(--card);border:1px solid var(--line);border-top:6px solid var(--lc,#888);border-radius:var(--r);padding:14px 15px}
+.day header{display:flex;align-items:center;flex-wrap:wrap;gap:4px 0}.day header>b{font-size:.98rem}
+.day h4{margin:6px 0 4px;font-size:1.12rem;line-height:1.3}
+.stops{list-style:none;margin:10px 0 6px;padding:0}
+.stops li{position:relative;padding:5px 0 7px 36px;min-height:34px;line-height:1.35}
+.stops li::before{content:attr(data-n);position:absolute;left:0;top:4px;width:25px;height:25px;border-radius:50%;background:var(--c);color:#fff;font-size:.78rem;font-weight:800;display:grid;place-items:center}
+.stops li:not(:last-child)::after{content:"";position:absolute;left:11px;top:30px;bottom:-4px;width:3px;background:color-mix(in srgb,var(--c) 38%,transparent)}
+.stops li.optional{color:var(--mut);font-style:italic}.stops li.unavailable{color:var(--mut);text-decoration:line-through}
+.rtl{margin:8px 0 2px}
+.go+.go{margin-top:8px}
+.go{display:flex;align-items:center;justify-content:center;min-height:48px;background:var(--c);color:#fff;border-radius:12px;padding:0 14px;text-decoration:none;font-weight:800}
+.lg2 summary{display:flex;align-items:center;min-height:44px;font-size:.9rem;color:var(--mut);cursor:pointer}
+.lg2 a{display:block;min-height:44px;padding:11px 4px;border-bottom:1px solid var(--line);font-size:.9rem;color:var(--ink);text-decoration:none}
+.lts{margin:10px 0}.lts h5,.dg h5{margin:12px 0 4px;font-size:.88rem;color:var(--mut);font-weight:800}
+.lt{background:color-mix(in srgb,var(--lamp) 16%,var(--card));border-left:4px solid var(--lamp);border-radius:8px;padding:8px 11px;margin:6px 0;font-size:.94rem}.lt small{display:block;color:var(--mut);font-size:.8rem}.lt p{margin:2px 0 0;font-size:.86rem}
+.dn{margin-top:10px;border-top:1px solid var(--line)}
+.dn summary{display:flex;align-items:center;gap:6px;min-height:50px;cursor:pointer;font-weight:800;list-style:none}
+.dn summary::-webkit-details-marker{display:none}
+.dn summary::after{content:"+";margin-left:auto;font-size:1.4rem;font-weight:500;color:var(--mut)}
+.dn[open] summary::after{content:"–"}
+.dn summary em{font-style:normal;color:var(--mut);font-weight:500}
+.di{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:50px;padding:8px 2px;color:inherit;text-decoration:none;border-bottom:1px solid var(--line);font-size:.94rem}
+.di small{display:block;color:var(--mut);font-size:.8rem}.di i{font-style:normal;flex:none;color:var(--c);font-size:.82rem;font-weight:800}
+.mu{color:var(--mut);font-size:.84rem;display:block;margin-top:4px}.day p{margin:6px 0;font-size:.94rem}
+.sug{background:var(--sg);border-radius:10px;padding:9px 11px}
+.src{color:var(--c,#2f7fe0);font-weight:700}.stops li small.mu{margin-top:1px}
+
+/* Item grids */
+.gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px}
+.it{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:12px;padding:11px 13px}
+.it.sg{background:var(--sg);border-style:dashed;border-left-style:solid}.it.unavailable{opacity:.55}
+.it small{display:block;color:var(--mut);font-size:.8rem}.it p{margin:5px 0 0;font-size:.9rem}
+.tags i{font-style:normal;font-size:.74rem;color:var(--mut);margin-right:8px}
+.q li{margin:6px 0}
+body.nosg .sg{display:none!important}
+.b.k-book{--lc:#2f7fe0}.b.k-verify{--lc:#e0a100}.b.k-decide{--lc:#8d4fd8}.b.k-gap{--lc:#e8740c}.b.k-assume{--lc:#8a93a8}
+.cl{list-style:none;margin:0;padding:0}.cl li{margin:0 0 10px;line-height:1.4;font-size:.94rem}.cl .b{margin:0 6px 0 0;display:inline-block}
+h5.kh{margin:16px 0 6px;font-size:.9rem;font-weight:800;color:var(--mut)}h5.kh em{font-style:normal;font-weight:500}
+footer{max-width:1100px;margin:0 auto;color:var(--mut);font-size:.84rem;padding:6px 16px 28px}
+</style></head><body>
+<header class="hero"><div class="hero-in"><h1>Viaje a Japón 2027 · V3</h1><p id="sub"></p><p id="left" class="left"></p></div><div id="strip"></div></header>
+<div class="bar" id="bar"></div>
+<main id="main"></main>
+<footer>Built from the five city JSON files. Amounts in USD are estimates (¥1,000 ≈ $6.33); hotel prices are shown once recorded. Dashed yellow items are Claude’s suggestions; ⚠ light-show dates are unverified.</footer>
+<nav id="nav" aria-label="Cities"></nav>
+<script>
+const D=/*DATA*/[];
+const COL=['#d6336c','#0f9d8a','#e8740c','#8d4fd8','#2f7fe0'],SHORT=['Tokyo Ueno','Nagoya','Hiroshima','Osaka','Tokyo Asakusa'],TK=['ov','c1','c2','c3','c4','c5'];
+const FX=D[0]._meta.fx_jpy_to_usd||0.00633;
+const yen=n=>n==null?'price TBD':'¥'+n.toLocaleString('en-US');
+const usd=n=>n==null?'':'≈$'+Math.round(n*FX).toLocaleString('en-US');
+const money=n=>n==null?'price not recorded':yen(n)+' · '+usd(n);
+const LOAD={travel:'Travel',light:'Light',medium:'Medium',heavy:'Heavy',open:'Open'};
+const LISTS=['places','kawaguchiko_places','doesnt_fit','winter_lights','dining','day_trip_options','day_trips'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/(\w)'(\w)/g,'$1’$2');
+const fd=d=>new Date(d+'T00:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+const PM=D.map(c=>{const m={};[...(c.places||[]),...(c.kawaguchiko_places||[])].forEach(p=>m[p.id]=p);return m});
+const USED=D.map(c=>new Set(c.itinerary.flatMap(d=>d.stops)));
+const CAL={};D.forEach((c,i)=>c.itinerary.forEach(d=>CAL[d.date]={i,d}));
+let sugg=true,pend=null,mode='transit',curT=0;
+
+/* Trip window comes from _meta.trip_dates so the calendar and countdown follow the data */
+const [TA,TB]=D[0]._meta.trip_dates.split('/'),S0=Date.parse(TA+'T00:00:00Z'),S1=Date.parse(TB+'T00:00:00Z'),NDAYS=Math.round((S1-S0)/864e5)+1;
+const NOW=new Date(),T0=Date.UTC(NOW.getFullYear(),NOW.getMonth(),NOW.getDate()),TODAY=new Date(T0).toISOString().slice(0,10);
+
+const strip=s=>s.replace(/\s*\(.*?\)/g,'');
+const qry=(c,p)=>p.maps_query||strip(p.name)+', '+c.city;
+const dir=(o,e,w)=>`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(o)}&destination=${encodeURIComponent(e)}${w&&w.length?`&waypoints=${encodeURIComponent(w.join('|'))}`:''}&travelmode=${mode}`;
+function rte(i,d){const c=D[i],pm=PM[i];
+ const ids=(d.route!==undefined?d.route:d.stops).filter(s=>pm[s]&&!['stopover','day-trip'].includes(pm[s].category)).slice(0,9);
+ if(!ids.length)return '';
+ const sp=c.stopover&&d.date<=c.lodging.check_in;
+ const hq=x=>x.name+', '+x.address,o=hq(sp?c.stopover:c.lodging),e=hq(c.lodging);
+ const pts=[o,...ids.map(s=>qry(c,pm[s])),e],L=[(sp?c.stopover:c.lodging).name,...ids.map(s=>pm[s].name),c.lodging.name];
+ /* Mobile browsers take at most 3 waypoints per directions link, so each link covers 4 legs (3 stops) and long days split into parts */
+ const n=pts.length,ch=[];for(let s=0;s<n-1;s+=4)ch.push(s);
+ const btn=ch.map((s,k)=>{const en=Math.min(s+4,n-1);return `<a class="go" target="_blank" rel="noopener" href="${dir(pts[s],pts[en],pts.slice(s+1,en))}">🗺 ${ch.length>1?`Route part ${k+1} of ${ch.length}`:'Open full route'}</a>`}).join('');
+ return `<div class="rtl">${btn}<details class="lg2"><summary>Leg by leg (from → to)</summary>${pts.slice(0,-1).map((a,k)=>`<a target="_blank" rel="noopener" href="${dir(a,pts[k+1])}">${k+1}. ${esc(L[k])} → ${esc(L[k+1])}</a>`).join('')}</details></div>`}
+const item=x=>`<div class="it ${x.source==='claude'?'sg':''} ${x.status||''}"><b>${esc(x.name)}</b>${x.book_ahead?'<span class="b bk">book ahead</span>':''}${x.booked===false?'<span class="b un">not booked</span>':''}${x.status==='unavailable'?'<span class="b un">sold out</span>':''}${x.verified===false?'<span class="b vf">⚠ verify dates</span>':''}<small>${esc([x.area,x.category,x.window,x.day?fd(x.day):''].filter(Boolean).join(' · '))}</small>${x.tags?`<div class="tags">${x.tags.slice(0,4).map(t=>`<i>#${esc(t)}</i>`).join('')}</div>`:''}${x.hours?`<small>🕒 ${esc(x.hours)}</small>`:''}${x.notes?`<p>${esc(x.notes)}</p>`:''}${x.source_url?`<small><a class="src" target="_blank" rel="noopener" href="${esc(x.source_url)}">Check source</a></small>`:''}</div>`;
+const sec=(t,a)=>a&&a.length?`<h3>${t} <em>${a.length}</em></h3><div class="gr">${a.map(item).join('')}</div>`:'';
+const lodg=(x,l)=>`<div class="lo"><small>${l}</small><br><b>${esc(x.name)}</b><br><small>${fd(x.check_in)} → ${fd(x.check_out)} · ${money(x.price_jpy)}</small><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.address)}">${esc(x.address)}</a><br><small>Confirmation ${esc(x.confirmation||'not yet booked')} · under ${esc(x.booked_under)}</small>${x.notes?`<p class="mu">${esc(x.notes)}</p>`:''}</div>`;
+
+const DT=[['sushi','🍣','Sushi'],['ramen','🍜','Ramen'],['sweets','🍰','Sweets'],['coffee','☕','Coffee shops'],['other','🍴','Other']];
+const onDay=(a,k)=>(a||[]).filter(x=>x.day===k||(x.days||[]).includes(k));
+const dlink=x=>x.kind==='q'?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.maps_query||x.name)}`:`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(x.maps_query||x.name)}&travelmode=${mode}`;
+const lite=x=>`<div class="lt"><b>${esc(x.name)}</b>${x.verified===false?'<span class="b vf">⚠ verify dates</span>':''}<small>${esc([x.area,x.window].filter(Boolean).join(' · '))}</small>${x.hours?`<small>🕒 ${esc(x.hours)}</small>`:''}${x.notes?`<p>${esc(x.notes)}</p>`:''}${x.verified_on&&x.verified!==false?`<small>✔ checked ${fd(x.verified_on)}</small>`:''}${x.source_url?`<small><a class="src" target="_blank" rel="noopener" href="${esc(x.source_url)}">Check source</a></small>`:''}</div>`;
+const nearby=d=>{const a=d.nearby||[];return a.length?`<details class="dn nb"><summary>✨ Bonus nearby <em>${a.length}</em></summary>${a.map(x=>`<a class="di" target="_blank" rel="noopener" href="${dlink(x)}"><span>${esc(x.name)}${x.notes?`<small>${esc(x.notes)}</small>`:''}</span><i>${x.kind==='q'?'🔎 browse':'📍 go'}</i></a>`).join('')}<small class="mu">Extra ideas near this day's area, not part of the route above. Verify hours before going.</small></details>`:''};
+const shop=d=>{const a=d.shopping||[];return a.length?`<details class="dn sp"><summary>🛍 Shopping here <em>${a.length}</em></summary>${a.map(x=>`<a class="di" target="_blank" rel="noopener" href="${dlink(x)}"><span>${esc(x.name)}${x.notes?`<small>${esc(x.notes)}</small>`:''}</span><i>${x.kind==='q'?'🔎 browse':'📍 go'}</i></a>`).join('')}<small class="mu">Shops that match this day's area. New Year hours can differ; verify before going.</small></details>`:''};
+const KL={book:'Book / confirm',verify:'Verify',decide:'Decide',gap:'Missing',assume:'Assumption'},KO=['book','verify','decide','gap','assume'];
+const chk=a=>a&&a.length?`<ul class="cl">${a.map(x=>`<li><span class="b k-${x.kind}">${KL[x.kind]||x.kind}</span>${esc(x.text)}</li>`).join('')}</ul>`:'';
+const trip=()=>{const a=(D[0]._meta.trip_checklist||[]);return a.length?`<h3>✅ Before you go <em>${a.length}</em></h3>${KO.map(k=>{const g=a.filter(x=>x.kind===k);return g.length?`<h5 class="kh">${KL[k]} <em>${g.length}</em></h5>${chk(g)}`:''}).join('')}`:''};
+const dine=a=>a.length?`<details class="dn"><summary>🍽 Eat nearby <em>${a.length}</em></summary>${DT.map(([k,ic,l])=>{const g=a.filter(x=>x.type===k);return g.length?`<div class="dg"><h5>${ic} ${l}</h5>${g.map(x=>`<a class="di" target="_blank" rel="noopener" href="${dlink(x)}"><span>${esc(x.name)}${x.kind==='s'?' ⭐':''}${x.notes?`<small>${esc(x.notes)}</small>`:''}</span><i>${x.kind==='q'?'🔎 browse':'📍 go'}</i></a>`).join('')}</div>`:''}).join('')}<small class="mu">📍 directions from your current location · 🔎 map search · ⭐ local specialty. Not part of the route above.</small></details>`:'';
+function day(i,d){const pm=PM[i],c=D[i],L=onDay(c.winter_lights,d.date),F=onDay(c.dining,d.date),o=d.route&&d.route.length?d.route:d.stops;
+ const rows=o.map(s=>pm[s]).filter(Boolean);
+ return `<article class="day ${d.load}" id="d-${d.date}"><header><b>${d.weekday} ${fd(d.date)}</b><span class="b">${LOAD[d.load]||d.load}</span>${d.status==='unassigned'?'<span class="b un">unassigned</span>':''}</header><h4>${esc(d.title)}</h4>`+
+ (rows.length?`<ol class="stops">${rows.map((p,k)=>`<li data-n="${k+1}" class="${p.status}">${esc(p.name)}${p.book_ahead?' 🎟':''}${p.hours?`<small class="mu">🕒 ${esc(p.hours)}</small>`:''}${p.source_url?`<small class="mu"><a class="src" target="_blank" rel="noopener" href="${esc(p.source_url)}">Check source</a></small>`:''}</li>`).join('')}</ol>`:'')+
+ rte(i,d)+(L.length?`<div class="lts"><h5>✨ Lights</h5>${L.map(lite).join('')}</div>`:'')+
+ (d.wanderlog_route?`<span class="mu">Wanderlog est.: ${esc(d.wanderlog_route)}</span>`:'')+
+ (d.notes?`<p>${esc(d.notes)}</p>`:'')+(d.claude_suggestion?`<p class="sug sg">💡 ${esc(d.claude_suggestion)}</p>`:'')+shop(d)+nearby(d)+dine(F)+'</article>'}
+
+function city(i){const c=D[i],tl={in:'Arrive',out:'Leave',local:'Getting around'};
+ return `<div style="--c:${COL[i]}"><section class="ch"><h2>${esc(c.leg_label)}</h2><p>${fd(c.dates.arrive)} – ${fd(c.dates.depart)} · ${c.dates.nights} nights</p></section>`+
+ `<div class="g2">${lodg(c.lodging,'Hotel')}${c.stopover?lodg(c.stopover,'One-night stopover'):''}</div>`+
+ `<div class="tr">${Object.entries(c.transport||{}).map(([k,v])=>`<div><b>${tl[k]||k}:</b> ${esc(v)}</div>`).join('')}</div>`+
+ `<h3>Day by day</h3><div class="days">${c.itinerary.map(d=>day(i,d)).join('')}</div>`+
+ sec('🚆 Day trips',[...(c.day_trips||[]),...(c.day_trip_options||[])])+sec('🗻 Kawaguchiko stop',c.kawaguchiko_places)+
+ sec('🚫 Doesn’t fit',c.doesnt_fit)+
+ (c.checklist&&c.checklist.length?`<h3>✅ Checklist <em>${c.checklist.length}</em></h3>${chk(c.checklist)}`:'')+
+ (c.open_questions&&c.open_questions.length?`<h3>❓ Open questions</h3><ul class="q">${c.open_questions.map(q=>`<li>${esc(q)}</li>`).join('')}</ul>`:'')+'</div>'}
+
+function overview(){
+ let own=0,ai=0,lights=0,open=0;
+ D.forEach(c=>{LISTS.forEach(k=>(c[k]||[]).forEach(x=>x.source==='claude'?ai++:own++));lights+=(c.winter_lights||[]).length;c.itinerary.forEach(d=>{if(d.status==='unassigned')open++})});
+ const nights=D.reduce((a,c)=>a+c.dates.nights+(c.stopover?c.stopover.nights||1:0),0);
+ const yt=D.reduce((a,c)=>a+(c.lodging.price_jpy||0)+(c.stopover&&c.stopover.price_jpy||0),0);
+ const hotel=yt?usd(yt):'TBD',hotelLbl=yt?'priced stays only · '+yen(yt):'hotel prices not recorded';
+ const st=[[nights,'nights in Japan'],[D.length,'stays'],[hotel,hotelLbl],[own,'your places & plans'],[ai,'Claude ideas'],[lights,'light shows'],[open,'days still open']];
+ const te=CAL[TODAY];
+ let h=(te?`<button class="today" data-t="${te.i+1}" data-a="d-${TODAY}"><b>Today, ${fd(TODAY)}</b><span>${esc(te.d.title)}</span></button>`:'')+
+ `<div class="facts">${st.map(s=>`<div class="fc"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div><h3>Route</h3><div class="route">`+
+ D.map((c,i)=>`<button class="rt" style="--c:${COL[i]}" data-t="${i+1}"><b>${SHORT[i]}</b><small>${fd(c.dates.arrive)} – ${fd(c.dates.depart)} · ${c.dates.nights} nights</small><small>${esc(c.lodging.name)}</small><small>${money(c.lodging.price_jpy)}</small>${c.stopover?`<small>+ ${esc(c.stopover.name)} ${money(c.stopover.price_jpy)}</small>`:''}</button>`).join('')+
+ `</div>${trip()}<h3>Calendar</h3><div class="lg">${Object.keys(LOAD).map(k=>`<span class="${k}"><u class="b">${LOAD[k]}</u></span>`).join('')}<span>Top colour = city. Tap a day to open it.</span></div><div class="cal">`+
+ ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(w=>`<div class="wd">${w}</div>`).join('')+Array.from({length:new Date(S0).getUTCDay()},()=>'<div class="cd e"></div>').join('');
+ for(let t=S0;t<=S1;t+=864e5){const dt=new Date(t),k=dt.toISOString().slice(0,10),e=CAL[k];
+  h+=e?`<button class="cd ${e.d.load}${k===TODAY?' now':''}" style="--c:${COL[e.i]}" data-t="${e.i+1}" data-a="d-${k}"><i>${dt.getUTCDate()}</i><u></u><span>${esc(e.d.title)}</span></button>`:`<div class="cd e"></div>`}
+ return h+'</div>'}
+
+function render(t){curT=t;
+ $('#nav').innerHTML=TK.map((k,i)=>`<button class="${i===t?'on':''}" style="--c:${i?COL[i-1]:'#5b6478'}" data-t="${i}" ${i===t?'aria-current="page"':''}>${i?SHORT[i-1]+`<small>${fd(D[i-1].dates.arrive)}</small>`:'Overview'}</button>`).join('');
+ $('#bar').innerHTML=`<span id="where">${t?SHORT[t-1]+' · '+fd(D[t-1].dates.arrive)+' – '+fd(D[t-1].dates.depart):'Trip overview'}</span><select id="md" aria-label="Travel mode">${[['transit','🚆 Transit'],['walking','🚶 Walk'],['driving','🚗 Drive']].map(m=>`<option value="${m[0]}" ${m[0]===mode?'selected':''}>${m[1]}</option>`).join('')}</select><label class="tg"><input type="checkbox" id="sg" ${sugg?'checked':''}><span>💡 <span class="lng">Claude </span>ideas</span></label>`;
+ $('#main').innerHTML=t?city(t-1):overview();document.body.classList.toggle('nosg',!sugg)}
+function route(){const t=Math.max(0,TK.indexOf(location.hash.slice(1)));render(t);
+ if(pend){const e=document.getElementById(pend);pend=null;e&&e.scrollIntoView({block:'start'})}else window.scrollTo(0,t?$('.hero').offsetHeight:0)}
+function go(t,a){pend=a||null;const h='#'+TK[t];if(location.hash===h)route();else location.hash=h}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(b)go(+b.dataset.t,b.dataset.a)});
+document.addEventListener('change',e=>{if(e.target.id==='md'){mode=e.target.value;const y=scrollY;render(curT);scrollTo(0,y)}if(e.target.id==='sg'){sugg=e.target.checked;document.body.classList.toggle('nosg',!sugg)}});
+addEventListener('hashchange',route);
+$('#strip').innerHTML=D.map((c,i)=>`<i style="flex:${c.dates.nights+(c.stopover?1:0)};--c:${COL[i]}"></i>`).join('');
+$('#sub').textContent=D[0]._meta.travelers.map(n=>n.split(' ')[0]).join(' & ')+' · '+fd(TA)+', '+TA.slice(0,4)+' – '+fd(TB)+', '+TB.slice(0,4);
+$('#left').textContent=T0<S0?Math.round((S0-T0)/864e5)+' days to go':T0<=S1?'Day '+(Math.round((T0-S0)/864e5)+1)+' of '+NDAYS:'Back home';
+route();
+</script></body></html>

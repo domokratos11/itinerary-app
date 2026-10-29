@@ -1,0 +1,910 @@
+{
+  "_meta": {
+    "trip": "Viaje a Japón 2027",
+    "trip_dates": "2026-12-15/2027-01-12",
+    "travelers": [
+      "Reynaldo",
+      "Karla"
+    ],
+    "schema_version": "1.2",
+    "last_updated": "2026-10-28",
+    "version": "V3",
+    "source": "V2 plan + Claude suggestions",
+    "status_values": [
+      "planned",
+      "unassigned",
+      "suggested",
+      "optional",
+      "unavailable"
+    ],
+    "source_values": [
+      "wanderlog",
+      "claude",
+      "user"
+    ],
+    "notes": "Osaka is the fourth stay (Dec 30 to Jan 4, 5 nights), booked at Tokyu REI Hotel Osaka. Kobe is no longer an overnight stay: it is a day trip on Jan 3 from Osaka. Kyoto or Nara on Jan 2 is still unassigned. Dreamination, Umeda and Midosuji light dates are unconfirmed. Year-end closures can run Dec 30 to Jan 3; verify every opening day. Items with source claude are suggestions from general knowledge, not live lookups.",
+    "fx_jpy_to_usd": 0.00633,
+    "fx_note": "Estimate used by the page: JPY 1,000 = USD 6.33. Change here to update every USD amount.",
+    "dining_note": "dining items belong to one day (day) and are grouped by type: sushi, ramen, sweets, coffee, other. kind: r = named place, s = local specialty, q = map search. They are never part of the route links.",
+    "nearby_note": "itinerary days carry 'nearby': bonus ideas near that day's area, hidden in the page by default. All entries are Claude suggestions (source claude) from general knowledge, not live lookups: verify opening days and hours before going. kind r = named place (directions), q = map search.",
+    "checklist_note": "checklist entries: book = needs a booking or confirmation; verify = check hours or dates; decide = choose between options; gap = not in the plan yet; assume = an assumption the plan depends on. Delete an entry when it is done.",
+    "privacy_note": "Confirmation numbers and full names were removed before committing to the public repo."
+  },
+  "city": "Osaka",
+  "leg": 4,
+  "leg_label": "Osaka (with Kobe day trip)",
+  "dates": {
+    "arrive": "2026-12-30",
+    "depart": "2027-01-04",
+    "nights": 5
+  },
+  "lodging": {
+    "name": "Tokyu REI Hotel Osaka",
+    "address": "2-1 Doyama-cho, Kita-ku, Osaka 530-0027, Japan",
+    "check_in": "2026-12-30",
+    "check_out": "2027-01-04",
+    "confirmation": "",
+    "booked_under": "Reynaldo",
+    "price_jpy": null,
+    "notes": "Confirmed for Dec 30 to Jan 4. Near Umeda and Osaka Station; price not recorded."
+  },
+  "transport": {
+    "in": "Shinkansen Hiroshima to Shin-Osaka on Dec 30, then the subway to Umeda (about 15 min)",
+    "out": "Jan 4: check out and travel to Kawaguchiko (Shinkansen to Mishima or Shin-Yokohama and onward; allow most of the day, see Kawaguchiko stopover)",
+    "local": "Osaka subway (Midosuji, Tanimachi, Osaka Loop); JR Kobe Line to Sannomiya for the Jan 3 day trip; JR Yamatoji or Kintetsu for Nara"
+  },
+  "places": [
+    {
+      "id": "o-umeda-sky",
+      "name": "Umeda Sky Building (Floating Garden)",
+      "category": "attraction",
+      "area": "Kita",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-30",
+      "book_ahead": true,
+      "tags": [
+        "view",
+        "night-lit"
+      ],
+      "notes": "Book the rooftop time slot in advance; go at dusk"
+    },
+    {
+      "id": "o-midosuji",
+      "name": "Midosuji Boulevard illuminations",
+      "category": "sightseeing",
+      "area": "Umeda to Namba",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-30",
+      "book_ahead": false,
+      "tags": [
+        "lights",
+        "walk"
+      ],
+      "notes": "Long tree-lined avenue; walk from Umeda toward Namba"
+    },
+    {
+      "id": "o-shinsekai",
+      "name": "Shinsekai and Tsutenkaku Tower",
+      "category": "sightseeing",
+      "area": "Naniwa",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-31",
+      "book_ahead": false,
+      "tags": [
+        "retro",
+        "kushikatsu"
+      ],
+      "notes": "Lively old district; kushikatsu is the local specialty"
+    },
+    {
+      "id": "o-harukas",
+      "name": "Abeno Harukas observation deck",
+      "category": "attraction",
+      "area": "Abeno",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-31",
+      "book_ahead": false,
+      "tags": [
+        "view"
+      ],
+      "notes": "Tallest building in Japan at the time of its opening; check winter hours"
+    },
+    {
+      "id": "o-tempozan",
+      "name": "Tempozan Ferris Wheel and Kaiyukan area",
+      "category": "attraction",
+      "area": "Minato",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2027-01-01",
+      "book_ahead": false,
+      "tags": [
+        "view",
+        "harbor"
+      ],
+      "notes": "Check New Year opening hours"
+    },
+    {
+      "id": "o-dotonbori",
+      "name": "Dotonbori",
+      "category": "sightseeing",
+      "area": "Namba",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2027-01-01",
+      "book_ahead": false,
+      "tags": [
+        "food",
+        "lights",
+        "canal"
+      ],
+      "notes": "The night scene; the Glico sign is the classic photo"
+    },
+    {
+      "id": "o-hozenji",
+      "name": "Hozenji Temple and Yokocho alley",
+      "category": "attraction",
+      "area": "Namba",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2027-01-01",
+      "book_ahead": false,
+      "tags": [
+        "alley",
+        "lanterns"
+      ],
+      "notes": "Small alley beside Dotonbori; a quick stop, not a temple focus"
+    },
+    {
+      "id": "o-kitano",
+      "name": "Kitano-Ijinkan (Kobe foreign houses)",
+      "category": "sightseeing",
+      "area": "Kobe",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2027-01-03",
+      "book_ahead": false,
+      "tags": [
+        "houses",
+        "views"
+      ],
+      "notes": "Kobe day trip"
+    },
+    {
+      "id": "o-nankinmachi",
+      "name": "Nankinmachi (Kobe Chinatown)",
+      "category": "food",
+      "area": "Kobe",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2027-01-03",
+      "book_ahead": false,
+      "tags": [
+        "food",
+        "chinatown"
+      ],
+      "notes": "Kobe day trip"
+    },
+    {
+      "id": "o-motomachi",
+      "name": "Motomachi shopping street",
+      "category": "shopping",
+      "area": "Kobe",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2027-01-03",
+      "book_ahead": false,
+      "tags": [
+        "shopping",
+        "arcade"
+      ],
+      "notes": "Kobe day trip"
+    },
+    {
+      "id": "o-harborland",
+      "name": "Kobe Harborland and Meriken Park",
+      "category": "sightseeing",
+      "area": "Kobe",
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2027-01-03",
+      "book_ahead": false,
+      "tags": [
+        "harbor",
+        "lights"
+      ],
+      "notes": "Kobe day trip; harbor lights in the evening"
+    }
+  ],
+  "doesnt_fit": [
+    {
+      "id": "o-df-usj",
+      "name": "Universal Studios Japan (Christmas party)",
+      "category": "theme-park",
+      "area": "Konohana",
+      "status": "optional",
+      "source": "wanderlog",
+      "book_ahead": true,
+      "tags": [
+        "theme-park"
+      ],
+      "notes": "Holiday party tickets sell out; a full day, so it does not fit the Osaka plan. Keep only if you want a dedicated day"
+    },
+    {
+      "id": "o-df-osakacastle",
+      "name": "Osaka Castle",
+      "category": "attraction",
+      "area": "Chuo",
+      "status": "optional",
+      "source": "claude",
+      "book_ahead": false,
+      "tags": [
+        "castle"
+      ],
+      "notes": "Typically open daily, but the castle tower and grounds can be crowded at New Year; not planned"
+    }
+  ],
+  "winter_lights": [
+    {
+      "id": "o-wl-umeda",
+      "name": "Umeda and Midosuji illuminations",
+      "area": "Kita to Namba",
+      "window": "typically late Nov to early Jan (2026-27 dates unconfirmed)",
+      "verified": false,
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-30",
+      "notes": "Walk from Umeda toward Namba on the evening of Dec 30",
+      "days": [
+        "2026-12-30"
+      ]
+    },
+    {
+      "id": "o-wl-shinsekai",
+      "name": "Tsutenkaku Tower night lighting",
+      "area": "Naniwa",
+      "window": "nightly",
+      "verified": false,
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2026-12-31",
+      "notes": "Lit at night; combine with Shinsekai",
+      "days": [
+        "2026-12-31"
+      ]
+    },
+    {
+      "id": "o-wl-dotonbori",
+      "name": "Dotonbori and Glico sign",
+      "area": "Namba",
+      "window": "nightly",
+      "verified": false,
+      "status": "planned",
+      "source": "wanderlog",
+      "day": "2027-01-01",
+      "notes": "The best night scene in Osaka",
+      "days": [
+        "2027-01-01"
+      ]
+    },
+    {
+      "id": "o-wl-harborland",
+      "name": "Harborland and Kobe Port Tower lights",
+      "area": "Kobe",
+      "window": "nightly",
+      "verified": false,
+      "status": "suggested",
+      "source": "claude",
+      "day": "2027-01-03",
+      "notes": "Evening on the Kobe day trip; return by train",
+      "days": [
+        "2027-01-03"
+      ]
+    }
+  ],
+  "dining": [
+    {
+      "id": "o-f-1230-1",
+      "name": "Gyoza or okonomiyaki on Umeda side streets",
+      "type": "other",
+      "kind": "q",
+      "day": "2026-12-30",
+      "maps_query": "okonomiyaki Umeda Osaka",
+      "notes": "Easy dinner before the walk",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-1230-2",
+      "name": "Umeda cafes",
+      "type": "coffee",
+      "kind": "q",
+      "day": "2026-12-30",
+      "maps_query": "cafe Umeda Osaka",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-1231-1",
+      "name": "Kushikatsu Daruma (Shinsekai)",
+      "type": "other",
+      "kind": "r",
+      "day": "2026-12-31",
+      "maps_query": "Kushikatsu Daruma Shinsekai",
+      "notes": "Classic kushikatsu; queue likely",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-1231-2",
+      "name": "Takoyaki near Dotonbori",
+      "type": "other",
+      "kind": "s",
+      "day": "2026-12-31",
+      "maps_query": "takoyaki Shinsekai Osaka",
+      "notes": "Street food on the way",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-1231-3",
+      "name": "Sweets in Shinsekai",
+      "type": "sweets",
+      "kind": "q",
+      "day": "2026-12-31",
+      "maps_query": "sweets Shinsekai Osaka",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-0101-1",
+      "name": "Kani Doraku (crab, Dotonbori)",
+      "type": "other",
+      "kind": "r",
+      "day": "2027-01-01",
+      "maps_query": "Kani Doraku Dotonbori",
+      "notes": "Iconic crab sign; check New Year hours",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-0101-2",
+      "name": "Ichiran Dotonbori (ramen)",
+      "type": "ramen",
+      "kind": "r",
+      "day": "2027-01-01",
+      "maps_query": "Ichiran Dotonbori",
+      "notes": "Late-night ramen",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-0101-3",
+      "name": "Dotonbori sweets",
+      "type": "sweets",
+      "kind": "q",
+      "day": "2027-01-01",
+      "maps_query": "sweets Dotonbori Osaka",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-0101-4",
+      "name": "Sushi near Namba",
+      "type": "sushi",
+      "kind": "q",
+      "day": "2027-01-01",
+      "maps_query": "sushi Namba Osaka",
+      "notes": "Check New Year hours",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-0103-1",
+      "name": "Kobe beef",
+      "type": "other",
+      "kind": "s",
+      "day": "2027-01-03",
+      "maps_query": "Kobe beef Sannomiya",
+      "notes": "Splurge option; reserve ahead",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-0103-2",
+      "name": "Nankinmachi food stalls",
+      "type": "other",
+      "kind": "q",
+      "day": "2027-01-03",
+      "maps_query": "Nankinmachi Kobe",
+      "notes": "Pork buns and snacks",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-0103-3",
+      "name": "Kobe cafes",
+      "type": "coffee",
+      "kind": "q",
+      "day": "2027-01-03",
+      "maps_query": "cafe Motomachi Kobe",
+      "notes": "",
+      "source": "claude",
+      "status": "suggested"
+    },
+    {
+      "id": "o-f-0104-1",
+      "name": "Osaka Station ekiben",
+      "type": "other",
+      "kind": "q",
+      "day": "2027-01-04",
+      "maps_query": "ekiben Osaka Station",
+      "notes": "Lunch for the trip to Kawaguchiko",
+      "source": "claude",
+      "status": "suggested"
+    }
+  ],
+  "day_trip_options": [
+    {
+      "id": "o-d-kyoto",
+      "name": "Kyoto (Jan 2)",
+      "status": "unassigned",
+      "source": "claude",
+      "notes": "Shrines and temples are not priorities; an option only for the Nishiki or Teramachi shopping and food areas, or the Kyoto winter lights"
+    },
+    {
+      "id": "o-d-nara",
+      "name": "Nara (Jan 2)",
+      "status": "unassigned",
+      "source": "claude",
+      "notes": "Deer park; a temple-heavy day, so likely skip"
+    }
+  ],
+  "itinerary": [
+    {
+      "date": "2026-12-30",
+      "weekday": "Wed",
+      "title": "Arrive Osaka, Umeda and Midosuji lights",
+      "status": "planned",
+      "load": "medium",
+      "stops": [
+        "o-umeda-sky",
+        "o-midosuji"
+      ],
+      "route": [
+        "o-umeda-sky",
+        "o-midosuji"
+      ],
+      "notes": "Arrive from Hiroshima; check in, then the evening light walk. The Sky Building needs a timed ticket.",
+      "claude_suggestion": "Check in at Tokyu REI, Umeda Sky Building at dusk, then walk Midosuji toward Namba.",
+      "nearby": [
+        {
+          "name": "Grand Front Osaka",
+          "category": "shopping",
+          "area": "Umeda",
+          "kind": "r",
+          "maps_query": "Grand Front Osaka",
+          "notes": "Large mall next to Umeda Station",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Hankyu Umeda department store",
+          "category": "shopping",
+          "area": "Umeda",
+          "kind": "r",
+          "maps_query": "Hankyu Umeda",
+          "notes": "Basement food hall",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Osaka Station City lights",
+          "category": "sightseeing",
+          "area": "Umeda",
+          "kind": "q",
+          "maps_query": "Osaka Station City illumination",
+          "notes": "Lit walkways near the station",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Yodoyabashi lights",
+          "category": "sightseeing",
+          "area": "Kita",
+          "kind": "q",
+          "maps_query": "Yodoyabashi Osaka",
+          "notes": "Bridge and canal walk",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Nakanoshima Park",
+          "category": "park",
+          "area": "Kita",
+          "kind": "r",
+          "maps_query": "Nakanoshima Park Osaka",
+          "notes": "Riverside walk and the Osaka Central Public Hall",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    },
+    {
+      "date": "2026-12-31",
+      "weekday": "Thu",
+      "title": "Shinsekai and Abeno Harukas",
+      "status": "planned",
+      "load": "medium",
+      "stops": [
+        "o-shinsekai",
+        "o-harukas"
+      ],
+      "route": [
+        "o-harukas",
+        "o-shinsekai"
+      ],
+      "notes": "Late afternoon Harukas, then Shinsekai for dinner and the tower lights. New Year's Eve crowds are likely.",
+      "claude_suggestion": "Harukas in the afternoon, Shinsekai kushikatsu dinner at dusk.",
+      "nearby": [
+        {
+          "name": "Tennoji Zoo",
+          "category": "attraction",
+          "area": "Tennoji",
+          "kind": "r",
+          "maps_query": "Tennoji Zoo Osaka",
+          "notes": "Check winter hours; short visit",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Shitenno-ji area food street",
+          "category": "food",
+          "area": "Tennoji",
+          "kind": "q",
+          "maps_query": "Tennoji Osaka food street",
+          "notes": "Food street near the temple; the temple itself is not a priority",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Spa World (Taishokan)",
+          "category": "attraction",
+          "area": "Shinsekai",
+          "kind": "r",
+          "maps_query": "Spa World Taishokan Osaka",
+          "notes": "Large bathhouse; verify holiday hours",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Kuromon Market",
+          "category": "food",
+          "area": "Nippombashi",
+          "kind": "r",
+          "maps_query": "Kuromon Ichiba Market",
+          "notes": "Seafood and street snacks; may close early on New Year's Eve",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Sennichimae shopping",
+          "category": "shopping",
+          "area": "Namba",
+          "kind": "q",
+          "maps_query": "Sennichimae Osaka",
+          "notes": "Covered shopping arcades",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    },
+    {
+      "date": "2027-01-01",
+      "weekday": "Fri",
+      "title": "Tempozan, Dotonbori, Hozenji",
+      "status": "planned",
+      "load": "medium",
+      "stops": [
+        "o-tempozan",
+        "o-dotonbori",
+        "o-hozenji"
+      ],
+      "route": [
+        "o-tempozan",
+        "o-dotonbori",
+        "o-hozenji"
+      ],
+      "notes": "New Year's Day: many shops and some restaurants close. Dotonbori is a crowd event; go in the evening.",
+      "claude_suggestion": "Tempozan Ferris Wheel in the afternoon if open, Dotonbori and Hozenji after dark.",
+      "nearby": [
+        {
+          "name": "Osaka Aquarium Kaiyukan",
+          "category": "attraction",
+          "area": "Minato",
+          "kind": "r",
+          "maps_query": "Osaka Aquarium Kaiyukan",
+          "notes": "Near Tempozan; check New Year hours",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Amerika-mura (American Village)",
+          "category": "shopping",
+          "area": "Shinsaibashi",
+          "kind": "q",
+          "maps_query": "Amerikamura Osaka",
+          "notes": "Vintage shops and street fashion",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Shinsaibashi Shopping Street",
+          "category": "shopping",
+          "area": "Shinsaibashi",
+          "kind": "r",
+          "maps_query": "Shinsaibashi shopping street Osaka",
+          "notes": "Covered arcade; many stores open on New Year's Day",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Namba Yasaka Shrine (Shrine)",
+          "category": "shrine",
+          "area": "Namba",
+          "kind": "r",
+          "maps_query": "Namba Yasaka Shrine",
+          "notes": "Lion-head shrine; optional, not a priority",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Den Den Town (electronics)",
+          "category": "shopping",
+          "area": "Nippombashi",
+          "kind": "q",
+          "maps_query": "Den Den Town Osaka",
+          "notes": "Anime, electronics and game shops",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    },
+    {
+      "date": "2027-01-02",
+      "weekday": "Sat",
+      "title": "Free day (Kyoto or Nara not assigned)",
+      "status": "unassigned",
+      "load": "light",
+      "stops": [],
+      "route": [],
+      "notes": "Open day. Kyoto or Nara are options but not chosen; leave free if unsure.",
+      "claude_suggestion": "Shopping in Umeda or Shinsaibashi, or Kyoto Nishiki Market and Teramachi arcade if you choose Kyoto.",
+      "nearby": [
+        {
+          "name": "Nishiki Market (Kyoto)",
+          "category": "food",
+          "area": "Kyoto",
+          "kind": "r",
+          "maps_query": "Nishiki Market Kyoto",
+          "notes": "Food and shopping street; Kyoto option",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Teramachi Covered Shopping Street (Kyoto)",
+          "category": "shopping",
+          "area": "Kyoto",
+          "kind": "r",
+          "maps_query": "Teramachi Kyoto shopping arcade",
+          "notes": "Covered shopping arcade; Kyoto option",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Kyoto Station Porta and Isetan",
+          "category": "shopping",
+          "area": "Kyoto",
+          "kind": "r",
+          "maps_query": "Porta Kyoto Station",
+          "notes": "Underground food and shops near the station",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Umeda Hankyu Men's",
+          "category": "shopping",
+          "area": "Umeda",
+          "kind": "q",
+          "maps_query": "Umeda shopping Osaka",
+          "notes": "Shopping close to the hotel",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    },
+    {
+      "date": "2027-01-03",
+      "weekday": "Sun",
+      "title": "Kobe day trip: Kitano, Nankinmachi, Motomachi, Harborland",
+      "status": "planned",
+      "load": "heavy",
+      "stops": [
+        "o-kitano",
+        "o-nankinmachi",
+        "o-motomachi",
+        "o-harborland"
+      ],
+      "route": [
+        "o-kitano",
+        "o-nankinmachi",
+        "o-motomachi",
+        "o-harborland"
+      ],
+      "notes": "Kobe replaces the former overnight stay. Start at Sannomiya; Kitano first in the morning. Return to Osaka by evening.",
+      "claude_suggestion": "Kitano in the morning, Nankinmachi lunch, Motomachi shopping, Harborland lights at dusk.",
+      "nearby": [
+        {
+          "name": "Sannomiya shopping",
+          "category": "shopping",
+          "area": "Sannomiya",
+          "kind": "q",
+          "maps_query": "Sannomiya shopping Kobe",
+          "notes": "Department stores and arcades near the station",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Kobe Port Tower",
+          "category": "attraction",
+          "area": "Harborland",
+          "kind": "r",
+          "maps_query": "Kobe Port Tower",
+          "notes": "Lit at night",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Mosaic shopping (Kobe)",
+          "category": "shopping",
+          "area": "Harborland",
+          "kind": "r",
+          "maps_query": "Mosaic Kobe",
+          "notes": "Outlet-style shops and restaurants by the harbor",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Ikuta Shrine (Kobe)",
+          "category": "shrine",
+          "area": "Sannomiya",
+          "kind": "r",
+          "maps_query": "Ikuta Shrine Kobe",
+          "notes": "Optional; not a priority",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Kobe Sweets Street (Motomachi)",
+          "category": "sweets",
+          "area": "Kobe",
+          "kind": "q",
+          "maps_query": "sweets Motomachi Kobe",
+          "notes": "Bakeries and sweets shops",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    },
+    {
+      "date": "2027-01-04",
+      "weekday": "Mon",
+      "title": "Check out, travel to Kawaguchiko",
+      "status": "planned",
+      "load": "travel",
+      "stops": [],
+      "notes": "Check out of Tokyu REI. Continue in 05_tokyo_asakusa.json (Plaza Inn Kawaguchiko stopover).",
+      "nearby": [
+        {
+          "name": "Osaka Station ekiben",
+          "category": "food",
+          "area": "Osaka Station",
+          "kind": "q",
+          "maps_query": "ekiben Osaka Station",
+          "notes": "Lunch for the train",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Umeda Station shopping",
+          "category": "shopping",
+          "area": "Umeda",
+          "kind": "q",
+          "maps_query": "Umeda Station shopping",
+          "notes": "Last shopping before leaving",
+          "source": "claude",
+          "status": "suggested"
+        },
+        {
+          "name": "Osaka Station City",
+          "category": "shopping",
+          "area": "Umeda",
+          "kind": "r",
+          "maps_query": "Osaka Station City",
+          "notes": "Shops and food on the way to the train",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ],
+      "shopping": [
+        {
+          "id": "o-s-umeda",
+          "name": "Umeda shopping (Grand Front, Hankyu)",
+          "area": "Umeda",
+          "category": "shopping",
+          "kind": "q",
+          "maps_query": "Grand Front Osaka",
+          "notes": "Last shopping stop near the hotel",
+          "source": "claude",
+          "status": "suggested"
+        }
+      ]
+    }
+  ],
+  "checklist": [
+    {
+      "id": "o-c-01",
+      "kind": "verify",
+      "text": "Umeda Sky Building timed ticket for Dec 30: reserve in advance.",
+      "source": "claude"
+    },
+    {
+      "id": "o-c-02",
+      "kind": "verify",
+      "text": "Tempozan, Kaiyukan and Dotonbori opening hours on Jan 1.",
+      "source": "claude"
+    },
+    {
+      "id": "o-c-03",
+      "kind": "verify",
+      "text": "Abeno Harukas hours on Dec 31 and Jan 1.",
+      "source": "claude"
+    },
+    {
+      "id": "o-c-04",
+      "kind": "decide",
+      "text": "Jan 2: Kyoto, Nara or a free day? Currently unassigned.",
+      "source": "claude"
+    },
+    {
+      "id": "o-c-05",
+      "kind": "decide",
+      "text": "Universal Studios Japan Christmas party: keep or drop (sold-out risk; does not fit the plan).",
+      "source": "claude"
+    },
+    {
+      "id": "o-c-06",
+      "kind": "verify",
+      "text": "Kobe day-trip return time on Jan 3 (last trains from Sannomiya).",
+      "source": "claude"
+    },
+    {
+      "id": "o-c-07",
+      "kind": "assume",
+      "text": "Assumes Shinsekai and Dotonbori are open on Dec 31 and Jan 1.",
+      "source": "claude"
+    }
+  ],
+  "open_questions": [
+    "Jan 2: Kyoto, Nara or free day?",
+    "Keep the Universal Studios Japan party day or drop it?",
+    "Dec 31: New Year's Eve crowds; start Shinsekai earlier?"
+  ]
+}
