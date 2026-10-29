@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  costTotal,
   directionsUrl,
   hotelsForDay,
   itemsForDay,
@@ -8,8 +9,9 @@ import {
   legsForDay,
   nextStop,
   newPlanItem,
+  stopWarnings,
 } from "@/domain/plan";
-import type { PlanItem, Stay } from "@/domain/schemas";
+import type { PlanItem, Place, Stay } from "@/domain/schemas";
 
 const stay = (cityId: string, checkIn: string, checkOut: string): Stay => ({
   cityId,
@@ -156,5 +158,61 @@ describe("newPlanItem", () => {
     });
     expect(created.status).toBe("planned");
     expect(created.updatedAt).toBe("2026-12-25T09:00:00.000Z");
+  });
+});
+
+describe("stopWarnings", () => {
+  const place = (overrides: Partial<Place>): Place =>
+    ({
+      id: "p",
+      cityId: "nagoya",
+      mapsUrl: "https://www.google.com/maps/search/?api=1&query=x",
+      name: "Place",
+      lat: null,
+      lng: null,
+      category: "sight",
+      purpose: null,
+      description: null,
+      tips: [],
+      costEstimateJPY: null,
+      durationMin: null,
+      openingHours: null,
+      closedDates: [],
+      seasonFrom: null,
+      seasonTo: null,
+      priority: "want",
+      verifiedAt: null,
+      websiteUrl: null,
+      notes: null,
+      ...overrides,
+    }) as Place;
+
+  it("warns on a closed date", () => {
+    const p = place({ closedDates: ["2026-12-29"] });
+    expect(stopWarnings(p, "2026-12-29")).toEqual(["Closed on this day"]);
+    expect(stopWarnings(p, "2026-12-30")).toEqual([]);
+  });
+
+  it("warns outside the season on either side", () => {
+    const p = place({ seasonFrom: "2026-11-01", seasonTo: "2027-02-14" });
+    expect(stopWarnings(p, "2026-10-31")).toEqual(["Outside its season"]);
+    expect(stopWarnings(p, "2026-12-20")).toEqual([]);
+    expect(stopWarnings(p, "2027-02-15")).toEqual(["Outside its season"]);
+  });
+
+  it("gives no warnings when nothing is known", () => {
+    expect(stopWarnings(place({}), "2026-12-20")).toEqual([]);
+  });
+});
+
+describe("costTotal", () => {
+  it("adds known costs and counts unknown ones separately", () => {
+    const priced = { costEstimateJPY: 1300 } as Place;
+    const free = { costEstimateJPY: 0 } as Place;
+    const unknown = { costEstimateJPY: null } as Place;
+    expect(costTotal([priced, free, unknown, undefined])).toEqual({
+      yen: 1300,
+      unpriced: 2,
+    });
   });
 });

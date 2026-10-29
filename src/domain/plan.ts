@@ -126,3 +126,29 @@ export function newPlanItem(input: {
     updatedAt: input.now.toISOString(),
   };
 }
+
+// Warnings for a stop on a given day: the place is closed that day, or the
+// day is outside the season the place is open for.
+export function stopWarnings(place: Place, date: string): string[] {
+  const warnings: string[] = [];
+  if (place.closedDates.includes(date)) warnings.push("Closed on this day");
+  const beforeSeason = place.seasonFrom !== null && date < place.seasonFrom;
+  const afterSeason = place.seasonTo !== null && date > place.seasonTo;
+  if (beforeSeason || afterSeason) warnings.push("Outside its season");
+  return warnings;
+}
+
+// Estimated cost of some stops. Places without a researched cost are counted
+// separately, so an unknown price is never shown as zero.
+export function costTotal(places: (Place | undefined)[]): {
+  yen: number;
+  unpriced: number;
+} {
+  let yen = 0;
+  let unpriced = 0;
+  for (const place of places) {
+    if (place?.costEstimateJPY == null) unpriced += 1;
+    else yen += place.costEstimateJPY;
+  }
+  return { yen, unpriced };
+}

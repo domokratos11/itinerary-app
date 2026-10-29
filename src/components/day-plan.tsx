@@ -53,11 +53,14 @@ import {
   legsForDay,
   nextStop,
   placeLocation,
+  stopWarnings,
   type Location,
 } from "@/domain/plan";
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
 import { allPlaces, trip } from "@/lib/catalog";
 import { CATEGORY_LABEL } from "@/lib/category-label";
+import { CostLine } from "@/components/cost-line";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { formatDayLabel } from "@/lib/format-day";
 import { placeItem, removeItem, restoreItem } from "@/lib/plan-actions";
 import { usePlanStore } from "@/lib/plan-store";
@@ -196,9 +199,13 @@ export function DayPlan(props: Props) {
           >
             ← Trip days
           </Link>
-          <RecentlyChanged />
+          <div className="flex items-center gap-2">
+            <RecentlyChanged />
+            <ThemeToggle />
+          </div>
         </div>
         <h1 className="text-2xl font-semibold">{props.label}</h1>
+        <CostLine places={stops.map((i) => placesById.get(i.placeId))} />
         <div className="flex flex-wrap gap-2">
           {props.cityNames.map((name) => (
             <Badge key={name} variant="secondary">
@@ -434,6 +441,12 @@ function StopCard({
               </Badge>
             )}
             {meta && <Badge variant="outline">{meta}</Badge>}
+            {place &&
+              stopWarnings(place, item.date).map((warning) => (
+                <Badge key={warning} variant="destructive">
+                  {warning}
+                </Badge>
+              ))}
           </div>
         </div>
       </CardHeader>
