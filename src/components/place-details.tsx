@@ -81,7 +81,9 @@ function PlaceBody({ place, nearby }: { place: Place; nearby: NearbyPlace[] }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
         <Badge variant="secondary">{CATEGORY_LABEL[place.category]}</Badge>
-        <Badge variant="outline">{place.priority}</Badge>
+        <Badge variant="outline" className="text-foreground">
+          {place.priority}
+        </Badge>
         {place.verifiedAt && (
           <Badge variant="outline">Checked {place.verifiedAt}</Badge>
         )}
