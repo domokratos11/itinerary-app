@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Access is by trip ID only: anyone who has the exact ID can read and edit
+// that trip's plan. Listing, creating or deleting trips is never allowed.
+// Paste this file into Firebase console → Firestore → Rules, then Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isPlanItem(d) {
+      return d.keys().hasOnly(['id', 'placeId', 'date', 'order', 'startTime', 'durationMin', 'note', 'status', 'updatedAt'])
+        && d.keys().hasAll(['id', 'placeId', 'date', 'order', 'startTime', 'durationMin', 'note', 'status', 'updatedAt'])
+        && d.id is string && d.id.size() > 0 && d.id.size() <= 64
+        && d.placeId is string && d.placeId.size() > 0 && d.placeId.size() <= 64
+        && d.date is string && d.date.size() == 10
+        && d.order is string && d.order.size() > 0 && d.order.size() <= 64
+        && (d.startTime == null || (d.startTime is string && d.startTime.size() == 5))
+        && (d.durationMin == null || (d.durationMin is int && d.durationMin > 0 && d.durationMin <= 1440))
+        && (d.note == null || (d.note is string && d.note.size() <= 500))
+        && d.status in ['planned', 'done', 'skipped', 'removed']
+        && d.updatedAt is string && d.updatedAt.size() <= 30;
+    }
+
+    match /trips/{tripId} {
+      allow get: if true;
+      allow list, create, update, delete: if false;
+
+      match /items/{itemId} {
+        allow read: if exists(/databases/$(database)/documents/trips/$(tripId));
+        allow create, update: if exists(/databases/$(database)/documents/trips/$(tripId))
+          && isPlanItem(request.resource.data)
+          && request.resource.data.id == itemId;
+        allow delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

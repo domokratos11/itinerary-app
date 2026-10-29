@@ -1,7 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import Home from "./page";
+
+// The trip-plan badge reads ?trip= via useSearchParams, which needs the
+// Next.js router. Tests have no router, so give it an empty query.
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 describe("Home", () => {
   it("shows the placeholder trip card", () => {

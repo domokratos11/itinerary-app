@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { TripPlanStatus } from "@/components/trip-plan-status";
 
 // Server Component: rendered at build time into static HTML.
 export default function Home() {
@@ -30,6 +31,7 @@ export default function Home() {
             <Badge variant="secondary">Osaka</Badge>
             <Badge variant="secondary">Kawaguchiko</Badge>
           </div>
+          <TripPlanStatus />
         </CardContent>
       </Card>
     </main>
