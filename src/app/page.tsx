@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { ExportPlan } from "@/components/export-plan";
+import { QueuePanel } from "@/components/queue-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TripPlanStatus } from "@/components/trip-plan-status";
 import { TripDays, type DayView } from "@/components/trip-days";
@@ -50,6 +51,9 @@ export default function Home() {
           </div>
         </CardContent>
       </Card>
+      <Suspense fallback={null}>
+        <QueuePanel />
+      </Suspense>
       <Suspense fallback={null}>
         <TripDays days={days} />
       </Suspense>
