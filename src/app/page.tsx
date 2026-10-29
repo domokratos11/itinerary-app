@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { TripPlanStatus } from "@/components/trip-plan-status";
 import { TripDays, type DayView } from "@/components/trip-days";
 import {
@@ -43,7 +44,9 @@ export default function Home() {
           <TripPlanStatus />
         </CardContent>
       </Card>
-      <TripDays days={days} />
+      <Suspense fallback={null}>
+        <TripDays days={days} />
+      </Suspense>
     </main>
   );
 }

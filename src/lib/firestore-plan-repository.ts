@@ -7,15 +7,23 @@ import { getDb } from "@/lib/firebase";
 // Reads and writes trips/{tripId}/items/{itemId}. Rows that fail the schema
 // are skipped, so one bad write cannot break the whole day view.
 export class FirestorePlanRepository implements PlanRepository {
-  subscribe(tripId: string, onItems: (items: PlanItem[]) => void): () => void {
+  subscribe(
+    tripId: string,
+    onItems: (items: PlanItem[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void {
     const items = collection(getDb(), "trips", tripId, "items");
-    return onSnapshot(items, (snapshot) => {
-      const parsed = snapshot.docs.flatMap((d) => {
-        const result = PlanItemSchema.safeParse(d.data());
-        return result.success ? [result.data] : [];
-      });
-      onItems(parsed);
-    });
+    return onSnapshot(
+      items,
+      (snapshot) => {
+        const parsed = snapshot.docs.flatMap((d) => {
+          const result = PlanItemSchema.safeParse(d.data());
+          return result.success ? [result.data] : [];
+        });
+        onItems(parsed);
+      },
+      (error) => onError?.(error),
+    );
   }
 
   async save(tripId: string, item: PlanItem): Promise<void> {

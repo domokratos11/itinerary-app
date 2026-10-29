@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Geist_Mono, Instrument_Sans } from "next/font/google";
+import { Suspense } from "react";
+
+import { PlanSync } from "@/components/plan-sync";
+import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
 const instrumentSansHeading = Instrument_Sans({
@@ -32,7 +36,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         instrumentSansHeading.variable,
       )}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <Suspense fallback={null}>
+          <PlanSync />
+        </Suspense>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

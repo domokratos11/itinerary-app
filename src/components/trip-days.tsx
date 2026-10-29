@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePlanStore } from "@/lib/plan-store";
 import { todayInTokyo } from "@/lib/tokyo-date";
+import { useTripId } from "@/lib/use-trip-id";
 
 export type DayView = {
   date: string; // YYYY-MM-DD
@@ -18,6 +20,7 @@ export type DayView = {
 // after the trip to the last day.
 export function TripDays({ days }: { days: DayView[] }) {
   const items = usePlanStore((s) => s.items);
+  const tripId = useTripId();
 
   const stopsByDate = useMemo(() => {
     const counts = new Map<string, number>();
@@ -48,10 +51,20 @@ export function TripDays({ days }: { days: DayView[] }) {
       </div>
       {days.map((day) => {
         const stops = stopsByDate.get(day.date) ?? 0;
+        const href = tripId
+          ? `/day/${day.date}/?trip=${tripId}`
+          : `/day/${day.date}/`;
         return (
           <Card key={day.date} id={`day-${day.date}`} className="scroll-mt-4">
             <CardHeader>
-              <CardTitle className="text-base">{day.label}</CardTitle>
+              <CardTitle className="text-base">
+                <Link
+                  href={href}
+                  className="underline-offset-4 hover:underline"
+                >
+                  {day.label}
+                </Link>
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap items-center gap-2">
               {day.cities.map((city) => (

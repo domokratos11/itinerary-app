@@ -19,6 +19,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { AddToDay } from "@/components/add-to-day";
 import type { Place } from "@/domain/schemas";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -92,6 +93,7 @@ function PlaceBody({ place, nearby }: { place: Place; nearby: NearbyPlace[] }) {
           Open in Google Maps
         </a>
       </Button>
+      <AddToDay place={place} />
 
       {place.purpose && <Section label="Why go">{place.purpose}</Section>}
       {place.description && (

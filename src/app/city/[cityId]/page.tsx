@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { Suspense } from "react";
 import { CityCatalog } from "@/components/city-catalog";
 import { cities, cityById, nearby, placesForCity } from "@/lib/catalog";
 
@@ -31,7 +32,9 @@ export default async function CityPage({
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-4 py-6 md:max-w-3xl">
-      <CityCatalog city={city} places={places} nearby={nearbyForCity} />
+      <Suspense fallback={null}>
+        <CityCatalog city={city} places={places} nearby={nearbyForCity} />
+      </Suspense>
     </main>
   );
 }
