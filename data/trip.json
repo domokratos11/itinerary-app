@@ -1,0 +1,92 @@
+{
+  "stays": [
+    {
+      "cityId": "tokyo-ueno",
+      "hotelName": "APA Hotel Ueno Eki Minami",
+      "hotelMapsUrl": "https://www.google.com/maps/search/?api=1&query=APA+Hotel+Ueno+Eki+Minami",
+      "lat": null,
+      "lng": null,
+      "checkIn": "2026-12-17",
+      "checkOut": "2026-12-24"
+    },
+    {
+      "cityId": "nagoya",
+      "hotelName": "KOKO Hotel Nagoya Marunouchi",
+      "hotelMapsUrl": "https://www.google.com/maps/search/?api=1&query=KOKO+Hotel+Nagoya+Marunouchi",
+      "lat": null,
+      "lng": null,
+      "checkIn": "2026-12-24",
+      "checkOut": "2026-12-27"
+    },
+    {
+      "cityId": "hiroshima",
+      "hotelName": "To be decided",
+      "hotelMapsUrl": null,
+      "lat": null,
+      "lng": null,
+      "checkIn": "2026-12-27",
+      "checkOut": "2026-12-30"
+    },
+    {
+      "cityId": "osaka",
+      "hotelName": "Tokyu REI Hotel Osaka",
+      "hotelMapsUrl": "https://www.google.com/maps/search/?api=1&query=Tokyu+REI+Hotel+Osaka",
+      "lat": null,
+      "lng": null,
+      "checkIn": "2026-12-30",
+      "checkOut": "2027-01-04"
+    },
+    {
+      "cityId": "kawaguchiko",
+      "hotelName": "Plaza Inn Kawaguchiko",
+      "hotelMapsUrl": "https://www.google.com/maps/search/?api=1&query=Plaza+Inn+Kawaguchiko",
+      "lat": null,
+      "lng": null,
+      "checkIn": "2027-01-04",
+      "checkOut": "2027-01-05"
+    },
+    {
+      "cityId": "tokyo-asakusa",
+      "hotelName": "APA Hotel Asakusa Kuramae Kita",
+      "hotelMapsUrl": "https://www.google.com/maps/search/?api=1&query=APA+Hotel+Asakusa+Kuramae+Kita",
+      "lat": null,
+      "lng": null,
+      "checkIn": "2027-01-05",
+      "checkOut": "2027-01-12"
+    }
+  ],
+  "reservations": [
+    {
+      "type": "flight",
+      "date": "2026-12-15",
+      "time": null,
+      "from": "SAL",
+      "to": "LAX",
+      "note": "Volaris"
+    },
+    {
+      "type": "flight",
+      "date": "2026-12-16",
+      "time": null,
+      "from": "LAX",
+      "to": "HND",
+      "note": "United UA 39, lands 2026-12-17"
+    },
+    {
+      "type": "flight",
+      "date": "2027-01-12",
+      "time": "21:05",
+      "from": "HND",
+      "to": "LAX",
+      "note": "ANA NH 126"
+    },
+    {
+      "type": "flight",
+      "date": "2027-01-12",
+      "time": "23:54",
+      "from": "LAX",
+      "to": "SAL",
+      "note": "Volaris"
+    }
+  ]
+}

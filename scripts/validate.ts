@@ -6,16 +6,24 @@
  * with no matching schema is an error, so nothing ships unchecked.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { z } from "zod";
+
+import {
+  CitiesFileSchema,
+  PlacesFileSchema,
+  TripFileSchema,
+} from "../src/domain/schemas";
 
 export type SchemaRule = { pattern: RegExp; schema: z.ZodType };
 
 // Paths are relative to data/, using forward slashes.
-// Example once the domain model exists:
-//   { pattern: /^cities\.json$/, schema: CitiesFileSchema },
-//   { pattern: /^places\/[a-z0-9-]+\.json$/, schema: PlacesFileSchema },
-export const SCHEMAS: SchemaRule[] = [];
+export const SCHEMAS: SchemaRule[] = [
+  { pattern: /^cities\.json$/, schema: CitiesFileSchema },
+  { pattern: /^trip\.json$/, schema: TripFileSchema },
+  { pattern: /^places\/[a-z0-9-]+\.json$/, schema: PlacesFileSchema },
+];
 
 export function listJsonFiles(dir: string, base = dir): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -61,4 +69,6 @@ function main() {
   console.log(`data/ is valid (${files.length} file(s) checked).`);
 }
 
-if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) main();
+if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+  main();
+}
