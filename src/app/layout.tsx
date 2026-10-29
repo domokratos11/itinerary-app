@@ -1,5 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Geist_Mono, Instrument_Sans } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const instrumentSansHeading = Instrument_Sans({
+  subsets: ["latin"],
+  variable: "--font-heading",
+});
+
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "Japan Trip 2026–27",
@@ -14,7 +23,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html
+      lang="en"
+      className={cn(
+        "h-full antialiased",
+        "font-mono",
+        geistMono.variable,
+        instrumentSansHeading.variable,
+      )}
+    >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
