@@ -109,7 +109,9 @@ export function CityCatalog({ city, places, nearby }: Props) {
             }
           >
             <SelectTrigger className="w-40">
-              <SelectValue />
+              <SelectValue>
+                {filter.priority === "all" ? "All priorities" : filter.priority}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All priorities</SelectItem>
@@ -153,7 +155,9 @@ export function CityCatalog({ city, places, nearby }: Props) {
                 <Badge variant="secondary">
                   {CATEGORY_LABEL[place.category]}
                 </Badge>
-                <Badge variant="outline">{place.priority}</Badge>
+                <Badge variant="outline" className="text-foreground">
+                  {place.priority}
+                </Badge>
                 {assigned.has(place.id) && <Badge>In plan</Badge>}
               </CardContent>
             </Card>
