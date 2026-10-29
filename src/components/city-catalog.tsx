@@ -23,6 +23,7 @@ import {
 } from "@/domain/schemas";
 import { filterPlaces, type CatalogFilter } from "@/lib/catalog-filter";
 import { CATEGORY_LABEL } from "@/lib/category-label";
+import { CostLine } from "@/components/cost-line";
 import { usePlanStore } from "@/lib/plan-store";
 
 type Props = {
@@ -56,6 +57,13 @@ export function CityCatalog({ city, places, nearby }: Props) {
     [places, filter, assigned],
   );
   const selected = places.find((p) => p.id === selectedId) ?? null;
+  // Estimated cost of this city's planned stops.
+  const planned = useMemo(() => {
+    const byId = new Map(places.map((p) => [p.id, p]));
+    return items
+      .filter((i) => i.status !== "removed" && byId.has(i.placeId))
+      .map((i) => byId.get(i.placeId));
+  }, [items, places]);
 
   return (
     <>
@@ -64,6 +72,7 @@ export function CityCatalog({ city, places, nearby }: Props) {
         <p className="text-sm text-muted-foreground">
           {visible.length} of {places.length} places
         </p>
+        <CostLine places={planned} />
       </header>
 
       <div className="flex flex-col gap-3">

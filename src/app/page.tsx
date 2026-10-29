@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { ExportPlan } from "@/components/export-plan";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { TripPlanStatus } from "@/components/trip-plan-status";
 import { TripDays, type DayView } from "@/components/trip-days";
 import {
@@ -42,6 +44,10 @@ export default function Home() {
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <TripPlanStatus />
+          <div className="flex flex-wrap gap-2">
+            <ExportPlan />
+            <ThemeToggle />
+          </div>
         </CardContent>
       </Card>
       <Suspense fallback={null}>
