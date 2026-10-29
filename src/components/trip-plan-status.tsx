@@ -1,30 +1,15 @@
 "use client";
 
-import { Suspense, useSyncExternalStore } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { usePlanStore } from "@/lib/plan-store";
-import { usePlanSync } from "@/lib/use-plan-sync";
-import { resolveTripId } from "@/lib/trip-id";
-
-// The trip ID comes from the URL and localStorage, neither of which changes
-// while the page is open, so there is nothing to subscribe to.
-const noopSubscribe = () => () => {};
+import { useTripId } from "@/lib/use-trip-id";
 
 function PlanStatus() {
-  const params = useSearchParams();
-  // Null on the server and during hydration, so the static HTML matches the
-  // first client render; the real ID is read on the client afterwards.
-  const tripId = useSyncExternalStore(
-    noopSubscribe,
-    () => resolveTripId(params.get("trip")),
-    () => null,
-  );
-
-  usePlanSync(tripId);
-
+  const tripId = useTripId();
   const ready = usePlanStore((s) => s.ready);
+  const error = usePlanStore((s) => s.error);
   const stops = usePlanStore(
     (s) => s.items.filter((i) => i.status !== "removed").length,
   );
@@ -33,6 +18,13 @@ function PlanStatus() {
     return (
       <Badge variant="outline">
         Open your shared link with ?trip= to load the plan
+      </Badge>
+    );
+  }
+  if (error) {
+    return (
+      <Badge variant="destructive" className="whitespace-normal">
+        Can&apos;t reach the plan: {error}
       </Badge>
     );
   }
