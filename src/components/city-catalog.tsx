@@ -89,7 +89,7 @@ export function CityCatalog({ city, places, nearby }: Props) {
           ))}
         </ToggleGroup>
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Select
             value={filter.priority}
             onValueChange={(value) =>

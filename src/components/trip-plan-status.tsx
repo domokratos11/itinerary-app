@@ -16,25 +16,55 @@ function PlanStatus() {
 
   if (!tripId) {
     return (
-      <Badge variant="outline">
+      <Badge
+        variant="outline"
+        className="h-auto py-1 text-left whitespace-normal"
+      >
         Open your shared link with ?trip= to load the plan
       </Badge>
     );
   }
   if (error) {
     return (
-      <Badge variant="destructive" className="whitespace-normal">
+      <Badge
+        variant="destructive"
+        className="h-auto py-1 text-left whitespace-normal"
+      >
         Can&apos;t reach the plan: {error}
       </Badge>
     );
   }
-  if (!ready) return <Badge variant="outline">Loading plan…</Badge>;
-  return <Badge variant="secondary">{stops} planned stops</Badge>;
+  if (!ready)
+    return (
+      <Badge
+        variant="outline"
+        className="h-auto py-1 text-left whitespace-normal"
+      >
+        Loading plan…
+      </Badge>
+    );
+  return (
+    <Badge
+      variant="secondary"
+      className="h-auto py-1 text-left whitespace-normal"
+    >
+      {stops} planned stops
+    </Badge>
+  );
 }
 
 export function TripPlanStatus() {
   return (
-    <Suspense fallback={<Badge variant="outline">Loading plan…</Badge>}>
+    <Suspense
+      fallback={
+        <Badge
+          variant="outline"
+          className="h-auto py-1 text-left whitespace-normal"
+        >
+          Loading plan…
+        </Badge>
+      }
+    >
       <PlanStatus />
     </Suspense>
   );
