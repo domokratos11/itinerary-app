@@ -7,7 +7,7 @@ import { useMemo } from "react";
 import { CityCatalog } from "@/components/city-catalog";
 import { nearbyByPlace } from "@/lib/catalog-filter";
 import { homeHref } from "@/lib/links";
-import { useCitiesById, useTrip } from "@/lib/trip-store";
+import { useCitiesById, useTrip, useTripStore } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 
 // /city/?id=<cityId>. Places come from the live trip, so draft places from
@@ -19,6 +19,8 @@ export function CityScreen() {
   const tripId = useTripId();
   const trip = useTrip();
   const city = useCitiesById().get(cityId);
+  const allPlaceIds = useTripStore((s) => s.data.places);
+  const takenIds = useMemo(() => allPlaceIds.map((p) => p.id), [allPlaceIds]);
   const places = useMemo(
     () => trip.places.filter((p) => p.cityId === cityId),
     [trip.places, cityId],
@@ -49,6 +51,8 @@ export function CityScreen() {
       key={`${cityId}-${placeId ?? ""}`}
       city={city}
       places={places}
+      tripId={tripId}
+      takenIds={takenIds}
       nearby={nearby}
       initialPlaceId={placeId}
     />
