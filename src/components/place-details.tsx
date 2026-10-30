@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ExternalLink } from "lucide-react";
+import { Archive, ExternalLink, Pencil } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { AddToDay } from "@/components/add-to-day";
-import type { Place } from "@/domain/schemas";
+import type { PlaceRecord } from "@/domain/schemas";
 import { isDraft } from "@/domain/queue";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -28,13 +28,33 @@ import { useMediaQuery } from "@/lib/use-media-query";
 export type NearbyPlace = { id: string; name: string };
 
 type Props = {
-  place: Place | null;
+  place: PlaceRecord | null;
   nearby: NearbyPlace[];
+  // True when a plan item uses the place; it can't be archived then.
+  inPlan: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit: (place: PlaceRecord) => void;
+  onArchive: (place: PlaceRecord) => void;
 };
 
 // Phones get a bottom Drawer; wider screens get a side Sheet.
-export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
+export function PlaceDetails({
+  place,
+  nearby,
+  inPlan,
+  onOpenChange,
+  onEdit,
+  onArchive,
+}: Props) {
+  const body = place && (
+    <PlaceBody
+      place={place}
+      nearby={nearby}
+      inPlan={inPlan}
+      onEdit={() => onEdit(place)}
+      onArchive={() => onArchive(place)}
+    />
+  );
   const wide = useMediaQuery("(min-width: 768px)");
   const open = place !== null;
 
@@ -50,7 +70,7 @@ export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
                   Place details
                 </SheetDescription>
               </SheetHeader>
-              <PlaceBody place={place} nearby={nearby} />
+              {body}
             </>
           )}
         </SheetContent>
@@ -69,7 +89,7 @@ export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
                 Place details
               </DrawerDescription>
             </DrawerHeader>
-            <PlaceBody place={place} nearby={nearby} />
+            {body}
           </div>
         )}
       </DrawerContent>
@@ -77,7 +97,19 @@ export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
   );
 }
 
-function PlaceBody({ place, nearby }: { place: Place; nearby: NearbyPlace[] }) {
+function PlaceBody({
+  place,
+  nearby,
+  inPlan,
+  onEdit,
+  onArchive,
+}: {
+  place: PlaceRecord;
+  nearby: NearbyPlace[];
+  inPlan: boolean;
+  onEdit: () => void;
+  onArchive: () => void;
+}) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
@@ -102,6 +134,27 @@ function PlaceBody({ place, nearby }: { place: Place; nearby: NearbyPlace[] }) {
         </a>
       </Button>
       <AddToDay place={place} />
+      <div className="flex gap-2">
+        <Button variant="outline" className="flex-1" onClick={onEdit}>
+          <Pencil />
+          Edit
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1"
+          disabled={inPlan}
+          title={inPlan ? "Remove it from the plan first" : undefined}
+          onClick={onArchive}
+        >
+          <Archive />
+          Archive
+        </Button>
+      </div>
+      {inPlan && (
+        <p className="-mt-2 text-xs text-muted-foreground">
+          It&apos;s in the plan. Remove it from its day to archive it.
+        </p>
+      )}
 
       {place.purpose && <Section label="Why go">{place.purpose}</Section>}
       {place.description && (
