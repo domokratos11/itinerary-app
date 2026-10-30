@@ -126,4 +126,21 @@ describe("queue lifecycle", () => {
     expect(PlaceRecordSchema.safeParse(place).success).toBe(true);
     expect(isDraft(place)).toBe(true);
   });
+
+  it("keeps the category chosen in the queue, and defaults to sight", () => {
+    const input = { cityId: "nagoya", name: "Oasis 21", takenIds: [] };
+    const now = new Date("2026-11-01T00:00:00.000Z");
+    expect(
+      draftPlaceFrom({ ...saved, category: "lights" }, input, now).category,
+    ).toBe("lights");
+    expect(
+      draftPlaceFrom({ ...saved, category: null }, input, now).category,
+    ).toBe("sight");
+  });
+
+  it("reads links saved before categories existed", () => {
+    const old: Record<string, unknown> = { ...saved };
+    delete old.category;
+    expect(QueuedPlaceSchema.parse(old).category).toBeNull();
+  });
 });

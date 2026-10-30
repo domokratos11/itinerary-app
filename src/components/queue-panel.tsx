@@ -31,6 +31,8 @@ import {
   type QueuedPlace,
   type QueueStatus,
 } from "@/domain/queue";
+import { CATEGORY_LABEL } from "@/lib/category-label";
+import { CATEGORIES, type Category } from "@/domain/schemas";
 import { formatDayLabel } from "@/lib/format-day";
 import { assignQueued, queueAdd, queueUpdate } from "@/lib/queue-actions";
 import { useCitiesById, useTrip, useTripDays } from "@/lib/trip-store";
@@ -53,6 +55,7 @@ export function QueuePanel() {
   const { items, error } = useQueue(tripId);
   const [url, setUrl] = useState("");
   const [note, setNote] = useState("");
+  const [category, setCategory] = useState<Category | "">("");
   const [problem, setProblem] = useState<string | null>(null);
   const [filter, setFilter] = useState<QueueStatus>("queued");
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -86,6 +89,7 @@ export function QueuePanel() {
         lat: parsed.lat,
         lng: parsed.lng,
         note: note.trim() || null,
+        category: category || null,
       });
     } catch {
       toast.error("That link was refused. Check the trip link.");
@@ -94,6 +98,7 @@ export function QueuePanel() {
     toast.success("Queued for the next update");
     setUrl("");
     setNote("");
+    setCategory("");
   }
 
   function exportQueue() {
@@ -158,6 +163,14 @@ export function QueuePanel() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={500}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="queue-category">Category (optional)</Label>
+            <CategorySelect
+              id="queue-category"
+              value={category}
+              onChange={setCategory}
             />
           </div>
           {problem && (
@@ -291,6 +304,9 @@ function QueueRow({
       {item.note && <span className="text-muted-foreground">{item.note}</span>}
       <div className="flex flex-wrap items-center gap-2">
         {city && <Badge variant="secondary">{city.name}</Badge>}
+        {item.category && (
+          <Badge variant="outline">{CATEGORY_LABEL[item.category]}</Badge>
+        )}
         <a
           className="inline-flex items-center gap-1 text-xs underline"
           href={item.url}
@@ -337,6 +353,37 @@ function QueueRow({
   );
 }
 
+const NO_CATEGORY = "none";
+
+function CategorySelect({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: Category | "";
+  onChange: (category: Category | "") => void;
+}) {
+  return (
+    <Select
+      value={value || NO_CATEGORY}
+      onValueChange={(v) => onChange(v === NO_CATEGORY ? "" : (v as Category))}
+    >
+      <SelectTrigger id={id} className="w-full">
+        <SelectValue>{value ? CATEGORY_LABEL[value] : "Not set"}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={NO_CATEGORY}>Not set</SelectItem>
+        {CATEGORIES.map((c) => (
+          <SelectItem key={c} value={c}>
+            {CATEGORY_LABEL[c]}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function CitySelect({
   id,
   value,
@@ -376,11 +423,14 @@ function EditQueued({
 }: {
   item: QueuedPlace;
   onClose: () => void;
-  onSave: (changes: Pick<QueuedPlace, "name" | "note" | "cityId">) => void;
+  onSave: (
+    changes: Pick<QueuedPlace, "name" | "note" | "cityId" | "category">,
+  ) => void;
 }) {
   const [name, setName] = useState(item.name ?? "");
   const [note, setNote] = useState(item.note ?? "");
   const [cityId, setCityId] = useState(useSuggestedCity(item));
+  const [category, setCategory] = useState<Category | "">(item.category ?? "");
   return (
     <EditPanel
       open
@@ -391,6 +441,7 @@ function EditQueued({
           name: name.trim() || null,
           note: note.trim() || null,
           cityId: cityId || null,
+          category: category || null,
         })
       }
     >
@@ -412,6 +463,17 @@ function EditQueued({
       </Field>
       <Field label="City" htmlFor="queued-city">
         <CitySelect id="queued-city" value={cityId} onChange={setCityId} />
+      </Field>
+      <Field
+        label="Category"
+        htmlFor="queued-category"
+        hint="Kept when you assign it to a day."
+      >
+        <CategorySelect
+          id="queued-category"
+          value={category}
+          onChange={setCategory}
+        />
       </Field>
     </EditPanel>
   );
