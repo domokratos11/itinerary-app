@@ -58,7 +58,13 @@ describe("assignQueued", () => {
     const [item] = current<QueuedPlace[]>((cb) => queue.subscribe(TRIP, cb));
     expect(item.status).toBe("queued");
 
-    const place = await assignQueued(TRIP, item, "nagoya", "2026-12-25", NOW);
+    const { place } = await assignQueued(
+      TRIP,
+      item,
+      "nagoya",
+      "2026-12-25",
+      NOW,
+    );
 
     expect(place).toMatchObject({ cityId: "nagoya", status: "draft" });
     const places = useTripStore.getState().data.places;
@@ -96,7 +102,7 @@ describe("assignQueued", () => {
     const item = current<QueuedPlace[]>((cb) => queue.subscribe(TRIP, cb)).find(
       (i) => i.name === "Cafe",
     )!;
-    const place = await assignQueued(TRIP, item, "osaka", null, NOW);
+    const { place } = await assignQueued(TRIP, item, "osaka", null, NOW);
     const planned = current<{ placeId: string }[]>((cb) =>
       plans.subscribe(TRIP, cb),
     );

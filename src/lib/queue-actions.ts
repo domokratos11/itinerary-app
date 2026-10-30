@@ -1,7 +1,7 @@
 import { itemsForDay } from "@/domain/plan";
 import { draftPlaceFrom, type QueuedPlace } from "@/domain/queue";
-import type { PlaceRecord } from "@/domain/schemas";
-import { addPlaceToDay } from "@/lib/plan-actions";
+import type { PlaceRecord, PlanItem } from "@/domain/schemas";
+import { addPlaceAt } from "@/lib/plan-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { queueRepository } from "@/lib/queue-repository-instance";
 import { saveRecord } from "@/lib/trip-actions";
@@ -40,15 +40,17 @@ export function queueUpdate(
 }
 
 // Turns a queued link into a draft place in `cityId` and, when a date is
-// given, puts it at the end of that day. The queue item is marked promoted
-// and remembers the place, so the next enrichment run can research it.
+// given, puts it on that day (at `index`, or the end). The queue item is
+// marked promoted and remembers the place, so the next enrichment run can
+// research it. Returns the place and the new stop, if any.
 export async function assignQueued(
   tripId: string,
   item: QueuedPlace,
   cityId: string,
   date: string | null,
   now: Date = new Date(),
-): Promise<PlaceRecord> {
+  index?: number,
+): Promise<{ place: PlaceRecord; stop: PlanItem | null }> {
   const places = useTripStore.getState().data.places;
   const existing = item.placeId
     ? places.find((p) => p.id === item.placeId)
@@ -64,12 +66,22 @@ export async function assignQueued(
       },
       now,
     );
-  const writes: Promise<void>[] = [];
+  const writes: Promise<unknown>[] = [];
   if (!existing) writes.push(saveRecord(tripId, "places", place));
-  if (date) {
-    const dayItems = itemsForDay(usePlanStore.getState().items, date);
-    writes.push(addPlaceToDay(tripId, place.id, date, dayItems, now));
-  }
+  const adding = date
+    ? (() => {
+        const dayItems = itemsForDay(usePlanStore.getState().items, date);
+        return addPlaceAt(
+          tripId,
+          place.id,
+          date,
+          index ?? dayItems.length,
+          dayItems,
+          now,
+        );
+      })()
+    : Promise.resolve(null);
+  writes.push(adding);
   writes.push(
     queueRepository.save(tripId, {
       ...item,
@@ -80,5 +92,5 @@ export async function assignQueued(
     }),
   );
   await Promise.all(writes);
-  return place;
+  return { place, stop: await adding };
 }

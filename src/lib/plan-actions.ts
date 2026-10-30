@@ -32,8 +32,21 @@ export async function addPlaceToDay(
   date: string,
   dayItems: PlanItem[],
   now: Date = new Date(),
-): Promise<void> {
-  const { order, rekeyed } = keysForInsert(dayItems, dayItems.length);
+): Promise<PlanItem> {
+  return addPlaceAt(tripId, placeId, date, dayItems.length, dayItems, now);
+}
+
+// Adds a new stop at `index` in the day's list (`dayItems`, in order) and
+// returns it, so the caller can offer Undo.
+export async function addPlaceAt(
+  tripId: string,
+  placeId: string,
+  date: string,
+  index: number,
+  dayItems: PlanItem[],
+  now: Date = new Date(),
+): Promise<PlanItem> {
+  const { order, rekeyed } = keysForInsert(dayItems, index);
   const item = newPlanItem({
     id: crypto.randomUUID(),
     placeId,
@@ -42,6 +55,7 @@ export async function addPlaceToDay(
     now,
   });
   await saveAll(tripId, [item, ...withKeys(dayItems, rekeyed, now)]);
+  return item;
 }
 
 // Puts an item on `date` at `index`. `others` is that day's items without

@@ -101,8 +101,10 @@ describe("QueuePanel", () => {
 
   it("assigns a queued link to the suggested city's first day", async () => {
     vi.mocked(assignQueued).mockResolvedValue({
-      name: "Oasis 21",
-    } as Awaited<ReturnType<typeof assignQueued>>);
+      place: { name: "Oasis 21" },
+      stop: null,
+    } as unknown as Awaited<ReturnType<typeof assignQueued>>);
+
     queueItems = [oasis];
     render(<QueuePanel />);
 

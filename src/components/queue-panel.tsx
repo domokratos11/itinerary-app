@@ -250,7 +250,7 @@ export function QueuePanel() {
             const item = dialog.item;
             setDialog(null);
             assignQueued(tripId, item, cityId, date)
-              .then((place) =>
+              .then(({ place }) =>
                 toast.success(
                   date
                     ? `Added ${place.name} to ${formatDayLabel(date)}`

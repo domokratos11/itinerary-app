@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   TouchSensor,
   closestCenter,
+  pointerWithin,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
@@ -59,15 +62,38 @@ import {
 } from "@/domain/plan";
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
-import { isDraft } from "@/domain/queue";
+import { planDrop, type DragSource, type DropTarget } from "@/domain/drop";
+import { isDraft, suggestCity } from "@/domain/queue";
+import {
+  DaySidePanel,
+  DragPreview,
+  LIST_ID,
+  parseDragId,
+  placeDragId,
+  queueDragId,
+  useListDrop,
+} from "@/components/day-side-panel";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { formatDayLabel } from "@/lib/format-day";
-import { placeItem, removeItem, restoreItem } from "@/lib/plan-actions";
+import {
+  addPlaceAt,
+  placeItem,
+  removeItem,
+  restoreItem,
+} from "@/lib/plan-actions";
+import { assignQueued, queueUpdate } from "@/lib/queue-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { homeHref } from "@/lib/links";
-import { usePlacesById, useTripDays } from "@/lib/trip-store";
+import {
+  useCitiesById,
+  usePlacesById,
+  useTrip,
+  useTripDays,
+} from "@/lib/trip-store";
+import { useQueue } from "@/lib/use-queue";
+import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTripId } from "@/lib/use-trip-id";
 
@@ -89,7 +115,11 @@ export function DayPlan(props: Props) {
   const tripId = useTripId();
   const items = usePlanStore((s) => s.items);
   const placesById = usePlacesById();
+  const citiesById = useCitiesById();
+  const trip = useTrip();
   const tripDays = useTripDays();
+  const queue = useQueue(tripId).items;
+  const [dragging, setDragging] = useState<string | null>(null);
   const wide = useMediaQuery("(min-width: 768px)");
   const stops = useMemo(
     () => itemsForDay(items, props.date),
@@ -119,21 +149,165 @@ export function DayPlan(props: Props) {
     );
   }
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const from = stops.findIndex((i) => i.id === active.id);
-    const to = stops.findIndex((i) => i.id === over.id);
-    if (from < 0 || to < 0) return;
-    const item = stops[from];
-    // `to` is the item's new position in the list. Without the moved item,
-    // the same index is the right slot.
-    move(
-      item,
-      props.date,
-      to,
-      stops.filter((i) => i.id !== item.id),
+  // Wide screens: what can be dragged in from the side panel, and the other
+  // days of this day's cities to drop a stop on.
+  const waiting = useMemo(() => {
+    const planned = new Set(
+      items.filter((i) => i.status !== "removed").map((i) => i.placeId),
     );
+    const drafts = trip.places
+      .filter(
+        (p) =>
+          isDraft(p) && props.cityIds.includes(p.cityId) && !planned.has(p.id),
+      )
+      .map((p) => ({
+        dragId: placeDragId(p.id),
+        name: p.name,
+        detail: "Not researched yet",
+      }));
+    const links = queue
+      .filter((q) => q.status === "queued")
+      .map((q) => ({
+        dragId: queueDragId(q.id),
+        name: q.name ?? "Short link",
+        detail: "Queued link",
+      }));
+    return [...drafts, ...links];
+  }, [items, trip.places, queue, props.cityIds]);
+  const otherDays = tripDays.filter(
+    (d) =>
+      d.date !== props.date && d.cityIds.some((c) => props.cityIds.includes(c)),
+  );
+  const stopCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const i of items)
+      if (i.status !== "removed")
+        counts.set(i.date, (counts.get(i.date) ?? 0) + 1);
+    return counts;
+  }, [items]);
+
+  function sourceFor(id: string): DragSource | null {
+    const parsed = parseDragId(id);
+    if (parsed?.kind === "place") {
+      const place = placesById.get(parsed.value);
+      return place
+        ? { kind: "place", placeId: place.id, cityId: place.cityId }
+        : null;
+    }
+    if (parsed?.kind === "queue") {
+      const q = queue.find((i) => i.id === parsed.value);
+      return q
+        ? {
+            kind: "queued",
+            queueId: q.id,
+            cityId: q.cityId ?? suggestCity(q, trip.places, trip.stays),
+          }
+        : null;
+    }
+    const item = stops.find((i) => i.id === id);
+    return item
+      ? {
+          kind: "stop",
+          item,
+          cityId: placesById.get(item.placeId)?.cityId ?? null,
+        }
+      : null;
+  }
+
+  function targetFor(id: string): DropTarget | null {
+    if (id === LIST_ID) return { kind: "list" };
+    const parsed = parseDragId(id);
+    if (parsed?.kind === "day") return { kind: "day", date: parsed.value };
+    const index = stops.findIndex((i) => i.id === id);
+    return index < 0 ? null : { kind: "stop", index };
+  }
+
+  function nameOf(source: DragSource): string {
+    if (source.kind === "stop")
+      return placesById.get(source.item.placeId)?.name ?? "This stop";
+    if (source.kind === "place")
+      return placesById.get(source.placeId)?.name ?? "This place";
+    return queue.find((q) => q.id === source.queueId)?.name ?? "This place";
+  }
+
+  function handleDragEnd({ active, over }: DragEndEvent) {
+    setDragging(null);
+    if (!over || !tripId) return;
+    const source = sourceFor(String(active.id));
+    const target = targetFor(String(over.id));
+    if (!source || !target) return;
+    const movingId = source.kind === "stop" ? source.item.id : null;
+    const dayItems = (date: string) =>
+      itemsForDay(items, date).filter((i) => i.id !== movingId);
+    const plan = planDrop(source, target, {
+      date: props.date,
+      stops,
+      days: tripDays,
+      dayLength: (date) => dayItems(date).length,
+    });
+    if (plan.kind === "none") return;
+    if (plan.kind === "refuse") {
+      const city = citiesById.get(source.cityId ?? "")?.name ?? "Its city";
+      toast.error(
+        plan.reason === "not-a-day"
+          ? "That isn't one of the trip's days."
+          : `${city} isn't on ${formatDayLabel(plan.date)}, so ${nameOf(source)} can't go there.`,
+      );
+      return;
+    }
+
+    const id = tripId;
+    const label = formatDayLabel(plan.date);
+    if (source.kind === "stop") {
+      const before = source.item;
+      move(before, plan.date, plan.index, dayItems(plan.date));
+      if (plan.date !== before.date)
+        toast(`Moved ${nameOf(source)} to ${label}`, {
+          action: {
+            label: "Undo",
+            onClick: () => undo(restoreItem(id, before)),
+          },
+        });
+      return;
+    }
+
+    const added =
+      source.kind === "place"
+        ? addPlaceAt(
+            id,
+            source.placeId,
+            plan.date,
+            plan.index,
+            dayItems(plan.date),
+          )
+        : assignQueued(
+            id,
+            queue.find((q) => q.id === source.queueId)!,
+            plan.cityId!,
+            plan.date,
+            new Date(),
+            plan.index,
+          ).then((r) => r.stop!);
+    added
+      .then((stop) =>
+        toast(`Added ${nameOf(source)} to ${label}`, {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              undo(removeItem(id, stop));
+              if (source.kind === "queued") {
+                const q = queue.find((i) => i.id === source.queueId);
+                if (q) undo(queueUpdate(id, q, { status: "queued" }));
+              }
+            },
+          },
+        }),
+      )
+      .catch(() => toast.error(REFUSED));
+  }
+
+  function undo(write: Promise<void>) {
+    write.catch(() => toast.error("Couldn't undo that change."));
   }
 
   function stepBy(item: PlanItem, delta: number) {
@@ -243,29 +417,47 @@ export function DayPlan(props: Props) {
       {wide ? (
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCenter}
+          collisionDetection={preferItems}
+          onDragStart={({ active }) => setDragging(String(active.id))}
+          onDragCancel={() => setDragging(null)}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext
-            items={rows.map((r) => r.item.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <ol className="flex flex-col gap-3">
-              {rows.map((row, index) => (
-                <SortableStop
-                  key={row.item.id}
-                  id={row.item.id}
-                  item={row.item}
-                  place={row.place}
-                  origin={originFor(index)}
-                  dayOptions={dayOptionsFor(row.place?.cityId)}
-                  currentDate={props.date}
-                  onRemove={() => remove(row.item)}
-                  onMoveDay={(d) => moveToDay(row.item, d)}
-                />
-              ))}
-            </ol>
-          </SortableContext>
+          <div className="grid grid-cols-[minmax(0,1fr)_15rem] items-start gap-4">
+            <SortableContext
+              items={rows.map((r) => r.item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <DroppableList empty={rows.length === 0}>
+                {rows.map((row, index) => (
+                  <SortableStop
+                    key={row.item.id}
+                    id={row.item.id}
+                    item={row.item}
+                    place={row.place}
+                    origin={originFor(index)}
+                    dayOptions={dayOptionsFor(row.place?.cityId)}
+                    currentDate={props.date}
+                    onRemove={() => remove(row.item)}
+                    onMoveDay={(d) => moveToDay(row.item, d)}
+                  />
+                ))}
+              </DroppableList>
+            </SortableContext>
+            <DaySidePanel
+              waiting={waiting}
+              otherDays={otherDays}
+              stopCounts={stopCounts}
+            />
+          </div>
+          <DragOverlay>
+            {dragging && parseDragId(dragging) ? (
+              <DragPreview
+                name={
+                  waiting.find((w) => w.dragId === dragging)?.name ?? "Place"
+                }
+              />
+            ) : null}
+          </DragOverlay>
         </DndContext>
       ) : (
         <ol className="flex flex-col gap-3">
@@ -291,7 +483,7 @@ export function DayPlan(props: Props) {
         </ol>
       )}
 
-      {stops.length === 0 && (
+      {stops.length === 0 && !wide && (
         <p className="text-sm text-muted-foreground">
           No stops yet. Open a place from a city list and choose Add to day.
         </p>
@@ -325,6 +517,45 @@ export function DayPlan(props: Props) {
         </section>
       )}
     </div>
+  );
+}
+
+// Drops land on the most specific target under the pointer: a stop or a
+// day before the list around them. Keyboard drags have no pointer, so they
+// fall back to the nearest target.
+const preferItems: CollisionDetection = (args) => {
+  const within = pointerWithin(args);
+  const specific = within.filter((c) => c.id !== LIST_ID);
+  if (specific.length) return specific;
+  if (within.length) return within;
+  return closestCenter(args);
+};
+
+function DroppableList({
+  empty,
+  children,
+}: {
+  empty: boolean;
+  children: ReactNode;
+}) {
+  const { setNodeRef, isOver } = useListDrop();
+  return (
+    <ol
+      ref={setNodeRef}
+      className={cn(
+        "flex min-h-24 flex-col gap-3 rounded-xl",
+        empty && "items-center justify-center border border-dashed p-6",
+        isOver && "bg-primary/5 ring-2 ring-primary/30",
+      )}
+    >
+      {children}
+      {empty && (
+        <li className="text-center text-sm text-muted-foreground">
+          No stops yet. Drag a place here from the right, or open a city list
+          and choose Add to day.
+        </li>
+      )}
+    </ol>
   );
 }
 
