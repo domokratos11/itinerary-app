@@ -13,6 +13,7 @@
     "seed": "tsx scripts/seed.ts",
     "queue:pull": "tsx scripts/queue-pull.ts",
     "places:push": "tsx scripts/places-push.ts",
+    "maps:check": "tsx scripts/maps-check.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit"
