@@ -31,6 +31,8 @@ type Props = {
   city: City;
   places: Place[];
   nearby: Record<string, NearbyPlace[]>;
+  // Opens this place's details first (from search).
+  initialPlaceId?: string | null;
 };
 
 const initialFilter: CatalogFilter = {
@@ -39,9 +41,14 @@ const initialFilter: CatalogFilter = {
   unassignedOnly: false,
 };
 
-export function CityCatalog({ city, places, nearby }: Props) {
+export function CityCatalog({
+  city,
+  places,
+  nearby,
+  initialPlaceId = null,
+}: Props) {
   const [filter, setFilter] = useState<CatalogFilter>(initialFilter);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialPlaceId);
   const items = usePlanStore((s) => s.items);
 
   // Places with an active plan item are assigned; the rest are unassigned.

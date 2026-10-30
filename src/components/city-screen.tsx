@@ -13,7 +13,9 @@ import { useTripId } from "@/lib/use-trip-id";
 // /city/?id=<cityId>. Places come from the live trip, so draft places from
 // the queue show up here too.
 export function CityScreen() {
-  const cityId = useSearchParams().get("id") ?? "";
+  const params = useSearchParams();
+  const cityId = params.get("id") ?? "";
+  const placeId = params.get("place");
   const tripId = useTripId();
   const trip = useTrip();
   const city = useCitiesById().get(cityId);
@@ -42,5 +44,13 @@ export function CityScreen() {
     );
   }
 
-  return <CityCatalog city={city} places={places} nearby={nearby} />;
+  return (
+    <CityCatalog
+      key={`${cityId}-${placeId ?? ""}`}
+      city={city}
+      places={places}
+      nearby={nearby}
+      initialPlaceId={placeId}
+    />
+  );
 }
