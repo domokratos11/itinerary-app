@@ -3,6 +3,7 @@ import "./globals.css";
 import { Geist_Mono, Oxanium } from "next/font/google";
 import { Suspense } from "react";
 
+import { AppHeader, BottomNav } from "@/components/app-header";
 import { OfflineBanner } from "@/components/offline-banner";
 import { PlanSync } from "@/components/plan-sync";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
@@ -61,14 +62,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         geistMono.variable,
       )}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <ThemeProvider>
           <ServiceWorkerRegister />
+          <Suspense fallback={null}>
+            <AppHeader />
+          </Suspense>
           <OfflineBanner />
           <Suspense fallback={null}>
             <PlanSync />
           </Suspense>
           {children}
+          <Suspense fallback={null}>
+            <BottomNav />
+          </Suspense>
           <Toaster />
         </ThemeProvider>
       </body>

@@ -1,10 +1,6 @@
 import { Suspense } from "react";
-import { ActivitySheet } from "@/components/activity-sheet";
 import { ExportPlan } from "@/components/export-plan";
 import { NeedsNewDay } from "@/components/needs-new-day";
-import { QueuePanel } from "@/components/queue-panel";
-import { SettingsLink } from "@/components/settings-link";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { TripDates } from "@/components/trip-dates";
 import { TripPlanStatus } from "@/components/trip-plan-status";
 import { TripDays } from "@/components/trip-days";
@@ -33,22 +29,12 @@ export default function Home() {
         <CardContent className="flex flex-col gap-3">
           <TripPlanStatus />
           <div className="flex flex-wrap gap-2">
-            <Suspense fallback={null}>
-              <SettingsLink />
-            </Suspense>
-            <Suspense fallback={null}>
-              <ActivitySheet />
-            </Suspense>
             <ExportPlan />
-            <ThemeToggle />
           </div>
         </CardContent>
       </Card>
       <Suspense fallback={null}>
         <NeedsNewDay />
-      </Suspense>
-      <Suspense fallback={null}>
-        <QueuePanel />
       </Suspense>
       <Suspense fallback={null}>
         <TripDays />

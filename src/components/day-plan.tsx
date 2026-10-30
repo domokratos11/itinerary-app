@@ -79,7 +79,6 @@ import {
 } from "@/components/day-side-panel";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { formatDayLabel } from "@/lib/format-day";
 import {
   addPlaceAt,
@@ -88,7 +87,6 @@ import {
   restoreItem,
   updateItem,
 } from "@/lib/plan-actions";
-import { ActivitySheet } from "@/components/activity-sheet";
 import { StopEditor, type StopChanges } from "@/components/stop-editor";
 import { assignQueued, queueUpdate } from "@/lib/queue-actions";
 import { usePlanStore } from "@/lib/plan-store";
@@ -396,10 +394,6 @@ export function DayPlan(props: Props) {
           >
             ← Trip days
           </Link>
-          <div className="flex items-center gap-2">
-            <ActivitySheet />
-            <ThemeToggle />
-          </div>
         </div>
         <h1 className="text-2xl font-semibold">{props.label}</h1>
         <CostLine places={stops.map((i) => placesById.get(i.placeId))} />

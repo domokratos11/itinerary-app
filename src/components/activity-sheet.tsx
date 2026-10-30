@@ -44,7 +44,7 @@ const noopSubscribe = () => () => {};
 // Who changed what, newest first, grouped by day in Japan time. Plan
 // changes can be undone while the stop hasn't changed since. Removed stops
 // are listed apart so they can be restored even when the change is old.
-export function ActivitySheet() {
+export function ActivitySheet({ compact = false }: { compact?: boolean }) {
   const tripId = useTripId();
   const [open, setOpen] = useState(false);
   const { entries, error } = useActivity(tripId, open);
@@ -84,9 +84,13 @@ export function ActivitySheet() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant={compact ? "ghost" : "outline"}
+          size={compact ? "icon-sm" : "sm"}
+          aria-label="Activity"
+        >
           <History />
-          Activity
+          {!compact && "Activity"}
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
