@@ -10,6 +10,7 @@
     "test:watch": "vitest",
     "validate": "tsx scripts/validate.ts",
     "migrate:v3": "tsx scripts/migrate-v3.ts",
+    "seed": "tsx scripts/seed.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit"

@@ -25,7 +25,8 @@ export function OfflineBanner() {
       role="status"
       className="bg-muted px-4 py-2 text-center text-sm text-muted-foreground"
     >
-      Offline. Changes are saved on this phone and will sync when you&apos;re back online.
+      Offline. Changes are saved on this phone and will sync when you&apos;re
+      back online.
     </div>
   );
 }

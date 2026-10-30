@@ -23,9 +23,10 @@ export function ThemeToggle() {
     () => false,
   );
 
-  const current = mounted && ORDER.includes(theme as (typeof ORDER)[number])
-    ? (theme as (typeof ORDER)[number])
-    : "system";
+  const current =
+    mounted && ORDER.includes(theme as (typeof ORDER)[number])
+      ? (theme as (typeof ORDER)[number])
+      : "system";
   const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
   const Icon = ICON[current];
 

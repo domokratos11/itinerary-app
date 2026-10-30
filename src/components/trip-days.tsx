@@ -6,20 +6,21 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDayLabel } from "@/lib/format-day";
+import { cityHref, dayHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
 import { todayInTokyo } from "@/lib/tokyo-date";
+import { useCitiesById, useTripDays } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 
-export type DayView = {
-  date: string; // YYYY-MM-DD
-  label: string; // e.g. "Thu, Dec 17", formatted on the server
-  cities: { id: string; name: string; color: string }[];
-};
+const FALLBACK_COLOR = "#64748b";
 
-// Scrolls to today's card. Before the trip it goes to the first day, and
-// after the trip to the last day.
-export function TripDays({ days }: { days: DayView[] }) {
+// The trip's days, derived from the live stays. "Today" scrolls to today's
+// card; before the trip it goes to the first day, after it to the last.
+export function TripDays() {
   const items = usePlanStore((s) => s.items);
+  const days = useTripDays();
+  const citiesById = useCitiesById();
   const tripId = useTripId();
 
   const stopsByDate = useMemo(() => {
@@ -32,6 +33,7 @@ export function TripDays({ days }: { days: DayView[] }) {
   }, [items]);
 
   function jumpToToday() {
+    if (days.length === 0) return;
     const today = todayInTokyo();
     const first = days[0].date;
     const last = days[days.length - 1].date;
@@ -49,34 +51,48 @@ export function TripDays({ days }: { days: DayView[] }) {
           Today
         </Button>
       </div>
+      {days.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          No stays yet. Add one in Settings to create the trip&apos;s days.
+        </p>
+      )}
       {days.map((day) => {
         const stops = stopsByDate.get(day.date) ?? 0;
-        const href = tripId
-          ? `/day/${day.date}/?trip=${tripId}`
-          : `/day/${day.date}/`;
         return (
           <Card key={day.date} id={`day-${day.date}`} className="scroll-mt-4">
             <CardHeader>
               <CardTitle className="text-base">
                 <Link
-                  href={href}
+                  href={dayHref(day.date, tripId)}
                   className="underline-offset-4 hover:underline"
                 >
-                  {day.label}
+                  {formatDayLabel(day.date)}
                 </Link>
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap items-center gap-2">
-              {day.cities.map((city) => (
-                <Badge key={city.id} variant="secondary" className="gap-1.5">
-                  <span
-                    aria-hidden
-                    className="size-2 rounded-full"
-                    style={{ backgroundColor: city.color }}
-                  />
-                  {city.name}
-                </Badge>
-              ))}
+              {day.cityIds.map((id) => {
+                const city = citiesById.get(id);
+                return (
+                  <Badge
+                    key={id}
+                    variant="secondary"
+                    className="gap-1.5"
+                    asChild
+                  >
+                    <Link href={cityHref(id, tripId)}>
+                      <span
+                        aria-hidden
+                        className="size-2 rounded-full"
+                        style={{
+                          backgroundColor: city?.color ?? FALLBACK_COLOR,
+                        }}
+                      />
+                      {city?.name ?? id}
+                    </Link>
+                  </Badge>
+                );
+              })}
               <span className="ml-auto text-sm text-muted-foreground">
                 {stops === 0
                   ? "No stops yet"

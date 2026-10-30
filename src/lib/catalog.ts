@@ -13,10 +13,11 @@ import {
   type City,
   type Place,
 } from "@/domain/schemas";
-import { nearbyByPlace } from "@/lib/catalog-filter";
+import { seedTrip, type TripData } from "@/domain/trip";
 
-// Catalog data is read at build time. Each file is parsed with its schema so
-// the types are checked here as well as by `npm run validate`.
+// The seed: the data/ files, bundled with the app. The live trip is in
+// Firestore; the app shows the seed until Firestore answers, and for any
+// collection that is still empty (before `npm run seed`).
 export const cities: City[] = CitiesFileSchema.parse(citiesJson);
 export const trip = TripFileSchema.parse(tripJson);
 
@@ -29,13 +30,10 @@ export const allPlaces: Place[] = [
   ...PlacesFileSchema.parse(placesTokyoAsakusa),
 ];
 
-// Nearby saved places for every place, computed once for the whole catalog.
-export const nearby = nearbyByPlace(allPlaces);
+// A fixed time, so the seed is the same in every build.
+const SEED_TIME = new Date("2026-10-29T00:00:00.000Z");
 
-export function cityById(id: string): City | undefined {
-  return cities.find((c) => c.id === id);
-}
-
-export function placesForCity(cityId: string): Place[] {
-  return allPlaces.filter((p) => p.cityId === cityId);
-}
+export const seed: TripData = seedTrip(
+  { cities, trip, places: allPlaces },
+  SEED_TIME,
+);

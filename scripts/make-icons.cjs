@@ -12,7 +12,8 @@ function crc32(buf) {
   let crc = ~0;
   for (const byte of buf) {
     crc ^= byte;
-    for (let k = 0; k < 8; k++) crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
+    for (let k = 0; k < 8; k++)
+      crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
   }
   return ~crc >>> 0;
 }

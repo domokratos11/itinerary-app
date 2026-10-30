@@ -47,7 +47,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { deriveDays } from "@/domain/days";
 import {
   directionsUrl,
   distanceBetweenPlaces,
@@ -59,17 +58,17 @@ import {
   type Location,
 } from "@/domain/plan";
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
-import { allPlaces, trip } from "@/lib/catalog";
+import type { Endpoint } from "@/domain/trip";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { formatDayLabel } from "@/lib/format-day";
 import { placeItem, removeItem, restoreItem } from "@/lib/plan-actions";
 import { usePlanStore } from "@/lib/plan-store";
+import { homeHref } from "@/lib/links";
+import { usePlacesById, useTripDays } from "@/lib/trip-store";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTripId } from "@/lib/use-trip-id";
-
-export type Endpoint = { name: string; location: Location | null };
 
 type Props = {
   date: string;
@@ -81,9 +80,6 @@ type Props = {
   reservations: Reservation[];
 };
 
-const placesById = new Map(allPlaces.map((p) => [p.id, p]));
-const tripDays = deriveDays(trip.stays);
-
 const REFUSED = "That change was refused. Check the trip link.";
 
 type Origin = { location: Location | null; place: Place | null };
@@ -91,6 +87,8 @@ type Origin = { location: Location | null; place: Place | null };
 export function DayPlan(props: Props) {
   const tripId = useTripId();
   const items = usePlanStore((s) => s.items);
+  const placesById = usePlacesById();
+  const tripDays = useTripDays();
   const wide = useMediaQuery("(min-width: 768px)");
   const stops = useMemo(
     () => itemsForDay(items, props.date),
@@ -199,7 +197,7 @@ export function DayPlan(props: Props) {
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
           <Link
-            href={tripId ? `/?trip=${tripId}` : "/"}
+            href={homeHref(tripId)}
             className="text-sm text-muted-foreground underline"
           >
             ← Trip days
@@ -540,6 +538,7 @@ function FullDay({
   end: Endpoint | null;
   stops: PlanItem[];
 }) {
+  const placesById = usePlacesById();
   const legs = useMemo(() => {
     if (!start?.location || !end?.location) return null;
     const points = stops.flatMap((item) => {
@@ -552,7 +551,7 @@ function FullDay({
       name: end.name,
       location: end.location,
     });
-  }, [start, end, stops]);
+  }, [start, end, stops, placesById]);
 
   return (
     <Sheet>
@@ -599,6 +598,7 @@ function FullDay({
 // Every item in the trip, newest change first. Removed stops can be restored.
 function RecentlyChanged() {
   const items = usePlanStore((s) => s.items);
+  const placesById = usePlacesById();
   const tripId = useTripId();
   const recent = useMemo(
     () =>

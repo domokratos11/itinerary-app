@@ -32,9 +32,118 @@ service cloud.firestore {
         && d.createdAt is string && d.createdAt.size() <= 30;
     }
 
+    function shortString(v, max) {
+      return v is string && v.size() <= max;
+    }
+
+    function optionalString(v, max) {
+      return v == null || shortString(v, max);
+    }
+
+    function optionalNumber(v) {
+      return v == null || v is number;
+    }
+
+    function isRecord(d) {
+      return d.archived is bool && shortString(d.updatedAt, 30);
+    }
+
+    function isCity(d) {
+      return d.keys().hasOnly(['id', 'name', 'color', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'name', 'color', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.name, 100) && d.name.size() > 0
+        && d.color is string && d.color.matches('^#[0-9a-fA-F]{6}$')
+        && isRecord(d);
+    }
+
+    function isStay(d) {
+      return d.keys().hasOnly(['id', 'cityId', 'hotelName', 'hotelMapsUrl', 'lat', 'lng', 'checkIn', 'checkOut', 'note', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'cityId', 'hotelName', 'hotelMapsUrl', 'lat', 'lng', 'checkIn', 'checkOut', 'note', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.cityId, 64)
+        && shortString(d.hotelName, 200) && d.hotelName.size() > 0
+        && optionalString(d.hotelMapsUrl, 500)
+        && optionalNumber(d.lat) && optionalNumber(d.lng)
+        && d.checkIn is string && d.checkIn.size() == 10
+        && d.checkOut is string && d.checkOut.size() == 10
+        && d.checkOut > d.checkIn
+        && optionalString(d.note, 500)
+        && isRecord(d);
+    }
+
+    function isReservation(d) {
+      return d.keys().hasOnly(['id', 'type', 'date', 'time', 'from', 'to', 'note', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'type', 'date', 'time', 'from', 'to', 'note', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && d.type in ['flight', 'train', 'hotel', 'tour', 'ticket']
+        && d.date is string && d.date.size() == 10
+        && (d.time == null || (d.time is string && d.time.size() == 5))
+        && optionalString(d.from, 100) && optionalString(d.to, 100)
+        && optionalString(d.note, 500)
+        && isRecord(d);
+    }
+
+    function isPlace(d) {
+      return d.keys().hasOnly(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.cityId, 64)
+        && shortString(d.mapsUrl, 500)
+        && shortString(d.name, 200) && d.name.size() > 0
+        && optionalNumber(d.lat) && optionalNumber(d.lng)
+        && d.category in ['lights', 'food', 'shopping', 'sight', 'daytrip', 'temple']
+        && optionalString(d.purpose, 1000) && optionalString(d.description, 3000)
+        && d.tips is list && d.tips.size() <= 30
+        && optionalNumber(d.costEstimateJPY) && optionalNumber(d.durationMin)
+        && optionalString(d.openingHours, 500)
+        && d.closedDates is list && d.closedDates.size() <= 60
+        && optionalString(d.seasonFrom, 10) && optionalString(d.seasonTo, 10)
+        && d.priority in ['must', 'want', 'maybe']
+        && optionalString(d.verifiedAt, 10)
+        && optionalString(d.websiteUrl, 500)
+        && optionalString(d.notes, 2000)
+        && d.status in ['draft', 'researched']
+        && d.source in ['catalog', 'queue']
+        && isRecord(d);
+    }
+
+    function tripExists(tripId) {
+      return exists(/databases/$(database)/documents/trips/$(tripId));
+    }
+
     match /trips/{tripId} {
       allow get: if true;
       allow list, create, update, delete: if false;
+
+      // The trip's structure. Records are archived, never deleted.
+      match /cities/{id} {
+        allow read: if tripExists(tripId);
+        allow create, update: if tripExists(tripId)
+          && isCity(request.resource.data) && request.resource.data.id == id;
+        allow delete: if false;
+      }
+
+      match /stays/{id} {
+        allow read: if tripExists(tripId);
+        allow create, update: if tripExists(tripId)
+          && isStay(request.resource.data) && request.resource.data.id == id;
+        allow delete: if false;
+      }
+
+      match /reservations/{id} {
+        allow read: if tripExists(tripId);
+        allow create, update: if tripExists(tripId)
+          && isReservation(request.resource.data) && request.resource.data.id == id;
+        allow delete: if false;
+      }
+
+      match /places/{id} {
+        allow read: if tripExists(tripId);
+        allow create, update: if tripExists(tripId)
+          && isPlace(request.resource.data) && request.resource.data.id == id;
+        allow delete: if false;
+      }
 
       match /queue/{queueId} {
         allow read: if exists(/databases/$(database)/documents/trips/$(tripId));

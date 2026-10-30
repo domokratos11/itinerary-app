@@ -33,9 +33,7 @@ describe("QueuePanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add to queue" }));
 
     await waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith(
-        "Queued for the next update",
-      ),
+      expect(toast.success).toHaveBeenCalledWith("Queued for the next update"),
     );
     expect(toast.error).not.toHaveBeenCalled();
     expect(screen.getByLabelText("Google Maps link")).toHaveValue("");

@@ -101,6 +101,43 @@ export const PlanItemSchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 
+// Firestore records under trips/{tripId}. Each is the seed shape plus an
+// id where the seed has none, `archived` (records are never deleted) and
+// the time of the last change.
+const recordId = z
+  .string()
+  .regex(/^[a-z0-9-]+$/)
+  .max(64);
+const recordFields = { archived: z.boolean(), updatedAt: z.iso.datetime() };
+
+export const PLACE_STATUSES = ["draft", "researched"] as const;
+export const PLACE_SOURCES = ["catalog", "queue"] as const;
+
+export const CityRecordSchema = CitySchema.extend(recordFields);
+
+export const StayRecordSchema = StaySchema.extend({
+  id: recordId,
+  note: z.string().max(500).nullable(),
+  ...recordFields,
+});
+
+export const ReservationRecordSchema = ReservationSchema.extend({
+  id: recordId,
+  ...recordFields,
+});
+
+// A draft place was made from a queued link and is waiting for research.
+export const PlaceRecordSchema = PlaceSchema.extend({
+  status: z.enum(PLACE_STATUSES),
+  source: z.enum(PLACE_SOURCES),
+  ...recordFields,
+});
+
+export type CityRecord = z.infer<typeof CityRecordSchema>;
+export type StayRecord = z.infer<typeof StayRecordSchema>;
+export type ReservationRecord = z.infer<typeof ReservationRecordSchema>;
+export type PlaceRecord = z.infer<typeof PlaceRecordSchema>;
+
 export type City = z.infer<typeof CitySchema>;
 export type Place = z.infer<typeof PlaceSchema>;
 export type Stay = z.infer<typeof StaySchema>;
