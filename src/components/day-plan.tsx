@@ -3,6 +3,7 @@
 import { useMemo, type CSSProperties, type ReactNode } from "react";
 import {
   DndContext,
+  KeyboardSensor,
   PointerSensor,
   TouchSensor,
   closestCenter,
@@ -12,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -98,6 +100,9 @@ export function DayPlan(props: Props) {
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, {
       activationConstraint: { delay: 200, tolerance: 6 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
 
@@ -360,7 +365,8 @@ type StopProps = {
   onMoveDay: (date: string) => void;
 };
 
-// Wide screens: drag the grip to reorder.
+// Wide screens: drag the grip to reorder, or focus it and use Space and the
+// arrow keys.
 function SortableStop({ id, ...props }: StopProps & { id: string }) {
   const {
     attributes,
@@ -383,7 +389,7 @@ function SortableStop({ id, ...props }: StopProps & { id: string }) {
           <button
             type="button"
             aria-label="Drag to reorder"
-            className="cursor-grab touch-none text-muted-foreground"
+            className="mt-0.5 cursor-grab touch-none rounded-sm text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
             {...attributes}
             {...listeners}
           >
@@ -430,7 +436,7 @@ function StopCard({
 
   return (
     <Card>
-      <CardHeader className="flex-row items-start gap-3">
+      <CardHeader className="flex items-start gap-3">
         {handle}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <CardTitle className="text-base">{name}</CardTitle>

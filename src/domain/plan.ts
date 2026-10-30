@@ -1,4 +1,4 @@
-import { keyAfter, keyBetween } from "@/lib/order";
+import { evenKeys, keyAfter, keyBetween } from "@/lib/order";
 import { distanceKm, type LatLng } from "@/lib/geo";
 import type { PlanItem, Place, Stay } from "./schemas";
 
@@ -97,6 +97,35 @@ export function keyAt(list: PlanItem[], index: number): string {
   return before === null && after === null
     ? keyAfter(null)
     : keyBetween(before, after);
+}
+
+// Keys for putting an item at `index` in `others` (the day's items without
+// it, in order). Usually only the item gets a new key. If two of the day's
+// keys are equal or invalid (a restored stop can share its key with one
+// added while it was removed, or two phones add at once), no key fits
+// between them, so the whole day is re-keyed and `rekeyed` lists the
+// other items whose key changed.
+export function keysForInsert(
+  others: PlanItem[],
+  index: number,
+): { order: string; rekeyed: { id: string; order: string }[] } {
+  const distinct = others.every(
+    (i, n) => n === 0 || others[n - 1].order < i.order,
+  );
+  if (distinct) {
+    try {
+      return { order: keyAt(others, index), rekeyed: [] };
+    } catch {
+      // An invalid key: fall through and re-key the day.
+    }
+  }
+  const keys = evenKeys(others.length + 1);
+  const order = keys[index];
+  const rekeyed = others.flatMap((item, n) => {
+    const key = keys[n < index ? n : n + 1];
+    return key === item.order ? [] : [{ id: item.id, order: key }];
+  });
+  return { order, rekeyed };
 }
 
 // Straight-line distance between two catalog places, or null if either has

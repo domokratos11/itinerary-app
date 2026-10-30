@@ -1,10 +1,30 @@
 import { markRemoved } from "@/domain/plan-repository";
-import { newPlanItem, keyAt } from "@/domain/plan";
+import { newPlanItem, keysForInsert } from "@/domain/plan";
 import type { PlanItem } from "@/domain/schemas";
+import { usePlanStore } from "@/lib/plan-store";
 import { planRepository } from "@/lib/plan-repository-instance";
 
 // Every change to the plan goes through here, then through PlanRepository.
 // Each function writes the whole item, so the Firestore rules see all fields.
+// Changes are shown at once (the store is updated before the save), and the
+// next snapshot from the repository replaces them, or undoes them if refused.
+async function saveAll(tripId: string, items: PlanItem[]): Promise<void> {
+  usePlanStore.getState().apply(items);
+  await Promise.all(items.map((item) => planRepository.save(tripId, item)));
+}
+
+// The other items of the day whose key changed when the day was re-keyed.
+function withKeys(
+  others: PlanItem[],
+  rekeyed: { id: string; order: string }[],
+  now: Date,
+): PlanItem[] {
+  const byId = new Map(others.map((i) => [i.id, i]));
+  return rekeyed.flatMap(({ id, order }) => {
+    const item = byId.get(id);
+    return item ? [{ ...item, order, updatedAt: now.toISOString() }] : [];
+  });
+}
 
 export async function addPlaceToDay(
   tripId: string,
@@ -13,14 +33,15 @@ export async function addPlaceToDay(
   dayItems: PlanItem[],
   now: Date = new Date(),
 ): Promise<void> {
+  const { order, rekeyed } = keysForInsert(dayItems, dayItems.length);
   const item = newPlanItem({
     id: crypto.randomUUID(),
     placeId,
     date,
-    order: keyAt(dayItems, dayItems.length),
+    order,
     now,
   });
-  await planRepository.save(tripId, item);
+  await saveAll(tripId, [item, ...withKeys(dayItems, rekeyed, now)]);
 }
 
 // Puts an item on `date` at `index`. `others` is that day's items without
@@ -33,12 +54,11 @@ export async function placeItem(
   others: PlanItem[],
   now: Date = new Date(),
 ): Promise<void> {
-  await planRepository.save(tripId, {
-    ...item,
-    date,
-    order: keyAt(others, index),
-    updatedAt: now.toISOString(),
-  });
+  const { order, rekeyed } = keysForInsert(others, index);
+  await saveAll(tripId, [
+    { ...item, date, order, updatedAt: now.toISOString() },
+    ...withKeys(others, rekeyed, now),
+  ]);
 }
 
 export async function removeItem(
@@ -46,7 +66,7 @@ export async function removeItem(
   item: PlanItem,
   now: Date = new Date(),
 ): Promise<void> {
-  await planRepository.save(tripId, markRemoved(item, now));
+  await saveAll(tripId, [markRemoved(item, now)]);
 }
 
 // Restores an item exactly as it was before it was removed (used by Undo).
@@ -54,5 +74,5 @@ export async function restoreItem(
   tripId: string,
   previous: PlanItem,
 ): Promise<void> {
-  await planRepository.save(tripId, previous);
+  await saveAll(tripId, [previous]);
 }

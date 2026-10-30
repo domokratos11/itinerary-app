@@ -6,6 +6,7 @@ import {
   hotelsForDay,
   itemsForDay,
   keyAt,
+  keysForInsert,
   legsForDay,
   nextStop,
   newPlanItem,
@@ -144,6 +145,55 @@ describe("keyAt", () => {
   it("appends after the last item", () => {
     const list = [item({ order: "a0" })];
     expect(keyAt(list, 1) > "a0").toBe(true);
+  });
+});
+
+describe("keysForInsert", () => {
+  // Applies the result and returns the day's ids in their new order.
+  function orderAfter(others: PlanItem[], moved: PlanItem, index: number) {
+    const { order, rekeyed } = keysForInsert(others, index);
+    const changed = new Map(rekeyed.map((r) => [r.id, r.order]));
+    return [
+      ...others.map((i) => ({ ...i, order: changed.get(i.id) ?? i.order })),
+      { ...moved, order },
+    ]
+      .sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0))
+      .map((i) => i.id);
+  }
+
+  it("keys only the moved item when the day's keys are distinct", () => {
+    const others = [
+      item({ id: "a", order: "a0" }),
+      item({ id: "b", order: "a1" }),
+    ];
+    const result = keysForInsert(others, 1);
+    expect(result.rekeyed).toEqual([]);
+    expect(result.order > "a0" && result.order < "a1").toBe(true);
+  });
+
+  it("re-keys the day when two neighbours share a key", () => {
+    // A restored stop can share its key with one added while it was removed.
+    const others = [
+      item({ id: "a", order: "a0" }),
+      item({ id: "b", order: "a1" }),
+      item({ id: "c", order: "a1" }),
+    ];
+    const moved = item({ id: "m", order: "a2" });
+    expect(orderAfter(others, moved, 2)).toEqual(["a", "b", "m", "c"]);
+    expect(keysForInsert(others, 2).rekeyed.length).toBeGreaterThan(0);
+  });
+
+  it("re-keys the day when a key is not a valid order key", () => {
+    const others = [
+      item({ id: "a", order: "1" }),
+      item({ id: "b", order: "2" }),
+    ];
+    const moved = item({ id: "m", order: "a0" });
+    expect(orderAfter(others, moved, 1)).toEqual(["a", "m", "b"]);
+  });
+
+  it("appends to an empty day", () => {
+    expect(keysForInsert([], 0)).toEqual({ order: "a0", rekeyed: [] });
   });
 });
 
