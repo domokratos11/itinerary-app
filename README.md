@@ -12,3 +12,19 @@ npm run build      # static export in out/
 ```
 
 Project rules for Claude Code are in [CLAUDE.md](CLAUDE.md).
+
+## After changing firestore.rules
+
+The app reads and writes the trip in Firestore. When `firestore.rules`
+changes, paste it into Firebase console → Firestore → Rules and Publish;
+until then, edits to the new parts (settings, queue edits, activity) are
+refused, and the app keeps showing the bundled `data/` files.
+
+To copy `data/` into a trip right away (optional: the first edit in
+Settings copies it too):
+
+```bash
+TRIP_ID=<your trip id> npm run seed
+```
+
+The trip ID stays out of the repo; it lives only in the shared link.

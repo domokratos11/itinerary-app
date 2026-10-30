@@ -2,14 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import {
   costTotal,
+  dayRunsLate,
   directionsUrl,
+  holidayWarnings,
   hotelsForDay,
   itemsForDay,
   keyAt,
+  keysForInsert,
   legsForDay,
   nextStop,
   newPlanItem,
+  parseHours,
+  stopTimes,
   stopWarnings,
+  timeWarnings,
 } from "@/domain/plan";
 import type { PlanItem, Place, Stay } from "@/domain/schemas";
 
@@ -147,6 +153,55 @@ describe("keyAt", () => {
   });
 });
 
+describe("keysForInsert", () => {
+  // Applies the result and returns the day's ids in their new order.
+  function orderAfter(others: PlanItem[], moved: PlanItem, index: number) {
+    const { order, rekeyed } = keysForInsert(others, index);
+    const changed = new Map(rekeyed.map((r) => [r.id, r.order]));
+    return [
+      ...others.map((i) => ({ ...i, order: changed.get(i.id) ?? i.order })),
+      { ...moved, order },
+    ]
+      .sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0))
+      .map((i) => i.id);
+  }
+
+  it("keys only the moved item when the day's keys are distinct", () => {
+    const others = [
+      item({ id: "a", order: "a0" }),
+      item({ id: "b", order: "a1" }),
+    ];
+    const result = keysForInsert(others, 1);
+    expect(result.rekeyed).toEqual([]);
+    expect(result.order > "a0" && result.order < "a1").toBe(true);
+  });
+
+  it("re-keys the day when two neighbours share a key", () => {
+    // A restored stop can share its key with one added while it was removed.
+    const others = [
+      item({ id: "a", order: "a0" }),
+      item({ id: "b", order: "a1" }),
+      item({ id: "c", order: "a1" }),
+    ];
+    const moved = item({ id: "m", order: "a2" });
+    expect(orderAfter(others, moved, 2)).toEqual(["a", "b", "m", "c"]);
+    expect(keysForInsert(others, 2).rekeyed.length).toBeGreaterThan(0);
+  });
+
+  it("re-keys the day when a key is not a valid order key", () => {
+    const others = [
+      item({ id: "a", order: "1" }),
+      item({ id: "b", order: "2" }),
+    ];
+    const moved = item({ id: "m", order: "a0" });
+    expect(orderAfter(others, moved, 1)).toEqual(["a", "m", "b"]);
+  });
+
+  it("appends to an empty day", () => {
+    expect(keysForInsert([], 0)).toEqual({ order: "a0", rekeyed: [] });
+  });
+});
+
 describe("newPlanItem", () => {
   it("creates a planned item with an ISO update time", () => {
     const created = newPlanItem({
@@ -214,5 +269,91 @@ describe("costTotal", () => {
       yen: 1300,
       unpriced: 2,
     });
+  });
+});
+
+describe("stop times", () => {
+  const place = { durationMin: 90, openingHours: "about 10:00-21:00 (verify)" };
+
+  it("reads the first hours range from free text", () => {
+    expect(parseHours("9:30-17:00, last entry 16:00")).toEqual({
+      open: "09:30",
+      close: "17:00",
+    });
+    expect(parseHours("Verify on the day")).toBeNull();
+    expect(parseHours(null)).toBeNull();
+  });
+
+  it("ends a stop after its duration, or the place's typical one", () => {
+    expect(stopTimes({ startTime: "10:30", durationMin: null }, place)).toEqual(
+      { start: "10:30", end: "12:00" },
+    );
+    expect(stopTimes({ startTime: "23:30", durationMin: 60 }, place)?.end).toBe(
+      "24:30",
+    );
+    expect(stopTimes({ startTime: null, durationMin: 60 }, place)).toBeNull();
+  });
+
+  it("warns when a stop is outside the opening hours", () => {
+    expect(
+      timeWarnings({ startTime: "09:00", durationMin: 60 }, place),
+    ).toEqual(["May not be open yet (opens 10:00)"]);
+    expect(
+      timeWarnings({ startTime: "20:00", durationMin: 90 }, place),
+    ).toEqual(["May be closed by then (closes 21:00)"]);
+    expect(
+      timeWarnings({ startTime: "12:00", durationMin: 60 }, place),
+    ).toEqual([]);
+  });
+
+  it("flags a day that runs past 22:00", () => {
+    const places = new Map([["p", { durationMin: 120 }]]);
+    expect(
+      dayRunsLate(
+        [{ placeId: "p", startTime: "21:00", durationMin: null }],
+        places,
+      ),
+    ).toBe("23:00");
+    expect(
+      dayRunsLate(
+        [{ placeId: "p", startTime: "18:00", durationMin: null }],
+        places,
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("holidayWarnings", () => {
+  const holidays = [
+    { date: "2026-12-31", kind: "closures" as const },
+    { date: "2027-01-11", kind: "holiday" as const },
+  ];
+  const museum = { category: "sight" as const, closedDates: [] as string[] };
+
+  it("warns about stops in the New Year closures and on holidays", () => {
+    expect(holidayWarnings(museum, "2026-12-31", holidays)).toEqual([
+      "New Year closures: check it's open",
+    ]);
+    expect(holidayWarnings(museum, "2027-01-11", holidays)).toEqual([
+      "Holiday: check it's open",
+    ]);
+    expect(holidayWarnings(museum, "2026-12-20", holidays)).toEqual([]);
+  });
+
+  it("skips temples and places already marked closed that day", () => {
+    expect(
+      holidayWarnings(
+        { ...museum, category: "temple" },
+        "2026-12-31",
+        holidays,
+      ),
+    ).toEqual([]);
+    expect(
+      holidayWarnings(
+        { ...museum, closedDates: ["2026-12-31"] },
+        "2026-12-31",
+        holidays,
+      ),
+    ).toEqual([]);
   });
 });

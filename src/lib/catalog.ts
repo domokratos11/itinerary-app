@@ -1,5 +1,6 @@
 import citiesJson from "../../data/cities.json";
 import tripJson from "../../data/trip.json";
+import holidaysJson from "../../data/holidays.json";
 import placesTokyoUeno from "../../data/places/tokyo-ueno.json";
 import placesNagoya from "../../data/places/nagoya.json";
 import placesHiroshima from "../../data/places/hiroshima.json";
@@ -8,15 +9,18 @@ import placesKawaguchiko from "../../data/places/kawaguchiko.json";
 import placesTokyoAsakusa from "../../data/places/tokyo-asakusa.json";
 import {
   CitiesFileSchema,
+  HolidaysFileSchema,
   PlacesFileSchema,
   TripFileSchema,
   type City,
+  type Holiday,
   type Place,
 } from "@/domain/schemas";
-import { nearbyByPlace } from "@/lib/catalog-filter";
+import { seedTrip, type TripData } from "@/domain/trip";
 
-// Catalog data is read at build time. Each file is parsed with its schema so
-// the types are checked here as well as by `npm run validate`.
+// The seed: the data/ files, bundled with the app. The live trip is in
+// Firestore; the app shows the seed until Firestore answers, and for any
+// collection that is still empty (before `npm run seed`).
 export const cities: City[] = CitiesFileSchema.parse(citiesJson);
 export const trip = TripFileSchema.parse(tripJson);
 
@@ -29,13 +33,13 @@ export const allPlaces: Place[] = [
   ...PlacesFileSchema.parse(placesTokyoAsakusa),
 ];
 
-// Nearby saved places for every place, computed once for the whole catalog.
-export const nearby = nearbyByPlace(allPlaces);
+// Holidays and closure periods: reference data, the same for every trip.
+export const holidays: Holiday[] = HolidaysFileSchema.parse(holidaysJson);
 
-export function cityById(id: string): City | undefined {
-  return cities.find((c) => c.id === id);
-}
+// A fixed time, so the seed is the same in every build.
+const SEED_TIME = new Date("2026-10-29T00:00:00.000Z");
 
-export function placesForCity(cityId: string): Place[] {
-  return allPlaces.filter((p) => p.cityId === cityId);
-}
+export const seed: TripData = seedTrip(
+  { cities, trip, places: allPlaces },
+  SEED_TIME,
+);

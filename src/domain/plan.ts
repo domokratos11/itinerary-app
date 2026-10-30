@@ -1,6 +1,6 @@
-import { keyAfter, keyBetween } from "@/lib/order";
+import { evenKeys, keyAfter, keyBetween } from "@/lib/order";
 import { distanceKm, type LatLng } from "@/lib/geo";
-import type { PlanItem, Place, Stay } from "./schemas";
+import type { Holiday, PlanItem, Place, Stay } from "./schemas";
 
 // Active plan items (not soft-deleted) on one date, in their saved order.
 // Order keys are fractional strings, so a plain string sort is correct.
@@ -99,6 +99,35 @@ export function keyAt(list: PlanItem[], index: number): string {
     : keyBetween(before, after);
 }
 
+// Keys for putting an item at `index` in `others` (the day's items without
+// it, in order). Usually only the item gets a new key. If two of the day's
+// keys are equal or invalid (a restored stop can share its key with one
+// added while it was removed, or two phones add at once), no key fits
+// between them, so the whole day is re-keyed and `rekeyed` lists the
+// other items whose key changed.
+export function keysForInsert(
+  others: PlanItem[],
+  index: number,
+): { order: string; rekeyed: { id: string; order: string }[] } {
+  const distinct = others.every(
+    (i, n) => n === 0 || others[n - 1].order < i.order,
+  );
+  if (distinct) {
+    try {
+      return { order: keyAt(others, index), rekeyed: [] };
+    } catch {
+      // An invalid key: fall through and re-key the day.
+    }
+  }
+  const keys = evenKeys(others.length + 1);
+  const order = keys[index];
+  const rekeyed = others.flatMap((item, n) => {
+    const key = keys[n < index ? n : n + 1];
+    return key === item.order ? [] : [{ id: item.id, order: key }];
+  });
+  return { order, rekeyed };
+}
+
 // Straight-line distance between two catalog places, or null if either has
 // no coordinates.
 export function distanceBetweenPlaces(a: Place, b: Place): number | null {
@@ -151,4 +180,86 @@ export function costTotal(places: (Place | undefined)[]): {
     else yen += place.costEstimateJPY;
   }
   return { yen, unpriced };
+}
+
+// "HH:MM" plus minutes, as "HH:MM". Times past midnight read as 24:30 etc.
+export function addMinutes(time: string, minutes: number): string {
+  const [h, m] = time.split(":").map(Number);
+  const total = h * 60 + m + minutes;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+// The first "10:00-21:00" range in a place's free-text hours, if any. Hours
+// are researched text ("about 10:00-20:00 (verify)"), so this is a hint.
+export function parseHours(
+  text: string | null,
+): { open: string; close: string } | null {
+  const match = text?.match(/(\d{1,2}):(\d{2})\s*[-–~]\s*(\d{1,2}):(\d{2})/);
+  if (!match) return null;
+  const pad = (h: string, m: string) => `${h.padStart(2, "0")}:${m}`;
+  return { open: pad(match[1], match[2]), close: pad(match[3], match[4]) };
+}
+
+// The stop's start and end, when a start time is set. Duration falls back
+// to the place's typical visit.
+export function stopTimes(
+  item: Pick<PlanItem, "startTime" | "durationMin">,
+  place: Pick<Place, "durationMin"> | undefined,
+): { start: string; end: string | null } | null {
+  if (!item.startTime) return null;
+  const minutes = item.durationMin ?? place?.durationMin ?? null;
+  return {
+    start: item.startTime,
+    end: minutes === null ? null : addMinutes(item.startTime, minutes),
+  };
+}
+
+// Warnings about a stop's time: it starts before the place opens or ends
+// after it closes, going by the first hours range in its text.
+export function timeWarnings(
+  item: Pick<PlanItem, "startTime" | "durationMin">,
+  place: Pick<Place, "durationMin" | "openingHours"> | undefined,
+): string[] {
+  const times = stopTimes(item, place);
+  const hours = parseHours(place?.openingHours ?? null);
+  if (!times || !hours) return [];
+  if (times.start < hours.open)
+    return [`May not be open yet (opens ${hours.open})`];
+  if (times.start >= hours.close || (times.end && times.end > hours.close))
+    return [`May be closed by then (closes ${hours.close})`];
+  return [];
+}
+
+export const LATE_DAY = "22:00";
+
+// The latest end time among the day's timed stops, if it's past LATE_DAY.
+export function dayRunsLate(
+  stops: Pick<PlanItem, "startTime" | "durationMin" | "placeId">[],
+  places: Map<string, Pick<Place, "durationMin">>,
+): string | null {
+  let latest: string | null = null;
+  for (const s of stops) {
+    const t = stopTimes(s, places.get(s.placeId));
+    const end = t?.end ?? t?.start ?? null;
+    if (end && (!latest || end > latest)) latest = end;
+  }
+  return latest && latest > LATE_DAY ? latest : null;
+}
+
+// A softer warning for stops on a holiday or in the New Year closures, for
+// places not already known to be closed that day. Temples and shrines are
+// open (and busiest) then.
+export function holidayWarnings(
+  place: Pick<Place, "category" | "closedDates">,
+  date: string,
+  holidays: Pick<Holiday, "date" | "kind">[],
+): string[] {
+  const holiday = holidays.find((h) => h.date === date);
+  if (!holiday || place.category === "temple") return [];
+  if (place.closedDates.includes(date)) return [];
+  return [
+    holiday.kind === "holiday"
+      ? "Holiday: check it's open"
+      : "New Year closures: check it's open",
+  ];
 }

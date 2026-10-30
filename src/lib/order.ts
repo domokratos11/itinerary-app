@@ -1,4 +1,4 @@
-import { generateKeyBetween } from "fractional-indexing";
+import { generateKeyBetween, generateNKeysBetween } from "fractional-indexing";
 
 // Order keys are strings that sort correctly, so moving a stop only changes
 // one item's `order` (see the fractional-indexing package).
@@ -14,4 +14,9 @@ export function keyBetween(
   after: string | null,
 ): string {
   return generateKeyBetween(before, after);
+}
+
+// `count` fresh keys in ascending order, for re-keying a whole list.
+export function evenKeys(count: number): string[] {
+  return generateNKeysBetween(null, null, count);
 }

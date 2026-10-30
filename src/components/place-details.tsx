@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { AddToDay } from "@/components/add-to-day";
 import type { Place } from "@/domain/schemas";
+import { isDraft } from "@/domain/queue";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { useMediaQuery } from "@/lib/use-media-query";
 
@@ -84,6 +85,11 @@ function PlaceBody({ place, nearby }: { place: Place; nearby: NearbyPlace[] }) {
         <Badge variant="outline" className="text-foreground">
           {place.priority}
         </Badge>
+        {isDraft(place) && (
+          <Badge variant="outline" className="border-dashed">
+            Not researched yet
+          </Badge>
+        )}
         {place.verifiedAt && (
           <Badge variant="outline">Checked {place.verifiedAt}</Badge>
         )}

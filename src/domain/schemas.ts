@@ -89,6 +89,16 @@ export const TripFileSchema = z.object({
   reservations: z.array(ReservationSchema),
 });
 
+// Holidays and closure periods in the trip window (data/holidays.json).
+export const HolidaySchema = z.object({
+  date: isoDate,
+  name: z.string().min(1),
+  kind: z.enum(["holiday", "closures"]),
+  note: z.string().nullable(),
+});
+
+export const HolidaysFileSchema = z.array(HolidaySchema);
+
 export const PlanItemSchema = z.object({
   id: z.string(),
   placeId: z.string(),
@@ -101,10 +111,48 @@ export const PlanItemSchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 
+// Firestore records under trips/{tripId}. Each is the seed shape plus an
+// id where the seed has none, `archived` (records are never deleted) and
+// the time of the last change.
+const recordId = z
+  .string()
+  .regex(/^[a-z0-9-]+$/)
+  .max(64);
+const recordFields = { archived: z.boolean(), updatedAt: z.iso.datetime() };
+
+export const PLACE_STATUSES = ["draft", "researched"] as const;
+export const PLACE_SOURCES = ["catalog", "queue"] as const;
+
+export const CityRecordSchema = CitySchema.extend(recordFields);
+
+export const StayRecordSchema = StaySchema.extend({
+  id: recordId,
+  note: z.string().max(500).nullable(),
+  ...recordFields,
+});
+
+export const ReservationRecordSchema = ReservationSchema.extend({
+  id: recordId,
+  ...recordFields,
+});
+
+// A draft place was made from a queued link and is waiting for research.
+export const PlaceRecordSchema = PlaceSchema.extend({
+  status: z.enum(PLACE_STATUSES),
+  source: z.enum(PLACE_SOURCES),
+  ...recordFields,
+});
+
+export type CityRecord = z.infer<typeof CityRecordSchema>;
+export type StayRecord = z.infer<typeof StayRecordSchema>;
+export type ReservationRecord = z.infer<typeof ReservationRecordSchema>;
+export type PlaceRecord = z.infer<typeof PlaceRecordSchema>;
+
 export type City = z.infer<typeof CitySchema>;
 export type Place = z.infer<typeof PlaceSchema>;
 export type Stay = z.infer<typeof StaySchema>;
 export type Reservation = z.infer<typeof ReservationSchema>;
+export type Holiday = z.infer<typeof HolidaySchema>;
 export type TripFile = z.infer<typeof TripFileSchema>;
 export type PlanItem = z.infer<typeof PlanItemSchema>;
 export type Category = (typeof CATEGORIES)[number];

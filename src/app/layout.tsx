@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Geist_Mono, Instrument_Sans } from "next/font/google";
+import { Geist_Mono, Oxanium } from "next/font/google";
 import { Suspense } from "react";
 
+import { AppHeader, BottomNav } from "@/components/app-header";
+import { AppSidebar } from "@/components/app-sidebar";
 import { OfflineBanner } from "@/components/offline-banner";
 import { PlanSync } from "@/components/plan-sync";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
@@ -11,9 +13,20 @@ import { Toaster } from "@/components/ui/sonner";
 import { BASE_PATH } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
-const instrumentSansHeading = Instrument_Sans({
+// Oxanium has no Japanese glyphs, so Japanese text falls back to the
+// phone's own fonts. next/font serves the font from the site, so it works
+// offline.
+const oxanium = Oxanium({
   subsets: ["latin"],
-  variable: "--font-heading",
+  variable: "--font-sans",
+  fallback: [
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic",
+    "Noto Sans JP",
+    "system-ui",
+    "sans-serif",
+  ],
 });
 
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
@@ -21,7 +34,11 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 export const metadata: Metadata = {
   title: "Japan Trip 2026–27",
   description: "Our day-by-day plan for Japan, Dec 2026 – Jan 2027.",
-  appleWebApp: { capable: true, title: "Japan Trip", statusBarStyle: "default" },
+  appleWebApp: {
+    capable: true,
+    title: "Japan Trip",
+    statusBarStyle: "default",
+  },
   icons: { apple: `${BASE_PATH}/apple-touch-icon.png` },
 };
 
@@ -29,7 +46,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#16a34a",
+  themeColor: "#0f766e",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -41,20 +58,36 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={cn(
         "h-full antialiased",
-        "font-mono",
+        "font-sans",
+        oxanium.variable,
         geistMono.variable,
-        instrumentSansHeading.variable,
       )}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <ThemeProvider>
           <ServiceWorkerRegister />
+          <Suspense fallback={null}>
+            <AppHeader />
+          </Suspense>
           <OfflineBanner />
           <Suspense fallback={null}>
             <PlanSync />
           </Suspense>
-          {children}
-          <Toaster />
+          <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+            <Suspense fallback={null}>
+              <AppSidebar />
+            </Suspense>
+            <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+          </div>
+          <Suspense fallback={null}>
+            <BottomNav />
+          </Suspense>
+          {/* On phones, keep toasts above the bottom tab bar. */}
+          <Toaster
+            mobileOffset={{
+              bottom: "calc(4.5rem + env(safe-area-inset-bottom))",
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

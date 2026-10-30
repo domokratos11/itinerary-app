@@ -24,12 +24,15 @@ import {
 import { filterPlaces, type CatalogFilter } from "@/lib/catalog-filter";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
+import { isDraft } from "@/domain/queue";
 import { usePlanStore } from "@/lib/plan-store";
 
 type Props = {
   city: City;
   places: Place[];
   nearby: Record<string, NearbyPlace[]>;
+  // Opens this place's details first (from search).
+  initialPlaceId?: string | null;
 };
 
 const initialFilter: CatalogFilter = {
@@ -38,9 +41,14 @@ const initialFilter: CatalogFilter = {
   unassignedOnly: false,
 };
 
-export function CityCatalog({ city, places, nearby }: Props) {
+export function CityCatalog({
+  city,
+  places,
+  nearby,
+  initialPlaceId = null,
+}: Props) {
   const [filter, setFilter] = useState<CatalogFilter>(initialFilter);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialPlaceId);
   const items = usePlanStore((s) => s.items);
 
   // Places with an active plan item are assigned; the rest are unassigned.
@@ -75,100 +83,113 @@ export function CityCatalog({ city, places, nearby }: Props) {
         <CostLine places={planned} />
       </header>
 
-      <div className="flex flex-col gap-3">
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          value={filter.category}
-          onValueChange={(value) => {
-            if (value)
-              setFilter({
-                ...filter,
-                category: value as CatalogFilter["category"],
-              });
-          }}
-          className="flex flex-wrap justify-start"
-        >
-          <ToggleGroupItem value="all">All</ToggleGroupItem>
-          {CATEGORIES.map((c) => (
-            <ToggleGroupItem key={c} value={c}>
-              {CATEGORY_LABEL[c]}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Select
-            value={filter.priority}
-            onValueChange={(value) =>
-              setFilter({
-                ...filter,
-                priority: value as CatalogFilter["priority"],
-              })
-            }
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:rounded-xl lg:border lg:bg-card lg:p-4">
+          <h2 className="hidden text-sm font-medium lg:block">Filter</h2>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={filter.category}
+            onValueChange={(value) => {
+              if (value)
+                setFilter({
+                  ...filter,
+                  category: value as CatalogFilter["category"],
+                });
+            }}
+            className="flex flex-wrap justify-start"
           >
-            <SelectTrigger className="w-40">
-              <SelectValue>
-                {filter.priority === "all" ? "All priorities" : filter.priority}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All priorities</SelectItem>
-              {PRIORITIES.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <ToggleGroupItem value="all">All</ToggleGroupItem>
+            {CATEGORIES.map((c) => (
+              <ToggleGroupItem key={c} value={c}>
+                {CATEGORY_LABEL[c]}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
 
-          <div className="flex items-center gap-2">
-            <Switch
-              id="unassigned-only"
-              checked={filter.unassignedOnly}
-              onCheckedChange={(checked) =>
-                setFilter({ ...filter, unassignedOnly: checked })
+          <div className="flex flex-wrap items-center justify-between gap-3 lg:flex-col lg:items-start">
+            <Select
+              value={filter.priority}
+              onValueChange={(value) =>
+                setFilter({
+                  ...filter,
+                  priority: value as CatalogFilter["priority"],
+                })
               }
-            />
-            <Label htmlFor="unassigned-only">Unassigned only</Label>
+            >
+              <SelectTrigger className="w-40 lg:w-full">
+                <SelectValue>
+                  {filter.priority === "all"
+                    ? "All priorities"
+                    : filter.priority}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All priorities</SelectItem>
+                {PRIORITIES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center gap-2">
+              <Switch
+                id="unassigned-only"
+                checked={filter.unassignedOnly}
+                onCheckedChange={(checked) =>
+                  setFilter({ ...filter, unassignedOnly: checked })
+                }
+              />
+              <Label htmlFor="unassigned-only">Unassigned only</Label>
+            </div>
           </div>
+        </aside>
+
+        <div className="flex flex-col gap-3">
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {visible.map((place) => (
+              <li key={place.id}>
+                <Card
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedId(place.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ")
+                      setSelectedId(place.id);
+                  }}
+                  className="h-full cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50"
+                >
+                  <CardHeader>
+                    <CardTitle className="text-base">{place.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">
+                      {CATEGORY_LABEL[place.category]}
+                    </Badge>
+                    <Badge variant="outline" className="text-foreground">
+                      {place.priority}
+                    </Badge>
+                    {assigned.has(place.id) && <Badge>In plan</Badge>}
+                    {isDraft(place) && (
+                      <Badge variant="outline" className="border-dashed">
+                        Not researched yet
+                      </Badge>
+                    )}
+                  </CardContent>
+                </Card>
+              </li>
+            ))}
+          </ul>
+          {visible.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No places match these filters.
+            </p>
+          )}
         </div>
       </div>
-
-      <ul className="flex flex-col gap-3">
-        {visible.map((place) => (
-          <li key={place.id}>
-            <Card
-              role="button"
-              tabIndex={0}
-              onClick={() => setSelectedId(place.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") setSelectedId(place.id);
-              }}
-              className="cursor-pointer transition-colors hover:bg-muted/50"
-            >
-              <CardHeader>
-                <CardTitle className="text-base">{place.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                <Badge variant="secondary">
-                  {CATEGORY_LABEL[place.category]}
-                </Badge>
-                <Badge variant="outline" className="text-foreground">
-                  {place.priority}
-                </Badge>
-                {assigned.has(place.id) && <Badge>In plan</Badge>}
-              </CardContent>
-            </Card>
-          </li>
-        ))}
-      </ul>
-      {visible.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          No places match these filters.
-        </p>
-      )}
 
       <PlaceDetails
         place={selected}

@@ -19,22 +19,14 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { deriveDays, type TripDay } from "@/domain/days";
 import { itemsForDay } from "@/domain/plan";
 import type { Place } from "@/domain/schemas";
-import { cityById, trip } from "@/lib/catalog";
 import { addPlaceToDay } from "@/lib/plan-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { useCitiesById, useTripDays } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 import { formatDayLabel } from "@/lib/format-day";
-
-const tripDays = deriveDays(trip.stays);
-
-// Days where this place's city is staying (transfer days included).
-export function daysForCity(cityId: string): TripDay[] {
-  return tripDays.filter((d) => d.cityIds.includes(cityId));
-}
 
 // "Add to day": a bottom Drawer on phones, a command palette on wider screens.
 export function AddToDay({ place }: { place: Place }) {
@@ -42,7 +34,13 @@ export function AddToDay({ place }: { place: Place }) {
   const wide = useMediaQuery("(min-width: 768px)");
   const tripId = useTripId();
   const items = usePlanStore((s) => s.items);
-  const days = useMemo(() => daysForCity(place.cityId), [place.cityId]);
+  const tripDays = useTripDays();
+  const citiesById = useCitiesById();
+  // Days where this place's city is staying (transfer days included).
+  const days = useMemo(
+    () => tripDays.filter((d) => d.cityIds.includes(place.cityId)),
+    [tripDays, place.cityId],
+  );
 
   function pick(date: string) {
     setOpen(false);
@@ -63,7 +61,7 @@ export function AddToDay({ place }: { place: Place }) {
       <CommandList>
         <CommandEmpty>No days for this city.</CommandEmpty>
         <CommandGroup
-          heading={`Days in ${cityById(place.cityId)?.name ?? place.cityId}`}
+          heading={`Days in ${citiesById.get(place.cityId)?.name ?? place.cityId}`}
         >
           {days.map((day) => (
             <CommandItem
