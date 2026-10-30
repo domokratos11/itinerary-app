@@ -1,5 +1,6 @@
 import citiesJson from "../../data/cities.json";
 import tripJson from "../../data/trip.json";
+import holidaysJson from "../../data/holidays.json";
 import placesTokyoUeno from "../../data/places/tokyo-ueno.json";
 import placesNagoya from "../../data/places/nagoya.json";
 import placesHiroshima from "../../data/places/hiroshima.json";
@@ -8,9 +9,11 @@ import placesKawaguchiko from "../../data/places/kawaguchiko.json";
 import placesTokyoAsakusa from "../../data/places/tokyo-asakusa.json";
 import {
   CitiesFileSchema,
+  HolidaysFileSchema,
   PlacesFileSchema,
   TripFileSchema,
   type City,
+  type Holiday,
   type Place,
 } from "@/domain/schemas";
 import { seedTrip, type TripData } from "@/domain/trip";
@@ -29,6 +32,9 @@ export const allPlaces: Place[] = [
   ...PlacesFileSchema.parse(placesKawaguchiko),
   ...PlacesFileSchema.parse(placesTokyoAsakusa),
 ];
+
+// Holidays and closure periods: reference data, the same for every trip.
+export const holidays: Holiday[] = HolidaysFileSchema.parse(holidaysJson);
 
 // A fixed time, so the seed is the same in every build.
 const SEED_TIME = new Date("2026-10-29T00:00:00.000Z");

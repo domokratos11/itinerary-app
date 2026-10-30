@@ -1,6 +1,6 @@
 import { evenKeys, keyAfter, keyBetween } from "@/lib/order";
 import { distanceKm, type LatLng } from "@/lib/geo";
-import type { PlanItem, Place, Stay } from "./schemas";
+import type { Holiday, PlanItem, Place, Stay } from "./schemas";
 
 // Active plan items (not soft-deleted) on one date, in their saved order.
 // Order keys are fractional strings, so a plain string sort is correct.
@@ -244,4 +244,22 @@ export function dayRunsLate(
     if (end && (!latest || end > latest)) latest = end;
   }
   return latest && latest > LATE_DAY ? latest : null;
+}
+
+// A softer warning for stops on a holiday or in the New Year closures, for
+// places not already known to be closed that day. Temples and shrines are
+// open (and busiest) then.
+export function holidayWarnings(
+  place: Pick<Place, "category" | "closedDates">,
+  date: string,
+  holidays: Pick<Holiday, "date" | "kind">[],
+): string[] {
+  const holiday = holidays.find((h) => h.date === date);
+  if (!holiday || place.category === "temple") return [];
+  if (place.closedDates.includes(date)) return [];
+  return [
+    holiday.kind === "holiday"
+      ? "Holiday: check it's open"
+      : "New Year closures: check it's open",
+  ];
 }

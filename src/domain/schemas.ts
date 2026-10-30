@@ -89,6 +89,16 @@ export const TripFileSchema = z.object({
   reservations: z.array(ReservationSchema),
 });
 
+// Holidays and closure periods in the trip window (data/holidays.json).
+export const HolidaySchema = z.object({
+  date: isoDate,
+  name: z.string().min(1),
+  kind: z.enum(["holiday", "closures"]),
+  note: z.string().nullable(),
+});
+
+export const HolidaysFileSchema = z.array(HolidaySchema);
+
 export const PlanItemSchema = z.object({
   id: z.string(),
   placeId: z.string(),
@@ -142,6 +152,7 @@ export type City = z.infer<typeof CitySchema>;
 export type Place = z.infer<typeof PlaceSchema>;
 export type Stay = z.infer<typeof StaySchema>;
 export type Reservation = z.infer<typeof ReservationSchema>;
+export type Holiday = z.infer<typeof HolidaySchema>;
 export type TripFile = z.infer<typeof TripFileSchema>;
 export type PlanItem = z.infer<typeof PlanItemSchema>;
 export type Category = (typeof CATEGORIES)[number];

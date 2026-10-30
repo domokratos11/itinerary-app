@@ -54,6 +54,7 @@ import {
 import {
   directionsUrl,
   distanceBetweenPlaces,
+  holidayWarnings,
   itemsForDay,
   legsForDay,
   dayRunsLate,
@@ -77,6 +78,7 @@ import {
   queueDragId,
   useListDrop,
 } from "@/components/day-side-panel";
+import { holidays } from "@/lib/catalog";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
 import { formatDayLabel } from "@/lib/format-day";
@@ -364,6 +366,7 @@ export function DayPlan(props: Props) {
     placesById,
   );
   const editingItem = stops.find((i) => i.id === editing);
+  const holiday = holidays.find((h) => h.date === props.date);
 
   function saveEdit(item: PlanItem, changes: StopChanges) {
     setEditing(null);
@@ -397,6 +400,11 @@ export function DayPlan(props: Props) {
         </div>
         <h1 className="text-2xl font-semibold">{props.label}</h1>
         <CostLine places={stops.map((i) => placesById.get(i.placeId))} />
+        {holiday && (
+          <p className="rounded-md bg-muted px-3 py-2 text-sm">
+            <span className="font-medium">{holiday.name}.</span> {holiday.note}
+          </p>
+        )}
         {lateEnd && (
           <p className="text-sm text-destructive">
             This day runs until {lateEnd}. Check the last train.
@@ -699,7 +707,11 @@ function StopCard({
       : null;
   const finished = item.status === "done" || item.status === "skipped";
   const warnings = place
-    ? [...stopWarnings(place, item.date), ...timeWarnings(item, place)]
+    ? [
+        ...stopWarnings(place, item.date),
+        ...holidayWarnings(place, item.date, holidays),
+        ...timeWarnings(item, place),
+      ]
     : [];
 
   return (

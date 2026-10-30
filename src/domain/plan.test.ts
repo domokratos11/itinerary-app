@@ -4,6 +4,7 @@ import {
   costTotal,
   dayRunsLate,
   directionsUrl,
+  holidayWarnings,
   hotelsForDay,
   itemsForDay,
   keyAt,
@@ -319,5 +320,40 @@ describe("stop times", () => {
         places,
       ),
     ).toBeNull();
+  });
+});
+
+describe("holidayWarnings", () => {
+  const holidays = [
+    { date: "2026-12-31", kind: "closures" as const },
+    { date: "2027-01-11", kind: "holiday" as const },
+  ];
+  const museum = { category: "sight" as const, closedDates: [] as string[] };
+
+  it("warns about stops in the New Year closures and on holidays", () => {
+    expect(holidayWarnings(museum, "2026-12-31", holidays)).toEqual([
+      "New Year closures: check it's open",
+    ]);
+    expect(holidayWarnings(museum, "2027-01-11", holidays)).toEqual([
+      "Holiday: check it's open",
+    ]);
+    expect(holidayWarnings(museum, "2026-12-20", holidays)).toEqual([]);
+  });
+
+  it("skips temples and places already marked closed that day", () => {
+    expect(
+      holidayWarnings(
+        { ...museum, category: "temple" },
+        "2026-12-31",
+        holidays,
+      ),
+    ).toEqual([]);
+    expect(
+      holidayWarnings(
+        { ...museum, closedDates: ["2026-12-31"] },
+        "2026-12-31",
+        holidays,
+      ),
+    ).toEqual([]);
   });
 });
