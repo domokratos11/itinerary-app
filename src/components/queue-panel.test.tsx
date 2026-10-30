@@ -79,6 +79,7 @@ describe("QueuePanel", () => {
     status: "queued",
     cityId: null,
     placeId: null,
+    category: null,
     updatedAt: null,
   };
 
@@ -96,6 +97,7 @@ describe("QueuePanel", () => {
       name: "Oasis 21 rooftop",
       note: null,
       cityId: "nagoya",
+      category: null,
     });
   });
 

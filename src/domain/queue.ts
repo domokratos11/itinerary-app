@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { distanceKm, type LatLng } from "@/lib/geo";
-import type { Place, PlaceRecord, Stay } from "./schemas";
+import { CATEGORIES, type Place, type PlaceRecord, type Stay } from "./schemas";
 import { uniqueId } from "./trip-edit";
 
 export const QUEUE_STATUSES = ["queued", "promoted", "dismissed"] as const;
@@ -20,6 +20,8 @@ export const QueuedPlaceSchema = z.object({
   status: z.enum(QUEUE_STATUSES).default("queued"),
   cityId: z.string().max(64).nullable().default(null),
   placeId: z.string().max(64).nullable().default(null),
+  // Chosen while queued and carried into the draft place when assigned.
+  category: z.enum(CATEGORIES).nullable().default(null),
   updatedAt: z.iso.datetime().nullable().default(null),
 });
 
@@ -61,7 +63,7 @@ export function draftPlaceFrom(
     name: input.name,
     lat: item.lat,
     lng: item.lng,
-    category: "sight",
+    category: item.category ?? "sight",
     purpose: item.note,
     description: null,
     tips: [],

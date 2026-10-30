@@ -22,14 +22,15 @@ service cloud.firestore {
         && d.updatedAt is string && d.updatedAt.size() <= 30;
     }
 
-    // status, cityId, placeId and updatedAt were added later, so links
+    // status, cityId, placeId, category and updatedAt were added later, so links
     // saved before them stay valid.
     function isQueuedPlace(d) {
-      return d.keys().hasOnly(['id', 'url', 'name', 'lat', 'lng', 'note', 'createdAt', 'status', 'cityId', 'placeId', 'updatedAt'])
+      return d.keys().hasOnly(['id', 'url', 'name', 'lat', 'lng', 'note', 'createdAt', 'status', 'cityId', 'placeId', 'category', 'updatedAt'])
         && d.keys().hasAll(['id', 'url', 'name', 'lat', 'lng', 'note', 'createdAt'])
         && (!('status' in d) || d.status in ['queued', 'promoted', 'dismissed'])
         && (!('cityId' in d) || d.cityId == null || shortString(d.cityId, 64))
         && (!('placeId' in d) || d.placeId == null || shortString(d.placeId, 64))
+        && (!('category' in d) || d.category == null || d.category in ['lights', 'food', 'shopping', 'sight', 'daytrip', 'temple'])
         && (!('updatedAt' in d) || d.updatedAt == null || shortString(d.updatedAt, 30))
         && d.id is string && d.id.size() > 0 && d.id.size() <= 64
         && d.url is string && d.url.size() > 0 && d.url.size() <= 500
