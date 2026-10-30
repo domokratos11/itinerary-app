@@ -23,7 +23,7 @@ export function QueuePanel() {
   const [note, setNote] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tripId) return;
     const parsed = parseMapsLink(url);
@@ -34,13 +34,18 @@ export function QueuePanel() {
       return;
     }
     setProblem(null);
-    queueAdd(tripId, {
-      url: url.trim(),
-      name: parsed.name,
-      lat: parsed.lat,
-      lng: parsed.lng,
-      note: note.trim() || null,
-    }).catch(() => toast.error("That link was refused. Check the trip link."));
+    try {
+      await queueAdd(tripId, {
+        url: url.trim(),
+        name: parsed.name,
+        lat: parsed.lat,
+        lng: parsed.lng,
+        note: note.trim() || null,
+      });
+    } catch {
+      toast.error("That link was refused. Check the trip link.");
+      return;
+    }
     toast.success("Queued for the next update");
     setUrl("");
     setNote("");
