@@ -8,11 +8,9 @@
  * assigned to this place.
  */
 import { readFileSync } from "node:fs";
-import { initializeApp } from "firebase/app";
-import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 import { z } from "zod";
 
-import { firebaseConfig } from "../src/lib/firebase.config";
+import { adminDb } from "./admin-db";
 import { QueuedPlaceSchema } from "../src/domain/queue";
 import {
   PlaceRecordSchema,
@@ -35,13 +33,13 @@ async function main() {
     process.exit(1);
   }
   const entries = PushFileSchema.parse(JSON.parse(readFileSync(file, "utf8")));
-  const db = getFirestore(initializeApp(firebaseConfig));
+  const db = adminDb();
   const now = new Date().toISOString();
 
   for (const { queueId, ...place } of entries) {
-    const ref = doc(db, "trips", tripId, "places", place.id);
-    const existing = await getDoc(ref);
-    const before = existing.exists()
+    const ref = db.doc(`trips/${tripId}/places/${place.id}`);
+    const existing = await ref.get();
+    const before = existing.exists
       ? PlaceRecordSchema.safeParse(existing.data())
       : null;
     const record: PlaceRecord = {
@@ -55,14 +53,14 @@ async function main() {
       archived: false,
       updatedAt: now,
     };
-    await setDoc(ref, record);
+    await ref.set(record);
 
     if (queueId) {
-      const qRef = doc(db, "trips", tripId, "queue", queueId);
-      const q = await getDoc(qRef);
-      const parsed = q.exists() ? QueuedPlaceSchema.safeParse(q.data()) : null;
+      const qRef = db.doc(`trips/${tripId}/queue/${queueId}`);
+      const q = await qRef.get();
+      const parsed = q.exists ? QueuedPlaceSchema.safeParse(q.data()) : null;
       if (parsed?.success)
-        await setDoc(qRef, {
+        await qRef.set({
           ...parsed.data,
           status: "promoted",
           cityId: record.cityId,
@@ -70,7 +68,7 @@ async function main() {
           updatedAt: now,
         });
     }
-    console.log(`${existing.exists() ? "updated" : "added"} ${record.id}`);
+    console.log(`${existing.exists ? "updated" : "added"} ${record.id}`);
   }
   process.exit(0);
 }

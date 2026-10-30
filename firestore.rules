@@ -1,7 +1,9 @@
 rules_version = '2';
 
-// Access is by trip ID only: anyone who has the exact ID can read and edit
-// that trip's plan. Listing, creating or deleting trips is never allowed.
+// Access needs both the trip ID and a Google sign-in whose email is on the
+// trip's member list; a leaked link alone opens nothing. Listing, creating
+// or deleting trips is never allowed. The scripts use the Admin SDK, which
+// these rules don't apply to.
 // Paste this file into Firebase console → Firestore → Rules, then Publish.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -126,58 +128,64 @@ service cloud.firestore {
         && optionalString(d.before, 4000) && optionalString(d.after, 4000);
     }
 
-    function tripExists(tripId) {
-      return exists(/databases/$(database)/documents/trips/$(tripId));
+    // Signed in with Google, and that email is on the trip document's
+    // `members` list (lowercase emails, edited only in the console). A
+    // missing trip fails too, so nobody can probe which IDs exist.
+    function isMember(tripId) {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in
+          get(/databases/$(database)/documents/trips/$(tripId)).data.get('members', []);
     }
 
     match /trips/{tripId} {
-      allow get: if true;
+      allow get: if isMember(tripId);
       allow list, create, update, delete: if false;
 
       // The change log: written once, never edited or deleted.
       match /activity/{id} {
-        allow read: if tripExists(tripId);
-        allow create: if tripExists(tripId)
+        allow read: if isMember(tripId);
+        allow create: if isMember(tripId)
           && isActivity(request.resource.data) && request.resource.data.id == id;
         allow update, delete: if false;
       }
 
       // The trip's structure. Records are archived, never deleted.
       match /cities/{id} {
-        allow read: if tripExists(tripId);
-        allow create, update: if tripExists(tripId)
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
           && isCity(request.resource.data) && request.resource.data.id == id;
         allow delete: if false;
       }
 
       match /stays/{id} {
-        allow read: if tripExists(tripId);
-        allow create, update: if tripExists(tripId)
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
           && isStay(request.resource.data) && request.resource.data.id == id;
         allow delete: if false;
       }
 
       match /reservations/{id} {
-        allow read: if tripExists(tripId);
-        allow create, update: if tripExists(tripId)
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
           && isReservation(request.resource.data) && request.resource.data.id == id;
         allow delete: if false;
       }
 
       match /places/{id} {
-        allow read: if tripExists(tripId);
-        allow create, update: if tripExists(tripId)
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
           && isPlace(request.resource.data) && request.resource.data.id == id;
         allow delete: if false;
       }
 
       match /queue/{queueId} {
-        allow read: if exists(/databases/$(database)/documents/trips/$(tripId));
-        allow create: if exists(/databases/$(database)/documents/trips/$(tripId))
+        allow read: if isMember(tripId);
+        allow create: if isMember(tripId)
           && isQueuedPlace(request.resource.data)
           && request.resource.data.id == queueId;
         // Edits keep the link and when it was added.
-        allow update: if exists(/databases/$(database)/documents/trips/$(tripId))
+        allow update: if isMember(tripId)
           && isQueuedPlace(request.resource.data)
           && request.resource.data.id == queueId
           && request.resource.data.url == resource.data.url
@@ -186,8 +194,8 @@ service cloud.firestore {
       }
 
       match /items/{itemId} {
-        allow read: if exists(/databases/$(database)/documents/trips/$(tripId));
-        allow create, update: if exists(/databases/$(database)/documents/trips/$(tripId))
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
           && isPlanItem(request.resource.data)
           && request.resource.data.id == itemId;
         allow delete: if false;

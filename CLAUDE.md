@@ -14,8 +14,9 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 6. **The editable plan lives in Firestore** under `trips/{tripId}/items`, accessed only through a `PlanRepository` interface; the trip's structure goes through `TripRepository`. Screens never import the Firebase SDK directly. Records are never deleted: plan items are marked `removed`, everything else `archived`.
 7. **Time zone.** "Today" and all trip dates are computed in `Asia/Tokyo` time, never the device's local time zone.
 8. **Mobile-first.** Design for a 390px-wide screen first, then widen.
-9. **Privacy.** The repo is public. Never commit hotel confirmation numbers, booking references, passport or other personal ID numbers. The trip ID lives only in the shared link, never in the repo.
-10. **Before finishing any task**, run `npm run test`, `npm run validate` and `npm run build`, and fix anything that fails.
+9. **Privacy.** The repo is public. Never commit hotel confirmation numbers, booking references, passport or other personal ID numbers, member emails or service-account keys. The trip ID lives only in the shared link, never in the repo.
+10. **Access needs sign-in and membership.** `firestore.rules` lets a request through only when it is signed in with Google and its email is in the trip document's `members` array. Every rule for a trip uses `isMember(tripId)`; never loosen it to "trip exists". In the app, Firestore listeners start only once `useAuthStore` says `access === "member"` (a listener refused before sign-in stays dead). Auth goes through `src/lib/auth.ts`; screens never import `firebase/auth`. The Node scripts use the Admin SDK (`scripts/admin-db.ts`) with the developer's Google Cloud login.
+11. **Before finishing any task**, run `npm run test`, `npm run validate` and `npm run build`, and fix anything that fails.
 
 ## Commands
 

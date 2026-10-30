@@ -42,3 +42,7 @@ next-env.d.ts
 
 # research exports from npm run queue:pull
 /research/
+
+# service-account keys for the scripts (never commit)
+*service-account*.json
+*-firebase-adminsdk-*.json
