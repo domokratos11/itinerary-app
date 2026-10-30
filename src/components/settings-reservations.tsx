@@ -34,21 +34,32 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
   const [editing, setEditing] = useState<Editing>(null);
 
   function save(record: ReservationRecord) {
-    saveRecord(tripId, "reservations", record).catch(() =>
-      toast.error(REFUSED),
-    );
+    saveRecord(
+      tripId,
+      "reservations",
+      record,
+      `saved the ${record.type} on ${formatDayLabel(record.date)}`,
+    ).catch(() => toast.error(REFUSED));
     setEditing(null);
   }
 
   function archive(r: ReservationRecord) {
-    archiveRecord(tripId, "reservations", r).catch(() => toast.error(REFUSED));
+    archiveRecord(
+      tripId,
+      "reservations",
+      r,
+      `archived the ${r.type} on ${formatDayLabel(r.date)}`,
+    ).catch(() => toast.error(REFUSED));
     toast("Reservation archived", {
       action: {
         label: "Undo",
         onClick: () =>
-          saveRecord(tripId, "reservations", r).catch(() =>
-            toast.error(REFUSED),
-          ),
+          saveRecord(
+            tripId,
+            "reservations",
+            r,
+            `restored the ${r.type} on ${formatDayLabel(r.date)}`,
+          ).catch(() => toast.error(REFUSED)),
       },
     });
   }

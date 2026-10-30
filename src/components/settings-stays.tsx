@@ -59,18 +59,33 @@ export function StaysSettings({ tripId }: { tripId: string }) {
   }
 
   function save(record: StayRecord) {
-    saveRecord(tripId, "stays", record).catch(() => toast.error(REFUSED));
+    saveRecord(
+      tripId,
+      "stays",
+      record,
+      `saved the stay at ${record.hotelName} (${formatDayLabel(record.checkIn)} → ${formatDayLabel(record.checkOut)})`,
+    ).catch(() => toast.error(REFUSED));
     setEditing(null);
   }
 
   function archive(stay: StayRecord) {
-    archiveRecord(tripId, "stays", stay).catch(() => toast.error(REFUSED));
+    archiveRecord(
+      tripId,
+      "stays",
+      stay,
+      `archived the stay at ${stay.hotelName}`,
+    ).catch(() => toast.error(REFUSED));
     setEditing(null);
     toast(`Archived the stay at ${stay.hotelName}`, {
       action: {
         label: "Undo",
         onClick: () =>
-          saveRecord(tripId, "stays", stay).catch(() => toast.error(REFUSED)),
+          saveRecord(
+            tripId,
+            "stays",
+            stay,
+            `restored the stay at ${stay.hotelName}`,
+          ).catch(() => toast.error(REFUSED)),
       },
     });
   }

@@ -114,6 +114,18 @@ service cloud.firestore {
         && isRecord(d);
     }
 
+    function isActivity(d) {
+      return d.keys().hasOnly(['id', 'at', 'device', 'kind', 'targetId', 'summary', 'before', 'after'])
+        && d.keys().hasAll(['id', 'at', 'device', 'kind', 'targetId', 'summary', 'before', 'after'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.at, 30)
+        && shortString(d.device, 40) && d.device.size() > 0
+        && d.kind in ['added', 'moved', 'reordered', 'edited', 'removed', 'restored', 'undone', 'queued', 'assigned', 'dismissed', 'settings']
+        && optionalString(d.targetId, 64)
+        && shortString(d.summary, 300) && d.summary.size() > 0
+        && optionalString(d.before, 4000) && optionalString(d.after, 4000);
+    }
+
     function tripExists(tripId) {
       return exists(/databases/$(database)/documents/trips/$(tripId));
     }
@@ -121,6 +133,14 @@ service cloud.firestore {
     match /trips/{tripId} {
       allow get: if true;
       allow list, create, update, delete: if false;
+
+      // The change log: written once, never edited or deleted.
+      match /activity/{id} {
+        allow read: if tripExists(tripId);
+        allow create: if tripExists(tripId)
+          && isActivity(request.resource.data) && request.resource.data.id == id;
+        allow update, delete: if false;
+      }
 
       // The trip's structure. Records are archived, never deleted.
       match /cities/{id} {

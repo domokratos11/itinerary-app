@@ -1,6 +1,9 @@
+import { undoFor, type Activity } from "@/domain/activity";
 import { markRemoved } from "@/domain/plan-repository";
 import { newPlanItem, keysForInsert } from "@/domain/plan";
 import type { PlanItem } from "@/domain/schemas";
+import { logActivity, placeName } from "@/lib/activity-log";
+import { formatDayLabel } from "@/lib/format-day";
 import { usePlanStore } from "@/lib/plan-store";
 import { planRepository } from "@/lib/plan-repository-instance";
 
@@ -55,6 +58,16 @@ export async function addPlaceAt(
     now,
   });
   await saveAll(tripId, [item, ...withKeys(dayItems, rekeyed, now)]);
+  logActivity(
+    tripId,
+    {
+      kind: "added",
+      targetId: item.id,
+      summary: `added ${placeName(placeId)} to ${formatDayLabel(date)}`,
+      after: item,
+    },
+    now,
+  );
   return item;
 }
 
@@ -69,10 +82,52 @@ export async function placeItem(
   now: Date = new Date(),
 ): Promise<void> {
   const { order, rekeyed } = keysForInsert(others, index);
-  await saveAll(tripId, [
-    { ...item, date, order, updatedAt: now.toISOString() },
-    ...withKeys(others, rekeyed, now),
-  ]);
+  const moved = { ...item, date, order, updatedAt: now.toISOString() };
+  await saveAll(tripId, [moved, ...withKeys(others, rekeyed, now)]);
+  const name = placeName(item.placeId);
+  logActivity(
+    tripId,
+    {
+      kind: item.date === date ? "reordered" : "moved",
+      targetId: item.id,
+      summary:
+        item.date === date
+          ? `reordered ${name} on ${formatDayLabel(date)}`
+          : `moved ${name} from ${formatDayLabel(item.date)} to ${formatDayLabel(date)}`,
+      before: item,
+      after: moved,
+    },
+    now,
+  );
+}
+
+// Saves edited details of a stop (time, duration, note, done or skipped).
+export async function updateItem(
+  tripId: string,
+  item: PlanItem,
+  changes: Partial<
+    Pick<PlanItem, "startTime" | "durationMin" | "note" | "status">
+  >,
+  now: Date = new Date(),
+): Promise<void> {
+  const updated = { ...item, ...changes, updatedAt: now.toISOString() };
+  await saveAll(tripId, [updated]);
+  const name = placeName(item.placeId);
+  const marked =
+    changes.status && changes.status !== item.status
+      ? `marked ${name} ${changes.status}`
+      : `edited ${name}`;
+  logActivity(
+    tripId,
+    {
+      kind: "edited",
+      targetId: item.id,
+      summary: `${marked} on ${formatDayLabel(item.date)}`,
+      before: item,
+      after: updated,
+    },
+    now,
+  );
 }
 
 export async function removeItem(
@@ -80,13 +135,62 @@ export async function removeItem(
   item: PlanItem,
   now: Date = new Date(),
 ): Promise<void> {
-  await saveAll(tripId, [markRemoved(item, now)]);
+  const removed = markRemoved(item, now);
+  await saveAll(tripId, [removed]);
+  logActivity(
+    tripId,
+    {
+      kind: "removed",
+      targetId: item.id,
+      summary: `removed ${placeName(item.placeId)} from ${formatDayLabel(item.date)}`,
+      before: item,
+      after: removed,
+    },
+    now,
+  );
 }
 
-// Restores an item exactly as it was before it was removed (used by Undo).
+// Puts an item back as it was before a change (used by Undo).
 export async function restoreItem(
   tripId: string,
   previous: PlanItem,
+  now: Date = new Date(),
 ): Promise<void> {
-  await saveAll(tripId, [previous]);
+  const restored = { ...previous, updatedAt: now.toISOString() };
+  await saveAll(tripId, [restored]);
+  logActivity(
+    tripId,
+    {
+      kind: "restored",
+      targetId: previous.id,
+      summary: `restored ${placeName(previous.placeId)} on ${formatDayLabel(previous.date)}`,
+      after: restored,
+    },
+    now,
+  );
+}
+
+// Undoes a plan change from the activity log, if the stop hasn't changed
+// since. Returns false when it can't be undone.
+export async function undoActivity(
+  tripId: string,
+  entry: Activity,
+  current: PlanItem | undefined,
+  now: Date = new Date(),
+): Promise<boolean> {
+  const target = undoFor(entry, current, now);
+  if (!target) return false;
+  await saveAll(tripId, [target]);
+  logActivity(
+    tripId,
+    {
+      kind: "undone",
+      targetId: target.id,
+      summary: `undid: ${entry.summary}`,
+      before: current,
+      after: target,
+    },
+    now,
+  );
+  return true;
 }

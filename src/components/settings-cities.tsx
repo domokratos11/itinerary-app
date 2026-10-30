@@ -35,17 +35,32 @@ export function CitiesSettings({ tripId }: { tripId: string }) {
           archived: false,
           updatedAt: now,
         };
-    saveRecord(tripId, "cities", record).catch(() => toast.error(REFUSED));
+    saveRecord(
+      tripId,
+      "cities",
+      record,
+      `${editing?.record ? "edited" : "added"} the city ${name}`,
+    ).catch(() => toast.error(REFUSED));
     setEditing(null);
   }
 
   function archive(city: CityRecord) {
-    archiveRecord(tripId, "cities", city).catch(() => toast.error(REFUSED));
+    archiveRecord(
+      tripId,
+      "cities",
+      city,
+      `archived the city ${city.name}`,
+    ).catch(() => toast.error(REFUSED));
     toast(`Archived ${city.name}`, {
       action: {
         label: "Undo",
         onClick: () =>
-          saveRecord(tripId, "cities", city).catch(() => toast.error(REFUSED)),
+          saveRecord(
+            tripId,
+            "cities",
+            city,
+            `restored the city ${city.name}`,
+          ).catch(() => toast.error(REFUSED)),
       },
     });
   }

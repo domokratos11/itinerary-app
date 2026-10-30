@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ActivitySheet } from "@/components/activity-sheet";
 import { ExportPlan } from "@/components/export-plan";
 import { NeedsNewDay } from "@/components/needs-new-day";
 import { QueuePanel } from "@/components/queue-panel";
@@ -34,6 +35,9 @@ export default function Home() {
           <div className="flex flex-wrap gap-2">
             <Suspense fallback={null}>
               <SettingsLink />
+            </Suspense>
+            <Suspense fallback={null}>
+              <ActivitySheet />
             </Suspense>
             <ExportPlan />
             <ThemeToggle />

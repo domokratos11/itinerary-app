@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   costTotal,
+  dayRunsLate,
   directionsUrl,
   hotelsForDay,
   itemsForDay,
@@ -10,7 +11,10 @@ import {
   legsForDay,
   nextStop,
   newPlanItem,
+  parseHours,
+  stopTimes,
   stopWarnings,
+  timeWarnings,
 } from "@/domain/plan";
 import type { PlanItem, Place, Stay } from "@/domain/schemas";
 
@@ -264,5 +268,56 @@ describe("costTotal", () => {
       yen: 1300,
       unpriced: 2,
     });
+  });
+});
+
+describe("stop times", () => {
+  const place = { durationMin: 90, openingHours: "about 10:00-21:00 (verify)" };
+
+  it("reads the first hours range from free text", () => {
+    expect(parseHours("9:30-17:00, last entry 16:00")).toEqual({
+      open: "09:30",
+      close: "17:00",
+    });
+    expect(parseHours("Verify on the day")).toBeNull();
+    expect(parseHours(null)).toBeNull();
+  });
+
+  it("ends a stop after its duration, or the place's typical one", () => {
+    expect(stopTimes({ startTime: "10:30", durationMin: null }, place)).toEqual(
+      { start: "10:30", end: "12:00" },
+    );
+    expect(stopTimes({ startTime: "23:30", durationMin: 60 }, place)?.end).toBe(
+      "24:30",
+    );
+    expect(stopTimes({ startTime: null, durationMin: 60 }, place)).toBeNull();
+  });
+
+  it("warns when a stop is outside the opening hours", () => {
+    expect(
+      timeWarnings({ startTime: "09:00", durationMin: 60 }, place),
+    ).toEqual(["May not be open yet (opens 10:00)"]);
+    expect(
+      timeWarnings({ startTime: "20:00", durationMin: 90 }, place),
+    ).toEqual(["May be closed by then (closes 21:00)"]);
+    expect(
+      timeWarnings({ startTime: "12:00", durationMin: 60 }, place),
+    ).toEqual([]);
+  });
+
+  it("flags a day that runs past 22:00", () => {
+    const places = new Map([["p", { durationMin: 120 }]]);
+    expect(
+      dayRunsLate(
+        [{ placeId: "p", startTime: "21:00", durationMin: null }],
+        places,
+      ),
+    ).toBe("23:00");
+    expect(
+      dayRunsLate(
+        [{ placeId: "p", startTime: "18:00", durationMin: null }],
+        places,
+      ),
+    ).toBeNull();
   });
 });

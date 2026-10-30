@@ -27,6 +27,7 @@ import {
   ExternalLink,
   GripVertical,
   Navigation,
+  Pencil,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -55,9 +56,12 @@ import {
   distanceBetweenPlaces,
   itemsForDay,
   legsForDay,
+  dayRunsLate,
   nextStop,
   placeLocation,
+  stopTimes,
   stopWarnings,
+  timeWarnings,
   type Location,
 } from "@/domain/plan";
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
@@ -82,7 +86,10 @@ import {
   placeItem,
   removeItem,
   restoreItem,
+  updateItem,
 } from "@/lib/plan-actions";
+import { ActivitySheet } from "@/components/activity-sheet";
+import { StopEditor, type StopChanges } from "@/components/stop-editor";
 import { assignQueued, queueUpdate } from "@/lib/queue-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { homeHref } from "@/lib/links";
@@ -120,6 +127,7 @@ export function DayPlan(props: Props) {
   const tripDays = useTripDays();
   const queue = useQueue(tripId).items;
   const [dragging, setDragging] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const wide = useMediaQuery("(min-width: 768px)");
   const stops = useMemo(
     () => itemsForDay(items, props.date),
@@ -353,6 +361,17 @@ export function DayPlan(props: Props) {
   }
 
   const next = nextStop(stops);
+  const lateEnd = dayRunsLate(
+    stops.filter((i) => i.status === "planned"),
+    placesById,
+  );
+  const editingItem = stops.find((i) => i.id === editing);
+
+  function saveEdit(item: PlanItem, changes: StopChanges) {
+    setEditing(null);
+    if (!tripId) return toast.error("Open your shared link with ?trip= first.");
+    updateItem(tripId, item, changes).catch(() => toast.error(REFUSED));
+  }
   const nextPlace = next ? placesById.get(next.placeId) : undefined;
 
   function dayOptionsFor(cityId: string | undefined) {
@@ -378,12 +397,17 @@ export function DayPlan(props: Props) {
             ← Trip days
           </Link>
           <div className="flex items-center gap-2">
-            <RecentlyChanged />
+            <ActivitySheet />
             <ThemeToggle />
           </div>
         </div>
         <h1 className="text-2xl font-semibold">{props.label}</h1>
         <CostLine places={stops.map((i) => placesById.get(i.placeId))} />
+        {lateEnd && (
+          <p className="text-sm text-destructive">
+            This day runs until {lateEnd}. Check the last train.
+          </p>
+        )}
         <div className="flex flex-wrap gap-2">
           {props.cityNames.map((name) => (
             <Badge key={name} variant="secondary">
@@ -438,6 +462,7 @@ export function DayPlan(props: Props) {
                     dayOptions={dayOptionsFor(row.place?.cityId)}
                     currentDate={props.date}
                     onRemove={() => remove(row.item)}
+                    onEdit={() => setEditing(row.item.id)}
                     onMoveDay={(d) => moveToDay(row.item, d)}
                   />
                 ))}
@@ -470,6 +495,7 @@ export function DayPlan(props: Props) {
                 dayOptions={dayOptionsFor(row.place?.cityId)}
                 currentDate={props.date}
                 onRemove={() => remove(row.item)}
+                onEdit={() => setEditing(row.item.id)}
                 onMoveDay={(d) => moveToDay(row.item, d)}
                 buttons={{
                   canUp: index > 0,
@@ -515,6 +541,15 @@ export function DayPlan(props: Props) {
             </Card>
           ))}
         </section>
+      )}
+      {editingItem && (
+        <StopEditor
+          key={editingItem.id}
+          item={editingItem}
+          place={placesById.get(editingItem.placeId)}
+          onCancel={() => setEditing(null)}
+          onSave={(changes) => saveEdit(editingItem, changes)}
+        />
       )}
     </div>
   );
@@ -592,6 +627,7 @@ type StopProps = {
   dayOptions: { date: string; label: string }[];
   currentDate: string;
   onRemove: () => void;
+  onEdit: () => void;
   onMoveDay: (date: string) => void;
 };
 
@@ -639,6 +675,7 @@ function StopCard({
   dayOptions,
   currentDate,
   onRemove,
+  onEdit,
   onMoveDay,
   handle,
   buttons,
@@ -657,24 +694,41 @@ function StopCard({
   const directions = place
     ? directionsUrl(placeLocation(place), origin.location ?? undefined)
     : null;
-  const meta = [
-    item.startTime,
-    item.durationMin ? `${item.durationMin} min` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const times = stopTimes(item, place);
+  const minutes = item.durationMin ?? null;
+  const meta = times
+    ? times.end
+      ? `${times.start}–${times.end}`
+      : times.start
+    : minutes
+      ? `${minutes} min`
+      : null;
+  const finished = item.status === "done" || item.status === "skipped";
+  const warnings = place
+    ? [...stopWarnings(place, item.date), ...timeWarnings(item, place)]
+    : [];
 
   return (
-    <Card>
+    <Card className={cn(finished && "opacity-70")}>
       <CardHeader className="flex items-start gap-3">
         {handle}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <CardTitle className="text-base">{name}</CardTitle>
+          <CardTitle
+            className={cn(
+              "text-base",
+              item.status === "done" && "line-through",
+            )}
+          >
+            {name}
+          </CardTitle>
           <div className="flex flex-wrap gap-2">
             {place && (
               <Badge variant="secondary">
                 {CATEGORY_LABEL[place.category]}
               </Badge>
+            )}
+            {finished && (
+              <Badge>{item.status === "done" ? "Done" : "Skipped"}</Badge>
             )}
             {meta && <Badge variant="outline">{meta}</Badge>}
             {place && isDraft(place) && (
@@ -682,8 +736,8 @@ function StopCard({
                 Not researched yet
               </Badge>
             )}
-            {place &&
-              stopWarnings(place, item.date).map((warning) => (
+            {!finished &&
+              warnings.map((warning) => (
                 <Badge key={warning} variant="destructive">
                   {warning}
                 </Badge>
@@ -754,8 +808,16 @@ function StopCard({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Remove"
+            aria-label={`Edit ${name}`}
             className="ml-auto"
+            onClick={onEdit}
+          >
+            <Pencil />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove"
             onClick={onRemove}
           >
             <Trash2 />
@@ -827,70 +889,6 @@ function FullDay({
             </a>
           ))}
         </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-// Every item in the trip, newest change first. Removed stops can be restored.
-function RecentlyChanged() {
-  const items = usePlanStore((s) => s.items);
-  const placesById = usePlacesById();
-  const tripId = useTripId();
-  const recent = useMemo(
-    () =>
-      [...items].sort((a, b) =>
-        a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0,
-      ),
-    [items],
-  );
-
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
-          Recently changed
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="overflow-y-auto">
-        <SheetHeader className="text-left">
-          <SheetTitle>Recently changed</SheetTitle>
-          <SheetDescription>
-            Newest first. Removed stops can be restored.
-          </SheetDescription>
-        </SheetHeader>
-        <ul className="flex flex-col gap-2 px-4 pb-6">
-          {recent.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-center justify-between gap-2 rounded-md border p-3 text-sm"
-            >
-              <span className="min-w-0">
-                <span className="block truncate">
-                  {placesById.get(item.placeId)?.name ?? item.placeId}
-                </span>
-                <span className="text-muted-foreground">
-                  {formatDayLabel(item.date)} · {item.status}
-                </span>
-              </span>
-              {item.status === "removed" && tripId && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    restoreItem(tripId, {
-                      ...item,
-                      status: "planned",
-                      updatedAt: new Date().toISOString(),
-                    }).catch(() => toast.error(REFUSED))
-                  }
-                >
-                  Restore
-                </Button>
-              )}
-            </li>
-          ))}
-        </ul>
       </SheetContent>
     </Sheet>
   );
