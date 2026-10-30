@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveDays, weekdayOf } from "@/domain/days";
+import { deriveDays, tripPhase, weekdayOf } from "@/domain/days";
 import type { Stay } from "@/domain/schemas";
 
 const stay = (cityId: string, checkIn: string, checkOut: string): Stay => ({
@@ -59,5 +59,36 @@ describe("deriveDays", () => {
 describe("weekdayOf", () => {
   it("names the weekday of a trip date", () => {
     expect(weekdayOf("2026-12-17")).toBe("Thu");
+  });
+});
+
+describe("tripPhase", () => {
+  const days = deriveDays([
+    {
+      cityId: "tokyo",
+      hotelName: "h",
+      hotelMapsUrl: null,
+      lat: null,
+      lng: null,
+      checkIn: "2026-12-17",
+      checkOut: "2026-12-20",
+    },
+  ]);
+
+  it("counts the days left before the trip", () => {
+    expect(tripPhase("2026-11-01", days)).toEqual({
+      phase: "before",
+      daysLeft: 46,
+      first: "2026-12-17",
+    });
+  });
+
+  it("is during the trip from the first to the last day", () => {
+    expect(tripPhase("2026-12-17", days)).toEqual({
+      phase: "during",
+      date: "2026-12-17",
+    });
+    expect(tripPhase("2026-12-20", days).phase).toBe("during");
+    expect(tripPhase("2026-12-21", days).phase).toBe("after");
   });
 });

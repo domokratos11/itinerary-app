@@ -57,3 +57,21 @@ export function weekdayOf(date: string): string {
     timeZone: "UTC",
   });
 }
+
+export type TripPhase =
+  | { phase: "before"; daysLeft: number; first: string }
+  | { phase: "during"; date: string }
+  | { phase: "after" };
+
+// Where `today` (a Tokyo date) falls relative to the trip's days.
+export function tripPhase(today: string, days: TripDay[]): TripPhase {
+  if (days.length === 0) return { phase: "after" };
+  const first = days[0].date;
+  const last = days[days.length - 1].date;
+  if (today < first) {
+    const ms = toUtcDate(first).getTime() - toUtcDate(today).getTime();
+    return { phase: "before", daysLeft: Math.round(ms / 86_400_000), first };
+  }
+  if (today > last) return { phase: "after" };
+  return { phase: "during", date: today };
+}
