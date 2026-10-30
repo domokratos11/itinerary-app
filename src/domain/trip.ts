@@ -139,3 +139,28 @@ export function strandedItems(
     return [];
   });
 }
+
+export type StayGroup<S extends Stay = Stay> = {
+  stay: S | null;
+  days: TripDay[];
+};
+
+// The days grouped by the hotel slept in that night, in order. A transfer
+// day goes with the hotel you arrive at; the last day goes with the last
+// hotel. Nights with no hotel form their own groups.
+export function groupDaysByStay<S extends Stay>(
+  days: TripDay[],
+  stays: S[],
+): StayGroup<S>[] {
+  const groups: StayGroup<S>[] = [];
+  for (const day of days) {
+    const stay =
+      stays.find((s) => s.checkIn <= day.date && day.date < s.checkOut) ??
+      stays.find((s) => s.checkOut === day.date) ??
+      null;
+    const last = groups.at(-1);
+    if (last && last.stay === stay) last.days.push(day);
+    else groups.push({ stay, days: [day] });
+  }
+  return groups;
+}

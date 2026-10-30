@@ -5,6 +5,7 @@ import type { PlanItem, Stay } from "@/domain/schemas";
 import {
   activeTrip,
   endpointFor,
+  groupDaysByStay,
   seedTrip,
   strandedItems,
   type TripData,
@@ -139,5 +140,34 @@ describe("strandedItems", () => {
       places,
     );
     expect(result).toEqual([]);
+  });
+});
+
+describe("groupDaysByStay", () => {
+  it("groups nights by hotel, with transfer days under the next hotel", () => {
+    const stays = [
+      stay("tokyo-ueno", "2026-12-17", "2026-12-19"),
+      stay("nagoya", "2026-12-19", "2026-12-21"),
+    ];
+    const groups = groupDaysByStay(deriveDays(stays), stays);
+    expect(
+      groups.map((g) => [g.stay?.cityId, g.days.map((d) => d.date)]),
+    ).toEqual([
+      ["tokyo-ueno", ["2026-12-17", "2026-12-18"]],
+      ["nagoya", ["2026-12-19", "2026-12-20", "2026-12-21"]],
+    ]);
+  });
+
+  it("puts nights with no hotel in their own group", () => {
+    const stays = [
+      stay("tokyo-ueno", "2026-12-17", "2026-12-18"),
+      stay("nagoya", "2026-12-20", "2026-12-21"),
+    ];
+    const groups = groupDaysByStay(deriveDays(stays), stays);
+    expect(groups.map((g) => g.stay?.cityId ?? null)).toEqual([
+      "tokyo-ueno",
+      null,
+      "nagoya",
+    ]);
   });
 });

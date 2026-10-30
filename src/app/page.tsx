@@ -17,28 +17,30 @@ import {
 // lib/trip-store); this page is only the static shell around them.
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-4 py-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <h1 className="text-2xl">Japan Trip 2026–27</h1>
-          </CardTitle>
-          <CardDescription>
-            <TripDates />
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <TripPlanStatus />
-          <div className="flex flex-wrap gap-2">
-            <Suspense fallback={null}>
-              <ExportTrip />
-            </Suspense>
-          </div>
-        </CardContent>
-      </Card>
-      <Suspense fallback={null}>
-        <TodayCard />
-      </Suspense>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6 md:max-w-6xl lg:px-8 lg:py-8">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h1 className="text-2xl">Japan Trip 2026–27</h1>
+            </CardTitle>
+            <CardDescription>
+              <TripDates />
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <TripPlanStatus />
+            <div className="flex flex-wrap gap-2">
+              <Suspense fallback={null}>
+                <ExportTrip />
+              </Suspense>
+            </div>
+          </CardContent>
+        </Card>
+        <Suspense fallback={null}>
+          <TodayCard />
+        </Suspense>
+      </div>
       <Suspense fallback={null}>
         <NeedsNewDay />
       </Suspense>

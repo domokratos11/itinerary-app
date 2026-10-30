@@ -12,7 +12,7 @@ import { pageHref } from "@/lib/links";
 import { cn } from "@/lib/utils";
 import { useTripId } from "@/lib/use-trip-id";
 
-const SECTIONS = [
+export const SECTIONS = [
   { path: "/", label: "Days", icon: CalendarDays, match: ["/", "/day/"] },
   {
     path: "/cities/",
@@ -29,7 +29,7 @@ const SECTIONS = [
   },
 ] as const;
 
-function useSection(): string {
+export function useSection(): string {
   // usePathname has no base path and may lack the trailing slash.
   const path = usePathname();
   const normal = path.endsWith("/") ? path : `${path}/`;
@@ -47,14 +47,17 @@ export function AppHeader() {
   const active = useSection();
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-4">
+      <div className="flex h-14 w-full items-center gap-2 px-4 lg:px-6">
         <Link
           href={pageHref("/", tripId)}
           className="font-heading text-base font-semibold tracking-tight"
         >
           Japan Trip
         </Link>
-        <nav aria-label="Sections" className="ml-4 hidden gap-1 md:flex">
+        <nav
+          aria-label="Sections"
+          className="ml-4 hidden gap-1 md:flex lg:hidden"
+        >
           {SECTIONS.map(({ path, label, icon: Icon }) => (
             <Button
               key={path}

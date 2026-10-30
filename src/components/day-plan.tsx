@@ -438,7 +438,9 @@ export function DayPlan(props: Props) {
         </div>
       </header>
 
-      {props.start && <HotelRow label="Start" endpoint={props.start} />}
+      {!wide && props.start && (
+        <HotelRow label="Start" endpoint={props.start} />
+      )}
 
       {wide ? (
         <DndContext
@@ -448,7 +450,7 @@ export function DayPlan(props: Props) {
           onDragCancel={() => setDragging(null)}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-[minmax(0,1fr)_15rem] items-start gap-4">
+          <div className="grid grid-cols-[minmax(0,1fr)_16rem] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_19rem]">
             <SortableContext
               items={rows.map((r) => r.item.id)}
               strategy={verticalListSortingStrategy}
@@ -470,11 +472,16 @@ export function DayPlan(props: Props) {
                 ))}
               </DroppableList>
             </SortableContext>
-            <DaySidePanel
-              waiting={waiting}
-              otherDays={otherDays}
-              stopCounts={stopCounts}
-            />
+            <div className="sticky top-20 flex flex-col gap-4">
+              {props.start && <HotelRow label="Start" endpoint={props.start} />}
+              {props.end && <HotelRow label="End" endpoint={props.end} />}
+              <Reservations reservations={props.reservations} />
+              <DaySidePanel
+                waiting={waiting}
+                otherDays={otherDays}
+                stopCounts={stopCounts}
+              />
+            </div>
           </div>
           <DragOverlay>
             {dragging && parseDragId(dragging) ? (
@@ -517,33 +524,9 @@ export function DayPlan(props: Props) {
         </p>
       )}
 
-      {props.end && <HotelRow label="End" endpoint={props.end} />}
+      {!wide && props.end && <HotelRow label="End" endpoint={props.end} />}
 
-      {props.reservations.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase">
-            Reservations
-          </h2>
-          {props.reservations.map((r, i) => (
-            <Card key={`${r.type}-${i}`}>
-              <CardContent className="flex flex-col gap-1 py-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{r.type}</Badge>
-                  {r.time && <span className="font-medium">{r.time}</span>}
-                </div>
-                <div>
-                  {r.from && r.to
-                    ? `${r.from} → ${r.to}`
-                    : (r.from ?? r.to ?? "")}
-                </div>
-                {r.note && (
-                  <div className="text-muted-foreground">{r.note}</div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </section>
-      )}
+      {!wide && <Reservations reservations={props.reservations} />}
       {editingItem && (
         <StopEditor
           key={editingItem.id}
@@ -593,6 +576,32 @@ function DroppableList({
         </li>
       )}
     </ol>
+  );
+}
+
+// The day's bookings (flights, trains, tickets) from the trip settings.
+function Reservations({ reservations }: { reservations: Reservation[] }) {
+  if (reservations.length === 0) return null;
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="text-sm font-medium text-muted-foreground uppercase">
+        Reservations
+      </h2>
+      {reservations.map((r, i) => (
+        <Card key={`${r.type}-${i}`}>
+          <CardContent className="flex flex-col gap-1 py-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">{r.type}</Badge>
+              {r.time && <span className="font-medium">{r.time}</span>}
+            </div>
+            <div>
+              {r.from && r.to ? `${r.from} → ${r.to}` : (r.from ?? r.to ?? "")}
+            </div>
+            {r.note && <div className="text-muted-foreground">{r.note}</div>}
+          </CardContent>
+        </Card>
+      ))}
+    </section>
   );
 }
 

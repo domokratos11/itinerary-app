@@ -43,7 +43,7 @@ export function DaySidePanel({
   stopCounts: Map<string, number>;
 }) {
   return (
-    <aside className="flex flex-col gap-4 md:sticky md:top-4">
+    <aside className="flex flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Waiting to be placed</CardTitle>
