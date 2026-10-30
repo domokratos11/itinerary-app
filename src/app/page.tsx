@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ExportPlan } from "@/components/export-plan";
+import { ExportTrip } from "@/components/settings-backup";
 import { NeedsNewDay } from "@/components/needs-new-day";
 import { TodayCard } from "@/components/today-card";
 import { TripDates } from "@/components/trip-dates";
@@ -30,7 +30,9 @@ export default function Home() {
         <CardContent className="flex flex-col gap-3">
           <TripPlanStatus />
           <div className="flex flex-wrap gap-2">
-            <ExportPlan />
+            <Suspense fallback={null}>
+              <ExportTrip />
+            </Suspense>
           </div>
         </CardContent>
       </Card>

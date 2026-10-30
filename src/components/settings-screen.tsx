@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
 import { ReservationsSettings } from "@/components/settings-reservations";
 import { StaysSettings } from "@/components/settings-stays";
@@ -60,7 +61,8 @@ export function SettingsScreen() {
           <TabsList className="w-full">
             <TabsTrigger value="stays">Stays</TabsTrigger>
             <TabsTrigger value="cities">Cities</TabsTrigger>
-            <TabsTrigger value="reservations">Reservations</TabsTrigger>
+            <TabsTrigger value="reservations">Bookings</TabsTrigger>
+            <TabsTrigger value="backup">Backup</TabsTrigger>
           </TabsList>
           <TabsContent value="stays" className="pt-2">
             <StaysSettings tripId={tripId} />
@@ -70,6 +72,9 @@ export function SettingsScreen() {
           </TabsContent>
           <TabsContent value="reservations" className="pt-2">
             <ReservationsSettings tripId={tripId} />
+          </TabsContent>
+          <TabsContent value="backup" className="pt-2">
+            <BackupSettings tripId={tripId} />
           </TabsContent>
         </Tabs>
       )}

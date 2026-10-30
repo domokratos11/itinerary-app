@@ -16,6 +16,7 @@ import {
   PlacesFileSchema,
   TripFileSchema,
 } from "../src/domain/schemas";
+import { BackupSchema } from "../src/domain/backup";
 
 export type SchemaRule = { pattern: RegExp; schema: z.ZodType };
 
@@ -24,6 +25,7 @@ export const SCHEMAS: SchemaRule[] = [
   { pattern: /^cities\.json$/, schema: CitiesFileSchema },
   { pattern: /^trip\.json$/, schema: TripFileSchema },
   { pattern: /^holidays\.json$/, schema: HolidaysFileSchema },
+  { pattern: /^backups\/[\w.-]+\.json$/, schema: BackupSchema },
   { pattern: /^places\/[a-z0-9-]+\.json$/, schema: PlacesFileSchema },
 ];
 
