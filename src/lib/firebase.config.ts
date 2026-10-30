@@ -8,3 +8,7 @@ export const firebaseConfig = {
   messagingSenderId: "176033560300",
   appId: "1:176033560300:web:65c6893d89bb456ccf57c9",
 };
+
+// reCAPTCHA v3 site key for App Check. Public like the config above; null
+// leaves App Check off. See README → Security setup.
+export const appCheckSiteKey: string | null = null;

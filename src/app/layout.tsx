@@ -5,6 +5,7 @@ import { Suspense } from "react";
 
 import { AppHeader, BottomNav } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AuthGate } from "@/components/auth-gate";
 import { OfflineBanner } from "@/components/offline-banner";
 import { PlanSync } from "@/components/plan-sync";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
@@ -81,6 +82,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
           <Suspense fallback={null}>
             <BottomNav />
+          </Suspense>
+          <Suspense fallback={null}>
+            <AuthGate />
           </Suspense>
           {/* On phones, keep toasts above the bottom tab bar. */}
           <Toaster

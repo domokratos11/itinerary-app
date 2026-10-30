@@ -1,4 +1,4 @@
-import type { TripRepository } from "@/domain/trip-repository";
+import type { TripAccess, TripRepository } from "@/domain/trip-repository";
 import {
   TRIP_COLLECTIONS,
   type TripCollection,
@@ -15,6 +15,17 @@ type Listener = <C extends TripCollection>(
 export class LocalTripRepository implements TripRepository {
   private data = new Map<string, Map<string, Map<string, unknown>>>();
   private listeners = new Map<string, Set<Listener>>();
+
+  // Every trip is open unless a test says otherwise.
+  constructor(private access: TripAccess = "member") {}
+
+  watchAccess(
+    _tripId: string,
+    onAccess: (access: TripAccess) => void,
+  ): () => void {
+    onAccess(this.access);
+    return () => {};
+  }
 
   subscribe(tripId: string, onRecords: Listener): () => void {
     const set = this.listeners.get(tripId) ?? new Set();

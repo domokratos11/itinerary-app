@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 
+import { SignOutButton } from "@/components/auth-gate";
 import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
 import { ReservationsSettings } from "@/components/settings-reservations";
 import { StaysSettings } from "@/components/settings-stays";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuthStore } from "@/lib/auth-store";
 import { homeHref } from "@/lib/links";
 import { useTripStore } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 
 // Trip settings: the cities, hotels and reservations the days are built
-// from. Every change is live for everyone with the trip link.
+// from. Every change is live for everyone on the trip.
 export function SettingsScreen() {
   const tripId = useTripId();
   const live = useTripStore((s) => s.live);
@@ -78,6 +80,28 @@ export function SettingsScreen() {
           </TabsContent>
         </Tabs>
       )}
+
+      {tripId && <AccountSettings />}
     </div>
+  );
+}
+
+// Who is signed in on this device. Signing out also removes the trip's
+// offline copy from it.
+function AccountSettings() {
+  const user = useAuthStore((s) => s.user);
+  if (!user) return null;
+  return (
+    <section className="flex flex-col gap-2 border-t pt-4">
+      <h2 className="text-base font-semibold">Account</h2>
+      <p className="text-sm text-muted-foreground">
+        Signed in as {user.email ?? user.name ?? "a Google account"}. Signing
+        out removes the trip from this device; changes made offline that
+        haven&apos;t synced yet are lost.
+      </p>
+      <div>
+        <SignOutButton label="Sign out" variant="outline" />
+      </div>
+    </section>
   );
 }

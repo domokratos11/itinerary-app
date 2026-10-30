@@ -7,10 +7,8 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { initializeApp } from "firebase/app";
-import { collection, getDocs, getFirestore } from "firebase/firestore";
 
-import { firebaseConfig } from "../src/lib/firebase.config";
+import { adminDb } from "./admin-db";
 import { QueuedPlaceSchema } from "../src/domain/queue";
 import { PlaceRecordSchema } from "../src/domain/schemas";
 import { parseTripId } from "../src/lib/trip-id";
@@ -21,15 +19,15 @@ async function main() {
     console.error("Set TRIP_ID, e.g. TRIP_ID=abc123 npm run queue:pull");
     process.exit(1);
   }
-  const db = getFirestore(initializeApp(firebaseConfig));
+  const db = adminDb();
 
-  const queued = (await getDocs(collection(db, "trips", tripId, "queue"))).docs
+  const queued = (await db.collection(`trips/${tripId}/queue`).get()).docs
     .flatMap((d) => {
       const r = QueuedPlaceSchema.safeParse(d.data());
       return r.success ? [r.data] : [];
     })
     .filter((q) => q.status === "queued");
-  const drafts = (await getDocs(collection(db, "trips", tripId, "places"))).docs
+  const drafts = (await db.collection(`trips/${tripId}/places`).get()).docs
     .flatMap((d) => {
       const r = PlaceRecordSchema.safeParse(d.data());
       return r.success ? [r.data] : [];

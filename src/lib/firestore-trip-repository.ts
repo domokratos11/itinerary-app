@@ -7,7 +7,7 @@ import {
 } from "firebase/firestore";
 import type { z } from "zod";
 
-import type { TripRepository } from "@/domain/trip-repository";
+import type { TripAccess, TripRepository } from "@/domain/trip-repository";
 import {
   TRIP_COLLECTIONS,
   type TripCollection,
@@ -32,6 +32,25 @@ const SCHEMAS: { [C in TripCollection]: z.ZodType<TripRecordOf[C]> } = {
 // Rows that fail their schema are skipped, so one bad write cannot break
 // the whole trip.
 export class FirestoreTripRepository implements TripRepository {
+  // The rules let only members read the trip document, so reading it is
+  // the membership check. A missing document from the offline cache proves
+  // nothing, so that waits for the server.
+  watchAccess(
+    tripId: string,
+    onAccess: (access: TripAccess) => void,
+  ): () => void {
+    return onSnapshot(
+      doc(getDb(), "trips", tripId),
+      (snapshot) => {
+        if (snapshot.exists()) onAccess("member");
+        else if (!snapshot.metadata.fromCache) onAccess("missing");
+      },
+      (error) => {
+        if (error.code === "permission-denied") onAccess("denied");
+      },
+    );
+  }
+
   subscribe(
     tripId: string,
     onRecords: <C extends TripCollection>(
