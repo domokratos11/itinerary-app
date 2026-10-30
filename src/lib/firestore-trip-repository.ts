@@ -1,4 +1,10 @@
-import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  setDoc,
+  writeBatch,
+} from "firebase/firestore";
 import type { z } from "zod";
 
 import type { TripRepository } from "@/domain/trip-repository";
@@ -57,5 +63,20 @@ export class FirestoreTripRepository implements TripRepository {
     record: TripRecordOf[C],
   ): Promise<void> {
     await setDoc(doc(getDb(), "trips", tripId, name, record.id), record);
+  }
+
+  // A write batch holds at most 500 writes, so larger lists go in chunks.
+  async saveMany<C extends TripCollection>(
+    tripId: string,
+    name: C,
+    records: TripRecordOf[C][],
+  ): Promise<void> {
+    const db = getDb();
+    for (let i = 0; i < records.length; i += 450) {
+      const batch = writeBatch(db);
+      for (const record of records.slice(i, i + 450))
+        batch.set(doc(db, "trips", tripId, name, record.id), record);
+      await batch.commit();
+    }
   }
 }

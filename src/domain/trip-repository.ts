@@ -21,4 +21,11 @@ export interface TripRepository {
     collection: C,
     record: TripRecordOf[C],
   ): Promise<void>;
+  // Saves several records of one collection together, so listeners see
+  // them arrive at once.
+  saveMany<C extends TripCollection>(
+    tripId: string,
+    collection: C,
+    records: TripRecordOf[C][],
+  ): Promise<void>;
 }

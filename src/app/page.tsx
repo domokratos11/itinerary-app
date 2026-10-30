@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { ExportPlan } from "@/components/export-plan";
 import { NeedsNewDay } from "@/components/needs-new-day";
 import { QueuePanel } from "@/components/queue-panel";
+import { SettingsLink } from "@/components/settings-link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TripDates } from "@/components/trip-dates";
 import { TripPlanStatus } from "@/components/trip-plan-status";
@@ -31,6 +32,9 @@ export default function Home() {
         <CardContent className="flex flex-col gap-3">
           <TripPlanStatus />
           <div className="flex flex-wrap gap-2">
+            <Suspense fallback={null}>
+              <SettingsLink />
+            </Suspense>
             <ExportPlan />
             <ThemeToggle />
           </div>

@@ -32,9 +32,17 @@ export class LocalTripRepository implements TripRepository {
     name: C,
     record: TripRecordOf[C],
   ): Promise<void> {
+    return this.saveMany(tripId, name, [record]);
+  }
+
+  async saveMany<C extends TripCollection>(
+    tripId: string,
+    name: C,
+    records: TripRecordOf[C][],
+  ): Promise<void> {
     const trip = this.data.get(tripId) ?? new Map();
     const rows = trip.get(name) ?? new Map();
-    rows.set(record.id, record);
+    for (const record of records) rows.set(record.id, record);
     trip.set(name, rows);
     this.data.set(tripId, trip);
     for (const listener of this.listeners.get(tripId) ?? [])
