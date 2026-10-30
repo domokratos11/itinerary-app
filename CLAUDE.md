@@ -19,14 +19,16 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 
 ## Commands
 
-| Command                           | What it does                                                   |
-| --------------------------------- | -------------------------------------------------------------- |
-| `npm run dev`                     | Dev server at `http://localhost:3000/itinerary-app/`           |
-| `npm run test`                    | Vitest + React Testing Library                                 |
-| `npm run validate`                | Zod check of every file in `data/`                             |
-| `TRIP_ID=<id> npm run seed`       | Copy `data/` into the trip in Firestore (`--force` overwrites) |
-| `npm run build`                   | Static export to `out/`                                        |
-| `npm run lint` / `npm run format` | ESLint / Prettier                                              |
+| Command                                      | What it does                                                               |
+| -------------------------------------------- | -------------------------------------------------------------------------- |
+| `npm run dev`                                | Dev server at `http://localhost:3000/itinerary-app/`                       |
+| `npm run test`                               | Vitest + React Testing Library                                             |
+| `npm run validate`                           | Zod check of every file in `data/`                                         |
+| `TRIP_ID=<id> npm run seed`                  | Copy `data/` into the trip in Firestore (`--force` overwrites)             |
+| `TRIP_ID=<id> npm run queue:pull`            | Export queued links and draft places to `research/` for the enrichment run |
+| `TRIP_ID=<id> npm run places:push -- <file>` | Write researched places back and mark them researched                      |
+| `npm run build`                              | Static export to `out/`                                                    |
+| `npm run lint` / `npm run format`            | ESLint / Prettier                                                          |
 
 ## Layout
 

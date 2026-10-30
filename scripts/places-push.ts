@@ -1,0 +1,81 @@
+/**
+ * Writes researched places into the trip and marks them "researched".
+ * Run with `TRIP_ID=<id> npm run places:push -- <file.json>`.
+ *
+ * The file is a JSON array of places in the data/places shape. A draft
+ * keeps its id, so research for a draft replaces it in place. An entry may
+ * carry "queueId": the queued link it came from, which is then marked
+ * assigned to this place.
+ */
+import { readFileSync } from "node:fs";
+import { initializeApp } from "firebase/app";
+import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
+import { z } from "zod";
+
+import { firebaseConfig } from "../src/lib/firebase.config";
+import { QueuedPlaceSchema } from "../src/domain/queue";
+import {
+  PlaceRecordSchema,
+  PlaceSchema,
+  type PlaceRecord,
+} from "../src/domain/schemas";
+import { parseTripId } from "../src/lib/trip-id";
+
+export const PushFileSchema = z.array(
+  PlaceSchema.extend({ queueId: z.string().optional() }),
+);
+
+async function main() {
+  const tripId = parseTripId(process.env.TRIP_ID);
+  const file = process.argv[2];
+  if (!tripId || !file) {
+    console.error(
+      "Usage: TRIP_ID=abc123 npm run places:push -- research/places.json",
+    );
+    process.exit(1);
+  }
+  const entries = PushFileSchema.parse(JSON.parse(readFileSync(file, "utf8")));
+  const db = getFirestore(initializeApp(firebaseConfig));
+  const now = new Date().toISOString();
+
+  for (const { queueId, ...place } of entries) {
+    const ref = doc(db, "trips", tripId, "places", place.id);
+    const existing = await getDoc(ref);
+    const before = existing.exists()
+      ? PlaceRecordSchema.safeParse(existing.data())
+      : null;
+    const record: PlaceRecord = {
+      ...place,
+      status: "researched",
+      source: before?.success
+        ? before.data.source
+        : queueId
+          ? "queue"
+          : "catalog",
+      archived: false,
+      updatedAt: now,
+    };
+    await setDoc(ref, record);
+
+    if (queueId) {
+      const qRef = doc(db, "trips", tripId, "queue", queueId);
+      const q = await getDoc(qRef);
+      const parsed = q.exists() ? QueuedPlaceSchema.safeParse(q.data()) : null;
+      if (parsed?.success)
+        await setDoc(qRef, {
+          ...parsed.data,
+          status: "promoted",
+          cityId: record.cityId,
+          placeId: record.id,
+          updatedAt: now,
+        });
+    }
+    console.log(`${existing.exists() ? "updated" : "added"} ${record.id}`);
+  }
+  process.exit(0);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

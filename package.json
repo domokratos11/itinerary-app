@@ -11,6 +11,8 @@
     "validate": "tsx scripts/validate.ts",
     "migrate:v3": "tsx scripts/migrate-v3.ts",
     "seed": "tsx scripts/seed.ts",
+    "queue:pull": "tsx scripts/queue-pull.ts",
+    "places:push": "tsx scripts/places-push.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit"

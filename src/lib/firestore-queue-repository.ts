@@ -5,8 +5,7 @@ import { QueuedPlaceSchema, type QueuedPlace } from "@/domain/queue";
 import { getDb } from "@/lib/firebase";
 
 // Reads and writes trips/{tripId}/queue/{id}. Rows that fail the schema are
-// skipped. Items are add-only: the enrichment run reads them, the app never
-// edits or deletes them.
+// skipped. Newest first.
 export class FirestoreQueueRepository implements QueueRepository {
   subscribe(
     tripId: string,
@@ -27,7 +26,7 @@ export class FirestoreQueueRepository implements QueueRepository {
     );
   }
 
-  async add(tripId: string, item: QueuedPlace): Promise<void> {
+  async save(tripId: string, item: QueuedPlace): Promise<void> {
     await setDoc(doc(getDb(), "trips", tripId, "queue", item.id), item);
   }
 }

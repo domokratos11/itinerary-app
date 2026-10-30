@@ -24,6 +24,7 @@ import {
 import { filterPlaces, type CatalogFilter } from "@/lib/catalog-filter";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
+import { isDraft } from "@/domain/queue";
 import { usePlanStore } from "@/lib/plan-store";
 
 type Props = {
@@ -159,6 +160,11 @@ export function CityCatalog({ city, places, nearby }: Props) {
                   {place.priority}
                 </Badge>
                 {assigned.has(place.id) && <Badge>In plan</Badge>}
+                {isDraft(place) && (
+                  <Badge variant="outline" className="border-dashed">
+                    Not researched yet
+                  </Badge>
+                )}
               </CardContent>
             </Card>
           </li>

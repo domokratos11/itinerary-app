@@ -59,6 +59,7 @@ import {
 } from "@/domain/plan";
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
+import { isDraft } from "@/domain/queue";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -445,6 +446,11 @@ function StopCard({
               </Badge>
             )}
             {meta && <Badge variant="outline">{meta}</Badge>}
+            {place && isDraft(place) && (
+              <Badge variant="outline" className="border-dashed">
+                Not researched yet
+              </Badge>
+            )}
             {place &&
               stopWarnings(place, item.date).map((warning) => (
                 <Badge key={warning} variant="destructive">
