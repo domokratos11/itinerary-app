@@ -82,7 +82,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Suspense fallback={null}>
             <BottomNav />
           </Suspense>
-          <Toaster />
+          {/* On phones, keep toasts above the bottom tab bar. */}
+          <Toaster
+            mobileOffset={{
+              bottom: "calc(4.5rem + env(safe-area-inset-bottom))",
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>
