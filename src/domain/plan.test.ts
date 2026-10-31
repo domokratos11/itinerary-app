@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "@/lib/i18n";
+
 import {
   costTotal,
   dayRunsLate,
@@ -245,19 +247,19 @@ describe("stopWarnings", () => {
 
   it("warns on a closed date", () => {
     const p = place({ closedDates: ["2026-12-29"] });
-    expect(stopWarnings(p, "2026-12-29")).toEqual(["Closed on this day"]);
-    expect(stopWarnings(p, "2026-12-30")).toEqual([]);
+    expect(stopWarnings(p, "2026-12-29", t)).toEqual(["Closed on this day"]);
+    expect(stopWarnings(p, "2026-12-30", t)).toEqual([]);
   });
 
   it("warns outside the season on either side", () => {
     const p = place({ seasonFrom: "2026-11-01", seasonTo: "2027-02-14" });
-    expect(stopWarnings(p, "2026-10-31")).toEqual(["Outside its season"]);
-    expect(stopWarnings(p, "2026-12-20")).toEqual([]);
-    expect(stopWarnings(p, "2027-02-15")).toEqual(["Outside its season"]);
+    expect(stopWarnings(p, "2026-10-31", t)).toEqual(["Outside its season"]);
+    expect(stopWarnings(p, "2026-12-20", t)).toEqual([]);
+    expect(stopWarnings(p, "2027-02-15", t)).toEqual(["Outside its season"]);
   });
 
   it("gives no warnings when nothing is known", () => {
-    expect(stopWarnings(place({}), "2026-12-20")).toEqual([]);
+    expect(stopWarnings(place({}), "2026-12-20", t)).toEqual([]);
   });
 });
 
@@ -297,13 +299,13 @@ describe("stop times", () => {
 
   it("warns when a stop is outside the opening hours", () => {
     expect(
-      timeWarnings({ startTime: "09:00", durationMin: 60 }, place),
+      timeWarnings({ startTime: "09:00", durationMin: 60 }, place, t),
     ).toEqual(["May not be open yet (opens 10:00)"]);
     expect(
-      timeWarnings({ startTime: "20:00", durationMin: 90 }, place),
+      timeWarnings({ startTime: "20:00", durationMin: 90 }, place, t),
     ).toEqual(["May be closed by then (closes 21:00)"]);
     expect(
-      timeWarnings({ startTime: "12:00", durationMin: 60 }, place),
+      timeWarnings({ startTime: "12:00", durationMin: 60 }, place, t),
     ).toEqual([]);
   });
 
@@ -332,13 +334,13 @@ describe("holidayWarnings", () => {
   const museum = { category: "sight" as const, closedDates: [] as string[] };
 
   it("warns about stops in the New Year closures and on holidays", () => {
-    expect(holidayWarnings(museum, "2026-12-31", holidays)).toEqual([
+    expect(holidayWarnings(museum, "2026-12-31", holidays, t)).toEqual([
       "New Year closures: check it's open",
     ]);
-    expect(holidayWarnings(museum, "2027-01-11", holidays)).toEqual([
+    expect(holidayWarnings(museum, "2027-01-11", holidays, t)).toEqual([
       "Holiday: check it's open",
     ]);
-    expect(holidayWarnings(museum, "2026-12-20", holidays)).toEqual([]);
+    expect(holidayWarnings(museum, "2026-12-20", holidays, t)).toEqual([]);
   });
 
   it("skips temples and places already marked closed that day", () => {
@@ -347,6 +349,7 @@ describe("holidayWarnings", () => {
         { ...museum, category: "temple" },
         "2026-12-31",
         holidays,
+        t,
       ),
     ).toEqual([]);
     expect(
@@ -354,6 +357,7 @@ describe("holidayWarnings", () => {
         { ...museum, closedDates: ["2026-12-31"] },
         "2026-12-31",
         holidays,
+        t,
       ),
     ).toEqual([]);
   });

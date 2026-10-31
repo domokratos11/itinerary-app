@@ -2,6 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useAuthStore } from "@/lib/auth-store";
+import { getLocale, setLocale } from "@/lib/i18n";
 import { LocalTripRepository } from "@/lib/local-trip-repository";
 import { LocalUserRepository } from "@/lib/local-user-repository";
 import { useAuthSync } from "@/lib/use-auth-sync";
@@ -50,7 +51,8 @@ describe("useAuthSync", () => {
     const trips = new LocalTripRepository();
     await trips.createTrip("Japan", "ana@example.com");
     await trips.createTrip("Peru", "ana@example.com");
-    renderHook(() => useAuthSync(null, trips, new LocalUserRepository()));
+    const users = new LocalUserRepository();
+    renderHook(() => useAuthSync(null, trips, users));
 
     await waitFor(() => expect(store().trips).toHaveLength(2));
     expect(store().tripId).toBeNull();
@@ -58,23 +60,40 @@ describe("useAuthSync", () => {
 
   it("doesn't remember a trip the user was refused", async () => {
     const trips = new LocalTripRepository("denied");
-    renderHook(() =>
-      useAuthSync("someoneElsesTrip", trips, new LocalUserRepository()),
-    );
+    const users = new LocalUserRepository();
+    renderHook(() => useAuthSync("someoneElsesTrip", trips, users));
 
     await waitFor(() => expect(store().access).toBe("denied"));
     expect(window.localStorage.getItem("trip-id")).toBeNull();
   });
 
+  it("uses the language saved for this person", async () => {
+    const users = new LocalUserRepository();
+    await users.update("u1", { language: "es" });
+    const trips = new LocalTripRepository();
+    renderHook(() => useAuthSync(null, trips, users));
+
+    await waitFor(() => expect(getLocale()).toBe("es"));
+    setLocale("en");
+  });
+
+  it("saves the current language for someone with none yet", async () => {
+    const users = new LocalUserRepository();
+    setLocale("es");
+    const trips = new LocalTripRepository();
+    renderHook(() => useAuthSync(null, trips, users));
+
+    await waitFor(async () =>
+      expect((await users.get("u1")).language).toBe("es"),
+    );
+    setLocale("en");
+  });
+
   it("opens nothing for someone signed out", async () => {
     signedIn = null;
-    renderHook(() =>
-      useAuthSync(
-        "tripAAAAAA",
-        new LocalTripRepository(),
-        new LocalUserRepository(),
-      ),
-    );
+    const trips = new LocalTripRepository();
+    const users = new LocalUserRepository();
+    renderHook(() => useAuthSync("tripAAAAAA", trips, users));
 
     await waitFor(() => expect(store().status).toBe("signed-out"));
     expect(store().tripId).toBeNull();

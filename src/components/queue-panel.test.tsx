@@ -71,7 +71,7 @@ describe("QueuePanel", () => {
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "That link was refused. Check the trip link.",
+        "That link was refused. Check your connection.",
       ),
     );
     expect(toast.success).not.toHaveBeenCalled();

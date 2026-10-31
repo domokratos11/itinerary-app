@@ -20,6 +20,8 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 
 12. **Versions come from git.** `main` carries a `v*` tag; each merge after it adds one to the last number (`next.config.ts`, `src/domain/version.ts`), so nothing is bumped by hand. A new major or minor is a new tag. When a device finds a different version, `src/lib/app-reset.ts` clears its storage and caches and signs it out, keeping only preferences. `version.json` must stay out of the service worker's precache.
 
+13. **All text comes from `src/messages/{en,es}.json`.** Use `t("key")` from `src/lib/i18n.ts`; it works anywhere, and `MessageKey` makes a wrong key fail to compile. ESLint refuses words typed into JSX. `src/domain` stays free of the current language: functions that word something take a `Translate` parameter. Pages stay Server Components, so their text goes in a Client Component. A new language is a new messages file plus `LANGUAGES`, `firestore.rules` and `INTL_LOCALE`. The language is saved in `users/{uid}`. Google Maps stays in English: `liveDetails` and `parseGoogleHours` read Google's English text.
+
 ## Commands
 
 | Command                                      | What it does                                                               |
@@ -46,6 +48,7 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 - `src/components/ui`: shadcn/ui components
 - `src/domain`: schemas, pure trip and plan logic, repository interfaces
 - `src/lib`: Firestore repositories, Zustand stores, actions, helpers (`cn`)
+- `src/messages`: the app's text, one file per language
 - `src/test`: test setup and the sample trip
 - `scripts/`: Node scripts run with tsx
 - `public/.nojekyll`: copied into `out/` so GitHub Pages serves `_next/`

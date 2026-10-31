@@ -11,6 +11,8 @@ import {
   waitForPendingWrites,
 } from "firebase/firestore";
 
+import type { MessageKey } from "@/domain/i18n";
+import { t } from "@/lib/i18n";
 import { getDb, getFirebaseAuth } from "@/lib/firebase";
 
 export type SignedInUser = {
@@ -49,18 +51,15 @@ export async function signInWithGoogle(): Promise<boolean> {
       code === "auth/cancelled-popup-request"
     )
       return false;
-    throw new Error(SIGN_IN_ERRORS[code] ?? "Sign-in failed. Try again.");
+    throw new Error(t(SIGN_IN_ERRORS[code] ?? "auth.failed"));
   }
 }
 
-const SIGN_IN_ERRORS: Record<string, string> = {
-  "auth/popup-blocked":
-    "The browser blocked the sign-in window. Allow pop-ups for this site and try again.",
-  "auth/unauthorized-domain":
-    "This site isn't allowed to sign in yet. Add it under Firebase → Authentication → Settings → Authorized domains.",
-  "auth/operation-not-allowed":
-    "Google sign-in is turned off. Enable it under Firebase → Authentication → Sign-in method.",
-  "auth/network-request-failed": "No connection. Sign in once you're online.",
+const SIGN_IN_ERRORS: Record<string, MessageKey> = {
+  "auth/popup-blocked": "auth.popupBlocked",
+  "auth/unauthorized-domain": "auth.unauthorizedDomain",
+  "auth/operation-not-allowed": "auth.operationNotAllowed",
+  "auth/network-request-failed": "auth.network",
 };
 
 // Signs out and wipes the trip from this device's offline cache. Edits not

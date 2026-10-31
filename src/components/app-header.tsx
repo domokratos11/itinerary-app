@@ -9,22 +9,23 @@ import { SearchPalette } from "@/components/search-palette";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TripSwitcher } from "@/components/trip-switcher";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 import { pageHref } from "@/lib/links";
 import { cn } from "@/lib/utils";
 import { useTripId } from "@/lib/use-trip-id";
 
 export const SECTIONS = [
-  { path: "/", label: "Days", icon: CalendarDays, match: ["/", "/day/"] },
+  { path: "/", label: "nav.days", icon: CalendarDays, match: ["/", "/day/"] },
   {
     path: "/cities/",
-    label: "Cities",
+    label: "nav.cities",
     icon: MapPinned,
     match: ["/cities/", "/city/"],
   },
-  { path: "/queue/", label: "Queue", icon: Inbox, match: ["/queue/"] },
+  { path: "/queue/", label: "nav.queue", icon: Inbox, match: ["/queue/"] },
   {
     path: "/settings/",
-    label: "Settings",
+    label: "nav.settings",
     icon: Settings,
     match: ["/settings/"],
   },
@@ -51,7 +52,7 @@ export function AppHeader() {
       <div className="flex h-14 w-full items-center gap-2 px-4 lg:px-6">
         <TripSwitcher />
         <nav
-          aria-label="Sections"
+          aria-label={t("nav.sections")}
           className="ml-4 hidden gap-1 md:flex lg:hidden"
         >
           {SECTIONS.map(({ path, label, icon: Icon }) => (
@@ -66,7 +67,7 @@ export function AppHeader() {
                 aria-current={active === path ? "page" : undefined}
               >
                 <Icon />
-                {label}
+                {t(label)}
               </Link>
             </Button>
           ))}
@@ -86,7 +87,7 @@ export function BottomNav() {
   const active = useSection();
   return (
     <nav
-      aria-label="Sections"
+      aria-label={t("nav.sections")}
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <ul className="grid grid-cols-4">
@@ -101,7 +102,7 @@ export function BottomNav() {
               )}
             >
               <Icon className="size-5" />
-              {label}
+              {t(label)}
             </Link>
           </li>
         ))}

@@ -5,6 +5,7 @@ import { useMemo } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { cityHref, pageHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
@@ -26,15 +27,15 @@ export function CitiesScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Cities</h1>
+      <h1 className="text-2xl font-semibold">{t("cities.title")}</h1>
       {trip.cities.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No cities yet.{" "}
+          {t("cities.none")}{" "}
           <Link
             href={pageHref("/settings/", tripId, { tab: "cities" })}
             className="underline"
           >
-            Add one in Settings
+            {t("cities.addInSettings")}
           </Link>
           .
         </p>
@@ -66,8 +67,12 @@ export function CitiesScreen() {
                       </span>
                     ))}
                     <span className="flex flex-wrap gap-2">
-                      <Badge variant="secondary">{places.length} places</Badge>
-                      <Badge variant="outline">{inPlan} in the plan</Badge>
+                      <Badge variant="secondary">
+                        {t("common.places", { count: places.length })}
+                      </Badge>
+                      <Badge variant="outline">
+                        {t("cities.inPlan", { count: inPlan })}
+                      </Badge>
                     </span>
                   </CardContent>
                 </Card>

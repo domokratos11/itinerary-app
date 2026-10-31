@@ -18,19 +18,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { HOLIDAY_KINDS, type HolidayRecord } from "@/domain/schemas";
 import { uniqueId } from "@/domain/trip-edit";
+import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip, useTripStore } from "@/lib/trip-store";
 
-const REFUSED = "That change was refused. Check the trip link.";
-
 type Editing = { record: HolidayRecord | null } | null;
 type HolidayKind = HolidayRecord["kind"];
-
-const KIND_LABEL: Record<HolidayKind, string> = {
-  holiday: "Holiday",
-  closures: "Closures",
-};
 
 // The holidays and closure periods of this trip. Days show the note, and
 // stops on those dates get a warning.
@@ -47,8 +41,8 @@ export function HolidaysSettings({ tripId }: { tripId: string }) {
       tripId,
       "holidays",
       record,
-      `saved the holiday ${record.name}`,
-    ).catch(() => toast.error(REFUSED));
+      t("activity.savedHoliday", { name: record.name }),
+    ).catch(() => toast.error(t("common.refused")));
     setEditing(null);
   }
 
@@ -57,18 +51,18 @@ export function HolidaysSettings({ tripId }: { tripId: string }) {
       tripId,
       "holidays",
       h,
-      `archived the holiday ${h.name}`,
-    ).catch(() => toast.error(REFUSED));
-    toast("Holiday archived", {
+      t("activity.archivedHoliday", { name: h.name }),
+    ).catch(() => toast.error(t("common.refused")));
+    toast(t("holidays.archived"), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
           saveRecord(
             tripId,
             "holidays",
             h,
-            `restored the holiday ${h.name}`,
-          ).catch(() => toast.error(REFUSED)),
+            t("activity.restoredHoliday", { name: h.name }),
+          ).catch(() => toast.error(t("common.refused"))),
       },
     });
   }
@@ -83,7 +77,7 @@ export function HolidaysSettings({ tripId }: { tripId: string }) {
           >
             <span className="min-w-0 flex-1">
               <span className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{KIND_LABEL[h.kind]}</Badge>
+                <Badge variant="outline">{t(`holidays.${h.kind}`)}</Badge>
                 <span className="font-medium">
                   {formatDayLabel(h.date)} · {h.name}
                 </span>
@@ -97,7 +91,7 @@ export function HolidaysSettings({ tripId }: { tripId: string }) {
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label="Edit holiday"
+              aria-label={t("holidays.edit")}
               onClick={() => setEditing({ record: h })}
             >
               <Pencil />
@@ -105,7 +99,7 @@ export function HolidaysSettings({ tripId }: { tripId: string }) {
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label="Archive holiday"
+              aria-label={t("holidays.archiveAria")}
               onClick={() => archive(h)}
             >
               <Archive />
@@ -114,7 +108,7 @@ export function HolidaysSettings({ tripId }: { tripId: string }) {
         ))}
       </ul>
       {holidays.length === 0 && (
-        <p className="text-sm text-muted-foreground">No holidays yet.</p>
+        <p className="text-sm text-muted-foreground">{t("holidays.none")}</p>
       )}
       <Button
         variant="outline"
@@ -122,7 +116,7 @@ export function HolidaysSettings({ tripId }: { tripId: string }) {
         onClick={() => setEditing({ record: null })}
       >
         <Plus />
-        Add holiday
+        {t("holidays.add")}
       </Button>
       {editing && (
         <HolidayForm
@@ -170,12 +164,12 @@ function HolidayForm({
     <EditPanel
       open
       onOpenChange={(open) => !open && onCancel()}
-      title={holiday ? "Edit holiday" : "Add holiday"}
+      title={holiday ? t("holidays.edit") : t("holidays.add")}
       canSubmit={valid}
       onSubmit={() => onSave(build())}
     >
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Date" htmlFor="holiday-date">
+        <Field label={t("common.date")} htmlFor="holiday-date">
           <Input
             id="holiday-date"
             type="date"
@@ -184,7 +178,7 @@ function HolidayForm({
             required
           />
         </Field>
-        <Field label="Type" htmlFor="holiday-kind">
+        <Field label={t("common.type")} htmlFor="holiday-kind">
           <Select value={kind} onValueChange={(v) => setKind(v as HolidayKind)}>
             <SelectTrigger id="holiday-kind" className="w-full">
               <SelectValue />
@@ -192,14 +186,14 @@ function HolidayForm({
             <SelectContent>
               {HOLIDAY_KINDS.map((k) => (
                 <SelectItem key={k} value={k}>
-                  {KIND_LABEL[k]}
+                  {t(`holidays.${k}`)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </Field>
       </div>
-      <Field label="Name" htmlFor="holiday-name">
+      <Field label={t("common.name")} htmlFor="holiday-name">
         <Input
           id="holiday-name"
           value={name}
@@ -208,7 +202,7 @@ function HolidayForm({
           required
         />
       </Field>
-      <Field label="Note (optional)" htmlFor="holiday-note">
+      <Field label={t("common.noteOptional")} htmlFor="holiday-note">
         <Textarea
           id="holiday-note"
           value={note}

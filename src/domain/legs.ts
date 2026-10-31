@@ -2,24 +2,16 @@ import { distanceKm, type LatLng } from "@/lib/geo";
 import { directionsUrl, placeLocation, type Location } from "./plan";
 import type { Endpoint } from "./trip";
 import type {
-  LegMode,
   LegNote,
   NearestStation,
   Place,
   PlanItem,
 } from "./schemas";
+import type { Translate } from "./i18n";
 
 // Up to about here a leg is worth walking and gets a real walking route;
 // further than that it gets a link to transit directions in the Maps app.
 export const WALK_LEG_MAX_KM = 1.5;
-
-export const LEG_MODE_LABEL: Record<LegMode, string> = {
-  train: "Train",
-  subway: "Subway",
-  bus: "Bus",
-  walk: "Walk",
-  taxi: "Taxi",
-};
 
 export type DayLeg = {
   key: string;
@@ -114,18 +106,24 @@ function formatKm(km: number): string {
 }
 
 // A straight-line distance, which is only ever approximate.
-export function formatDistance(km: number): string {
-  return `About ${formatMeters(km * 1000)}`;
+export function formatDistance(km: number, tr: Translate): string {
+  return tr("leg.about", { distance: formatMeters(km * 1000) });
 }
 
-export function formatWalk(minutes: number, meters: number): string {
-  return `Walk ${minutes} min · ${formatMeters(meters)}`;
+export function formatWalk(
+  minutes: number,
+  meters: number,
+  tr: Translate,
+): string {
+  return tr("leg.walk", { minutes, distance: formatMeters(meters) });
 }
 
-export function formatLegNote(note: LegNote): string {
+export function formatLegNote(note: LegNote, tr: Translate): string {
   return [
-    LEG_MODE_LABEL[note.mode],
-    note.minutes !== null ? `about ${note.minutes} min` : "",
+    tr(`legMode.${note.mode}`),
+    note.minutes !== null
+      ? tr("leg.aboutMinutes", { minutes: note.minutes })
+      : "",
     note.fareJPY !== null ? `¥${note.fareJPY.toLocaleString("en-US")}` : "",
     note.text ?? "",
   ]
@@ -133,11 +131,13 @@ export function formatLegNote(note: LegNote): string {
     .join(" · ");
 }
 
-export function formatStation(station: NearestStation): string {
+export function formatStation(station: NearestStation, tr: Translate): string {
   return [
     station.name,
     station.lines.join(", "),
-    station.walkMin !== null ? `${station.walkMin} min walk` : "",
+    station.walkMin !== null
+      ? tr("common.minutesWalk", { minutes: station.walkMin })
+      : "",
   ]
     .filter(Boolean)
     .join(", ");

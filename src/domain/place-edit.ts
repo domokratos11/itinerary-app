@@ -197,15 +197,6 @@ export const RESEARCH_FIELDS = [
 
 export type ResearchField = (typeof RESEARCH_FIELDS)[number];
 
-export const RESEARCH_FIELD_LABEL: Record<ResearchField, string> = {
-  description: "description",
-  costEstimateJPY: "cost",
-  durationMin: "time needed",
-  openingHours: "hours",
-  websiteUrl: "website",
-  nearestStation: "station",
-};
-
 export function missingFields(place: PlaceRecord): ResearchField[] {
   return RESEARCH_FIELDS.filter((field) => place[field] === null);
 }
@@ -228,15 +219,6 @@ export const PLACE_FILTERS = [
 ] as const;
 
 export type PlaceFilter = (typeof PLACE_FILTERS)[number];
-
-export const PLACE_FILTER_LABEL: Record<PlaceFilter, string> = {
-  all: "All places",
-  "missing-cost": "Missing cost",
-  "missing-hours": "Missing hours",
-  "no-pin": "No map pin",
-  "needs-research": "Needs research",
-  review: "Has research to review",
-};
 
 export function matchesPlaceFilter(
   place: PlaceRecord,

@@ -8,11 +8,10 @@ import { Field } from "@/components/edit-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { memberEmail } from "@/domain/trip-edit";
+import { t } from "@/lib/i18n";
 import { logActivity } from "@/lib/activity-log";
 import { useActiveTrip, useAuthStore } from "@/lib/auth-store";
 import { tripRepository } from "@/lib/trip-repository-instance";
-
-const REFUSED = "That change was refused. Check your connection.";
 
 // The trip itself: its name and who is on it. Anyone on the trip can change
 // these; the rules keep them from removing themselves.
@@ -33,10 +32,10 @@ export function TripSettings({ tripId }: { tripId: string }) {
         logActivity(tripId, {
           kind: "settings",
           targetId: null,
-          summary: `renamed the trip to ${trimmed}`,
+          summary: t("activity.renamedTrip", { name: trimmed }),
         }),
       )
-      .catch(() => toast.error(REFUSED));
+      .catch(() => toast.error(t("common.refused")));
   }
 
   function saveMembers(next: string[]) {
@@ -46,10 +45,10 @@ export function TripSettings({ tripId }: { tripId: string }) {
         logActivity(tripId, {
           kind: "settings",
           targetId: null,
-          summary: "changed who is on the trip",
+          summary: t("activity.changedMembers"),
         }),
       )
-      .catch(() => toast.error(REFUSED));
+      .catch(() => toast.error(t("common.refused")));
   }
 
   function addMember(event: FormEvent) {
@@ -62,7 +61,7 @@ export function TripSettings({ tripId }: { tripId: string }) {
   return (
     <div className="flex flex-col gap-6 text-sm">
       <form onSubmit={saveName} className="flex flex-col gap-3">
-        <Field label="Trip name" htmlFor="trip-name">
+        <Field label={t("tripSettings.tripName")} htmlFor="trip-name">
           <Input
             id="trip-name"
             value={name}
@@ -76,16 +75,13 @@ export function TripSettings({ tripId }: { tripId: string }) {
           className="self-start"
           disabled={trimmed.length === 0 || trimmed === trip?.name}
         >
-          Save name
+          {t("tripSettings.saveName")}
         </Button>
       </form>
 
       <section className="flex flex-col gap-3">
-        <h3 className="font-medium">Members</h3>
-        <p className="text-muted-foreground">
-          Each person signs in with this Google account to see and edit the
-          trip.
-        </p>
+        <h3 className="font-medium">{t("tripSettings.members")}</h3>
+        <p className="text-muted-foreground">{t("tripSettings.membersHint")}</p>
         <ul className="flex flex-col gap-2">
           {members.map((member) => (
             <li
@@ -97,7 +93,7 @@ export function TripSettings({ tripId }: { tripId: string }) {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`Remove ${member}`}
+                  aria-label={t("tripSettings.removeName", { name: member })}
                   onClick={() =>
                     saveMembers(members.filter((m) => m !== member))
                   }
@@ -109,7 +105,7 @@ export function TripSettings({ tripId }: { tripId: string }) {
           ))}
         </ul>
         <form onSubmit={addMember} className="flex flex-col gap-3">
-          <Field label="Add a member" htmlFor="trip-member">
+          <Field label={t("tripSettings.addMember")} htmlFor="trip-member">
             <Input
               id="trip-member"
               type="email"
@@ -125,7 +121,7 @@ export function TripSettings({ tripId }: { tripId: string }) {
             disabled={!added}
           >
             <UserPlus />
-            Add member
+            {t("tripSettings.addMemberButton")}
           </Button>
         </form>
       </section>

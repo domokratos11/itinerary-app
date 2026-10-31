@@ -4,6 +4,7 @@ import {
   newProposal,
 } from "@/domain/proposals";
 import type { PlaceRecord, Proposal } from "@/domain/schemas";
+import { t } from "@/lib/i18n";
 import { proposalRepository } from "@/lib/proposal-repository-instance";
 import { saveRecord } from "@/lib/trip-actions";
 
@@ -46,7 +47,7 @@ export async function applyProposal(
     tripId,
     "places",
     acceptProposal(place, proposal, accepted, now),
-    `accepted research for ${place.name}`,
+    t("activity.acceptedResearch", { name: place.name }),
   );
   await proposalRepository.saveMany(tripId, [
     withStatus(proposal, "applied", now),
@@ -63,7 +64,7 @@ export async function undoProposal(
     tripId,
     "places",
     before,
-    `undid accepted research for ${before.name}`,
+    t("activity.undidResearch", { name: before.name }),
   );
   await proposalRepository.saveMany(tripId, [
     withStatus(proposal, "ready", now),

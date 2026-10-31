@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { MessageKey, Translate } from "./i18n";
 import {
   FieldSourceSchema,
   ProposalFieldsSchema,
@@ -12,20 +13,20 @@ import {
 
 export type ProposalField = keyof ProposalFields;
 
-export const PROPOSAL_FIELD_LABEL: Record<ProposalField, string> = {
-  purpose: "Why go",
-  description: "About",
-  tips: "Tips",
-  costEstimateJPY: "Cost",
-  durationMin: "Time needed",
-  openingHours: "Opening hours",
-  closedDates: "Closed on",
-  seasonFrom: "Season from",
-  seasonTo: "Season to",
-  websiteUrl: "Website",
-  notes: "Notes",
-  nearestStation: "Nearest station",
-  verifiedAt: "Last checked",
+const PROPOSAL_FIELD_LABEL: Record<ProposalField, MessageKey> = {
+  purpose: "common.whyGo",
+  description: "common.about",
+  tips: "common.tips",
+  costEstimateJPY: "common.cost",
+  durationMin: "common.timeNeeded",
+  openingHours: "common.openingHours",
+  closedDates: "common.closedOn",
+  seasonFrom: "common.seasonFrom",
+  seasonTo: "common.seasonTo",
+  websiteUrl: "common.website",
+  notes: "common.notes",
+  nearestStation: "common.nearestStation",
+  verifiedAt: "common.lastChecked",
 };
 
 const PROPOSAL_FIELDS = Object.keys(PROPOSAL_FIELD_LABEL) as ProposalField[];
@@ -61,19 +62,23 @@ const same = (a: unknown, b: unknown) =>
 export function formatProposalValue(
   field: ProposalField,
   value: unknown,
+  tr: Translate,
 ): string {
-  if (isEmpty(value) || value === undefined) return "Empty";
+  if (isEmpty(value) || value === undefined) return tr("common.empty");
   if (field === "costEstimateJPY")
     return value === 0
-      ? "Free"
+      ? tr("common.free")
       : `¥${(value as number).toLocaleString("en-US")}`;
-  if (field === "durationMin") return `${value as number} min`;
+  if (field === "durationMin")
+    return tr("common.minutes", { minutes: value as number });
   if (field === "nearestStation") {
     const station = value as NearestStation;
     return [
       station.name,
       station.lines.join(", "),
-      station.walkMin !== null ? `${station.walkMin} min walk` : "",
+      station.walkMin !== null
+        ? tr("common.minutesWalk", { minutes: station.walkMin })
+        : "",
     ]
       .filter(Boolean)
       .join(" · ");
@@ -97,23 +102,31 @@ export type ProposalRow = {
 export function proposalRows(
   place: PlaceRecord,
   proposal: Pick<Proposal, "fields" | "sources">,
+  tr: Translate,
 ): ProposalRow[] {
-  return PROPOSAL_FIELDS.flatMap((field) => {
+  return changedFields(place, proposal).map((field) => ({
+    field,
+    label: tr(PROPOSAL_FIELD_LABEL[field]),
+    before: formatProposalValue(field, place[field], tr),
+    after: formatProposalValue(field, proposal.fields[field], tr),
+    kind: isEmpty(place[field]) ? ("fill" as const) : ("change" as const),
+    sources: proposal.sources
+      .filter((s) => s.field === field)
+      .map((s) => s.url),
+  }));
+}
+
+function changedFields(
+  place: PlaceRecord,
+  proposal: Pick<Proposal, "fields">,
+): ProposalField[] {
+  return PROPOSAL_FIELDS.filter((field) => {
     const value = proposal.fields[field];
-    if (value === undefined || place.lockedFields.includes(field)) return [];
-    if (same(place[field], value)) return [];
-    return [
-      {
-        field,
-        label: PROPOSAL_FIELD_LABEL[field],
-        before: formatProposalValue(field, place[field]),
-        after: formatProposalValue(field, value),
-        kind: isEmpty(place[field]) ? ("fill" as const) : ("change" as const),
-        sources: proposal.sources
-          .filter((s) => s.field === field)
-          .map((s) => s.url),
-      },
-    ];
+    return (
+      value !== undefined &&
+      !place.lockedFields.includes(field) &&
+      !same(place[field], value)
+    );
   });
 }
 
@@ -125,9 +138,9 @@ export function acceptProposal(
   accepted: ReadonlySet<string>,
   now: Date,
 ): PlaceRecord {
-  const chosen = proposalRows(place, proposal)
-    .map((row) => row.field)
-    .filter((field) => accepted.has(field));
+  const chosen = changedFields(place, proposal).filter((field) =>
+    accepted.has(field),
+  );
   const changes = Object.fromEntries(
     chosen.map((field) => [field, proposal.fields[field]]),
   );

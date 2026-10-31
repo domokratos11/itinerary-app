@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { itemsForDay } from "@/domain/plan";
 import { strandedItems } from "@/domain/trip";
+import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { placeItem } from "@/lib/plan-actions";
 import { usePlanStore } from "@/lib/plan-store";
@@ -39,18 +40,18 @@ export function NeedsNewDay() {
     const { item } = stranded[index];
     const dayItems = itemsForDay(items, date);
     placeItem(tripId, item, date, dayItems.length, dayItems).catch(() =>
-      toast.error("That change was refused. Check the trip link."),
+      toast.error(t("common.refused")),
     );
   }
 
   return (
     <Card className="border-destructive/50">
       <CardHeader>
-        <CardTitle className="text-base">Needs a new day</CardTitle>
+        <CardTitle className="text-base">{t("misc.needsNewDay")}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <p className="text-sm text-muted-foreground">
-          The stays changed, so these stops are on a day that no longer fits.
+          {t("misc.needsNewDayBody")}
         </p>
         <ul className="flex flex-col gap-2">
           {stranded.map(({ item, reason }, index) => {
@@ -70,13 +71,13 @@ export function NeedsNewDay() {
                   <span className="text-muted-foreground">
                     {formatDayLabel(item.date)} ·{" "}
                     {reason === "outside-trip"
-                      ? "no longer a trip day"
-                      : "its city isn't on this day"}
+                      ? t("misc.noLongerTripDay")
+                      : t("misc.cityNotOnDay")}
                   </span>
                 </span>
                 <Select onValueChange={(date) => move(index, date)}>
                   <SelectTrigger size="sm" className="w-44">
-                    <SelectValue placeholder="Move to…" />
+                    <SelectValue placeholder={t("common.moveTo")} />
                   </SelectTrigger>
                   <SelectContent>
                     {options.map((d) => (

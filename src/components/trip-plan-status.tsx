@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { t } from "@/lib/i18n";
 import { usePlanStore } from "@/lib/plan-store";
 
 function PlanStatus() {
@@ -18,7 +19,7 @@ function PlanStatus() {
         variant="destructive"
         className="h-auto py-1 text-left whitespace-normal"
       >
-        Can&apos;t reach the plan: {error}
+        {t("home.planError", { error })}
       </Badge>
     );
   }
@@ -28,7 +29,7 @@ function PlanStatus() {
         variant="outline"
         className="h-auto py-1 text-left whitespace-normal"
       >
-        Loading plan…
+        {t("home.planLoading")}
       </Badge>
     );
   return (
@@ -36,7 +37,7 @@ function PlanStatus() {
       variant="secondary"
       className="h-auto py-1 text-left whitespace-normal"
     >
-      {stops} planned stops
+      {t("home.plannedStops", { count: stops })}
     </Badge>
   );
 }
@@ -49,7 +50,7 @@ export function TripPlanStatus() {
           variant="outline"
           className="h-auto py-1 text-left whitespace-normal"
         >
-          Loading plan…
+          {t("home.planLoading")}
         </Badge>
       }
     >

@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { AppHeader, BottomNav } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppGate } from "@/components/app-gate";
+import { LocaleRoot } from "@/components/locale-root";
 import { OfflineBanner } from "@/components/offline-banner";
 import { PlanSync } from "@/components/plan-sync";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
@@ -98,21 +99,23 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </Suspense>
             {/* Nothing inside renders, in the static HTML or the browser, until
                 a signed-in member has their trip. */}
-            <AppGate>
-              <Suspense fallback={null}>
-                <AppHeader />
-              </Suspense>
-              <OfflineBanner />
-              <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+            <LocaleRoot>
+              <AppGate>
                 <Suspense fallback={null}>
-                  <AppSidebar />
+                  <AppHeader />
                 </Suspense>
-                <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-              </div>
-              <Suspense fallback={null}>
-                <BottomNav />
-              </Suspense>
-            </AppGate>
+                <OfflineBanner />
+                <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+                  <Suspense fallback={null}>
+                    <AppSidebar />
+                  </Suspense>
+                  <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+                </div>
+                <Suspense fallback={null}>
+                  <BottomNav />
+                </Suspense>
+              </AppGate>
+            </LocaleRoot>
           </VersionGate>
           {/* On phones, keep toasts above the bottom tab bar. */}
           <Toaster

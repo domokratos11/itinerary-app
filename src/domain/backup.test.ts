@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "@/lib/i18n";
+
 import { BackupSchema, backupSummary, makeBackup } from "@/domain/backup";
 import { testPlace } from "@/domain/test-place";
 import { fixtureTrip } from "@/test/fixture-trip";
@@ -38,7 +40,7 @@ describe("backup", () => {
   });
 
   it("summarises what a backup holds", () => {
-    expect(backupSummary(backup)).toBe(
+    expect(backupSummary(backup, t)).toBe(
       "2 cities, 2 stays, 1 reservation, 1 place, 1 stop, 0 queued links",
     );
   });

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { EditPanel } from "@/components/edit-panel";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 import { APP_VERSION, resetApp } from "@/lib/app-reset";
 import { checkForUpdate } from "@/lib/version-check";
 
@@ -19,34 +20,36 @@ export function AboutSettings() {
     checkForUpdate(true).then((result) => {
       if (result === "updating") return;
       setBusy(false);
-      if (result === "current") toast.success("You're on the latest version.");
-      else toast.error("Couldn't check. Are you online?");
+      if (result === "current") toast.success(t("about.latest"));
+      else toast.error(t("about.couldntCheck"));
     });
   }
 
   return (
     <section className="flex flex-col gap-2 border-t pt-4">
-      <h2 className="text-base font-semibold">About</h2>
-      <p className="text-sm text-muted-foreground">Version {APP_VERSION}</p>
+      <h2 className="text-base font-semibold">{t("about.title")}</h2>
+      <p className="text-sm text-muted-foreground">
+        {t("common.version", { version: APP_VERSION })}
+      </p>
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" disabled={busy} onClick={check}>
-          Check for updates
+          {t("about.check")}
         </Button>
         <Button
           variant="outline"
           disabled={busy}
           onClick={() => setConfirming(true)}
         >
-          Clear data and sign in again
+          {t("about.clear")}
         </Button>
       </div>
       {confirming && (
         <EditPanel
           open
           onOpenChange={(open) => !open && setConfirming(false)}
-          title="Clear this device's data?"
-          description="This signs you out and removes the app's copy of the trip from this device. The trip itself stays safe in the cloud. Changes made offline that haven't synced yet may be lost."
-          submitLabel="Clear and sign in again"
+          title={t("about.confirmTitle")}
+          description={t("about.confirmBody")}
+          submitLabel={t("about.confirmSubmit")}
           onSubmit={() => {
             setConfirming(false);
             setBusy(true);

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/drawer";
 import { itemsForDay } from "@/domain/plan";
 import type { Place } from "@/domain/schemas";
+import { t } from "@/lib/i18n";
 import { addPlaceToDay } from "@/lib/plan-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -48,17 +49,21 @@ export function AddToDay({ place }: { place: Place }) {
     // Not awaited: the local cache applies the change at once, and the save
     // completes later when online. Only a refused write is reported.
     addPlaceToDay(tripId, place.id, date, itemsForDay(items, date)).catch(() =>
-      toast.error("That change was refused. Check the trip link."),
+      toast.error(t("common.refused")),
     );
-    toast.success(`Added ${place.name} to ${formatDayLabel(date)}`);
+    toast.success(
+      t("common.addedToDay", { name: place.name, day: formatDayLabel(date) }),
+    );
   }
 
   const list = (
     <Command>
       <CommandList>
-        <CommandEmpty>No days for this city.</CommandEmpty>
+        <CommandEmpty>{t("misc.noDaysForCity")}</CommandEmpty>
         <CommandGroup
-          heading={`Days in ${citiesById.get(place.cityId)?.name ?? place.cityId}`}
+          heading={t("misc.daysIn", {
+            city: citiesById.get(place.cityId)?.name ?? place.cityId,
+          })}
         >
           {days.map((day) => (
             <CommandItem
@@ -68,7 +73,9 @@ export function AddToDay({ place }: { place: Place }) {
             >
               {formatDayLabel(day.date)}
               <span className="ml-auto text-muted-foreground">
-                {itemsForDay(items, day.date).length} stops
+                {t("common.stops", {
+                  count: itemsForDay(items, day.date).length,
+                })}
               </span>
             </CommandItem>
           ))}
@@ -80,14 +87,14 @@ export function AddToDay({ place }: { place: Place }) {
   return (
     <>
       <Button className="w-full" onClick={() => setOpen(true)}>
-        Add to day
+        {t("common.addToDay")}
       </Button>
       {wide ? (
         <CommandDialog
           open={open}
           onOpenChange={setOpen}
-          title="Add to day"
-          description={`Choose a day for ${place.name}`}
+          title={t("common.addToDay")}
+          description={t("misc.chooseDayFor", { name: place.name })}
         >
           {list}
         </CommandDialog>
@@ -95,9 +102,9 @@ export function AddToDay({ place }: { place: Place }) {
         <Drawer open={open} onOpenChange={setOpen}>
           <DrawerContent className="max-h-[70vh]">
             <DrawerHeader className="text-left">
-              <DrawerTitle>Add to day</DrawerTitle>
+              <DrawerTitle>{t("common.addToDay")}</DrawerTitle>
               <DrawerDescription>
-                Choose a day for {place.name}
+                {t("misc.chooseDayFor", { name: place.name })}
               </DrawerDescription>
             </DrawerHeader>
             <div className="px-2 pb-6">{list}</div>

@@ -1,6 +1,7 @@
 import { itemsForDay } from "@/domain/plan";
 import { draftPlaceFrom, type QueuedPlace } from "@/domain/queue";
 import type { PlaceRecord, PlanItem } from "@/domain/schemas";
+import { t } from "@/lib/i18n";
 import { logActivity } from "@/lib/activity-log";
 import { formatDayLabel } from "@/lib/format-day";
 import { addPlaceAt } from "@/lib/plan-actions";
@@ -33,7 +34,9 @@ export async function queueAdd(
     {
       kind: "queued",
       targetId: id,
-      summary: `queued ${input.name ?? "a link"}`,
+      summary: t("activity.queued", {
+        name: input.name ?? t("activity.aLink"),
+      }),
     },
     now,
   );
@@ -53,13 +56,13 @@ export async function queueUpdate(
     ...changes,
     updatedAt: now.toISOString(),
   });
-  const name = changes.name ?? item.name ?? "a link";
+  const name = changes.name ?? item.name ?? t("activity.aLink");
   const summary =
     changes.status === "dismissed"
-      ? `dismissed ${name}`
+      ? t("activity.dismissed", { name })
       : changes.status === "queued" && item.status !== "queued"
-        ? `put ${name} back in the queue`
-        : `edited queued ${name}`;
+        ? t("activity.requeued", { name })
+        : t("activity.editedQueued", { name });
   logActivity(
     tripId,
     {
@@ -93,7 +96,7 @@ export async function assignQueued(
       item,
       {
         cityId,
-        name: item.name ?? "Queued place",
+        name: item.name ?? t("activity.queuedPlace"),
         takenIds: places.map((p) => p.id),
       },
       now,
@@ -130,8 +133,11 @@ export async function assignQueued(
       kind: "assigned",
       targetId: item.id,
       summary: date
-        ? `assigned ${place.name} to ${formatDayLabel(date)}`
-        : `added ${place.name} to the city list`,
+        ? t("activity.assigned", {
+            name: place.name,
+            day: formatDayLabel(date),
+          })
+        : t("activity.addedToCity", { name: place.name }),
     },
     now,
   );

@@ -28,7 +28,8 @@ import { mapsSearchUrl } from "@/domain/place-edit";
 import { isOpenProposal } from "@/domain/proposals";
 import type { PlaceRecord } from "@/domain/schemas";
 import { isDraft } from "@/domain/queue";
-import { CATEGORY_LABEL } from "@/lib/category-label";
+import { t } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/category-label";
 import { pageHref } from "@/lib/links";
 import { requestResearch } from "@/lib/proposal-actions";
 import { useProposals } from "@/lib/use-proposals";
@@ -92,7 +93,7 @@ export function PlaceDetails({
                 <SheetHeader className="text-left">
                   <SheetTitle className="text-xl">{place.name}</SheetTitle>
                   <SheetDescription className="sr-only">
-                    Place details
+                    {t("place.details")}
                   </SheetDescription>
                 </SheetHeader>
                 {body}
@@ -114,7 +115,7 @@ export function PlaceDetails({
               <DrawerHeader className="px-0 text-left">
                 <DrawerTitle className="text-xl">{place.name}</DrawerTitle>
                 <DrawerDescription className="sr-only">
-                  Place details
+                  {t("place.details")}
                 </DrawerDescription>
               </DrawerHeader>
               {body}
@@ -145,24 +146,26 @@ function PlaceBody({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">{CATEGORY_LABEL[place.category]}</Badge>
+        <Badge variant="secondary">{categoryLabel(place.category)}</Badge>
         <Badge variant="outline" className="text-foreground">
-          {place.priority}
+          {t(`priorities.${place.priority}`)}
         </Badge>
         {isDraft(place) && (
           <Badge variant="outline" className="border-dashed">
-            Not researched yet
+            {t("common.notResearched")}
           </Badge>
         )}
         {place.verifiedAt && (
-          <Badge variant="outline">Checked {place.verifiedAt}</Badge>
+          <Badge variant="outline">
+            {t("place.checked", { date: place.verifiedAt })}
+          </Badge>
         )}
       </div>
 
       <Button asChild>
         <a href={mapsLink} target="_blank" rel="noopener noreferrer">
           <ExternalLink />
-          Open in Google Maps
+          {t("place.openInMaps")}
         </a>
       </Button>
       <AddToDay place={place} />
@@ -171,7 +174,7 @@ function PlaceBody({
           {onEdit && (
             <Button variant="outline" className="flex-1" onClick={onEdit}>
               <Pencil />
-              Edit place
+              {t("place.edit")}
             </Button>
           )}
           {onArchive && (
@@ -179,29 +182,31 @@ function PlaceBody({
               variant="outline"
               className="flex-1"
               disabled={inPlan}
-              title={inPlan ? "Remove it from the plan first" : undefined}
+              title={inPlan ? t("place.removeFromPlanFirst") : undefined}
               onClick={onArchive}
             >
               <Archive />
-              Archive
+              {t("common.archive")}
             </Button>
           )}
         </div>
       )}
       {onArchive && inPlan && (
         <p className="-mt-2 text-xs text-muted-foreground">
-          It&apos;s in the plan. Remove it from its day to archive it.
+          {t("place.inPlanNote")}
         </p>
       )}
       <PlaceResearch place={place} />
       <PlaceLive key={place.id} place={place} />
 
-      {place.purpose && <Section label="Why go">{place.purpose}</Section>}
+      {place.purpose && (
+        <Section label={t("common.whyGo")}>{place.purpose}</Section>
+      )}
       {place.description && (
-        <Section label="About">{place.description}</Section>
+        <Section label={t("common.about")}>{place.description}</Section>
       )}
       {place.tips.length > 0 && (
-        <Section label="Tips">
+        <Section label={t("common.tips")}>
           <ul className="list-disc pl-5">
             {place.tips.map((tip) => (
               <li key={tip}>{tip}</li>
@@ -210,17 +215,19 @@ function PlaceBody({
         </Section>
       )}
 
-      <Section label="Cost">{formatCost(place.costEstimateJPY)}</Section>
-      <Section label="Time needed">
-        {place.durationMin === null
-          ? "Not researched yet"
-          : `${place.durationMin} min`}
+      <Section label={t("common.cost")}>
+        {formatCost(place.costEstimateJPY)}
       </Section>
-      <Section label="Opening hours">
-        {place.openingHours ?? "Not researched yet"}
+      <Section label={t("common.timeNeeded")}>
+        {place.durationMin === null
+          ? t("common.notResearched")
+          : t("common.minutes", { minutes: place.durationMin })}
+      </Section>
+      <Section label={t("common.openingHours")}>
+        {place.openingHours ?? t("common.notResearched")}
       </Section>
       {place.closedDates.length > 0 && (
-        <Section label="Closed on">
+        <Section label={t("common.closedOn")}>
           <div className="flex flex-wrap gap-1.5">
             {place.closedDates.map((d) => (
               <Badge key={d} variant="destructive">
@@ -231,26 +238,33 @@ function PlaceBody({
         </Section>
       )}
       {place.seasonFrom && place.seasonTo && (
-        <Section label="Season">
-          {place.seasonFrom} to {place.seasonTo}
+        <Section label={t("place.season")}>
+          {t("place.seasonRange", {
+            from: place.seasonFrom,
+            to: place.seasonTo,
+          })}
         </Section>
       )}
       {place.nearestStation && (
-        <Section label="Nearest station">
+        <Section label={t("common.nearestStation")}>
           {[
             place.nearestStation.name,
             place.nearestStation.lines.join(", "),
             place.nearestStation.walkMin !== null
-              ? `${place.nearestStation.walkMin} min walk`
+              ? t("common.minutesWalk", {
+                  minutes: place.nearestStation.walkMin,
+                })
               : "",
           ]
             .filter(Boolean)
             .join(" · ")}
         </Section>
       )}
-      {place.notes && <Section label="Notes">{place.notes}</Section>}
+      {place.notes && (
+        <Section label={t("common.notes")}>{place.notes}</Section>
+      )}
       {place.websiteUrl && (
-        <Section label="Website">
+        <Section label={t("common.website")}>
           <a
             className="break-all underline"
             href={place.websiteUrl}
@@ -262,9 +276,9 @@ function PlaceBody({
         </Section>
       )}
 
-      <Section label="Nearby saved places (within 1 km)">
+      <Section label={t("place.nearby")}>
         {nearby.length === 0 ? (
-          "None"
+          t("common.none")
         ) : (
           <ul className="list-disc pl-5">
             {nearby.map((n) => (
@@ -291,13 +305,13 @@ function PlaceResearch({ place }: { place: PlaceRecord }) {
         href={pageHref("/settings/", tripId, { tab: "places" })}
         className="text-sm underline"
       >
-        Research is ready to review in Settings
+        {t("place.researchReady")}
       </Link>
     );
   if (open)
     return (
       <p className="text-sm text-muted-foreground">
-        Research requested. It arrives after the next research run.
+        {t("place.researchPending")}
       </p>
     );
   return (
@@ -305,19 +319,19 @@ function PlaceResearch({ place }: { place: PlaceRecord }) {
       variant="outline"
       onClick={() =>
         requestResearch(tripId, [place], proposals).catch(() =>
-          toast.error("That change was refused. Check the trip link."),
+          toast.error(t("common.refused")),
         )
       }
     >
       <Search />
-      Research this place
+      {t("place.research")}
     </Button>
   );
 }
 
 function formatCost(yen: number | null): string {
-  if (yen === null) return "Not researched yet";
-  if (yen === 0) return "Free";
+  if (yen === null) return t("common.notResearched");
+  if (yen === 0) return t("common.free");
   return `¥${yen.toLocaleString("en-US")}`;
 }
 

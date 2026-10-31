@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { t } from "@/lib/i18n";
 import { BASE_PATH } from "@/lib/base-path";
 import { pageHref } from "@/lib/links";
 import { recallTripId } from "@/lib/trip-id";
@@ -35,9 +36,9 @@ export function OldLinkRedirect() {
 
   return (
     <div className="flex flex-col gap-3">
-      <h1 className="text-2xl font-semibold">Page not found</h1>
+      <h1 className="text-2xl font-semibold">{t("misc.pageNotFound")}</h1>
       <Link href="/" className="text-sm underline">
-        ← Trip days
+        {t("common.backToDays")}
       </Link>
     </div>
   );

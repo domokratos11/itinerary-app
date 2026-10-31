@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { t } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/auth-store";
 import { pageHref } from "@/lib/links";
 import { openTrip } from "@/lib/trip-id";
@@ -55,7 +56,7 @@ export function TripSwitcher() {
               onSelect={() => trip.id !== tripId && openTrip(trip.id)}
             >
               <Check className={trip.id === tripId ? "" : "invisible"} />
-              {trip.name ?? "My trip"}
+              {trip.name ?? t("common.myTrip")}
             </DropdownMenuItem>
           ))}
           {canCreate && (
@@ -63,7 +64,7 @@ export function TripSwitcher() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => setCreating(true)}>
                 <Plus />
-                New trip
+                {t("gate.newTrip")}
               </DropdownMenuItem>
             </>
           )}

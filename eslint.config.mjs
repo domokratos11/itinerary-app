@@ -7,6 +7,34 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   prettier,
+  // All text comes from src/messages, so no words typed into the markup.
+  {
+    files: ["src/components/**/*.tsx", "src/app/**/*.tsx"],
+    ignores: ["src/components/ui/**", "**/*.test.tsx"],
+    rules: {
+      "react/jsx-no-literals": [
+        "error",
+        {
+          allowedStrings: [
+            "→",
+            "·",
+            "—",
+            "…",
+            "–",
+            "¥",
+            "/",
+            ".",
+            ",",
+            ":",
+            "Google Maps",
+            "Ctrl K",
+            "(",
+            ")",
+          ],
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
@@ -14,7 +42,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "legacy/**",
   ]),
 ]);
 

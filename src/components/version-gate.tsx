@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { Splash } from "@/components/app-gate";
 import { APP_VERSION, resetApp } from "@/lib/app-reset";
+import { initLocale } from "@/lib/i18n";
 import { checkForUpdate, storageIsStale } from "@/lib/version-check";
 
 // How long the first check for a newer deploy may hold back the app. A slow
@@ -17,6 +18,7 @@ export function VersionGate({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(process.env.NODE_ENV !== "production");
 
   useEffect(() => {
+    initLocale();
     if (process.env.NODE_ENV !== "production") return;
     removeVersionFromUrl();
     if (storageIsStale()) {

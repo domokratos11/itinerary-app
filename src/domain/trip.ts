@@ -1,4 +1,5 @@
 import { deriveDays, type TripDay } from "./days";
+import type { Translate } from "./i18n";
 import { stayLocation, type Location } from "./plan";
 import type {
   CityRecord,
@@ -87,11 +88,13 @@ export function tripDays(data: TripData): TripDay[] {
 export type Endpoint = { name: string; location: Location | null };
 
 // A hotel with no name yet ("To be decided") has no location to route to.
-export function endpointFor(stay: Stay | null): Endpoint | null {
+export function endpointFor(stay: Stay | null, tr: Translate): Endpoint | null {
   if (!stay) return null;
-  const undecided = stay.hotelName.toLowerCase().startsWith("to be decided");
+  const name = stay.hotelName.toLowerCase();
+  const undecided =
+    name.startsWith("to be decided") || name.startsWith("por decidir");
   return {
-    name: undecided ? "Hotel to be decided" : stay.hotelName,
+    name: undecided ? tr("leg.hotelUndecided") : stay.hotelName,
     location: undecided ? null : stayLocation(stay),
   };
 }

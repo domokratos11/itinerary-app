@@ -20,6 +20,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
+import { t } from "@/lib/i18n";
 import { useMediaQuery } from "@/lib/use-media-query";
 
 type Props = {
@@ -41,7 +42,7 @@ export function EditPanel({
   title,
   description,
   onSubmit,
-  submitLabel = "Save",
+  submitLabel = t("common.save"),
   canSubmit = true,
   children,
 }: Props) {
@@ -59,7 +60,7 @@ export function EditPanel({
         variant="outline"
         onClick={() => onOpenChange(false)}
       >
-        Cancel
+        {t("common.cancel")}
       </Button>
       <Button type="submit" disabled={!canSubmit}>
         {submitLabel}

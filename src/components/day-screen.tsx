@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { DayPlan } from "@/components/day-plan";
 import { hotelsForDay } from "@/domain/plan";
 import { endpointFor } from "@/domain/trip";
+import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { homeHref } from "@/lib/links";
 import { useCitiesById, useTrip, useTripDays } from "@/lib/trip-store";
@@ -24,12 +25,12 @@ export function DayScreen() {
   if (!day) {
     return (
       <div className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold">Day not found</h1>
+        <h1 className="text-2xl font-semibold">{t("day.notFound")}</h1>
         <p className="text-sm text-muted-foreground">
-          {date ? `${date} isn't one of the trip's days.` : "No date given."}
+          {date ? t("day.notATripDay", { date }) : t("day.noDate")}
         </p>
         <Link href={homeHref(tripId)} className="text-sm underline">
-          ← Trip days
+          {t("common.backToDays")}
         </Link>
       </div>
     );
@@ -42,8 +43,8 @@ export function DayScreen() {
       label={formatDayLabel(date)}
       cityNames={day.cityIds.map((id) => citiesById.get(id)?.name ?? id)}
       cityIds={day.cityIds}
-      start={endpointFor(start)}
-      end={endpointFor(end)}
+      start={endpointFor(start, t)}
+      end={endpointFor(end, t)}
       reservations={trip.reservations.filter((r) => r.date === date)}
     />
   );

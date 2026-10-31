@@ -13,6 +13,7 @@ import {
   type Backup,
 } from "@/domain/backup";
 import { TRIP_COLLECTIONS } from "@/domain/trip";
+import { t } from "@/lib/i18n";
 import { importBackup } from "@/lib/backup-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
@@ -47,7 +48,7 @@ export function ExportTrip({
   return (
     <Button variant={variant} size="sm" onClick={download}>
       <Download />
-      Export trip
+      {t("backup.exportTrip")}
     </Button>
   );
 }
@@ -71,37 +72,30 @@ export function BackupSettings({ tripId }: { tripId: string }) {
       if (!result.success) throw new Error("not a backup");
       setPending(result.data);
     } catch {
-      toast.error("That file isn't a trip backup.");
+      toast.error(t("backup.notABackup"));
     }
   }
 
   function restore(backup: Backup) {
     setPending(null);
     importBackup(tripId, backup)
-      .then(() => toast.success("Backup restored"))
-      .catch(() => toast.error("The backup was refused. Check the trip link."));
+      .then(() => toast.success(t("backup.restored")))
+      .catch(() => toast.error(t("backup.refused")));
   }
 
   return (
     <div className="flex flex-col gap-4 text-sm">
       <section className="flex flex-col gap-2">
-        <h3 className="font-medium">Export</h3>
-        <p className="text-muted-foreground">
-          The whole trip in one file: cities, stays, reservations, places, the
-          plan and the queue. Keep it somewhere private, not in the public repo.
-          Map pins from Google are left out, as its terms require; run maps:refresh after
-          restoring to get them back.
-        </p>
+        <h3 className="font-medium">{t("backup.exportTitle")}</h3>
+        <p className="text-muted-foreground">{t("backup.exportBody")}</p>
         <div>
           <ExportTrip />
         </div>
       </section>
       <section className="flex flex-col gap-2">
-        <h3 className="font-medium">Import</h3>
+        <h3 className="font-medium">{t("backup.importTitle")}</h3>
         <p className="text-muted-foreground">
-          {empty
-            ? "Restore a backup into this trip. Only works while the trip has nothing saved yet."
-            : "This trip already has saved changes, so a backup can't be imported here. Create a new trip to restore into it."}
+          {empty ? t("backup.importEmpty") : t("backup.importFull")}
         </p>
         <input
           ref={fileInput}
@@ -122,7 +116,7 @@ export function BackupSettings({ tripId }: { tripId: string }) {
             onClick={() => fileInput.current?.click()}
           >
             <Upload />
-            Choose a backup file
+            {t("backup.choose")}
           </Button>
         </div>
       </section>
@@ -130,12 +124,14 @@ export function BackupSettings({ tripId }: { tripId: string }) {
         <EditPanel
           open
           onOpenChange={(open) => !open && setPending(null)}
-          title="Restore this backup?"
-          description={`Exported ${pending.exportedAt.slice(0, 10)}`}
-          submitLabel="Restore"
+          title={t("backup.restoreTitle")}
+          description={t("backup.exportedOn", {
+            date: pending.exportedAt.slice(0, 10),
+          })}
+          submitLabel={t("common.restore")}
           onSubmit={() => restore(pending)}
         >
-          <p className="text-sm">{backupSummary(pending)}.</p>
+          <p className="text-sm">{backupSummary(pending, t)}.</p>
         </EditPanel>
       )}
     </div>

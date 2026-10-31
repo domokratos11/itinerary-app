@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "@/lib/i18n";
+
 import {
   dayLegs,
   formatDistance,
@@ -61,37 +63,46 @@ describe("dayLegs", () => {
 
 describe("formatting", () => {
   it("rounds distances", () => {
-    expect(formatDistance(0.87)).toBe("About 900 m");
-    expect(formatDistance(4.04)).toBe("About 4 km");
-    expect(formatDistance(1.62)).toBe("About 1.6 km");
-    expect(formatDistance(12.6)).toBe("About 13 km");
+    expect(formatDistance(0.87, t)).toBe("About 900 m");
+    expect(formatDistance(4.04, t)).toBe("About 4 km");
+    expect(formatDistance(1.62, t)).toBe("About 1.6 km");
+    expect(formatDistance(12.6, t)).toBe("About 13 km");
   });
 
   it("describes a walk", () => {
-    expect(formatWalk(12, 900)).toBe("Walk 12 min · 900 m");
+    expect(formatWalk(12, 900, t)).toBe("Walk 12 min · 900 m");
   });
 
   it("leaves out what a note doesn't have", () => {
     expect(
-      formatLegNote({
-        mode: "subway",
-        minutes: 12,
-        fareJPY: 180,
-        text: "Ginza Line",
-      }),
+      formatLegNote(
+        {
+          mode: "subway",
+          minutes: 12,
+          fareJPY: 180,
+          text: "Ginza Line",
+        },
+        t,
+      ),
     ).toBe("Subway · about 12 min · ¥180 · Ginza Line");
     expect(
-      formatLegNote({ mode: "taxi", minutes: null, fareJPY: null, text: null }),
+      formatLegNote(
+        { mode: "taxi", minutes: null, fareJPY: null, text: null },
+        t,
+      ),
     ).toBe("Taxi");
   });
 
   it("describes a station", () => {
     expect(
-      formatStation({
-        name: "Ueno Station",
-        lines: ["Ginza Line"],
-        walkMin: 4,
-      }),
+      formatStation(
+        {
+          name: "Ueno Station",
+          lines: ["Ginza Line"],
+          walkMin: 4,
+        },
+        t,
+      ),
     ).toBe("Ueno Station, Ginza Line, 4 min walk");
   });
 });

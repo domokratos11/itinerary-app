@@ -1,7 +1,7 @@
 /**
  * Validates the JSON files kept in the repo against their Zod schemas: the
- * sample trip the tests use. Run with `npm run validate`. Exits with code 1
- * on any problem.
+ * sample trip the tests use and the app's text. Run with `npm run validate`.
+ * Exits with code 1 on any problem.
  *
  * Add a schema to SCHEMAS for each new kind of file, and its folder to
  * FOLDERS. A JSON file with no matching schema is an error, so nothing ships
@@ -16,11 +16,18 @@ import { TripDataSchema } from "../src/domain/schemas";
 
 export type SchemaRule = { pattern: RegExp; schema: z.ZodType };
 
-const FOLDERS = ["src/test"];
+const FOLDERS = ["src/test", "src/messages"];
+
+// The app's text. i18n.test.ts checks both languages have the same keys.
+const MessagesSchema: z.ZodType = z.record(
+  z.string(),
+  z.lazy(() => z.union([z.string().min(1), MessagesSchema])),
+);
 
 // Paths are relative to the repo root, using forward slashes.
 export const SCHEMAS: SchemaRule[] = [
   { pattern: /^src\/test\/fixture-trip\.json$/, schema: TripDataSchema },
+  { pattern: /^src\/messages\/(en|es)\.json$/, schema: MessagesSchema },
 ];
 
 export function listJsonFiles(dir: string, base = dir): string[] {

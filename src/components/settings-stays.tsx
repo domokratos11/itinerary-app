@@ -19,14 +19,11 @@ import { parseMapsLink } from "@/domain/queue";
 import type { StayRecord } from "@/domain/schemas";
 import { stayId } from "@/domain/trip";
 import { dayChanges, stayIssues, type DayChanges } from "@/domain/trip-edit";
+import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { usePlanStore } from "@/lib/plan-store";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useCitiesById, useTrip, useTripStore } from "@/lib/trip-store";
-
-const REFUSED = "That change was refused. Check the trip link.";
-export const PRIVATE_NOTE_HINT =
-  "Anyone with the trip link can read this. Don't add booking or confirmation numbers.";
 
 type Editing =
   | { kind: "edit"; record: StayRecord | null }
@@ -63,8 +60,12 @@ export function StaysSettings({ tripId }: { tripId: string }) {
       tripId,
       "stays",
       record,
-      `saved the stay at ${record.hotelName} (${formatDayLabel(record.checkIn)} → ${formatDayLabel(record.checkOut)})`,
-    ).catch(() => toast.error(REFUSED));
+      t("activity.savedStay", {
+        hotel: record.hotelName,
+        from: formatDayLabel(record.checkIn),
+        to: formatDayLabel(record.checkOut),
+      }),
+    ).catch(() => toast.error(t("common.refused")));
     setEditing(null);
   }
 
@@ -73,19 +74,19 @@ export function StaysSettings({ tripId }: { tripId: string }) {
       tripId,
       "stays",
       stay,
-      `archived the stay at ${stay.hotelName}`,
-    ).catch(() => toast.error(REFUSED));
+      t("activity.archivedStay", { hotel: stay.hotelName }),
+    ).catch(() => toast.error(t("common.refused")));
     setEditing(null);
-    toast(`Archived the stay at ${stay.hotelName}`, {
+    toast(t("stays.archived", { hotel: stay.hotelName }), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
           saveRecord(
             tripId,
             "stays",
             stay,
-            `restored the stay at ${stay.hotelName}`,
-          ).catch(() => toast.error(REFUSED)),
+            t("activity.restoredStay", { hotel: stay.hotelName }),
+          ).catch(() => toast.error(t("common.refused"))),
       },
     });
   }
@@ -100,8 +101,14 @@ export function StaysSettings({ tripId }: { tripId: string }) {
         >
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           {issue.kind === "gap"
-            ? `No hotel from ${formatDayLabel(issue.from)} to ${formatDayLabel(issue.to)}.`
-            : `Two hotels overlap from ${formatDayLabel(issue.from)} to ${formatDayLabel(issue.to)}.`}
+            ? t("stays.gap", {
+                from: formatDayLabel(issue.from),
+                to: formatDayLabel(issue.to),
+              })
+            : t("stays.overlap", {
+                from: formatDayLabel(issue.from),
+                to: formatDayLabel(issue.to),
+              })}
         </p>
       ))}
 
@@ -123,15 +130,15 @@ export function StaysSettings({ tripId }: { tripId: string }) {
                 <span className="block font-medium">{stay.hotelName}</span>
                 <span className="block text-muted-foreground">
                   {city?.name ?? stay.cityId} · {formatDayLabel(stay.checkIn)} →{" "}
-                  {formatDayLabel(stay.checkOut)} · {n}{" "}
-                  {n === 1 ? "night" : "nights"}
+                  {formatDayLabel(stay.checkOut)} ·{" "}
+                  {t("stays.nights", { count: n })}
                 </span>
                 {stay.note && <span className="block">{stay.note}</span>}
               </span>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={`Edit stay at ${stay.hotelName}`}
+                aria-label={t("stays.editAria", { hotel: stay.hotelName })}
                 onClick={() => setEditing({ kind: "edit", record: stay })}
               >
                 <Pencil />
@@ -139,7 +146,7 @@ export function StaysSettings({ tripId }: { tripId: string }) {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={`Archive stay at ${stay.hotelName}`}
+                aria-label={t("stays.archiveAria", { hotel: stay.hotelName })}
                 onClick={() => setEditing({ kind: "archive", record: stay })}
               >
                 <Archive />
@@ -154,7 +161,7 @@ export function StaysSettings({ tripId }: { tripId: string }) {
         onClick={() => setEditing({ kind: "edit", record: null })}
       >
         <Plus />
-        Add stay
+        {t("common.addStay")}
       </Button>
 
       {editing?.kind === "edit" && (
@@ -172,9 +179,9 @@ export function StaysSettings({ tripId }: { tripId: string }) {
         <EditPanel
           open
           onOpenChange={(open) => !open && setEditing(null)}
-          title="Archive this stay?"
+          title={t("stays.archiveTitle")}
           description={`${editing.record.hotelName}, ${formatDayLabel(editing.record.checkIn)} → ${formatDayLabel(editing.record.checkOut)}`}
-          submitLabel="Archive"
+          submitLabel={t("common.archive")}
           onSubmit={() => archive(editing.record)}
         >
           <ChangePreview changes={preview(null, editing.record.id)} />
@@ -251,14 +258,14 @@ function StayForm({
     <EditPanel
       open
       onOpenChange={(open) => !open && onCancel()}
-      title={stay ? "Edit stay" : "Add stay"}
+      title={stay ? t("stays.edit") : t("common.addStay")}
       canSubmit={valid}
       onSubmit={() => onSave(build())}
     >
-      <Field label="City" htmlFor="stay-city">
+      <Field label={t("common.city")} htmlFor="stay-city">
         <Select value={cityId} onValueChange={setCityId}>
           <SelectTrigger id="stay-city" className="w-full">
-            <SelectValue placeholder="Choose a city" />
+            <SelectValue placeholder={t("common.chooseCity")} />
           </SelectTrigger>
           <SelectContent>
             {trip.cities.map((c) => (
@@ -269,20 +276,20 @@ function StayForm({
           </SelectContent>
         </Select>
       </Field>
-      <Field label="Hotel" htmlFor="stay-hotel">
+      <Field label={t("stays.hotel")} htmlFor="stay-hotel">
         <Input
           id="stay-hotel"
           value={hotelName}
           maxLength={200}
           onChange={(e) => setHotelName(e.target.value)}
-          placeholder="To be decided"
+          placeholder={t("stays.toBeDecided")}
           required
         />
       </Field>
       <Field
-        label="Google Maps link (optional)"
+        label={t("stays.mapsOptional")}
         htmlFor="stay-maps"
-        hint="A full place link also saves the hotel's exact location."
+        hint={t("stays.mapsHint")}
       >
         <Input
           id="stay-maps"
@@ -295,7 +302,7 @@ function StayForm({
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Check-in" htmlFor="stay-in">
+        <Field label={t("stays.checkIn")} htmlFor="stay-in">
           <Input
             id="stay-in"
             type="date"
@@ -304,7 +311,7 @@ function StayForm({
             required
           />
         </Field>
-        <Field label="Check-out" htmlFor="stay-out">
+        <Field label={t("stays.checkOut")} htmlFor="stay-out">
           <Input
             id="stay-out"
             type="date"
@@ -318,13 +325,13 @@ function StayForm({
       </div>
       {checkOut !== "" && !datesValid && (
         <p role="alert" className="text-sm text-destructive">
-          Check-out must be after check-in.
+          {t("stays.checkOutAfter")}
         </p>
       )}
       <Field
-        label="Note (optional)"
+        label={t("common.noteOptional")}
         htmlFor="stay-note"
-        hint={PRIVATE_NOTE_HINT}
+        hint={t("stays.privateHint")}
       >
         <Textarea
           id="stay-note"
@@ -343,19 +350,23 @@ export function ChangePreview({ changes }: { changes: DayChanges }) {
   const { added, removed, stranded } = changes;
   if (added.length === 0 && removed.length === 0 && stranded === 0)
     return (
-      <p className="text-sm text-muted-foreground">
-        The trip&apos;s days stay the same.
-      </p>
+      <p className="text-sm text-muted-foreground">{t("stays.sameDays")}</p>
     );
   return (
     <ul className="flex flex-col gap-1 rounded-lg bg-muted p-3 text-sm">
-      {added.length > 0 && <li>Adds {added.map(formatDayLabel).join(", ")}</li>}
+      {added.length > 0 && (
+        <li>
+          {t("stays.adds", { days: added.map(formatDayLabel).join(", ") })}
+        </li>
+      )}
       {removed.length > 0 && (
-        <li>Removes {removed.map(formatDayLabel).join(", ")}</li>
+        <li>
+          {t("stays.removes", { days: removed.map(formatDayLabel).join(", ") })}
+        </li>
       )}
       {stranded > 0 && (
         <li className="font-medium text-destructive">
-          {stranded} {stranded === 1 ? "stop" : "stops"} will need a new day
+          {t("stays.stranded", { count: stranded })}
         </li>
       )}
     </ul>

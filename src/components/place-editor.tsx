@@ -25,10 +25,9 @@ import {
   type PlaceRecord,
   type Priority,
 } from "@/domain/schemas";
-import { CATEGORY_LABEL } from "@/lib/category-label";
+import { t } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/category-label";
 import { saveRecord } from "@/lib/trip-actions";
-
-const REFUSED = "That change was refused. Check the trip link.";
 
 // Every field of a place. Fields changed here are locked, so research won't
 // change them later. Saved through saveRecord, with an Undo.
@@ -56,19 +55,22 @@ export function PlaceEditor({
   function save() {
     if (!result.ok) return;
     onClose();
-    saveRecord(tripId, "places", result.place, `edited ${place.name}`).catch(
-      () => toast.error(REFUSED),
-    );
-    toast(`Saved ${result.place.name}`, {
+    saveRecord(
+      tripId,
+      "places",
+      result.place,
+      t("activity.editedPlace", { name: place.name }),
+    ).catch(() => toast.error(t("common.refused")));
+    toast(t("place.saved", { name: result.place.name }), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
           saveRecord(
             tripId,
             "places",
             place,
-            `undid an edit to ${place.name}`,
-          ).catch(() => toast.error(REFUSED)),
+            t("activity.undidEdit", { name: place.name }),
+          ).catch(() => toast.error(t("common.refused"))),
       },
     });
   }
@@ -77,16 +79,16 @@ export function PlaceEditor({
     <EditPanel
       open
       onOpenChange={(open) => !open && onClose()}
-      title={`Edit ${place.name}`}
-      description="Research won't change anything you edit here."
+      title={t("common.editName", { name: place.name })}
+      description={t("place.editDescription")}
       canSubmit={result.ok}
       onSubmit={save}
     >
-      <Field label="Name" htmlFor="place-name">
+      <Field label={t("common.name")} htmlFor="place-name">
         <Input id="place-name" maxLength={200} required {...text("name")} />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Category" htmlFor="place-category">
+        <Field label={t("common.category")} htmlFor="place-category">
           <Select
             value={form.category}
             onValueChange={(v) => setForm({ ...form, category: v as Category })}
@@ -97,13 +99,13 @@ export function PlaceEditor({
             <SelectContent>
               {CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {CATEGORY_LABEL[c]}
+                  {categoryLabel(c)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Priority" htmlFor="place-priority">
+        <Field label={t("common.priority")} htmlFor="place-priority">
           <Select
             value={form.priority}
             onValueChange={(v) => setForm({ ...form, priority: v as Priority })}
@@ -114,28 +116,36 @@ export function PlaceEditor({
             <SelectContent>
               {PRIORITIES.map((p) => (
                 <SelectItem key={p} value={p}>
-                  {p}
+                  {t(`priorities.${p}`)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </Field>
       </div>
-      <Field label="Why go" htmlFor="place-purpose">
+      <Field label={t("common.whyGo")} htmlFor="place-purpose">
         <Textarea id="place-purpose" maxLength={1000} {...text("purpose")} />
       </Field>
-      <Field label="About" htmlFor="place-description">
+      <Field label={t("common.about")} htmlFor="place-description">
         <Textarea
           id="place-description"
           maxLength={3000}
           {...text("description")}
         />
       </Field>
-      <Field label="Tips" htmlFor="place-tips" hint="One per line.">
+      <Field
+        label={t("common.tips")}
+        htmlFor="place-tips"
+        hint={t("place.onePerLine")}
+      >
         <Textarea id="place-tips" {...text("tips")} />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Cost (¥)" htmlFor="place-cost" hint="0 means free.">
+        <Field
+          label={t("place.costYen")}
+          htmlFor="place-cost"
+          hint={t("place.zeroFree")}
+        >
           <Input
             id="place-cost"
             type="number"
@@ -144,7 +154,7 @@ export function PlaceEditor({
             {...text("cost")}
           />
         </Field>
-        <Field label="Time needed (min)" htmlFor="place-duration">
+        <Field label={t("place.timeNeededMin")} htmlFor="place-duration">
           <Input
             id="place-duration"
             type="number"
@@ -154,36 +164,36 @@ export function PlaceEditor({
           />
         </Field>
       </div>
-      <Field label="Opening hours" htmlFor="place-hours">
+      <Field label={t("common.openingHours")} htmlFor="place-hours">
         <Input id="place-hours" maxLength={500} {...text("openingHours")} />
       </Field>
       <Field
-        label="Closed on"
+        label={t("common.closedOn")}
         htmlFor="place-closed"
-        hint="Dates such as 2026-12-29, separated by commas."
+        hint={t("place.closedHint")}
       >
         <Input id="place-closed" {...text("closedDates")} />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Season from" htmlFor="place-season-from">
+        <Field label={t("common.seasonFrom")} htmlFor="place-season-from">
           <Input id="place-season-from" type="date" {...text("seasonFrom")} />
         </Field>
-        <Field label="Season to" htmlFor="place-season-to">
+        <Field label={t("common.seasonTo")} htmlFor="place-season-to">
           <Input id="place-season-to" type="date" {...text("seasonTo")} />
         </Field>
       </div>
-      <Field label="Nearest station" htmlFor="place-station">
+      <Field label={t("common.nearestStation")} htmlFor="place-station">
         <Input id="place-station" maxLength={100} {...text("stationName")} />
       </Field>
       <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3">
         <Field
-          label="Lines"
+          label={t("place.lines")}
           htmlFor="place-station-lines"
-          hint="Separated by commas."
+          hint={t("place.commaSeparated")}
         >
           <Input id="place-station-lines" {...text("stationLines")} />
         </Field>
-        <Field label="Walk (min)" htmlFor="place-station-walk">
+        <Field label={t("place.walkMin")} htmlFor="place-station-walk">
           <Input
             id="place-station-walk"
             type="number"
@@ -193,7 +203,7 @@ export function PlaceEditor({
           />
         </Field>
       </div>
-      <Field label="Website" htmlFor="place-website">
+      <Field label={t("common.website")} htmlFor="place-website">
         <Input
           id="place-website"
           type="url"
@@ -202,7 +212,7 @@ export function PlaceEditor({
           {...text("websiteUrl")}
         />
       </Field>
-      <Field label="Google Maps link" htmlFor="place-maps">
+      <Field label={t("common.googleMapsLink")} htmlFor="place-maps">
         <Input
           id="place-maps"
           type="url"
@@ -213,22 +223,22 @@ export function PlaceEditor({
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Latitude" htmlFor="place-lat">
+        <Field label={t("place.latitude")} htmlFor="place-lat">
           <Input id="place-lat" inputMode="decimal" {...text("lat")} />
         </Field>
-        <Field label="Longitude" htmlFor="place-lng">
+        <Field label={t("place.longitude")} htmlFor="place-lng">
           <Input id="place-lng" inputMode="decimal" {...text("lng")} />
         </Field>
       </div>
-      <Field label="Notes" htmlFor="place-notes">
+      <Field label={t("common.notes")} htmlFor="place-notes">
         <Textarea id="place-notes" maxLength={2000} {...text("notes")} />
       </Field>
-      <Field label="Last checked" htmlFor="place-verified">
+      <Field label={t("common.lastChecked")} htmlFor="place-verified">
         <Input id="place-verified" type="date" {...text("verifiedAt")} />
       </Field>
       {!result.ok && (
         <p role="alert" className="text-sm text-destructive">
-          Check this field: {result.problem}
+          {t("place.checkField", { problem: result.problem })}
         </p>
       )}
     </EditPanel>

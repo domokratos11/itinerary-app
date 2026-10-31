@@ -34,6 +34,14 @@ When a device finds a different version, it uploads unsynced edits, clears its
 storage and caches, and asks for sign-in again. Language, theme and device name
 stay. Without signal nothing is cleared. Settings → About can check by hand.
 
+## Languages
+
+The app is in English and Spanish, with all its text in `src/messages/`. Each
+person's language is saved with their account and applied at sign-in; change it
+on the sign-in screen or in Settings → Account. Your own data (place names,
+notes) stays as you typed it, and activity entries stay in the language they
+were written in. Google Maps itself stays in English.
+
 ## Security setup
 
 The app shows nothing until someone signs in with Google, and a trip opens

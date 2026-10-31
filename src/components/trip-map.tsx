@@ -10,16 +10,17 @@ import {
   type MapsErrorKind,
   type MapView,
 } from "@/domain/maps-service";
+import type { MessageKey } from "@/domain/i18n";
+import { t } from "@/lib/i18n";
 import { mapsService } from "@/lib/maps-service-instance";
 import { useOnline } from "@/lib/use-online";
 import { cn } from "@/lib/utils";
 
-const MESSAGE: Record<MapsErrorKind, string> = {
-  "not-configured": "The map isn't set up yet.",
-  offline:
-    "You're offline. The map comes back with signal; the list still works.",
-  quota: "The map reached its daily limit. It will be back tomorrow.",
-  failed: "The map couldn't load. The list still works.",
+const MESSAGE: Record<MapsErrorKind, MessageKey> = {
+  "not-configured": "map.notConfigured",
+  offline: "map.offline",
+  quota: "map.quota",
+  failed: "map.failed",
 };
 
 type Props = {
@@ -118,7 +119,7 @@ export function TripMap({
             role="status"
             className="absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-muted-foreground"
           >
-            {MESSAGE[problem]}
+            {t(MESSAGE[problem])}
           </p>
         )}
       </div>

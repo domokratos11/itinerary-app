@@ -14,6 +14,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { dayHref, pageHref } from "@/lib/links";
 import { useCitiesById, useTrip, useTripDays } from "@/lib/trip-store";
@@ -53,11 +54,11 @@ export function SearchPalette() {
         variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
-        aria-label="Search"
+        aria-label={t("search.title")}
         className="text-muted-foreground"
       >
         <Search />
-        <span className="hidden lg:inline">Search</span>
+        <span className="hidden lg:inline">{t("search.title")}</span>
         <kbd className="hidden rounded border px-1 text-[10px] lg:inline">
           Ctrl K
         </kbd>
@@ -65,14 +66,14 @@ export function SearchPalette() {
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        title="Search"
-        description="Find a day, place or hotel"
+        title={t("search.title")}
+        description={t("search.description")}
       >
         <Command>
-          <CommandInput placeholder="Day, place or hotel…" />
+          <CommandInput placeholder={t("search.placeholder")} />
           <CommandList>
-            <CommandEmpty>Nothing found.</CommandEmpty>
-            <CommandGroup heading="Days">
+            <CommandEmpty>{t("search.nothing")}</CommandEmpty>
+            <CommandGroup heading={t("search.days")}>
               {days.map((d) => {
                 const label = formatDayLabel(d.date);
                 const cities = d.cityIds.map(cityName).join(" → ");
@@ -91,7 +92,7 @@ export function SearchPalette() {
                 );
               })}
             </CommandGroup>
-            <CommandGroup heading="Hotels">
+            <CommandGroup heading={t("search.hotels")}>
               {trip.stays.map((s) => (
                 <CommandItem
                   key={s.id}
@@ -106,7 +107,7 @@ export function SearchPalette() {
                 </CommandItem>
               ))}
             </CommandGroup>
-            <CommandGroup heading="Places">
+            <CommandGroup heading={t("search.places")}>
               {trip.places.map((p) => (
                 <CommandItem
                   key={p.id}

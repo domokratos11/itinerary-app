@@ -1,5 +1,6 @@
 import { evenKeys, keyAfter, keyBetween } from "@/lib/order";
 import { distanceKm, type LatLng } from "@/lib/geo";
+import type { Translate } from "./i18n";
 import type { Holiday, PlanItem, Place, Stay } from "./schemas";
 
 // Active plan items (not soft-deleted) on one date, in their saved order.
@@ -160,12 +161,17 @@ export function newPlanItem(input: {
 
 // Warnings for a stop on a given day: the place is closed that day, or the
 // day is outside the season the place is open for.
-export function stopWarnings(place: Place, date: string): string[] {
+export function stopWarnings(
+  place: Place,
+  date: string,
+  tr: Translate,
+): string[] {
   const warnings: string[] = [];
-  if (place.closedDates.includes(date)) warnings.push("Closed on this day");
+  if (place.closedDates.includes(date))
+    warnings.push(tr("warnings.closedOnDay"));
   const beforeSeason = place.seasonFrom !== null && date < place.seasonFrom;
   const afterSeason = place.seasonTo !== null && date > place.seasonTo;
-  if (beforeSeason || afterSeason) warnings.push("Outside its season");
+  if (beforeSeason || afterSeason) warnings.push(tr("warnings.outOfSeason"));
   return warnings;
 }
 
@@ -221,14 +227,15 @@ export function stopTimes(
 export function timeWarnings(
   item: Pick<PlanItem, "startTime" | "durationMin">,
   place: Pick<Place, "durationMin" | "openingHours"> | undefined,
+  tr: Translate,
 ): string[] {
   const times = stopTimes(item, place);
   const hours = parseHours(place?.openingHours ?? null);
   if (!times || !hours) return [];
   if (times.start < hours.open)
-    return [`May not be open yet (opens ${hours.open})`];
+    return [tr("warnings.notOpenYet", { time: hours.open })];
   if (times.start >= hours.close || (times.end && times.end > hours.close))
-    return [`May be closed by then (closes ${hours.close})`];
+    return [tr("warnings.closedByThen", { time: hours.close })];
   return [];
 }
 
@@ -255,13 +262,14 @@ export function holidayWarnings(
   place: Pick<Place, "category" | "closedDates">,
   date: string,
   holidays: Pick<Holiday, "date" | "kind">[],
+  tr: Translate,
 ): string[] {
   const holiday = holidays.find((h) => h.date === date);
   if (!holiday || place.category === "temple") return [];
   if (place.closedDates.includes(date)) return [];
   return [
     holiday.kind === "holiday"
-      ? "Holiday: check it's open"
-      : "New Year closures: check it's open",
+      ? tr("warnings.holiday")
+      : tr("warnings.closures"),
   ];
 }

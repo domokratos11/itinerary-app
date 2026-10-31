@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "@/lib/i18n";
+
 import { deriveDays } from "@/domain/days";
 import type { PlanItem, Stay } from "@/domain/schemas";
 import {
@@ -79,15 +81,18 @@ describe("activeTrip", () => {
 
 describe("endpointFor", () => {
   it("has no location for a hotel still to be decided", () => {
-    const endpoint = endpointFor({
-      ...stay("hiroshima", "a", "b"),
-      hotelName: "To be decided",
-    });
+    const endpoint = endpointFor(
+      {
+        ...stay("hiroshima", "a", "b"),
+        hotelName: "To be decided",
+      },
+      t,
+    );
     expect(endpoint).toEqual({ name: "Hotel to be decided", location: null });
   });
 
   it("searches by hotel name when there are no coordinates", () => {
-    expect(endpointFor(stay("nagoya", "a", "b"))?.location).toEqual({
+    expect(endpointFor(stay("nagoya", "a", "b"), t)?.location).toEqual({
       query: "nagoya hotel Japan",
     });
   });

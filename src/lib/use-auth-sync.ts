@@ -6,6 +6,7 @@ import type { TripRepository } from "@/domain/trip-repository";
 import type { UserProfile, UserRepository } from "@/domain/user-repository";
 import { watchUser } from "@/lib/auth";
 import { useAuthStore } from "@/lib/auth-store";
+import { getLocale, setLocale } from "@/lib/i18n";
 import { chooseTrip, recallTripId, rememberTripId } from "@/lib/trip-id";
 import { tripRepository } from "@/lib/trip-repository-instance";
 import { userRepository } from "@/lib/user-repository-instance";
@@ -51,6 +52,17 @@ export function useAuthSync(
       current = false;
     };
   }, [uid, users]);
+
+  // The language saved for this person wins. Someone without one keeps what
+  // they see now, which also saves it for their other devices.
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.value.language) setLocale(profile.value.language);
+    else
+      users.update(profile.uid, { language: getLocale() }).catch(() => {
+        // The next sign-in tries again.
+      });
+  }, [profile, users]);
 
   // Once a trip is open it stays open; opening another reloads the page.
   const profileReady = profile !== null && profile.uid === uid;

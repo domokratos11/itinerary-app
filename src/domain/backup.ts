@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { Translate } from "./i18n";
 import { withoutGoogleCoordinates } from "./location";
 import { QueuedPlaceSchema, type QueuedPlace } from "./queue";
 import {
@@ -63,15 +64,13 @@ export function makeBackup(
   };
 }
 
-export function backupSummary(backup: Backup): string {
-  const n = (count: number, one: string, many = `${one}s`) =>
-    `${count} ${count === 1 ? one : many}`;
-  return [
-    n(backup.cities.length, "city", "cities"),
-    n(backup.stays.length, "stay"),
-    n(backup.reservations.length, "reservation"),
-    n(backup.places.length, "place"),
-    n(backup.items.filter((i) => i.status !== "removed").length, "stop"),
-    n(backup.queue.length, "queued link"),
-  ].join(", ");
+export function backupSummary(backup: Backup, tr: Translate): string {
+  return tr("backup.summary", {
+    cities: backup.cities.length,
+    stays: backup.stays.length,
+    reservations: backup.reservations.length,
+    places: backup.places.length,
+    stops: backup.items.filter((i) => i.status !== "removed").length,
+    queued: backup.queue.length,
+  });
 }

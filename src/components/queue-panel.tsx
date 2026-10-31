@@ -31,7 +31,8 @@ import {
   type QueuedPlace,
   type QueueStatus,
 } from "@/domain/queue";
-import { CATEGORY_LABEL } from "@/lib/category-label";
+import { t } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/category-label";
 import { CATEGORIES, type Category } from "@/domain/schemas";
 import { formatDayLabel } from "@/lib/format-day";
 import { assignQueued, queueAdd, queueUpdate } from "@/lib/queue-actions";
@@ -39,7 +40,6 @@ import { useCitiesById, useTrip, useTripDays } from "@/lib/trip-store";
 import { useQueue } from "@/lib/use-queue";
 import { useTripId } from "@/lib/use-trip-id";
 
-const REFUSED = "That change was refused. Check the trip link.";
 const NO_DAY = "none";
 
 type Dialog =
@@ -76,9 +76,7 @@ export function QueuePanel() {
     if (!tripId) return;
     const parsed = parseMapsLink(url);
     if (!parsed) {
-      setProblem(
-        "Paste a Google Maps link, such as one from maps.app.goo.gl or google.com/maps.",
-      );
+      setProblem(t("queue.badLink"));
       return;
     }
     setProblem(null);
@@ -92,10 +90,10 @@ export function QueuePanel() {
         category: category || null,
       });
     } catch {
-      toast.error("That link was refused. Check the trip link.");
+      toast.error(t("queue.linkRefused"));
       return;
     }
-    toast.success("Queued for the next update");
+    toast.success(t("queue.queued"));
     setUrl("");
     setNote("");
     setCategory("");
@@ -115,14 +113,16 @@ export function QueuePanel() {
   function setStatus(item: QueuedPlace, status: QueueStatus) {
     if (!tripId) return;
     const id = tripId;
-    queueUpdate(id, item, { status }).catch(() => toast.error(REFUSED));
+    queueUpdate(id, item, { status }).catch(() =>
+      toast.error(t("common.refused")),
+    );
     if (status === "dismissed")
-      toast("Dismissed", {
+      toast(t("queue.dismissed"), {
         action: {
-          label: "Undo",
+          label: t("common.undo"),
           onClick: () =>
             queueUpdate(id, item, { status: item.status }).catch(() =>
-              toast.error(REFUSED),
+              toast.error(t("common.refused")),
             ),
         },
       });
@@ -133,12 +133,12 @@ export function QueuePanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Queue a place</CardTitle>
+        <CardTitle className="text-base">{t("queue.queueAPlace")}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <form onSubmit={submit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="queue-url">Google Maps link</Label>
+            <Label htmlFor="queue-url">{t("common.googleMapsLink")}</Label>
             <Input
               id="queue-url"
               type="url"
@@ -150,17 +150,19 @@ export function QueuePanel() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="queue-note">Note (optional)</Label>
+            <Label htmlFor="queue-note">{t("common.noteOptional")}</Label>
             <Input
               id="queue-note"
-              placeholder="Why we want it"
+              placeholder={t("queue.whyWeWant")}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               maxLength={500}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="queue-category">Category (optional)</Label>
+            <Label htmlFor="queue-category">
+              {t("queue.categoryOptional")}
+            </Label>
             <CategorySelect
               id="queue-category"
               value={category}
@@ -173,13 +175,13 @@ export function QueuePanel() {
             </p>
           )}
           <Button type="submit" disabled={!url.trim()}>
-            Add to queue
+            {t("queue.addToQueue")}
           </Button>
         </form>
 
         {error ? (
           <p className="text-sm text-destructive">
-            Can&apos;t reach the queue: {error}
+            {t("queue.cantReach", { error })}
           </p>
         ) : (
           <div className="flex flex-col gap-3">
@@ -190,16 +192,16 @@ export function QueuePanel() {
                 size="sm"
                 value={filter}
                 onValueChange={(v) => v && setFilter(v as QueueStatus)}
-                aria-label="Show"
+                aria-label={t("queue.show")}
               >
                 <ToggleGroupItem value="queued">
-                  Queued {counts.queued}
+                  {t("queue.filterQueued", { count: counts.queued })}
                 </ToggleGroupItem>
                 <ToggleGroupItem value="promoted">
-                  Assigned {counts.promoted}
+                  {t("queue.filterAssigned", { count: counts.promoted })}
                 </ToggleGroupItem>
                 <ToggleGroupItem value="dismissed">
-                  Dismissed {counts.dismissed}
+                  {t("queue.filterDismissed", { count: counts.dismissed })}
                 </ToggleGroupItem>
               </ToggleGroup>
               <Button
@@ -209,7 +211,7 @@ export function QueuePanel() {
                 disabled={!items.length}
               >
                 <Download />
-                Export
+                {t("common.export")}
               </Button>
             </div>
             <ul className="flex flex-col gap-2">
@@ -227,8 +229,8 @@ export function QueuePanel() {
             {visible.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 {filter === "queued"
-                  ? "Nothing waiting. Paste a link above."
-                  : "None yet."}
+                  ? t("queue.nothingWaiting")
+                  : t("queue.noneYet")}
               </p>
             )}
           </div>
@@ -242,7 +244,7 @@ export function QueuePanel() {
           onClose={() => setDialog(null)}
           onSave={(changes) => {
             queueUpdate(tripId, dialog.item, changes).catch(() =>
-              toast.error(REFUSED),
+              toast.error(t("common.refused")),
             );
             setDialog(null);
           }}
@@ -260,15 +262,28 @@ export function QueuePanel() {
               .then(({ place }) =>
                 toast.success(
                   date
-                    ? `Added ${place.name} to ${formatDayLabel(date)}`
-                    : `Added ${place.name} to the city list`,
+                    ? t("common.addedToDay", {
+                        name: place.name,
+                        day: formatDayLabel(date),
+                      })
+                    : t("queue.addedToCity", { name: place.name }),
                 ),
               )
-              .catch(() => toast.error(REFUSED));
+              .catch(() => toast.error(t("common.refused")));
           }}
         />
       )}
     </Card>
+  );
+}
+
+// The heading of the Queue page.
+export function QueueIntro() {
+  return (
+    <>
+      <h1 className="text-2xl font-semibold">{t("queue.title")}</h1>
+      <p className="text-sm text-muted-foreground">{t("queue.intro")}</p>
+    </>
   );
 }
 
@@ -286,7 +301,7 @@ function QueueRow({
   onRestore: () => void;
 }) {
   const city = useCitiesById().get(item.cityId ?? "");
-  const name = item.name ?? "Short link, name added in the next update";
+  const name = item.name ?? t("queue.shortLinkName");
   return (
     <li className="flex flex-col gap-2 rounded-md border p-3 text-sm">
       <div className="flex items-start justify-between gap-2">
@@ -299,7 +314,7 @@ function QueueRow({
       <div className="flex flex-wrap items-center gap-2">
         {city && <Badge variant="secondary">{city.name}</Badge>}
         {item.category && (
-          <Badge variant="outline">{CATEGORY_LABEL[item.category]}</Badge>
+          <Badge variant="outline">{categoryLabel(item.category)}</Badge>
         )}
         <a
           className="inline-flex items-center gap-1 text-xs underline"
@@ -308,19 +323,19 @@ function QueueRow({
           rel="noopener noreferrer"
         >
           <ExternalLink className="size-3" />
-          Open link
+          {t("queue.openLink")}
         </a>
         <span className="ml-auto flex items-center gap-1">
           {item.status === "queued" && (
             <>
               <Button size="sm" onClick={onAssign}>
                 <CalendarPlus />
-                Assign
+                {t("queue.assign")}
               </Button>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={`Edit ${name}`}
+                aria-label={t("common.editName", { name })}
                 onClick={onEdit}
               >
                 <Pencil />
@@ -328,7 +343,7 @@ function QueueRow({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={`Dismiss ${name}`}
+                aria-label={t("queue.dismissName", { name })}
                 onClick={onDismiss}
               >
                 <X />
@@ -338,7 +353,7 @@ function QueueRow({
           {item.status === "dismissed" && (
             <Button variant="outline" size="sm" onClick={onRestore}>
               <RotateCcw />
-              Restore
+              {t("common.restore")}
             </Button>
           )}
         </span>
@@ -364,13 +379,15 @@ function CategorySelect({
       onValueChange={(v) => onChange(v === NO_CATEGORY ? "" : (v as Category))}
     >
       <SelectTrigger id={id} className="w-full">
-        <SelectValue>{value ? CATEGORY_LABEL[value] : "Not set"}</SelectValue>
+        <SelectValue>
+          {value ? categoryLabel(value) : t("queue.notSet")}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={NO_CATEGORY}>Not set</SelectItem>
+        <SelectItem value={NO_CATEGORY}>{t("queue.notSet")}</SelectItem>
         {CATEGORIES.map((c) => (
           <SelectItem key={c} value={c}>
-            {CATEGORY_LABEL[c]}
+            {categoryLabel(c)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -391,7 +408,7 @@ function CitySelect({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger id={id} className="w-full">
-        <SelectValue placeholder="Choose a city" />
+        <SelectValue placeholder={t("common.chooseCity")} />
       </SelectTrigger>
       <SelectContent>
         {cities.map((c) => (
@@ -429,7 +446,7 @@ function EditQueued({
     <EditPanel
       open
       onOpenChange={(open) => !open && onClose()}
-      title="Edit queued place"
+      title={t("queue.editTitle")}
       onSubmit={() =>
         onSave({
           name: name.trim() || null,
@@ -439,7 +456,7 @@ function EditQueued({
         })
       }
     >
-      <Field label="Name" htmlFor="queued-name">
+      <Field label={t("common.name")} htmlFor="queued-name">
         <Input
           id="queued-name"
           value={name}
@@ -447,7 +464,7 @@ function EditQueued({
           onChange={(e) => setName(e.target.value)}
         />
       </Field>
-      <Field label="Note" htmlFor="queued-note">
+      <Field label={t("common.note")} htmlFor="queued-note">
         <Input
           id="queued-note"
           value={note}
@@ -455,13 +472,13 @@ function EditQueued({
           onChange={(e) => setNote(e.target.value)}
         />
       </Field>
-      <Field label="City" htmlFor="queued-city">
+      <Field label={t("common.city")} htmlFor="queued-city">
         <CitySelect id="queued-city" value={cityId} onChange={setCityId} />
       </Field>
       <Field
-        label="Category"
+        label={t("common.category")}
         htmlFor="queued-category"
-        hint="Kept when you assign it to a day."
+        hint={t("queue.categoryHint")}
       >
         <CategorySelect
           id="queued-category"
@@ -496,27 +513,26 @@ function AssignQueued({
     <EditPanel
       open
       onOpenChange={(open) => !open && onClose()}
-      title="Assign to a day"
-      description={
-        item.name ??
-        "This short link's name is added when the place is researched."
+      title={t("queue.assignTitle")}
+      description={item.name ?? t("queue.shortLinkAssign")}
+      submitLabel={
+        date === NO_DAY ? t("queue.addToCity") : t("common.addToDay")
       }
-      submitLabel={date === NO_DAY ? "Add to city" : "Add to day"}
       canSubmit={cityId !== ""}
       onSubmit={() => onAssign(cityId, date === NO_DAY ? null : date)}
     >
       <Field
-        label="City"
+        label={t("common.city")}
         htmlFor="assign-city"
         hint={
           item.cityId === null && cityId !== ""
-            ? "Suggested from the link's location."
+            ? t("queue.suggested")
             : undefined
         }
       >
         <CitySelect id="assign-city" value={cityId} onChange={pickCity} />
       </Field>
-      <Field label="Day" htmlFor="assign-day">
+      <Field label={t("common.day")} htmlFor="assign-day">
         <Select value={date} onValueChange={setDate} disabled={!cityId}>
           <SelectTrigger id="assign-day" className="w-full">
             <SelectValue />
@@ -527,14 +543,11 @@ function AssignQueued({
                 {formatDayLabel(d.date)}
               </SelectItem>
             ))}
-            <SelectItem value={NO_DAY}>No day yet, city list only</SelectItem>
+            <SelectItem value={NO_DAY}>{t("queue.noDayYet")}</SelectItem>
           </SelectContent>
         </Select>
       </Field>
-      <p className="text-xs text-muted-foreground">
-        It becomes a place marked &ldquo;Not researched yet&rdquo; until the
-        next update fills in hours, cost and tips.
-      </p>
+      <p className="text-xs text-muted-foreground">{t("queue.becomesDraft")}</p>
     </EditPanel>
   );
 }

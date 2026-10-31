@@ -21,18 +21,15 @@ import {
   hasPin,
   matchesPlaceFilter,
   missingFields,
-  PLACE_FILTER_LABEL,
   PLACE_FILTERS,
-  RESEARCH_FIELD_LABEL,
   type PlaceFilter,
 } from "@/domain/place-edit";
 import type { PlaceRecord, Proposal } from "@/domain/schemas";
+import { t } from "@/lib/i18n";
 import { requestResearch } from "@/lib/proposal-actions";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip } from "@/lib/trip-store";
 import { useProposals } from "@/lib/use-proposals";
-
-const REFUSED = "That change was refused. Check the trip link.";
 
 // Settings → Places: every place by city, with filters for what's missing.
 export function PlacesSettings({ tripId }: { tripId: string }) {
@@ -89,25 +86,31 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
       .then((count) =>
         toast(
           count === 0
-            ? "Those places already have research requested."
-            : `Research requested for ${count} ${count === 1 ? "place" : "places"}. It arrives after the next research run.`,
+            ? t("placeSettings.alreadyRequested")
+            : t("placeSettings.requested", { count }),
         ),
       )
-      .catch(() => toast.error(REFUSED));
+      .catch(() => toast.error(t("common.refused")));
     setSelected(new Set());
   }
 
   function archive(place: PlaceRecord) {
-    archiveRecord(tripId, "places", place, `archived ${place.name}`).catch(() =>
-      toast.error(REFUSED),
-    );
-    toast(`Archived ${place.name}`, {
+    archiveRecord(
+      tripId,
+      "places",
+      place,
+      t("activity.archivedPlace", { name: place.name }),
+    ).catch(() => toast.error(t("common.refused")));
+    toast(t("common.archivedName", { name: place.name }), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
-          saveRecord(tripId, "places", place, `restored ${place.name}`).catch(
-            () => toast.error(REFUSED),
-          ),
+          saveRecord(
+            tripId,
+            "places",
+            place,
+            t("activity.restoredPlace", { name: place.name }),
+          ).catch(() => toast.error(t("common.refused"))),
       },
     });
   }
@@ -120,14 +123,13 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
           className="h-auto justify-start py-2 whitespace-normal"
           onClick={() => setFilter("review")}
         >
-          {ready.size} {ready.size === 1 ? "place has" : "places have"} research
-          to review
+          {t("common.researchToReview", { count: ready.size })}
         </Button>
       )}
       <div className="grid gap-2 sm:grid-cols-2">
         <Select value={cityId} onValueChange={setCityId}>
-          <SelectTrigger aria-label="City" className="w-full">
-            <SelectValue placeholder="Choose a city" />
+          <SelectTrigger aria-label={t("common.city")} className="w-full">
+            <SelectValue placeholder={t("common.chooseCity")} />
           </SelectTrigger>
           <SelectContent>
             {trip.cities.map((c) => (
@@ -141,13 +143,13 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
           value={filter}
           onValueChange={(v) => setFilter(v as PlaceFilter)}
         >
-          <SelectTrigger aria-label="Filter" className="w-full">
-            <SelectValue>{PLACE_FILTER_LABEL[filter]}</SelectValue>
+          <SelectTrigger aria-label={t("common.filter")} className="w-full">
+            <SelectValue>{t(`placeFilter.${filter}`)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {PLACE_FILTERS.map((f) => (
               <SelectItem key={f} value={f}>
-                {PLACE_FILTER_LABEL[f]}
+                {t(`placeFilter.${f}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -163,9 +165,9 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
                 on === true ? new Set(visible.map((p) => p.id)) : new Set(),
               )
             }
-            aria-label="Select all shown"
+            aria-label={t("placeSettings.selectAll")}
           />
-          {visible.length} {visible.length === 1 ? "place" : "places"}
+          {t("common.places", { count: visible.length })}
         </label>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -175,11 +177,13 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
             onClick={research}
           >
             <Search />
-            Research{chosen.length > 0 ? ` ${chosen.length}` : ""}
+            {chosen.length > 0
+              ? t("placeSettings.researchCount", { count: chosen.length })
+              : t("placeSettings.research")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
             <Plus />
-            Add place
+            {t("common.addPlace")}
           </Button>
         </div>
       </div>
@@ -201,7 +205,7 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
       </ul>
       {visible.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No places match this filter.
+          {t("placeSettings.noMatches")}
         </p>
       )}
 
@@ -258,7 +262,7 @@ function PlaceRow({
       <Checkbox
         checked={checked}
         onCheckedChange={(on) => onCheck(on === true)}
-        aria-label={`Select ${place.name}`}
+        aria-label={t("placeSettings.selectName", { name: place.name })}
         className="mt-0.5"
       />
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -266,18 +270,22 @@ function PlaceRow({
         <span className="flex flex-wrap gap-1.5">
           {canReview && (
             <Button size="xs" onClick={onReview}>
-              Review research
+              {t("placeSettings.review")}
             </Button>
           )}
-          {requested && <Badge variant="secondary">Research requested</Badge>}
-          {!hasPin(place) && <Badge variant="outline">No map pin</Badge>}
+          {requested && (
+            <Badge variant="secondary">{t("common.researchRequested")}</Badge>
+          )}
+          {!hasPin(place) && (
+            <Badge variant="outline">{t("placeSettings.noPin")}</Badge>
+          )}
           {missing.map((field) => (
             <Badge
               key={field}
               variant="outline"
               className="border-dashed text-muted-foreground"
             >
-              No {RESEARCH_FIELD_LABEL[field]}
+              {t(`missingField.${field}`)}
             </Badge>
           ))}
         </span>
@@ -285,7 +293,7 @@ function PlaceRow({
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={`Edit ${place.name}`}
+        aria-label={t("common.editName", { name: place.name })}
         onClick={onEdit}
       >
         <Pencil />
@@ -293,7 +301,7 @@ function PlaceRow({
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={`Archive ${place.name}`}
+        aria-label={t("placeSettings.archiveAria", { name: place.name })}
         onClick={onArchive}
       >
         <Archive />
