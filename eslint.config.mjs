@@ -33,6 +33,26 @@ const eslintConfig = defineConfig([
           ],
         },
       ],
+      // The same for text jsx-no-literals can't see. URLs and the Google Maps
+      // name aren't translated.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "JSXAttribute[name.name=/^(aria-label|placeholder|title|alt)$/] > Literal[value=/^(?!https?:|Google Maps$).*[A-Za-z]/]",
+          message: 'Use t("key"): all text comes from src/messages.',
+        },
+        {
+          selector:
+            "CallExpression[callee.name='toast'] > :matches(Literal, TemplateLiteral)",
+          message: 'Use t("key"): all text comes from src/messages.',
+        },
+        {
+          selector:
+            "CallExpression[callee.object.name='toast'] > :matches(Literal, TemplateLiteral)",
+          message: 'Use t("key"): all text comes from src/messages.',
+        },
+      ],
     },
   },
   // Override default ignores of eslint-config-next.
