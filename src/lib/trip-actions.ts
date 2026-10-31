@@ -1,9 +1,10 @@
+import type { Budget } from "@/domain/schemas";
 import type { TripCollection, TripRecordOf } from "@/domain/trip";
 import { logActivity } from "@/lib/activity-log";
 import { tripRepository } from "@/lib/trip-repository-instance";
 import { useTripStore } from "@/lib/trip-store";
 
-// Every change to cities, stays, reservations, places and holidays goes
+// Every change to cities, stays, reservations, places, holidays and expenses goes
 // through here, then through TripRepository. The change shows at once; the
 // next snapshot replaces it, or undoes it if the rules refuse the write.
 //
@@ -21,7 +22,12 @@ export async function saveRecord<C extends TripCollection>(
     logActivity(tripId, { kind: "settings", targetId: record.id, summary });
 }
 
-// Records are never deleted, only hidden.
+// Shared by the whole trip; the trip list brings it back to every device.
+export function saveBudget(tripId: string, budget: Budget): Promise<void> {
+  return tripRepository.updateTrip(tripId, { budget });
+}
+
+// Records are hidden first; only Clean up in Settings deletes them.
 export function archiveRecord<C extends TripCollection>(
   tripId: string,
   collection: C,

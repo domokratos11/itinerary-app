@@ -1,7 +1,7 @@
 /**
  * Clears a trip's places for a fresh start. Run with
  * `TRIP_ID=<id> npm run places:reset` to see what would change, then add
- * `-- --apply` to do it. Cities, stays, reservations and the queue stay as
+ * `-- --apply` to do it. Cities, stays and reservations stay as
  * they are.
  *
  * Records are never deleted: places are archived, the plan stops on them are

@@ -17,6 +17,8 @@ export function newAddressFor(pathname: string, search: string): string | null {
     ? pathname.slice(BASE_PATH.length)
     : pathname;
   const trip = new URLSearchParams(search).get("trip") ?? recallTripId();
+  // The Queue is gone; places are added on their city.
+  if (/^\/queue\/?$/.test(path)) return pageHref("/cities/", trip);
   const day = path.match(/^\/day\/(\d{4}-\d{2}-\d{2})\/?$/);
   if (day) return pageHref("/day/", trip, { date: day[1] });
   const city = path.match(/^\/city\/([a-z0-9-]+)\/?$/);
@@ -37,7 +39,7 @@ export function OldLinkRedirect() {
   return (
     <div className="flex flex-col gap-3">
       <h1 className="text-2xl font-semibold">{t("misc.pageNotFound")}</h1>
-      <Link href="/" className="text-sm underline">
+      <Link href="/days/" className="text-sm underline">
         {t("common.backToDays")}
       </Link>
     </div>

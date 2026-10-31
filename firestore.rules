@@ -2,8 +2,9 @@ rules_version = '2';
 
 // Access needs a Google sign-in whose email is on the trip's member list; a
 // leaked link alone opens nothing. People see only their own trips, only the
-// emails in config/access can create one, and trips are never deleted. The
-// scripts use the Admin SDK, which these rules don't apply to.
+// emails in config/access can create one, and trips are never deleted. Inside
+// a trip only what's already retired can be deleted (Clean up in Settings).
+// The scripts use the Admin SDK, which these rules don't apply to.
 // Paste this file into Firebase console → Firestore → Rules, then Publish.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -30,25 +31,6 @@ service cloud.firestore {
         && v.mode in ['train', 'subway', 'bus', 'walk', 'taxi']
         && optionalNumber(v.minutes) && optionalNumber(v.fareJPY)
         && optionalString(v.text, 200));
-    }
-
-    // status, cityId, placeId, category and updatedAt were added later, so links
-    // saved before them stay valid.
-    function isQueuedPlace(d) {
-      return d.keys().hasOnly(['id', 'url', 'name', 'lat', 'lng', 'note', 'createdAt', 'status', 'cityId', 'placeId', 'category', 'updatedAt'])
-        && d.keys().hasAll(['id', 'url', 'name', 'lat', 'lng', 'note', 'createdAt'])
-        && (!('status' in d) || d.status in ['queued', 'promoted', 'dismissed'])
-        && (!('cityId' in d) || d.cityId == null || shortString(d.cityId, 64))
-        && (!('placeId' in d) || d.placeId == null || shortString(d.placeId, 64))
-        && (!('category' in d) || d.category == null || d.category in ['lights', 'food', 'shopping', 'sight', 'daytrip', 'temple'])
-        && (!('updatedAt' in d) || d.updatedAt == null || shortString(d.updatedAt, 30))
-        && d.id is string && d.id.size() > 0 && d.id.size() <= 64
-        && d.url is string && d.url.size() > 0 && d.url.size() <= 500
-        && (d.name == null || (d.name is string && d.name.size() <= 200))
-        && (d.lat == null || (d.lat is number && d.lat >= -90 && d.lat <= 90))
-        && (d.lng == null || (d.lng is number && d.lng >= -180 && d.lng <= 180))
-        && (d.note == null || (d.note is string && d.note.size() <= 500))
-        && d.createdAt is string && d.createdAt.size() <= 30;
     }
 
     function shortString(v, max) {
@@ -185,6 +167,33 @@ service cloud.firestore {
         && optionalString(d.before, 4000) && optionalString(d.after, 4000);
     }
 
+    function isExpense(d) {
+      return d.keys().hasOnly(['id', 'title', 'amountJPY', 'category', 'date', 'status', 'paidBy', 'placeId', 'reservationId', 'stayId', 'note', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'title', 'amountJPY', 'category', 'date', 'status', 'paidBy', 'note', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.title, 200) && d.title.size() > 0
+        && d.amountJPY is int && d.amountJPY >= 0
+        && d.category in ['flight', 'booking', 'transport', 'food', 'souvenirs', 'attractions', 'clothes', 'temples', 'other']
+        && d.date is string && d.date.size() == 10
+        && d.status in ['planned', 'paid']
+        && optionalString(d.paidBy, 254)
+        && optionalString(d.get('placeId', null), 64)
+        && optionalString(d.get('reservationId', null), 64)
+        && optionalString(d.get('stayId', null), 64)
+        && optionalString(d.note, 500)
+        && isRecord(d);
+    }
+
+    function isBudget(v) {
+      return v == null || (v is map
+        && v.keys().hasOnly(['totalJPY', 'byCategory', 'travellers'])
+        && v.keys().hasAll(['totalJPY', 'byCategory', 'travellers'])
+        && (v.totalJPY == null || (v.totalJPY is int && v.totalJPY >= 0))
+        && v.byCategory is map
+        && v.byCategory.keys().hasOnly(['flight', 'booking', 'transport', 'food', 'souvenirs', 'attractions', 'clothes', 'temples', 'other'])
+        && (v.travellers == null || (v.travellers is int && v.travellers > 0 && v.travellers <= 20)));
+    }
+
     function isSignedIn() {
       return request.auth != null
         && request.auth.token.email_verified == true;
@@ -230,10 +239,11 @@ service cloud.firestore {
     }
 
     function isTripEdit(after, before) {
-      return after.diff(before).affectedKeys().hasOnly(['name', 'members', 'updatedAt'])
+      return after.diff(before).affectedKeys().hasOnly(['name', 'members', 'budget', 'updatedAt'])
         && shortString(after.get('name', 'unnamed'), 100)
         && after.get('name', 'unnamed').size() > 0
         && isMemberList(after.members)
+        && isBudget(after.get('budget', null))
         && shortString(after.updatedAt, 30);
     }
 
@@ -268,70 +278,72 @@ service cloud.firestore {
         && isTripEdit(request.resource.data, resource.data);
       allow delete: if false;
 
-      // The change log: written once, never edited or deleted.
+      // The change log: written once and never edited; Clean up can clear it.
       match /activity/{id} {
         allow read: if isMember(tripId);
         allow create: if isMember(tripId)
           && isActivity(request.resource.data) && request.resource.data.id == id;
-        allow update, delete: if false;
+        allow update: if false;
+        allow delete: if isMember(tripId);
       }
 
-      // The trip's structure. Records are archived, never deleted.
+      // The trip's structure. Records are archived, and only archived ones can
+      // be deleted.
       match /cities/{id} {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isCity(request.resource.data) && request.resource.data.id == id;
-        allow delete: if false;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 
       match /stays/{id} {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isStay(request.resource.data) && request.resource.data.id == id;
-        allow delete: if false;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 
       match /reservations/{id} {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isReservation(request.resource.data) && request.resource.data.id == id;
-        allow delete: if false;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 
       match /holidays/{id} {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isHoliday(request.resource.data) && request.resource.data.id == id;
-        allow delete: if false;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
+      }
+
+      match /expenses/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isExpense(request.resource.data) && request.resource.data.id == id;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 
       match /places/{id} {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isPlace(request.resource.data) && request.resource.data.id == id;
-        allow delete: if false;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 
-      // Research waiting for review. Dismissed, never deleted.
+      // Research waiting for review. Only finished research can be deleted.
       match /proposals/{id} {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isProposal(request.resource.data) && request.resource.data.id == id;
-        allow delete: if false;
+        allow delete: if isMember(tripId)
+          && resource.data.status in ['applied', 'dismissed'];
       }
 
+      // Links left from the old Queue: they can only be read and cleaned up.
       match /queue/{queueId} {
-        allow read: if isMember(tripId);
-        allow create: if isMember(tripId)
-          && isQueuedPlace(request.resource.data)
-          && request.resource.data.id == queueId;
-        // Edits keep the link and when it was added.
-        allow update: if isMember(tripId)
-          && isQueuedPlace(request.resource.data)
-          && request.resource.data.id == queueId
-          && request.resource.data.url == resource.data.url
-          && request.resource.data.createdAt == resource.data.createdAt;
-        allow delete: if false;
+        allow read, delete: if isMember(tripId);
+        allow create, update: if false;
       }
 
       match /items/{itemId} {
@@ -339,7 +351,7 @@ service cloud.firestore {
         allow create, update: if isMember(tripId)
           && isPlanItem(request.resource.data)
           && request.resource.data.id == itemId;
-        allow delete: if false;
+        allow delete: if isMember(tripId) && resource.data.status == 'removed';
       }
     }
 

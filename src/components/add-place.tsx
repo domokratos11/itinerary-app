@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { EditPanel, Field } from "@/components/edit-panel";
+import { CategoryOption, PriorityOption } from "@/components/tag-badges";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,8 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MapsError, type PlaceSuggestion } from "@/domain/maps-service";
-import { newDraftPlace } from "@/domain/place-edit";
-import { parseMapsLink } from "@/domain/queue";
+import { newDraftPlace, parseMapsLink } from "@/domain/place-edit";
 import {
   CATEGORIES,
   PRIORITIES,
@@ -23,7 +23,6 @@ import {
   type Priority,
 } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
-import { categoryLabel } from "@/lib/category-label";
 import { mapsService } from "@/lib/maps-service-instance";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip, useTripStore } from "@/lib/trip-store";
@@ -51,6 +50,7 @@ export function AddPlace({
   const [cityId, setCityId] = useState(defaultCityId);
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
+  const [note, setNote] = useState("");
   const [category, setCategory] = useState<Category>("sight");
   const [priority, setPriority] = useState<Priority>("want");
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
@@ -116,6 +116,7 @@ export function AddPlace({
         lat: point?.lat ?? link?.lat ?? null,
         lng: point?.lng ?? link?.lng ?? null,
         googlePlaceId: chosen?.placeId ?? null,
+        purpose: note,
         fromGoogle: point !== null,
         takenIds: allPlaces.map((p) => p.id),
       },
@@ -236,7 +237,7 @@ export function AddPlace({
             <SelectContent>
               {CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {categoryLabel(c)}
+                  <CategoryOption category={c} />
                 </SelectItem>
               ))}
             </SelectContent>
@@ -253,13 +254,22 @@ export function AddPlace({
             <SelectContent>
               {PRIORITIES.map((p) => (
                 <SelectItem key={p} value={p}>
-                  {t(`priorities.${p}`)}
+                  <PriorityOption priority={p} />
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </Field>
       </div>
+      <Field label={t("common.noteOptional")} htmlFor="add-place-note">
+        <Input
+          id="add-place-note"
+          value={note}
+          maxLength={500}
+          placeholder={t("place.whyWeWant")}
+          onChange={(e) => setNote(e.target.value)}
+        />
+      </Field>
     </EditPanel>
   );
 }

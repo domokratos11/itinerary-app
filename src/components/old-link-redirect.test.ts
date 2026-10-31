@@ -13,6 +13,12 @@ describe("newAddressFor", () => {
     expect(newAddressFor("/city/nagoya/", "")).toBe("/city/?id=nagoya");
   });
 
+  it("forwards the old Queue page to the cities", () => {
+    expect(newAddressFor("/queue/", "?trip=abc123")).toBe(
+      "/cities/?trip=abc123",
+    );
+  });
+
   it("leaves other paths alone", () => {
     expect(newAddressFor("/nothing/", "")).toBeNull();
   });

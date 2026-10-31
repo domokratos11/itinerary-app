@@ -1,7 +1,7 @@
 "use client";
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { GripVertical, Link2 } from "lucide-react";
+import { GripVertical } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,17 +13,14 @@ import { formatDayLabel } from "@/lib/format-day";
 // Drag ids on the day page. Stops use their plan item id; everything else
 // carries a prefix so the drop handler can tell them apart.
 export const LIST_ID = "list";
-export const queueDragId = (id: string) => `queue:${id}`;
 export const placeDragId = (id: string) => `place:${id}`;
 export const dayDropId = (date: string) => `day:${date}`;
 
 export function parseDragId(
   id: string,
-): { kind: "queue" | "place" | "day"; value: string } | null {
-  const match = id.match(/^(queue|place|day):(.+)$/);
-  return match
-    ? { kind: match[1] as "queue" | "place" | "day", value: match[2] }
-    : null;
+): { kind: "place" | "day"; value: string } | null {
+  const match = id.match(/^(place|day):(.+)$/);
+  return match ? { kind: match[1] as "place" | "day", value: match[2] } : null;
 }
 
 export type Waiting = {
@@ -112,10 +109,7 @@ function WaitingItem({ waiting }: { waiting: Waiting }) {
       <GripVertical className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
       <span className="min-w-0">
         <span className="block truncate font-medium">{waiting.name}</span>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          {waiting.dragId.startsWith("queue:") && <Link2 className="size-3" />}
-          {waiting.detail}
-        </span>
+        <span className="text-xs text-muted-foreground">{waiting.detail}</span>
       </span>
     </li>
   );

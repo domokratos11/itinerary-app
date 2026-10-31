@@ -1,6 +1,41 @@
 import type { Translate } from "./i18n";
 import { parseHours } from "./plan";
 
+export type HoursPoint = { day: number; hour: number; minute: number };
+export type HoursPeriod = { open: HoursPoint; close: HoursPoint | null };
+
+const MINUTES_IN_WEEK = 7 * 24 * 60;
+
+const minuteOfWeek = (p: HoursPoint) => (p.day * 24 + p.hour) * 60 + p.minute;
+
+// Whether a place is open now, from Google's opening periods and its UTC
+// offset, or null when it publishes no hours. Holidays aren't in the periods.
+// Worked out here because Place.isOpen() throws outside Google's beta channel.
+export function openNowFrom(
+  periods: HoursPeriod[],
+  utcOffsetMinutes: number | null | undefined,
+  now: Date,
+): boolean | null {
+  if (periods.length === 0 || utcOffsetMinutes == null) return null;
+  const local = new Date(now.getTime() + utcOffsetMinutes * 60_000);
+  const current = minuteOfWeek({
+    day: local.getUTCDay(),
+    hour: local.getUTCHours(),
+    minute: local.getUTCMinutes(),
+  });
+  return periods.some(({ open, close }) => {
+    // No closing time means open around the clock.
+    if (!close) return true;
+    const start = minuteOfWeek(open);
+    let end = minuteOfWeek(close);
+    // A period running past Saturday midnight wraps into the next week.
+    if (end <= start) end += MINUTES_IN_WEEK;
+    return [current, current + MINUTES_IN_WEEK].some(
+      (at) => at >= start && at < end,
+    );
+  });
+}
+
 function to24Hour(hour: number, minute: string, meridiem: string): string {
   const upper = meridiem.toUpperCase();
   const h =

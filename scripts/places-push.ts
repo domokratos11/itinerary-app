@@ -3,15 +3,12 @@
  * Run with `TRIP_ID=<id> npm run places:push -- <file.json>`.
  *
  * The file is a JSON array of places in the data/places shape. A draft
- * keeps its id, so research for a draft replaces it in place. An entry may
- * carry "queueId": the queued link it came from, which is then marked
- * assigned to this place.
+ * keeps its id, so research for a draft replaces it in place.
  */
 import { readFileSync } from "node:fs";
 import { z } from "zod";
 
 import { adminDb } from "./admin-db";
-import { QueuedPlaceSchema } from "../src/domain/queue";
 import {
   placeRecordDefaults,
   PlaceRecordSchema,
@@ -20,9 +17,7 @@ import {
 } from "../src/domain/schemas";
 import { parseTripId } from "../src/lib/trip-id";
 
-export const PushFileSchema = z.array(
-  PlaceSchema.extend({ queueId: z.string().optional() }),
-);
+export const PushFileSchema = z.array(PlaceSchema);
 
 async function main() {
   const tripId = parseTripId(process.env.TRIP_ID);
@@ -37,7 +32,7 @@ async function main() {
   const db = adminDb();
   const now = new Date().toISOString();
 
-  for (const { queueId, ...place } of entries) {
+  for (const place of entries) {
     const ref = db.doc(`trips/${tripId}/places/${place.id}`);
     const existing = await ref.get();
     const before = existing.exists
@@ -58,29 +53,11 @@ async function main() {
           }
         : {}),
       status: "researched",
-      source: before?.success
-        ? before.data.source
-        : queueId
-          ? "queue"
-          : "catalog",
+      source: before?.success ? before.data.source : "catalog",
       archived: false,
       updatedAt: now,
     };
     await ref.set(record);
-
-    if (queueId) {
-      const qRef = db.doc(`trips/${tripId}/queue/${queueId}`);
-      const q = await qRef.get();
-      const parsed = q.exists ? QueuedPlaceSchema.safeParse(q.data()) : null;
-      if (parsed?.success)
-        await qRef.set({
-          ...parsed.data,
-          status: "promoted",
-          cityId: record.cityId,
-          placeId: record.id,
-          updatedAt: now,
-        });
-    }
     console.log(`${existing.exists ? "updated" : "added"} ${record.id}`);
   }
   process.exit(0);

@@ -2,27 +2,45 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Inbox, MapPinned, Settings } from "lucide-react";
+import {
+  CalendarDays,
+  LayoutDashboard,
+  MapPinned,
+  Settings,
+  Wallet,
+} from "lucide-react";
 
 import { AccountSheet } from "@/components/account-sheet";
 import { ActivitySheet } from "@/components/activity-sheet";
 import { SearchPalette } from "@/components/search-palette";
 import { TripSwitcher } from "@/components/trip-switcher";
 import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { t } from "@/lib/i18n";
 import { pageHref } from "@/lib/links";
 import { cn } from "@/lib/utils";
 import { useTripId } from "@/lib/use-trip-id";
 
 export const SECTIONS = [
-  { path: "/", label: "nav.days", icon: CalendarDays, match: ["/", "/day/"] },
+  {
+    path: "/",
+    label: "nav.dashboard",
+    icon: LayoutDashboard,
+    match: ["/"],
+  },
+  {
+    path: "/days/",
+    label: "nav.days",
+    icon: CalendarDays,
+    match: ["/days/", "/day/"],
+  },
   {
     path: "/cities/",
     label: "nav.cities",
     icon: MapPinned,
     match: ["/cities/", "/city/"],
   },
-  { path: "/queue/", label: "nav.queue", icon: Inbox, match: ["/queue/"] },
+  { path: "/budget/", label: "nav.budget", icon: Wallet, match: ["/budget/"] },
   {
     path: "/settings/",
     label: "nav.settings",
@@ -50,6 +68,10 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="flex h-14 w-full items-center gap-2 px-4 lg:px-6">
+        <SidebarTrigger
+          aria-label={t("nav.toggleSidebar")}
+          className="hidden lg:inline-flex"
+        />
         <TripSwitcher />
         <nav
           aria-label={t("nav.sections")}
@@ -90,19 +112,19 @@ export function BottomNav() {
       aria-label={t("nav.sections")}
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {SECTIONS.map(({ path, label, icon: Icon }) => (
           <li key={path}>
             <Link
               href={pageHref(path, tripId)}
               aria-current={active === path ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center gap-0.5 py-2 text-xs text-muted-foreground",
+                "flex flex-col items-center gap-0.5 px-0.5 py-2 text-[11px] text-muted-foreground",
                 active === path && "font-medium text-primary",
               )}
             >
               <Icon className="size-5" />
-              {t(label)}
+              <span className="max-w-full truncate">{t(label)}</span>
             </Link>
           </li>
         ))}

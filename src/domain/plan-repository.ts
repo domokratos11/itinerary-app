@@ -15,8 +15,8 @@ export interface PlanRepository {
   save(tripId: string, item: PlanItem): Promise<void>;
 }
 
-// Soft delete: the item stays in the plan with status "removed", so it can
-// be restored and shows up in "Recently changed".
+// The item stays in the plan with status "removed", so it can be restored and
+// shows up in "Recently changed", until Clean up in Settings deletes it.
 export function markRemoved(item: PlanItem, now: Date = new Date()): PlanItem {
   return { ...item, status: "removed", updatedAt: now.toISOString() };
 }

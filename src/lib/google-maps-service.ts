@@ -1,3 +1,4 @@
+import { openNowFrom } from "@/domain/live-hours";
 import {
   MapsError,
   type LivePlace,
@@ -271,10 +272,12 @@ export class GoogleMapsService implements MapsService {
       const today = place.regularOpeningHours?.weekdayDescriptions.find(
         (line) => line.startsWith(prefix),
       );
-      // isOpen answers undefined when the place publishes no hours.
-      const open = place.regularOpeningHours ? await place.isOpen() : undefined;
       return {
-        openNow: open ?? null,
+        openNow: openNowFrom(
+          place.regularOpeningHours?.periods ?? [],
+          place.utcOffsetMinutes,
+          new Date(),
+        ),
         rating: place.rating ?? null,
         ratingCount: place.userRatingCount ?? null,
         todayHours: today ? today.slice(prefix.length).trim() : null,

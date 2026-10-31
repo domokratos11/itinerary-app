@@ -5,6 +5,8 @@ import { Archive, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { EditPanel, Field } from "@/components/edit-panel";
+import { LogCostButton } from "@/components/expense-form";
+import { categoryForReservation } from "@/domain/budget";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +100,17 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
                 <span className="block text-muted-foreground">{r.note}</span>
               )}
             </span>
+            <LogCostButton
+              tripId={tripId}
+              prefill={{
+                title: [t(`reservationType.${r.type}`), r.from, r.to]
+                  .filter(Boolean)
+                  .join(" · "),
+                category: categoryForReservation(r.type),
+                date: r.date,
+                reservationId: r.id,
+              }}
+            />
             <Button
               variant="ghost"
               size="icon-sm"

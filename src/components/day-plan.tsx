@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/select";
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -66,18 +67,16 @@ import {
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
 import { planDrop, type DragSource, type DropTarget } from "@/domain/drop";
-import { isDraft, suggestCity } from "@/domain/queue";
+import { isDraft } from "@/domain/place-edit";
 import {
   DaySidePanel,
   DragPreview,
   LIST_ID,
   parseDragId,
   placeDragId,
-  queueDragId,
   useListDrop,
 } from "@/components/day-side-panel";
 import { t } from "@/lib/i18n";
-import { categoryLabel } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
 import { formatDayLabel } from "@/lib/format-day";
 import {
@@ -88,6 +87,7 @@ import {
   updateItem,
 } from "@/lib/plan-actions";
 import { PlaceDetails } from "@/components/place-details";
+import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { StopEditor, type StopChanges } from "@/components/stop-editor";
 import { LegLine } from "@/components/leg-line";
 import { TripMap } from "@/components/trip-map";
@@ -97,16 +97,14 @@ import type { MapLine } from "@/domain/maps-service";
 import { useWalkingLegs } from "@/lib/use-walking-legs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { nearbyByPlace } from "@/lib/catalog-filter";
-import { assignQueued, queueUpdate } from "@/lib/queue-actions";
 import { usePlanStore } from "@/lib/plan-store";
-import { homeHref } from "@/lib/links";
+import { daysHref } from "@/lib/links";
 import {
   useCitiesById,
   usePlacesById,
   useTrip,
   useTripDays,
 } from "@/lib/trip-store";
-import { useQueue } from "@/lib/use-queue";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTripId } from "@/lib/use-trip-id";
@@ -128,7 +126,6 @@ export function DayPlan(props: Props) {
   const citiesById = useCitiesById();
   const trip = useTrip();
   const tripDays = useTripDays();
-  const queue = useQueue(tripId).items;
   const [dragging, setDragging] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "map">("list");
@@ -168,7 +165,7 @@ export function DayPlan(props: Props) {
     const planned = new Set(
       items.filter((i) => i.status !== "removed").map((i) => i.placeId),
     );
-    const drafts = trip.places
+    return trip.places
       .filter(
         (p) =>
           isDraft(p) && props.cityIds.includes(p.cityId) && !planned.has(p.id),
@@ -178,15 +175,7 @@ export function DayPlan(props: Props) {
         name: p.name,
         detail: t("common.notResearched"),
       }));
-    const links = queue
-      .filter((q) => q.status === "queued")
-      .map((q) => ({
-        dragId: queueDragId(q.id),
-        name: q.name ?? t("day.shortLink"),
-        detail: t("day.queuedLink"),
-      }));
-    return [...drafts, ...links];
-  }, [items, trip.places, queue, props.cityIds]);
+  }, [items, trip.places, props.cityIds]);
   const otherDays = tripDays.filter(
     (d) =>
       d.date !== props.date && d.cityIds.some((c) => props.cityIds.includes(c)),
@@ -205,16 +194,6 @@ export function DayPlan(props: Props) {
       const place = placesById.get(parsed.value);
       return place
         ? { kind: "place", placeId: place.id, cityId: place.cityId }
-        : null;
-    }
-    if (parsed?.kind === "queue") {
-      const q = queue.find((i) => i.id === parsed.value);
-      return q
-        ? {
-            kind: "queued",
-            queueId: q.id,
-            cityId: q.cityId ?? suggestCity(q, trip.places, trip.stays),
-          }
         : null;
     }
     const item = stops.find((i) => i.id === id);
@@ -238,11 +217,7 @@ export function DayPlan(props: Props) {
   function nameOf(source: DragSource): string {
     if (source.kind === "stop")
       return placesById.get(source.item.placeId)?.name ?? t("day.thisStop");
-    if (source.kind === "place")
-      return placesById.get(source.placeId)?.name ?? t("day.thisPlace");
-    return (
-      queue.find((q) => q.id === source.queueId)?.name ?? t("day.thisPlace")
-    );
+    return placesById.get(source.placeId)?.name ?? t("day.thisPlace");
   }
 
   function handleDragEnd({ active, over }: DragEndEvent) {
@@ -291,35 +266,12 @@ export function DayPlan(props: Props) {
       return;
     }
 
-    const added =
-      source.kind === "place"
-        ? addPlaceAt(
-            id,
-            source.placeId,
-            plan.date,
-            plan.index,
-            dayItems(plan.date),
-          )
-        : assignQueued(
-            id,
-            queue.find((q) => q.id === source.queueId)!,
-            plan.cityId!,
-            plan.date,
-            new Date(),
-            plan.index,
-          ).then((r) => r.stop!);
-    added
+    addPlaceAt(id, source.placeId, plan.date, plan.index, dayItems(plan.date))
       .then((stop) =>
         toast(t("common.addedToDay", { name: nameOf(source), day: label }), {
           action: {
             label: t("common.undo"),
-            onClick: () => {
-              undo(removeItem(id, stop));
-              if (source.kind === "queued") {
-                const q = queue.find((i) => i.id === source.queueId);
-                if (q) undo(queueUpdate(id, q, { status: "queued" }));
-              }
-            },
+            onClick: () => undo(removeItem(id, stop)),
           },
         }),
       )
@@ -425,7 +377,7 @@ export function DayPlan(props: Props) {
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
           <Link
-            href={homeHref(tripId)}
+            href={daysHref(tripId)}
             className="text-sm text-muted-foreground underline"
           >
             {t("common.backToDays")}
@@ -819,7 +771,10 @@ function StopCard({
           </CardTitle>
           <div className="flex flex-wrap gap-2">
             {place && (
-              <Badge variant="secondary">{categoryLabel(place.category)}</Badge>
+              <>
+                <CategoryBadge category={place.category} />
+                <PriorityBadge priority={place.priority} />
+              </>
             )}
             {finished && (
               <Badge>
@@ -949,7 +904,7 @@ function FullDay({
           <SheetTitle>{t("day.fullDay")}</SheetTitle>
           <SheetDescription>{t("day.fullDayDescription")}</SheetDescription>
         </SheetHeader>
-        <div className="flex flex-col gap-2 px-4 pb-6">
+        <SheetBody className="gap-2">
           {legs === null && (
             <p className="text-sm text-muted-foreground">
               {t("day.fullDayNeedsHotel")}
@@ -972,7 +927,7 @@ function FullDay({
               <ExternalLink className="size-4 text-muted-foreground" />
             </a>
           ))}
-        </div>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

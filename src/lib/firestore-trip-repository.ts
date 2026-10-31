@@ -23,7 +23,9 @@ import {
   type TripRecordOf,
 } from "@/domain/trip";
 import {
+  BudgetSchema,
   CityRecordSchema,
+  ExpenseRecordSchema,
   HolidayRecordSchema,
   PlaceRecordSchema,
   ReservationRecordSchema,
@@ -37,15 +39,17 @@ const SCHEMAS: { [C in TripCollection]: z.ZodType<TripRecordOf[C]> } = {
   reservations: ReservationRecordSchema,
   places: PlaceRecordSchema,
   holidays: HolidayRecordSchema,
+  expenses: ExpenseRecordSchema,
 };
 
 const TripDocSchema = z.object({
   name: z.string().nullable().default(null),
   members: z.array(z.string()).default([]),
+  budget: BudgetSchema.nullable().default(null).catch(null),
 });
 
 // Reads and writes
-// trips/{tripId}/{cities,stays,reservations,places,holidays}/{id}.
+// trips/{tripId}/{cities,stays,reservations,places,holidays,expenses}/{id}.
 // Rows that fail their schema are skipped, so one bad write cannot break
 // the whole trip.
 export class FirestoreTripRepository implements TripRepository {

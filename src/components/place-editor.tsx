@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { EditPanel, Field } from "@/components/edit-panel";
+import { CategoryOption, PriorityOption } from "@/components/tag-badges";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -26,7 +27,6 @@ import {
   type Priority,
 } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
-import { categoryLabel } from "@/lib/category-label";
 import { saveRecord } from "@/lib/trip-actions";
 
 // Every field of a place. Fields changed here are locked, so research won't
@@ -99,7 +99,7 @@ export function PlaceEditor({
             <SelectContent>
               {CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {categoryLabel(c)}
+                  <CategoryOption category={c} />
                 </SelectItem>
               ))}
             </SelectContent>
@@ -116,7 +116,7 @@ export function PlaceEditor({
             <SelectContent>
               {PRIORITIES.map((p) => (
                 <SelectItem key={p} value={p}>
-                  {t(`priorities.${p}`)}
+                  <PriorityOption priority={p} />
                 </SelectItem>
               ))}
             </SelectContent>

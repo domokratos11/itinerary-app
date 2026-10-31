@@ -2,7 +2,71 @@ import { describe, expect, it } from "vitest";
 
 import { t } from "@/lib/i18n";
 
-import { hoursDifference, parseGoogleHours } from "./live-hours";
+import {
+  hoursDifference,
+  openNowFrom,
+  parseGoogleHours,
+  type HoursPeriod,
+} from "./live-hours";
+
+describe("openNowFrom", () => {
+  const JST = 540;
+  // 2026-12-16 is a Wednesday (day 3).
+  const tokyo = (time: string) => new Date(`2026-12-16T${time}:00+09:00`);
+  const day = (d: number, open: number, close: number): HoursPeriod => ({
+    open: { day: d, hour: open, minute: 0 },
+    close: { day: d, hour: close, minute: 0 },
+  });
+
+  it("uses the place's own time, not the device's", () => {
+    const periods = [day(3, 9, 17)];
+    expect(openNowFrom(periods, JST, tokyo("09:00"))).toBe(true);
+    expect(openNowFrom(periods, JST, tokyo("16:59"))).toBe(true);
+    expect(openNowFrom(periods, JST, tokyo("17:00"))).toBe(false);
+    expect(openNowFrom(periods, JST, tokyo("08:59"))).toBe(false);
+  });
+
+  it("is closed on a day with no period", () => {
+    expect(openNowFrom([day(4, 9, 17)], JST, tokyo("12:00"))).toBe(false);
+  });
+
+  it("handles hours running past midnight", () => {
+    const periods: HoursPeriod[] = [
+      {
+        open: { day: 2, hour: 22, minute: 0 },
+        close: { day: 3, hour: 2, minute: 0 },
+      },
+    ];
+    expect(openNowFrom(periods, JST, tokyo("01:00"))).toBe(true);
+    expect(openNowFrom(periods, JST, tokyo("03:00"))).toBe(false);
+  });
+
+  it("handles hours running from Saturday into Sunday", () => {
+    const periods: HoursPeriod[] = [
+      {
+        open: { day: 6, hour: 22, minute: 0 },
+        close: { day: 0, hour: 2, minute: 0 },
+      },
+    ];
+    // 2026-12-20 is a Sunday, 2026-12-19 a Saturday.
+    const sunday = new Date("2026-12-20T01:00:00+09:00");
+    const saturday = new Date("2026-12-19T23:00:00+09:00");
+    expect(openNowFrom(periods, JST, sunday)).toBe(true);
+    expect(openNowFrom(periods, JST, saturday)).toBe(true);
+  });
+
+  it("treats no closing time as always open", () => {
+    const periods: HoursPeriod[] = [
+      { open: { day: 0, hour: 0, minute: 0 }, close: null },
+    ];
+    expect(openNowFrom(periods, JST, tokyo("03:00"))).toBe(true);
+  });
+
+  it("says nothing without hours or an offset", () => {
+    expect(openNowFrom([], JST, tokyo("12:00"))).toBeNull();
+    expect(openNowFrom([day(3, 9, 17)], null, tokyo("12:00"))).toBeNull();
+  });
+});
 
 describe("parseGoogleHours", () => {
   it("reads 12-hour times, with odd spaces", () => {

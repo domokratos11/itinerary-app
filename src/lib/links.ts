@@ -11,7 +11,7 @@ export function pageHref(
   return qs ? `${path}?${qs}` : path;
 }
 
-export const homeHref = (tripId: string | null) => pageHref("/", tripId);
+export const daysHref = (tripId: string | null) => pageHref("/days/", tripId);
 
 export const dayHref = (date: string, tripId: string | null) =>
   pageHref("/day/", tripId, { date });

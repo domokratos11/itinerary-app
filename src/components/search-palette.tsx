@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BedDouble, CalendarDays, MapPin, Search } from "lucide-react";
+import { BedDouble, CalendarDays, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +14,19 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import type { Category } from "@/domain/schemas";
+import { CATEGORY_COLOR } from "@/domain/taxonomy";
 import { t } from "@/lib/i18n";
+import { CATEGORY_ICON } from "@/lib/taxonomy-icons";
 import { formatDayLabel } from "@/lib/format-day";
 import { dayHref, pageHref } from "@/lib/links";
 import { useCitiesById, useTrip, useTripDays } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
+
+function PlaceIcon({ category }: { category: Category }) {
+  const Icon = CATEGORY_ICON[category];
+  return <Icon style={{ color: CATEGORY_COLOR[category] }} />;
+}
 
 // Search everything: days, places and hotels. Ctrl+K (or ⌘K) opens it on
 // desktop; phones use the search button in the header.
@@ -118,7 +126,7 @@ export function SearchPalette() {
                     )
                   }
                 >
-                  <MapPin />
+                  <PlaceIcon category={p.category} />
                   <span className="truncate">{p.name}</span>
                   <span className="ml-auto shrink-0 text-xs text-muted-foreground">
                     {cityName(p.cityId)}

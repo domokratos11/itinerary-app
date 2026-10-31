@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -42,7 +43,7 @@ export function AccountSheet() {
             {user?.email ?? user?.name ?? t("settings.aGoogleAccount")}
           </SheetDescription>
         </SheetHeader>
-        <div className="flex flex-col gap-5 px-4 pb-6">
+        <SheetBody className="gap-5">
           <div className="flex flex-col gap-4">
             <LanguageSelect id="account-language" />
             <div className="flex flex-col items-start gap-1.5">
@@ -59,7 +60,7 @@ export function AccountSheet() {
           </div>
           <Separator />
           <AboutSettings />
-        </div>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

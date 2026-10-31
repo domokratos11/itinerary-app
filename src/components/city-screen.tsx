@@ -7,12 +7,11 @@ import { useMemo } from "react";
 import { CityCatalog } from "@/components/city-catalog";
 import { t } from "@/lib/i18n";
 import { nearbyByPlace } from "@/lib/catalog-filter";
-import { homeHref } from "@/lib/links";
+import { daysHref } from "@/lib/links";
 import { useCitiesById, useTrip } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 
-// /city/?id=<cityId>. Places come from the live trip, so draft places from
-// the queue show up here too.
+// /city/?id=<cityId>. Places come from the live trip, drafts included.
 export function CityScreen() {
   const params = useSearchParams();
   const cityId = params.get("id") ?? "";
@@ -38,7 +37,7 @@ export function CityScreen() {
     return (
       <div className="flex flex-col gap-3">
         <h1 className="text-2xl font-semibold">{t("cities.notFound")}</h1>
-        <Link href={homeHref(tripId)} className="text-sm underline">
+        <Link href={daysHref(tripId)} className="text-sm underline">
           {t("common.backToDays")}
         </Link>
       </div>

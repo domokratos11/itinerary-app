@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -97,7 +98,7 @@ export function ActivitySheet({ compact = false }: { compact?: boolean }) {
           <SheetTitle>{t("activity.title")}</SheetTitle>
           <SheetDescription>{t("activity.description")}</SheetDescription>
         </SheetHeader>
-        <div className="flex flex-col gap-4 px-4 pb-6">
+        <SheetBody>
           <DeviceName />
           <Tabs defaultValue="activity">
             <TabsList className="w-full">
@@ -204,7 +205,7 @@ export function ActivitySheet({ compact = false }: { compact?: boolean }) {
               )}
             </TabsContent>
           </Tabs>
-        </div>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

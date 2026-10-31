@@ -2,9 +2,9 @@ import { z } from "zod";
 
 import type { Translate } from "./i18n";
 import { withoutGoogleCoordinates } from "./location";
-import { QueuedPlaceSchema, type QueuedPlace } from "./queue";
 import {
   CityRecordSchema,
+  ExpenseRecordSchema,
   HolidayRecordSchema,
   PlaceRecordSchema,
   PlanItemSchema,
@@ -20,7 +20,7 @@ import type { TripData } from "./trip";
 // it into an empty trip. A backup can be kept for good, so it never holds
 // coordinates from Google: they may be kept for 30 days at most. maps:refresh
 // fetches them again by place ID. Backups made before holidays moved into the
-// trip have none.
+// trip have none, and a queue in an older backup is ignored.
 export const BackupSchema = z
   .object({
     version: z.literal(1),
@@ -30,8 +30,8 @@ export const BackupSchema = z
     reservations: z.array(ReservationRecordSchema),
     places: z.array(PlaceRecordSchema),
     holidays: z.array(HolidayRecordSchema).default([]),
+    expenses: z.array(ExpenseRecordSchema).default([]),
     items: z.array(PlanItemSchema),
-    queue: z.array(QueuedPlaceSchema),
     proposals: z.array(ProposalSchema).default([]),
   })
   .refine(
@@ -48,7 +48,6 @@ export type Backup = z.infer<typeof BackupSchema>;
 export function makeBackup(
   trip: TripData,
   items: PlanItem[],
-  queue: QueuedPlace[],
   now: Date,
   proposals: Proposal[] = [],
 ): Backup {
@@ -59,7 +58,6 @@ export function makeBackup(
     stays: trip.stays.map(withoutGoogleCoordinates),
     places: trip.places.map(withoutGoogleCoordinates),
     items,
-    queue,
     proposals,
   };
 }
@@ -71,6 +69,5 @@ export function backupSummary(backup: Backup, tr: Translate): string {
     reservations: backup.reservations.length,
     places: backup.places.length,
     stops: backup.items.filter((i) => i.status !== "removed").length,
-    queued: backup.queue.length,
   });
 }

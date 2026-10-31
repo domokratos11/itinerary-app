@@ -2,11 +2,10 @@ import type { TripDay } from "./days";
 import type { PlanItem } from "./schemas";
 
 // What is being dragged on the day page: a stop already in the plan, a
-// place not yet planned (a draft from the queue), or a queued link.
+// or a draft place not yet planned.
 export type DragSource =
   | { kind: "stop"; item: PlanItem; cityId: string | null }
-  | { kind: "place"; placeId: string; cityId: string }
-  | { kind: "queued"; queueId: string; cityId: string | null };
+  | { kind: "place"; placeId: string; cityId: string };
 
 // Where it is dropped: on a stop of this day (before it), on the list's
 // empty space (the end), or on another day's chip (the end of that day).
@@ -37,10 +36,7 @@ export function planDrop(
   const day = ctx.days.find((d) => d.date === date);
   if (!day) return { kind: "refuse", reason: "not-a-day", date };
 
-  // A queued link with no city yet takes the city of the day it lands on.
-  const cityId =
-    source.cityId ??
-    (source.kind === "queued" ? (day.cityIds[0] ?? null) : null);
+  const cityId = source.cityId;
   if (cityId !== null && !day.cityIds.includes(cityId))
     return { kind: "refuse", reason: "city-not-on-day", date };
 
