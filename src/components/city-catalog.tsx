@@ -289,7 +289,9 @@ export function CityCatalog({
               </ul>
               {visible.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  No places match these filters.
+                  {places.length === 0
+                    ? "No places yet. Add the first one."
+                    : "No places match these filters."}
                 </p>
               )}
             </div>

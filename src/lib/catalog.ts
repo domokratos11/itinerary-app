@@ -24,6 +24,7 @@ import { seedTrip, type TripData } from "@/domain/trip";
 export const cities: City[] = CitiesFileSchema.parse(citiesJson);
 export const trip = TripFileSchema.parse(tripJson);
 
+// Empty for now: places are being added again from scratch, in the app.
 export const allPlaces: Place[] = [
   ...PlacesFileSchema.parse(placesTokyoUeno),
   ...PlacesFileSchema.parse(placesNagoya),

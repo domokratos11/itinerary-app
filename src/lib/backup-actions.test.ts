@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { makeBackup } from "@/domain/backup";
+import { testPlace } from "@/domain/test-place";
 import { seed } from "@/lib/catalog";
 import { LocalPlanRepository } from "@/lib/local-plan-repository";
 import { LocalProposalRepository } from "@/lib/local-proposal-repository";
@@ -36,9 +37,10 @@ const { importBackup } = await import("@/lib/backup-actions");
 
 describe("importBackup", () => {
   it("writes every collection, the plan and the queue into the trip", async () => {
+    const place = testPlace();
     const item = {
       id: "i1",
-      placeId: seed.places[0].id,
+      placeId: place.id,
       date: "2026-12-18",
       order: "a0",
       startTime: null,
@@ -64,7 +66,12 @@ describe("importBackup", () => {
     };
     await importBackup(
       "trip-2",
-      makeBackup(seed, [item], [queued], new Date("2026-11-02T00:00:00Z")),
+      makeBackup(
+        { ...seed, places: [place] },
+        [item],
+        [queued],
+        new Date("2026-11-02T00:00:00Z"),
+      ),
     );
 
     const counts: Record<string, number> = {};
@@ -75,7 +82,7 @@ describe("importBackup", () => {
       cities: seed.cities.length,
       stays: seed.stays.length,
       reservations: seed.reservations.length,
-      places: seed.places.length,
+      places: 1,
     });
 
     let planned: unknown[] = [];

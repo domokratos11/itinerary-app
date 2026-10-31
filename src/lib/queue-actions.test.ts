@@ -69,8 +69,6 @@ describe("assignQueued", () => {
     expect(place).toMatchObject({ cityId: "nagoya", status: "draft" });
     const places = useTripStore.getState().data.places;
     expect(places.find((p) => p.id === place.id)).toBeDefined();
-    // The seed places came along on the first save, so none were lost.
-    expect(places.length).toBeGreaterThan(100);
 
     const planned = current<{ placeId: string; date: string }[]>((cb) =>
       plans.subscribe(TRIP, cb),

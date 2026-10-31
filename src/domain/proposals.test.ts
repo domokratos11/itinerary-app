@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { seed } from "@/lib/catalog";
 import {
   acceptProposal,
   cleanResearch,
@@ -10,10 +9,11 @@ import {
   ResearchResultSchema,
 } from "./proposals";
 import { ProposalSchema, type PlaceRecord } from "./schemas";
+import { testPlace } from "./test-place";
 
 const now = new Date("2026-11-20T00:00:00.000Z");
 const place: PlaceRecord = {
-  ...seed.places[0],
+  ...testPlace(),
   status: "draft",
   costEstimateJPY: null,
   durationMin: 60,

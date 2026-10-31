@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import { BackupSchema, backupSummary, makeBackup } from "@/domain/backup";
+import { testPlace } from "@/domain/test-place";
 import { seed } from "@/lib/catalog";
+
+const place = testPlace();
+const trip = { ...seed, places: [place] };
 
 describe("backup", () => {
   const backup = makeBackup(
-    seed,
+    trip,
     [
       {
         id: "i1",
-        placeId: seed.places[0].id,
+        placeId: place.id,
         date: "2026-12-18",
         order: "a0",
         startTime: "10:00",
@@ -35,14 +39,14 @@ describe("backup", () => {
 
   it("summarises what a backup holds", () => {
     expect(backupSummary(backup)).toBe(
-      `6 cities, 6 stays, 4 reservations, ${seed.places.length} places, 1 stop, 0 queued links`,
+      "6 cities, 6 stays, 4 reservations, 1 place, 1 stop, 0 queued links",
     );
   });
 });
 
 describe("Google coordinates in backups", () => {
   const google = {
-    ...seed.places[0],
+    ...place,
     lat: 35.7,
     lng: 139.7,
     googlePlaceId: "abc",
