@@ -53,7 +53,6 @@ import {
 } from "@/components/ui/sheet";
 import {
   directionsUrl,
-  distanceBetweenPlaces,
   holidayWarnings,
   itemsForDay,
   legsForDay,
@@ -63,7 +62,6 @@ import {
   stopTimes,
   stopWarnings,
   timeWarnings,
-  type Location,
 } from "@/domain/plan";
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
@@ -91,8 +89,12 @@ import {
 } from "@/lib/plan-actions";
 import { PlaceDetails } from "@/components/place-details";
 import { StopEditor, type StopChanges } from "@/components/stop-editor";
+import { LegLine } from "@/components/leg-line";
 import { TripMap } from "@/components/trip-map";
-import { dayMap, straightLines } from "@/domain/map-pins";
+import { dayLegs } from "@/domain/legs";
+import { dayMap } from "@/domain/map-pins";
+import type { MapLine } from "@/domain/maps-service";
+import { useWalkingLegs } from "@/lib/use-walking-legs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { nearbyByPlace } from "@/lib/catalog-filter";
 import { assignQueued, queueUpdate } from "@/lib/queue-actions";
@@ -120,8 +122,6 @@ type Props = {
 };
 
 const REFUSED = "That change was refused. Check the trip link.";
-
-type Origin = { location: Location | null; place: Place | null };
 
 export function DayPlan(props: Props) {
   const tripId = useTripId();
@@ -359,14 +359,6 @@ export function DayPlan(props: Props) {
     });
   }
 
-  // Origin for a stop's directions: the stop before it, or the start hotel.
-  function originFor(index: number): Origin {
-    if (index === 0)
-      return { location: props.start?.location ?? null, place: null };
-    const prev = placesById.get(stops[index - 1].placeId) ?? null;
-    return { location: prev ? placeLocation(prev) : null, place: prev };
-  }
-
   const next = nextStop(stops);
   const lateEnd = dayRunsLate(
     stops.filter((i) => i.status === "planned"),
@@ -395,7 +387,21 @@ export function DayPlan(props: Props) {
   }));
 
   const map = dayMap(rows, props.start, props.end);
-  const mapLines = straightLines(map.route);
+  const legs = dayLegs(rows, props.start, props.end);
+  const walking = useWalkingLegs(legs);
+  const mapLines = legs.flatMap((leg): MapLine[] => {
+    if (!leg.from || !leg.to) return [];
+    const route = walking.get(leg.key);
+    return [
+      route && route.path.length > 1
+        ? { path: route.path, kind: "walk" }
+        : { path: [leg.from, leg.to], kind: "straight" },
+    ];
+  });
+  const legLine = (key: string) => {
+    const leg = legs.find((l) => l.key === key);
+    return leg ? <LegLine leg={leg} walking={walking.get(key)} /> : null;
+  };
   const mapNote =
     map.unpinned > 0
       ? `${map.unpinned} ${map.unpinned === 1 ? "stop has" : "stops have"} no map pin yet.`
@@ -503,13 +509,13 @@ export function DayPlan(props: Props) {
               strategy={verticalListSortingStrategy}
             >
               <DroppableList empty={rows.length === 0}>
-                {rows.map((row, index) => (
+                {rows.map((row) => (
                   <SortableStop
                     key={row.item.id}
                     id={row.item.id}
                     item={row.item}
                     place={row.place}
-                    origin={originFor(index)}
+                    leg={legLine(row.item.id)}
                     dayOptions={dayOptionsFor(row.place?.cityId)}
                     currentDate={props.date}
                     onRemove={() => remove(row.item)}
@@ -517,6 +523,7 @@ export function DayPlan(props: Props) {
                     onMoveDay={(d) => moveToDay(row.item, d)}
                   />
                 ))}
+                {rows.length > 0 && <li>{legLine("end")}</li>}
               </DroppableList>
             </SortableContext>
             <div className="sticky top-20 flex flex-col gap-4">
@@ -551,11 +558,11 @@ export function DayPlan(props: Props) {
         !showPhoneMap && (
           <ol className="flex flex-col gap-3">
             {rows.map((row, index) => (
-              <li key={row.item.id}>
+              <li key={row.item.id} className="flex flex-col gap-3">
+                {legLine(row.item.id)}
                 <StopCard
                   item={row.item}
                   place={row.place}
-                  origin={originFor(index)}
                   dayOptions={dayOptionsFor(row.place?.cityId)}
                   currentDate={props.date}
                   onRemove={() => remove(row.item)}
@@ -570,6 +577,7 @@ export function DayPlan(props: Props) {
                 />
               </li>
             ))}
+            {rows.length > 0 && <li>{legLine("end")}</li>}
           </ol>
         )
       )}
@@ -701,7 +709,6 @@ function HotelRow({ label, endpoint }: { label: string; endpoint: Endpoint }) {
 type StopProps = {
   item: PlanItem;
   place: Place | undefined;
-  origin: Origin;
   dayOptions: { date: string; label: string }[];
   currentDate: string;
   onRemove: () => void;
@@ -711,7 +718,11 @@ type StopProps = {
 
 // Wide screens: drag the grip to reorder, or focus it and use Space and the
 // arrow keys.
-function SortableStop({ id, ...props }: StopProps & { id: string }) {
+function SortableStop({
+  id,
+  leg,
+  ...props
+}: StopProps & { id: string; leg: ReactNode }) {
   const {
     attributes,
     listeners,
@@ -726,7 +737,8 @@ function SortableStop({ id, ...props }: StopProps & { id: string }) {
     opacity: isDragging ? 0.6 : 1,
   };
   return (
-    <li ref={setNodeRef} style={style}>
+    <li ref={setNodeRef} style={style} className="flex flex-col gap-3">
+      {leg}
       <StopCard
         {...props}
         handle={
@@ -749,7 +761,6 @@ function SortableStop({ id, ...props }: StopProps & { id: string }) {
 function StopCard({
   item,
   place,
-  origin,
   dayOptions,
   currentDate,
   onRemove,
@@ -767,11 +778,6 @@ function StopCard({
   };
 }) {
   const name = place?.name ?? item.placeId;
-  const distance =
-    place && origin.place ? distanceBetweenPlaces(origin.place, place) : null;
-  const directions = place
-    ? directionsUrl(placeLocation(place), origin.location ?? undefined)
-    : null;
   const times = stopTimes(item, place);
   const minutes = item.durationMin ?? null;
   const meta = times
@@ -829,19 +835,6 @@ function StopCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {item.note && <p className="text-sm">{item.note}</p>}
-        {directions && (
-          <div className="text-sm text-muted-foreground">
-            {distance !== null && <span>{distance.toFixed(1)} km away · </span>}
-            <a
-              className="underline"
-              href={directions}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Directions{origin.place ? ` from ${origin.place.name}` : ""}
-            </a>
-          </div>
-        )}
         <div className="flex flex-wrap items-center gap-2">
           {place && (
             <Button asChild variant="outline" size="sm">

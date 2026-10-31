@@ -48,16 +48,17 @@ function formatLocation(loc: Location): string {
     : `${loc.lat},${loc.lng}`;
 }
 
-// Opens Google Maps directions in transit mode. Without an origin, Maps uses
-// the phone's current location.
+// Opens Google Maps directions, in transit mode unless told otherwise. Without
+// an origin, Maps uses the phone's current location.
 export function directionsUrl(
   destination: Location,
   origin?: Location,
+  mode: "transit" | "walking" = "transit",
 ): string {
   const params = [
     "api=1",
     `destination=${formatLocation(destination)}`,
-    "travelmode=transit",
+    `travelmode=${mode}`,
   ];
   if (origin) params.push(`origin=${formatLocation(origin)}`);
   return `https://www.google.com/maps/dir/?${params.join("&")}`;
@@ -129,7 +130,7 @@ export function keysForInsert(
 }
 
 // Straight-line distance between two catalog places, or null if either has
-// no coordinates.
+// no coordinates. A rough guide; the day's legs use it offline too.
 export function distanceBetweenPlaces(a: Place, b: Place): number | null {
   if (a.lat === null || a.lng === null || b.lat === null || b.lng === null)
     return null;

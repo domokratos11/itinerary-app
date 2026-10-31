@@ -1,11 +1,13 @@
 import { distanceKm, type LatLng } from "@/lib/geo";
-import {
-  directionsUrl,
-  placeLocation,
-  type Location,
-} from "./plan";
+import { directionsUrl, placeLocation, type Location } from "./plan";
 import type { Endpoint } from "./trip";
-import type { LegMode, LegNote, NearestStation, Place, PlanItem } from "./schemas";
+import type {
+  LegMode,
+  LegNote,
+  NearestStation,
+  Place,
+  PlanItem,
+} from "./schemas";
 
 // Up to about here a leg is worth walking and gets a real walking route;
 // further than that it gets a link to transit directions in the Maps app.

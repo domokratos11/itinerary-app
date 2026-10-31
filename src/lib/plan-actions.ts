@@ -106,7 +106,7 @@ export async function updateItem(
   tripId: string,
   item: PlanItem,
   changes: Partial<
-    Pick<PlanItem, "startTime" | "durationMin" | "note" | "status">
+    Pick<PlanItem, "startTime" | "durationMin" | "note" | "status" | "legNote">
   >,
   now: Date = new Date(),
 ): Promise<void> {
