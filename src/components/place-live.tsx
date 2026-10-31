@@ -32,6 +32,8 @@ function messageFor(error: unknown): string {
     if (error.kind === "offline") return t("live.offline");
     if (error.kind === "not-configured") return t("live.notConfigured");
   }
+  // The person sees a general message, so keep the real cause findable.
+  console.warn("Google Maps call failed:", error);
   return t("live.noAnswer");
 }
 

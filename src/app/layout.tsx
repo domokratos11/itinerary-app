@@ -4,7 +4,7 @@ import { Geist_Mono, Oxanium } from "next/font/google";
 import { Suspense } from "react";
 
 import { AppHeader, BottomNav } from "@/components/app-header";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar, AppSidebarProvider } from "@/components/app-sidebar";
 import { AppGate } from "@/components/app-gate";
 import { LocaleRoot } from "@/components/locale-root";
 import { OfflineBanner } from "@/components/offline-banner";
@@ -101,19 +101,23 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 a signed-in member has their trip. */}
             <LocaleRoot>
               <AppGate>
-                <Suspense fallback={null}>
-                  <AppHeader />
-                </Suspense>
-                <OfflineBanner />
-                <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+                <AppSidebarProvider>
                   <Suspense fallback={null}>
-                    <AppSidebar />
+                    <AppHeader />
                   </Suspense>
-                  <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-                </div>
-                <Suspense fallback={null}>
-                  <BottomNav />
-                </Suspense>
+                  <OfflineBanner />
+                  <div className="flex flex-1">
+                    <Suspense fallback={null}>
+                      <AppSidebar />
+                    </Suspense>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      {children}
+                    </div>
+                  </div>
+                  <Suspense fallback={null}>
+                    <BottomNav />
+                  </Suspense>
+                </AppSidebarProvider>
               </AppGate>
             </LocaleRoot>
           </VersionGate>

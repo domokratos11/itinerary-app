@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Archive, ExternalLink, Pencil, Search } from "lucide-react";
+import { Archive, ExternalLink, Pencil, Search, Wallet } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -16,20 +16,22 @@ import {
 } from "@/components/ui/drawer";
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import { AddToDay } from "@/components/add-to-day";
+import { ExpenseForm } from "@/components/expense-form";
+import { categoryForPlace } from "@/domain/budget";
 import { PlaceEditor } from "@/components/place-editor";
 import { PlaceLive } from "@/components/place-live";
-import { mapsSearchUrl } from "@/domain/place-edit";
+import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
+import { isDraft, mapsSearchUrl } from "@/domain/place-edit";
 import { isOpenProposal } from "@/domain/proposals";
 import type { PlaceRecord } from "@/domain/schemas";
-import { isDraft } from "@/domain/queue";
 import { t } from "@/lib/i18n";
-import { categoryLabel } from "@/lib/category-label";
 import { pageHref } from "@/lib/links";
 import { requestResearch } from "@/lib/proposal-actions";
 import { useProposals } from "@/lib/use-proposals";
@@ -59,10 +61,12 @@ export function PlaceDetails({
   const wide = useMediaQuery("(min-width: 768px)");
   const tripId = useTripId();
   const [editing, setEditing] = useState<string | null>(null);
+  const [logging, setLogging] = useState<string | null>(null);
   // The details step aside while the editor is open, so two panels never
   // stack, and come back when it closes.
   const isEditing = place !== null && editing === place.id;
-  const open = place !== null && !isEditing;
+  const isLogging = place !== null && logging === place.id;
+  const open = place !== null && !isEditing && !isLogging;
   const onEdit = tripId && place ? () => setEditing(place.id) : null;
   const editor = isEditing && tripId && (
     <PlaceEditor
@@ -72,12 +76,29 @@ export function PlaceDetails({
       onClose={() => setEditing(null)}
     />
   );
+  const costForm = isLogging && tripId && (
+    <ExpenseForm
+      key={place.id}
+      tripId={tripId}
+      expense={null}
+      prefill={{
+        title: place.name,
+        category: categoryForPlace(place.category),
+        placeId: place.id,
+        ...(place.costEstimateJPY !== null && {
+          amountJPY: place.costEstimateJPY,
+        }),
+      }}
+      onClose={() => setLogging(null)}
+    />
+  );
   const body = place && (
     <PlaceBody
       place={place}
       nearby={nearby}
       inPlan={inPlan}
       onEdit={onEdit}
+      onLogCost={tripId ? () => setLogging(place.id) : null}
       onArchive={onArchive ? () => onArchive(place) : null}
     />
   );
@@ -86,6 +107,7 @@ export function PlaceDetails({
     return (
       <>
         {editor}
+        {costForm}
         <Sheet open={open} onOpenChange={onOpenChange}>
           <SheetContent side="right" className="overflow-y-auto sm:max-w-md">
             {place && (
@@ -96,7 +118,7 @@ export function PlaceDetails({
                     {t("place.details")}
                   </SheetDescription>
                 </SheetHeader>
-                {body}
+                <SheetBody>{body}</SheetBody>
               </>
             )}
           </SheetContent>
@@ -108,10 +130,11 @@ export function PlaceDetails({
   return (
     <>
       {editor}
+      {costForm}
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="max-h-[85vh]">
           {place && (
-            <div className="overflow-y-auto px-4 pb-6">
+            <div className="overflow-y-auto px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
               <DrawerHeader className="px-0 text-left">
                 <DrawerTitle className="text-xl">{place.name}</DrawerTitle>
                 <DrawerDescription className="sr-only">
@@ -132,12 +155,14 @@ function PlaceBody({
   nearby,
   inPlan,
   onEdit,
+  onLogCost,
   onArchive,
 }: {
   place: PlaceRecord;
   nearby: NearbyPlace[];
   inPlan: boolean;
   onEdit: (() => void) | null;
+  onLogCost: (() => void) | null;
   onArchive: (() => void) | null;
 }) {
   const mapsLink = place.googlePlaceId
@@ -146,10 +171,8 @@ function PlaceBody({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">{categoryLabel(place.category)}</Badge>
-        <Badge variant="outline" className="text-foreground">
-          {t(`priorities.${place.priority}`)}
-        </Badge>
+        <CategoryBadge category={place.category} />
+        <PriorityBadge priority={place.priority} />
         {isDraft(place) && (
           <Badge variant="outline" className="border-dashed">
             {t("common.notResearched")}
@@ -169,6 +192,12 @@ function PlaceBody({
         </a>
       </Button>
       <AddToDay place={place} />
+      {onLogCost && (
+        <Button variant="outline" onClick={onLogCost}>
+          <Wallet />
+          {t("budget.logCost")}
+        </Button>
+      )}
       {(onEdit || onArchive) && (
         <div className="flex gap-2">
           {onEdit && (

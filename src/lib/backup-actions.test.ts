@@ -5,11 +5,9 @@ import { testPlace } from "@/domain/test-place";
 import { fixtureTrip } from "@/test/fixture-trip";
 import { LocalPlanRepository } from "@/lib/local-plan-repository";
 import { LocalProposalRepository } from "@/lib/local-proposal-repository";
-import { LocalQueueRepository } from "@/lib/local-queue-repository";
 import { LocalTripRepository } from "@/lib/local-trip-repository";
 
 const plans = new LocalPlanRepository();
-const queue = new LocalQueueRepository();
 const trips = new LocalTripRepository();
 const proposals = new LocalProposalRepository();
 vi.mock("@/lib/proposal-repository-instance", () => ({
@@ -22,11 +20,6 @@ vi.mock("@/lib/plan-repository-instance", () => ({
     return plans;
   },
 }));
-vi.mock("@/lib/queue-repository-instance", () => ({
-  get queueRepository() {
-    return queue;
-  },
-}));
 vi.mock("@/lib/trip-repository-instance", () => ({
   get tripRepository() {
     return trips;
@@ -36,7 +29,7 @@ vi.mock("@/lib/trip-repository-instance", () => ({
 const { importBackup } = await import("@/lib/backup-actions");
 
 describe("importBackup", () => {
-  it("writes every collection, the plan and the queue into the trip", async () => {
+  it("writes every collection and the plan into the trip", async () => {
     const place = testPlace();
     const item = {
       id: "i1",
@@ -50,26 +43,11 @@ describe("importBackup", () => {
       legNote: null,
       updatedAt: "2026-11-01T00:00:00.000Z",
     };
-    const queued = {
-      id: "q1",
-      url: "https://maps.app.goo.gl/abc",
-      name: null,
-      lat: null,
-      lng: null,
-      note: null,
-      createdAt: "2026-11-01T00:00:00.000Z",
-      status: "queued" as const,
-      cityId: null,
-      placeId: null,
-      category: null,
-      updatedAt: null,
-    };
     await importBackup(
       "trip-2",
       makeBackup(
         { ...fixtureTrip, places: [place] },
         [item],
-        [queued],
         new Date("2026-11-02T00:00:00Z"),
       ),
     );
@@ -84,14 +62,11 @@ describe("importBackup", () => {
       reservations: fixtureTrip.reservations.length,
       places: 1,
       holidays: fixtureTrip.holidays.length,
+      expenses: 0,
     });
 
     let planned: unknown[] = [];
     plans.subscribe("trip-2", (items) => (planned = items))();
     expect(planned).toEqual([item]);
-
-    let inQueue: unknown[] = [];
-    queue.subscribe("trip-2", (items) => (inQueue = items))();
-    expect(inQueue).toEqual([queued]);
   });
 });

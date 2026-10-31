@@ -3,11 +3,12 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppHeader, BottomNav } from "@/components/app-header";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar, AppSidebarProvider } from "@/components/app-sidebar";
 import { CitiesScreen } from "@/components/cities-screen";
 import { CityScreen } from "@/components/city-screen";
 import { DayScreen } from "@/components/day-screen";
-import { QueueIntro, QueuePanel } from "@/components/queue-panel";
+import { BudgetScreen } from "@/components/budget-screen";
+import { DashboardScreen } from "@/components/dashboard-screen";
 import { SettingsScreen } from "@/components/settings-screen";
 import { TodayCard } from "@/components/today-card";
 import { TripDays } from "@/components/trip-days";
@@ -24,9 +25,6 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 vi.mock("@/lib/use-media-query", () => ({ useMediaQuery: () => false }));
-vi.mock("@/lib/use-queue", () => ({
-  useQueue: () => ({ items: [], error: null }),
-}));
 vi.mock("@/lib/use-proposals", () => ({ useProposals: () => [] }));
 vi.mock("@/lib/use-activity", () => ({
   useActivity: () => ({ entries: [], error: null }),
@@ -60,8 +58,8 @@ const SCREENS: [string, () => ReactNode, string, string][] = [
   ["cities", () => <CitiesScreen />, "Cities", "Ciudades"],
   ["city", () => <CityScreen />, "Add place", "Agregar lugar"],
   ["day", () => <DayScreen />, "Full day", "Día completo"],
-  ["queue intro", () => <QueueIntro />, "Queue", "Lista de espera"],
-  ["queue", () => <QueuePanel />, "Add to queue", "Agregar a la lista"],
+  ["dashboard", () => <DashboardScreen />, "Dashboard", "Panel"],
+  ["budget", () => <BudgetScreen />, "Budget", "Presupuesto"],
   ["settings", () => <SettingsScreen />, "Trip settings", "Ajustes del viaje"],
 ];
 
@@ -94,7 +92,7 @@ describe.each([
 
   it.each(SCREENS)("%s", (...row) => {
     const [, ui] = row;
-    render(<>{ui()}</>);
+    render(<AppSidebarProvider>{ui()}</AppSidebarProvider>);
     expect(screen.getAllByText(row[column]).length).toBeGreaterThan(0);
     expect(console.error).not.toHaveBeenCalled();
   });

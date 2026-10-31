@@ -1,16 +1,8 @@
 import type { LatLng } from "@/lib/geo";
 import type { MapLine, MapPin } from "./maps-service";
-import type { Category, Place, PlanItem } from "./schemas";
+import type { Place, PlanItem } from "./schemas";
+import { CATEGORY_COLOR } from "./taxonomy";
 import type { Endpoint } from "./trip";
-
-export const CATEGORY_PIN_COLOR: Record<Category, string> = {
-  lights: "#a855f7",
-  food: "#ea580c",
-  shopping: "#db2777",
-  sight: "#2563eb",
-  daytrip: "#0d9488",
-  temple: "#b91c1c",
-};
 
 const STOP_COLOR = "#2563eb";
 const FINISHED_COLOR = "#6b7280";
@@ -44,7 +36,7 @@ export function cityPins(places: Place[]): MapPin[] {
         position,
         title: place.name,
         label: null,
-        color: CATEGORY_PIN_COLOR[place.category],
+        color: CATEGORY_COLOR[place.category],
         emphasised: place.priority === "must",
         clickable: true,
       },

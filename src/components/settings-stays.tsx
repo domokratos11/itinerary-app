@@ -5,6 +5,7 @@ import { Archive, Pencil, Plus, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { EditPanel, Field } from "@/components/edit-panel";
+import { LogCostButton } from "@/components/expense-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { parseMapsLink } from "@/domain/queue";
+import { parseMapsLink } from "@/domain/place-edit";
 import type { StayRecord } from "@/domain/schemas";
 import { stayId } from "@/domain/trip";
 import { dayChanges, stayIssues, type DayChanges } from "@/domain/trip-edit";
@@ -135,6 +136,15 @@ export function StaysSettings({ tripId }: { tripId: string }) {
                 </span>
                 {stay.note && <span className="block">{stay.note}</span>}
               </span>
+              <LogCostButton
+                tripId={tripId}
+                prefill={{
+                  title: stay.hotelName,
+                  category: "booking",
+                  date: stay.checkIn,
+                  stayId: stay.id,
+                }}
+              />
               <Button
                 variant="ghost"
                 size="icon-sm"

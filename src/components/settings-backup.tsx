@@ -18,7 +18,6 @@ import { importBackup } from "@/lib/backup-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
 import { useProposals } from "@/lib/use-proposals";
-import { useQueue } from "@/lib/use-queue";
 import { useTripId } from "@/lib/use-trip-id";
 
 // Downloads the whole trip as one JSON file.
@@ -30,11 +29,10 @@ export function ExportTrip({
   const tripId = useTripId();
   const data = useTripStore((s) => s.data);
   const items = usePlanStore((s) => s.items);
-  const queue = useQueue(tripId).items;
   const proposals = useProposals(tripId);
 
   function download() {
-    const backup = makeBackup(data, items, queue, new Date(), proposals);
+    const backup = makeBackup(data, items, new Date(), proposals);
     const blob = new Blob([JSON.stringify(backup, null, 2) + "\n"], {
       type: "application/json",
     });
@@ -58,11 +56,9 @@ export function ExportTrip({
 export function BackupSettings({ tripId }: { tripId: string }) {
   const data = useTripStore((s) => s.data);
   const items = usePlanStore((s) => s.items);
-  const queue = useQueue(tripId).items;
   const empty =
     TRIP_COLLECTIONS.every((name) => data[name].length === 0) &&
-    items.length === 0 &&
-    queue.length === 0;
+    items.length === 0;
   const fileInput = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<Backup | null>(null);
 

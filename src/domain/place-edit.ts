@@ -247,6 +247,50 @@ export function mapsSearchUrl(name: string, googlePlaceId?: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${query}${id}`;
 }
 
+// True for a place still waiting for research.
+export function isDraft(place: Place): boolean {
+  return "status" in place && place.status === "draft";
+}
+
+export type ParsedMapsLink = {
+  name: string | null;
+  lat: number | null;
+  lng: number | null;
+};
+
+// Accepts full Google Maps place links and short maps.app.goo.gl links.
+// Full links carry the name and coordinates in the URL; short links must be
+// resolved later, so they only pass the host check.
+export function parseMapsLink(input: string): ParsedMapsLink | null {
+  let url: URL;
+  try {
+    url = new URL(input.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:") return null;
+
+  const isShort = url.hostname === "maps.app.goo.gl";
+  const isFull =
+    url.hostname === "www.google.com" && url.pathname.startsWith("/maps");
+  if (!isShort && !isFull) return null;
+  if (isShort) return { name: null, lat: null, lng: null };
+
+  // /maps/place/<Name>/@lat,lng,... and !3d<lat>!4d<lng> (the exact pin).
+  const nameMatch = url.pathname.match(/\/maps\/place\/([^/]+)/);
+  const name = nameMatch
+    ? decodeURIComponent(nameMatch[1].replace(/\+/g, " ")).trim() || null
+    : null;
+  const pin = url.href.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  const at = url.pathname.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  const coords = pin ?? at;
+  return {
+    name,
+    lat: coords ? Number(coords[1]) : null,
+    lng: coords ? Number(coords[2]) : null,
+  };
+}
+
 // A new place from the Add place form: a draft, until research fills it in.
 export function newDraftPlace(
   input: {
@@ -258,6 +302,8 @@ export function newDraftPlace(
     lat: number | null;
     lng: number | null;
     googlePlaceId: string | null;
+    // Why it's worth going, if the person said.
+    purpose?: string | null;
     // Coordinates just fetched from Google, rather than read from a link.
     fromGoogle: boolean;
     takenIds: Iterable<string>;
@@ -275,7 +321,7 @@ export function newDraftPlace(
     lat: input.lat,
     lng: input.lng,
     category: input.category,
-    purpose: null,
+    purpose: input.purpose?.trim() || null,
     description: null,
     tips: [],
     costEstimateJPY: null,

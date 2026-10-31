@@ -24,6 +24,20 @@ export const RESERVATION_TYPES = [
 
 export const PLAN_STATUSES = ["planned", "done", "skipped", "removed"] as const;
 
+export const EXPENSE_CATEGORIES = [
+  "flight",
+  "booking",
+  "transport",
+  "food",
+  "souvenirs",
+  "attractions",
+  "clothes",
+  "temples",
+  "other",
+] as const;
+
+export const EXPENSE_STATUSES = ["planned", "paid"] as const;
+
 // ISO calendar date, e.g. 2026-12-17.
 const isoDate = z.iso.date();
 
@@ -176,7 +190,7 @@ export const HolidayRecordSchema = HolidaySchema.extend({
   ...recordFields,
 });
 
-// A draft place was made from a queued link and is waiting for research.
+// A draft place is waiting for research.
 export const PlaceRecordSchema = PlaceSchema.extend({
   status: z.enum(PLACE_STATUSES),
   source: z.enum(PLACE_SOURCES),
@@ -188,6 +202,35 @@ export const PlaceRecordSchema = PlaceSchema.extend({
   ...recordFields,
 });
 
+// Money for the whole trip, in whole yen. Planned means agreed but not paid
+// yet. It may point at the place, booking or hotel it paid for, so that place
+// isn't estimated on top of it.
+export const ExpenseRecordSchema = z.object({
+  id: recordId,
+  title: z.string().min(1).max(200),
+  amountJPY: z.number().int().nonnegative(),
+  category: z.enum(EXPENSE_CATEGORIES),
+  date: isoDate,
+  status: z.enum(EXPENSE_STATUSES),
+  paidBy: z.string().max(254).nullable(),
+  placeId: recordId.nullable().default(null),
+  reservationId: recordId.nullable().default(null),
+  stayId: recordId.nullable().default(null),
+  note: z.string().max(500).nullable(),
+  ...recordFields,
+});
+
+// What the trip means to spend, kept on the trip document. Travellers
+// multiplies per-adult place estimates; null uses the member count.
+export const BudgetSchema = z.object({
+  totalJPY: z.number().int().nonnegative().nullable(),
+  byCategory: z.partialRecord(
+    z.enum(EXPENSE_CATEGORIES),
+    z.number().int().nonnegative(),
+  ),
+  travellers: z.number().int().positive().max(20).nullable(),
+});
+
 // A whole trip's structure in one object; the sample trip the tests use.
 export const TripDataSchema = z.object({
   cities: z.array(CityRecordSchema),
@@ -195,6 +238,7 @@ export const TripDataSchema = z.object({
   reservations: z.array(ReservationRecordSchema),
   places: z.array(PlaceRecordSchema),
   holidays: z.array(HolidayRecordSchema),
+  expenses: z.array(ExpenseRecordSchema).default([]),
 });
 
 export const PROPOSAL_STATUSES = [
@@ -258,6 +302,10 @@ export type StayRecord = z.infer<typeof StayRecordSchema>;
 export type ReservationRecord = z.infer<typeof ReservationRecordSchema>;
 export type HolidayRecord = z.infer<typeof HolidayRecordSchema>;
 export type PlaceRecord = z.infer<typeof PlaceRecordSchema>;
+export type ExpenseRecord = z.infer<typeof ExpenseRecordSchema>;
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+export type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
+export type Budget = z.infer<typeof BudgetSchema>;
 export type Proposal = z.infer<typeof ProposalSchema>;
 export type ProposalFields = z.infer<typeof ProposalFieldsSchema>;
 export type FieldSource = z.infer<typeof FieldSourceSchema>;

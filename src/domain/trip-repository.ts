@@ -1,3 +1,4 @@
+import type { Budget } from "./schemas";
 import type { TripCollection, TripRecordOf } from "./trip";
 
 // Whether the signed-in user may open a trip: "member" when their email is
@@ -11,9 +12,10 @@ export type TripSummary = {
   id: string;
   name: string | null;
   members: string[];
+  budget?: Budget | null;
 };
 
-export type TripChanges = Partial<Pick<TripSummary, "members">> & {
+export type TripChanges = Partial<Pick<TripSummary, "members" | "budget">> & {
   name?: string;
 };
 
@@ -50,8 +52,8 @@ export interface TripRepository {
     ) => void,
     onError?: (collection: TripCollection, error: Error) => void,
   ): () => void;
-  // Creates or replaces one record. Records are never deleted; set
-  // `archived` instead.
+  // Creates or replaces one record. To retire one, set `archived`; only
+  // Clean up in Settings deletes.
   save<C extends TripCollection>(
     tripId: string,
     collection: C,

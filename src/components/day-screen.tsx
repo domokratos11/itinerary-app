@@ -8,7 +8,7 @@ import { hotelsForDay } from "@/domain/plan";
 import { endpointFor } from "@/domain/trip";
 import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
-import { homeHref } from "@/lib/links";
+import { daysHref } from "@/lib/links";
 import { useCitiesById, useTrip, useTripDays } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 
@@ -29,7 +29,7 @@ export function DayScreen() {
         <p className="text-sm text-muted-foreground">
           {date ? t("day.notATripDay", { date }) : t("day.noDate")}
         </p>
-        <Link href={homeHref(tripId)} className="text-sm underline">
+        <Link href={daysHref(tripId)} className="text-sm underline">
           {t("common.backToDays")}
         </Link>
       </div>

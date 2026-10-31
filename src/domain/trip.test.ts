@@ -59,6 +59,7 @@ describe("activeTrip", () => {
         { ...stay("nagoya", "2026-12-24", "2026-12-27"), id: "a", ...base },
       ],
       reservations: [],
+      expenses: [],
       places: [],
       holidays: [
         {

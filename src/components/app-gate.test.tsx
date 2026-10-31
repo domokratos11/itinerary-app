@@ -24,6 +24,7 @@ const allLoaded = {
   reservations: true,
   places: true,
   holidays: true,
+  expenses: true,
 };
 
 function renderGate() {

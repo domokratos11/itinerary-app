@@ -205,6 +205,119 @@ describe("users/{uid}", () => {
   });
 });
 
+describe("expenses", () => {
+  const expense = {
+    id: "e1",
+    title: "Lunch",
+    amountJPY: 1200,
+    category: "food",
+    date: "2026-12-16",
+    status: "paid",
+    paidBy: ANA,
+    placeId: null,
+    reservationId: null,
+    stayId: null,
+    note: null,
+    archived: false,
+    updatedAt: NOW,
+  };
+
+  it("are saved by members, in the right shape", async () => {
+    const path = "trips/japan/expenses/e1";
+    await assertSucceeds(setDoc(doc(as(ANA), path), expense));
+    await assertFails(setDoc(doc(as(EVE), path), expense));
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...expense, amountJPY: 12.5 }),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...expense, category: "bribes" }),
+    );
+  });
+});
+
+describe("the trip's budget", () => {
+  const budget = {
+    totalJPY: 500000,
+    byCategory: { food: 100000 },
+    travellers: 2,
+  };
+
+  it("is set by members, in the right shape", async () => {
+    const trip = "trips/peru";
+    await assertSucceeds(
+      updateDoc(doc(as(BEN), trip), { budget, updatedAt: NOW }),
+    );
+    await assertFails(
+      updateDoc(doc(as(EVE), trip), { budget, updatedAt: NOW }),
+    );
+    await assertFails(
+      updateDoc(doc(as(BEN), trip), {
+        budget: { ...budget, byCategory: { bribes: 1 } },
+        updatedAt: NOW,
+      }),
+    );
+  });
+});
+
+describe("clean up", () => {
+  const seed = (path: string, data: Record<string, unknown>) =>
+    env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), path), data);
+    });
+
+  it.each([
+    "cities",
+    "stays",
+    "reservations",
+    "places",
+    "holidays",
+    "expenses",
+  ])("deletes only archived %s, only for members", async (name) => {
+    const live = `trips/japan/${name}/live`;
+    const retired = `trips/japan/${name}/retired`;
+    await seed(live, { archived: false });
+    await seed(retired, { archived: true });
+    await assertFails(deleteDoc(doc(as(ANA), live)));
+    await assertFails(deleteDoc(doc(as(EVE), retired)));
+    await assertSucceeds(deleteDoc(doc(as(ANA), retired)));
+  });
+
+  it("deletes only removed stops", async () => {
+    await seed("trips/japan/items/live", { status: "planned" });
+    await seed("trips/japan/items/gone", { status: "removed" });
+    await assertFails(deleteDoc(doc(as(ANA), "trips/japan/items/live")));
+    await assertFails(deleteDoc(doc(as(EVE), "trips/japan/items/gone")));
+    await assertSucceeds(deleteDoc(doc(as(ANA), "trips/japan/items/gone")));
+  });
+
+  it("deletes only finished research", async () => {
+    await seed("trips/japan/proposals/open", { status: "ready" });
+    await seed("trips/japan/proposals/done", { status: "applied" });
+    await assertFails(deleteDoc(doc(as(ANA), "trips/japan/proposals/open")));
+    await assertFails(deleteDoc(doc(as(EVE), "trips/japan/proposals/done")));
+    await assertSucceeds(deleteDoc(doc(as(ANA), "trips/japan/proposals/done")));
+  });
+
+  it("clears history and old queue links for members only", async () => {
+    await seed("trips/japan/activity/a", { summary: "x" });
+    await seed("trips/japan/queue/q", { url: "https://maps.app.goo.gl/x" });
+    await assertFails(deleteDoc(doc(as(EVE), "trips/japan/activity/a")));
+    await assertFails(deleteDoc(doc(as(EVE), "trips/japan/queue/q")));
+    await assertSucceeds(deleteDoc(doc(as(ANA), "trips/japan/activity/a")));
+    await assertSucceeds(deleteDoc(doc(as(ANA), "trips/japan/queue/q")));
+  });
+
+  it("no longer takes new queue links", async () => {
+    await assertFails(
+      setDoc(doc(as(ANA), "trips/japan/queue/new"), { id: "new" }),
+    );
+  });
+
+  it("never deletes a trip", async () => {
+    await assertFails(deleteDoc(doc(as(ANA), "trips/japan")));
+  });
+});
+
 describe("holidays", () => {
   const holiday = {
     id: "h1",

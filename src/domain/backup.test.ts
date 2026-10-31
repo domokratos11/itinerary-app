@@ -26,7 +26,6 @@ describe("backup", () => {
         updatedAt: "2026-11-01T00:00:00.000Z",
       },
     ],
-    [],
     new Date("2026-11-02T00:00:00.000Z"),
   );
 
@@ -41,8 +40,16 @@ describe("backup", () => {
 
   it("summarises what a backup holds", () => {
     expect(backupSummary(backup, t)).toBe(
-      "2 cities, 2 stays, 1 reservation, 1 place, 1 stop, 0 queued links",
+      "2 cities, 2 stays, 1 reservation, 1 place, 1 stop",
     );
+  });
+
+  it("ignores the queue in a backup from when there was one", () => {
+    const older = {
+      ...JSON.parse(JSON.stringify(backup)),
+      queue: [{ id: "q" }],
+    };
+    expect(BackupSchema.parse(older)).not.toHaveProperty("queue");
   });
 
   it("still reads a backup from before holidays moved into the trip", () => {
@@ -66,7 +73,6 @@ describe("Google coordinates in backups", () => {
     const backup = makeBackup(
       { ...fixtureTrip, places: [google] },
       [],
-      [],
       new Date("2026-11-02T00:00:00.000Z"),
     );
     expect(backup.places[0]).toMatchObject({
@@ -79,7 +85,7 @@ describe("Google coordinates in backups", () => {
   });
 
   it("refuses a file that contains them", () => {
-    const backup = makeBackup(fixtureTrip, [], [], new Date());
+    const backup = makeBackup(fixtureTrip, [], new Date());
     expect(
       BackupSchema.safeParse({ ...backup, places: [google] }).success,
     ).toBe(false);

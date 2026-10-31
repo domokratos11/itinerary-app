@@ -3,6 +3,7 @@ import type { Translate } from "./i18n";
 import { stayLocation, type Location } from "./plan";
 import type {
   CityRecord,
+  ExpenseRecord,
   HolidayRecord,
   Place,
   PlaceRecord,
@@ -20,6 +21,7 @@ export type TripData = {
   reservations: ReservationRecord[];
   places: PlaceRecord[];
   holidays: HolidayRecord[];
+  expenses: ExpenseRecord[];
 };
 
 export type TripCollection = keyof TripData;
@@ -29,6 +31,7 @@ export const TRIP_COLLECTIONS: TripCollection[] = [
   "reservations",
   "places",
   "holidays",
+  "expenses",
 ];
 
 export type TripRecordOf = {
@@ -41,6 +44,7 @@ export const EMPTY_TRIP: TripData = {
   reservations: [],
   places: [],
   holidays: [],
+  expenses: [],
 };
 
 export function stayId(stay: Pick<Stay, "cityId" | "checkIn">): string {
@@ -78,6 +82,9 @@ export function activeTrip(data: TripData): TripData {
     reservations,
     places: data.places.filter((p) => !p.archived),
     holidays: data.holidays.filter((h) => !h.archived),
+    expenses: data.expenses
+      .filter((e) => !e.archived)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
   };
 }
 

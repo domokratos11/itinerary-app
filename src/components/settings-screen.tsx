@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 
 import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
+import { CleanupSettings } from "@/components/settings-cleanup";
 import { HolidaysSettings } from "@/components/settings-holidays";
 import { PlacesSettings } from "@/components/settings-places";
 import { ReservationsSettings } from "@/components/settings-reservations";
@@ -51,6 +52,9 @@ export function SettingsScreen() {
             </TabsTrigger>
             <TabsTrigger value="trip">{t("settings.tabTrip")}</TabsTrigger>
             <TabsTrigger value="backup">{t("settings.tabBackup")}</TabsTrigger>
+            <TabsTrigger value="cleanup">
+              {t("settings.tabCleanup")}
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="stays" className="pt-2">
             <StaysSettings tripId={tripId} />
@@ -72,6 +76,9 @@ export function SettingsScreen() {
           </TabsContent>
           <TabsContent value="backup" className="pt-2">
             <BackupSettings tripId={tripId} />
+          </TabsContent>
+          <TabsContent value="cleanup" className="pt-2">
+            <CleanupSettings tripId={tripId} />
           </TabsContent>
         </Tabs>
       )}

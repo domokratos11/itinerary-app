@@ -73,7 +73,7 @@ export function EditPanel({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <form onSubmit={submit} className="flex flex-col gap-4">
-            <DialogHeader>
+            <DialogHeader className="pr-10">
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription className={description ? "" : "sr-only"}>
                 {description ?? title}

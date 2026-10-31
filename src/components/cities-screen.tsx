@@ -5,6 +5,7 @@ import { useMemo } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { tint } from "@/domain/taxonomy";
 import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { cityHref, pageHref } from "@/lib/links";
@@ -50,7 +51,11 @@ export function CitiesScreen() {
               <Link href={cityHref(city.id, tripId)} className="block h-full">
                 <Card
                   size="sm"
-                  className="h-full transition-colors hover:bg-muted/50"
+                  style={{
+                    backgroundColor: tint(city.color),
+                    borderLeft: `4px solid ${city.color}`,
+                  }}
+                  className="h-full transition-[filter] hover:brightness-95 dark:hover:brightness-110"
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">

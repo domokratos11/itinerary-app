@@ -6,7 +6,7 @@ export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
 
 // Preferences, not trip data. They survive a reset, so someone who reads
 // Spanish still gets a Spanish sign-in screen after an update.
-const KEPT_KEYS = ["locale", "theme", "device-name"];
+const KEPT_KEYS = ["locale", "theme", "device-name", "sidebar-open"];
 const VERSION_KEY = "app-version";
 // The version this tab last reset for. GitHub Pages may keep serving the old
 // page for a few minutes after a deploy, and resetting again wouldn't help.

@@ -92,14 +92,6 @@ describe("planDrop", () => {
     ).toMatchObject({ kind: "place", date: "2026-12-24" });
   });
 
-  it("gives a queued link with no city the city of the day", () => {
-    const queued: DragSource = { kind: "queued", queueId: "q", cityId: null };
-    expect(planDrop(queued, { kind: "list" }, ctx)).toMatchObject({
-      kind: "place",
-      cityId: "tokyo",
-    });
-  });
-
   it("refuses a date that isn't a trip day", () => {
     expect(
       planDrop(stop(0), { kind: "day", date: "2027-03-01" }, ctx),

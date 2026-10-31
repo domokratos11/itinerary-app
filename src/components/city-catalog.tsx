@@ -25,9 +25,15 @@ import {
 } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
 import { filterPlaces, type CatalogFilter } from "@/lib/catalog-filter";
-import { categoryLabel } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
-import { isDraft } from "@/domain/queue";
+import {
+  CategoryBadge,
+  CategoryOption,
+  PriorityBadge,
+  PriorityOption,
+} from "@/components/tag-badges";
+import { isDraft } from "@/domain/place-edit";
+import { tint } from "@/domain/taxonomy";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { usePlanStore } from "@/lib/plan-store";
 import { cn } from "@/lib/utils";
@@ -192,7 +198,7 @@ export function CityCatalog({
             <ToggleGroupItem value="all">{t("cities.all")}</ToggleGroupItem>
             {CATEGORIES.map((c) => (
               <ToggleGroupItem key={c} value={c}>
-                {categoryLabel(c)}
+                <CategoryOption category={c} />
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
@@ -209,16 +215,18 @@ export function CityCatalog({
             >
               <SelectTrigger className="w-fit min-w-44">
                 <SelectValue>
-                  {filter.priority === "all"
-                    ? t("cities.allPriorities")
-                    : t(`priorities.${filter.priority}`)}
+                  {filter.priority === "all" ? (
+                    t("cities.allPriorities")
+                  ) : (
+                    <PriorityOption priority={filter.priority} />
+                  )}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("cities.allPriorities")}</SelectItem>
                 {PRIORITIES.map((p) => (
                   <SelectItem key={p} value={p}>
-                    {t(`priorities.${p}`)}
+                    <PriorityOption priority={p} />
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -265,7 +273,11 @@ export function CityCatalog({
                         if (e.key === "Enter" || e.key === " ")
                           setSelectedId(place.id);
                       }}
-                      className="h-full cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50"
+                      style={{
+                        backgroundColor: tint(city.color),
+                        borderLeft: `4px solid ${city.color}`,
+                      }}
+                      className="h-full cursor-pointer transition-[filter] hover:brightness-95 dark:hover:brightness-110"
                     >
                       <CardHeader>
                         <CardTitle className="text-base">
@@ -273,12 +285,8 @@ export function CityCatalog({
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="flex flex-wrap gap-2">
-                        <Badge variant="secondary">
-                          {categoryLabel(place.category)}
-                        </Badge>
-                        <Badge variant="outline" className="text-foreground">
-                          {t(`priorities.${place.priority}`)}
-                        </Badge>
+                        <CategoryBadge category={place.category} />
+                        <PriorityBadge priority={place.priority} />
                         {assigned.has(place.id) && (
                           <Badge>{t("cities.inPlanBadge")}</Badge>
                         )}

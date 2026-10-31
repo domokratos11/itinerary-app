@@ -6,7 +6,7 @@ The trip ID stays out of the repo, so pass it in the shell each time.
 
 ## 1. Get the requests
 
-Requests come from pressing **Research** in the app. To request every place with empty fields, for example the first 5 as a trial:
+Requests come from pressing **Research** in the app. That button only leaves a request in Firestore: the app has no server, so nothing is researched until someone runs these steps. To request every place with empty fields, for example the first 5 as a trial:
 
 ```bash
 TRIP_ID=<id> npm run research:pull -- --all-missing --limit 5
@@ -75,4 +75,4 @@ The script checks the whole file first, then lists anything it dropped and why.
 
 ## 5. Review
 
-The home page shows how many places have research to review. Under Settings > Places, each one shows the new values with their sources. Accept all, accept some, or dismiss. Anything you accept can be undone.
+The Dashboard and the Days page show how many places have research to review. Under Settings > Places, each one shows the new values with their sources. Accept all, accept some, or dismiss. Anything you accept can be undone.

@@ -8,6 +8,6 @@ export interface ProposalRepository {
     onProposals: (proposals: Proposal[]) => void,
     onError?: (error: Error) => void,
   ): () => void;
-  // Saves several together. Proposals are dismissed, never deleted.
+  // Saves several together. Proposals are dismissed; only Clean up deletes.
   saveMany(tripId: string, proposals: Proposal[]): Promise<void>;
 }
