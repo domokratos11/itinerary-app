@@ -98,11 +98,19 @@ Follow [research-run.md](research-run.md).
 
 Google allows its coordinates to be kept for 30 days. The script refreshes those over 20 days old, and deletes any over 30 that it can't refresh.
 
-- [ ] Add these to your calendar: **Dec 13** before leaving, and **Jan 1** during the trip. Also run it about every 3 weeks until then, starting 20 days after step 7.
+- [ ] Run it about every 3 weeks until you leave, starting 3 weeks after step 7:
 
 ```bash
 TRIP_ID=<id> npm run maps:refresh
 ```
+
+- [ ] Add **Dec 13** to your calendar, and use `--all` that day so everything is fresh when you leave:
+
+```bash
+TRIP_ID=<id> npm run maps:refresh -- --all
+```
+
+- [ ] Add **Jan 3** to your calendar and run the first command again during the trip. That keeps the coordinates inside the limit until you're home on Jan 12.
 
 ## Good to know
 
