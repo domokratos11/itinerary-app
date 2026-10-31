@@ -126,7 +126,7 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
           {t("common.researchToReview", { count: ready.size })}
         </Button>
       )}
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2 lg:max-w-2xl">
         <Select value={cityId} onValueChange={setCityId}>
           <SelectTrigger aria-label={t("common.city")} className="w-full">
             <SelectValue placeholder={t("common.chooseCity")} />
@@ -188,7 +188,7 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
         </div>
       </div>
 
-      <ul className="flex flex-col gap-2">
+      <ul className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
         {visible.map((place) => (
           <PlaceRow
             key={place.id}

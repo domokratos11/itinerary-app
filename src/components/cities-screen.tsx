@@ -40,7 +40,7 @@ export function CitiesScreen() {
           .
         </p>
       )}
-      <ul className="grid gap-3 sm:grid-cols-2">
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {trip.cities.map((city) => {
           const stays = trip.stays.filter((s) => s.cityId === city.id);
           const places = trip.places.filter((p) => p.cityId === city.id);
@@ -48,7 +48,10 @@ export function CitiesScreen() {
           return (
             <li key={city.id}>
               <Link href={cityHref(city.id, tripId)} className="block h-full">
-                <Card className="h-full transition-colors hover:bg-muted/50">
+                <Card
+                  size="sm"
+                  className="h-full transition-colors hover:bg-muted/50"
+                >
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
                       <span

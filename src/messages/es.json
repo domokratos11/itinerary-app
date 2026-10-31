@@ -348,8 +348,8 @@
     "tabTrip": "Viaje",
     "tabBackup": "Respaldo",
     "account": "Cuenta",
-    "signedInAs": "Sesión iniciada como {who}. Al cerrar sesión se quita el viaje de este dispositivo; los cambios hechos sin conexión que aún no se sincronizan se pierden.",
-    "aGoogleAccount": "una cuenta de Google"
+    "aGoogleAccount": "una cuenta de Google",
+    "signOutHint": "Al cerrar sesión se quita el viaje de este dispositivo. Los cambios hechos sin conexión que aún no se sincronizan se pierden."
   },
   "about": {
     "title": "Acerca de",

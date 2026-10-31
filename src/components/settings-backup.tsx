@@ -84,7 +84,7 @@ export function BackupSettings({ tripId }: { tripId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-4 text-sm">
+    <div className="flex max-w-2xl flex-col gap-4 text-sm">
       <section className="flex flex-col gap-2">
         <h3 className="font-medium">{t("backup.exportTitle")}</h3>
         <p className="text-muted-foreground">{t("backup.exportBody")}</p>

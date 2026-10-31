@@ -135,7 +135,7 @@ export function QueuePanel() {
       <CardHeader>
         <CardTitle className="text-base">{t("queue.queueAPlace")}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-8">
         <form onSubmit={submit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="queue-url">{t("common.googleMapsLink")}</Label>
@@ -193,6 +193,7 @@ export function QueuePanel() {
                 value={filter}
                 onValueChange={(v) => v && setFilter(v as QueueStatus)}
                 aria-label={t("queue.show")}
+                className="flex flex-wrap justify-start"
               >
                 <ToggleGroupItem value="queued">
                   {t("queue.filterQueued", { count: counts.queued })}

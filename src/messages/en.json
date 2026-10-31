@@ -348,8 +348,8 @@
     "tabTrip": "Trip",
     "tabBackup": "Backup",
     "account": "Account",
-    "signedInAs": "Signed in as {who}. Signing out removes the trip from this device; changes made offline that haven't synced yet are lost.",
-    "aGoogleAccount": "a Google account"
+    "aGoogleAccount": "a Google account",
+    "signOutHint": "Signing out removes the trip from this device. Changes made offline that haven't synced yet are lost."
   },
   "about": {
     "title": "About",

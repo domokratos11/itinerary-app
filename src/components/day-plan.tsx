@@ -670,8 +670,8 @@ function Reservations({ reservations }: { reservations: Reservation[] }) {
         {t("day.reservations")}
       </h2>
       {reservations.map((r, i) => (
-        <Card key={`${r.type}-${i}`}>
-          <CardContent className="flex flex-col gap-1 py-4 text-sm">
+        <Card key={`${r.type}-${i}`} size="sm">
+          <CardContent className="flex flex-col gap-1 text-sm">
             <div className="flex items-center gap-2">
               <Badge variant="outline">{t(`reservationType.${r.type}`)}</Badge>
               {r.time && <span className="font-medium">{r.time}</span>}
@@ -689,8 +689,8 @@ function Reservations({ reservations }: { reservations: Reservation[] }) {
 
 function HotelRow({ label, endpoint }: { label: string; endpoint: Endpoint }) {
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between gap-3 py-4">
+    <Card size="sm">
+      <CardContent className="flex items-center justify-between gap-3">
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground uppercase">
             {t("day.hotelRow", { label })}
@@ -805,7 +805,7 @@ function StopCard({
     : [];
 
   return (
-    <Card className={cn(finished && "opacity-70")}>
+    <Card size="sm" className={cn(finished && "opacity-70")}>
       <CardHeader className="flex items-start gap-3">
         {handle}
         <div className="flex min-w-0 flex-1 flex-col gap-1">

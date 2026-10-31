@@ -173,11 +173,8 @@ export function CityCatalog({
         )}
       </header>
 
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:rounded-xl lg:border lg:bg-card lg:p-4">
-          <h2 className="hidden text-sm font-medium lg:block">
-            {t("common.filter")}
-          </h2>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-6">
           <ToggleGroup
             type="single"
             variant="outline"
@@ -200,7 +197,7 @@ export function CityCatalog({
             ))}
           </ToggleGroup>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 lg:flex-col lg:items-start">
+          <div className="flex flex-wrap items-center justify-between gap-3 lg:justify-start lg:gap-6">
             <Select
               value={filter.priority}
               onValueChange={(value) =>
@@ -210,7 +207,7 @@ export function CityCatalog({
                 })
               }
             >
-              <SelectTrigger className="w-40 lg:w-full">
+              <SelectTrigger className="w-fit min-w-44">
                 <SelectValue>
                   {filter.priority === "all"
                     ? t("cities.allPriorities")
@@ -240,21 +237,27 @@ export function CityCatalog({
               </Label>
             </div>
           </div>
-        </aside>
+        </div>
 
         <div
           className={cn(
             "flex flex-col gap-4",
             sideBySide &&
-              "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start",
+              "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start",
           )}
         >
           {showList && (
             <div className="flex flex-col gap-3">
-              <ul className="grid gap-3 sm:grid-cols-2">
+              <ul
+                className={cn(
+                  "grid gap-3",
+                  sideBySide ? "2xl:grid-cols-2" : "sm:grid-cols-2",
+                )}
+              >
                 {visible.map((place) => (
                   <li key={place.id}>
                     <Card
+                      size="sm"
                       role="button"
                       tabIndex={0}
                       onClick={() => setSelectedId(place.id)}
@@ -303,7 +306,11 @@ export function CityCatalog({
               <TripMap
                 pins={pins}
                 onPinClick={setSelectedId}
-                className={sideBySide ? "h-[calc(100vh-7rem)]" : "h-[65vh]"}
+                className={
+                  sideBySide
+                    ? "aspect-[4/3] max-h-[calc(100vh-7rem)]"
+                    : "h-[65vh]"
+                }
                 note={
                   unpinned > 0
                     ? t("cities.unpinned", { unpinned, total: visible.length })

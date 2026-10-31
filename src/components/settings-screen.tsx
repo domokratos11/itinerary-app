@@ -1,11 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { SignOutButton } from "@/components/app-gate";
-import { LanguageSelect } from "@/components/language-select";
-import { AboutSettings } from "@/components/settings-about";
 import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
 import { HolidaysSettings } from "@/components/settings-holidays";
@@ -16,8 +12,6 @@ import { TripSettings } from "@/components/settings-trip";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { t } from "@/lib/i18n";
-import { useAuthStore } from "@/lib/auth-store";
-import { homeHref } from "@/lib/links";
 import { useTripStore } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 
@@ -31,12 +25,6 @@ export function SettingsScreen() {
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-2">
-        <Link
-          href={homeHref(tripId)}
-          className="text-sm text-muted-foreground underline"
-        >
-          {t("common.backToDays")}
-        </Link>
         <h1 className="text-2xl font-semibold">{t("settings.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("settings.intro")}</p>
         {error && (
@@ -51,7 +39,7 @@ export function SettingsScreen() {
 
       {tripId && (
         <Tabs defaultValue={tab}>
-          <TabsList className="h-auto w-full flex-wrap">
+          <TabsList className="w-full flex-wrap justify-start gap-y-1 rounded-2xl group-data-horizontal/tabs:h-auto lg:w-fit">
             <TabsTrigger value="stays">{t("settings.tabStays")}</TabsTrigger>
             <TabsTrigger value="cities">{t("settings.tabCities")}</TabsTrigger>
             <TabsTrigger value="places">{t("settings.tabPlaces")}</TabsTrigger>
@@ -87,30 +75,6 @@ export function SettingsScreen() {
           </TabsContent>
         </Tabs>
       )}
-
-      <AccountSettings />
-      <AboutSettings />
     </div>
-  );
-}
-
-// Who is signed in on this device. Signing out also removes the trip's
-// offline copy from it.
-function AccountSettings() {
-  const user = useAuthStore((s) => s.user);
-  if (!user) return null;
-  return (
-    <section className="flex flex-col gap-2 border-t pt-4">
-      <h2 className="text-base font-semibold">{t("settings.account")}</h2>
-      <p className="text-sm text-muted-foreground">
-        {t("settings.signedInAs", {
-          who: user.email ?? user.name ?? t("settings.aGoogleAccount"),
-        })}
-      </p>
-      <LanguageSelect id="settings-language" />
-      <div>
-        <SignOutButton label={t("gate.signOut")} variant="outline" />
-      </div>
-    </section>
   );
 }

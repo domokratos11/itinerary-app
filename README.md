@@ -26,19 +26,19 @@ open a trip.
 ## Versions
 
 The version shows on the sign-in screen, at the bottom of the sidebar and in
-Settings → About. It comes from git, so nothing is edited by hand: `main`
+the account panel. It comes from git, so nothing is edited by hand: `main`
 carries the tag `v1.0.0`, and each merge after it adds one to the last number
 (1.0.1, 1.0.2, ...). For a new major or minor version, tag `main` (`v1.1.0`).
 
 When a device finds a different version, it uploads unsynced edits, clears its
 storage and caches, and asks for sign-in again. Language, theme and device name
-stay. Without signal nothing is cleared. Settings → About can check by hand.
+stay. Without signal nothing is cleared. The account panel (the person icon in the header) can check by hand.
 
 ## Languages
 
 The app is in English and Spanish, with all its text in `src/messages/`. Each
 person's language is saved with their account and applied at sign-in; change it
-on the sign-in screen or in Settings → Account. Your own data (place names,
+on the sign-in screen or in the account panel. Your own data (place names,
 notes) stays as you typed it, and activity entries stay in the language they
 were written in. Google Maps itself stays in English.
 

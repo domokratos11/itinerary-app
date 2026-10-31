@@ -14,8 +14,8 @@ const ICON = { system: Monitor, light: Sun, dark: Moon } as const;
 // a neutral state on the server and the first client render.
 const noop = () => () => {};
 
-// Cycles Match phone → Light → Dark. `compact` shows only the icon.
-export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+// Cycles Match phone → Light → Dark.
+export function ThemeToggle() {
   const { theme = "system", setTheme } = useTheme();
   const mounted = useSyncExternalStore(
     noop,
@@ -32,8 +32,8 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
 
   return (
     <Button
-      variant={compact ? "ghost" : "outline"}
-      size={compact ? "icon-sm" : "sm"}
+      variant="outline"
+      size="sm"
       onClick={() => setTheme(next)}
       aria-label={t("theme.aria", {
         current: t(`theme.${current}`),
@@ -41,7 +41,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
       })}
     >
       <Icon />
-      {!compact && (mounted ? t(`theme.${current}`) : t("theme.theme"))}
+      {mounted ? t(`theme.${current}`) : t("theme.theme")}
     </Button>
   );
 }

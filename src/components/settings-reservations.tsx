@@ -73,7 +73,7 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <ul className="flex flex-col gap-2">
+      <ul className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
         {trip.reservations.map((r) => (
           <li
             key={r.id}

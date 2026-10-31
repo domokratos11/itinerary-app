@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Inbox, MapPinned, Settings } from "lucide-react";
 
+import { AccountSheet } from "@/components/account-sheet";
 import { ActivitySheet } from "@/components/activity-sheet";
 import { SearchPalette } from "@/components/search-palette";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { TripSwitcher } from "@/components/trip-switcher";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
@@ -42,7 +42,7 @@ export function useSection(): string {
 }
 
 // The top bar on every page: the trip name, the sections (on wider
-// screens), search, activity and theme. Phones get the sections as a tab
+// screens), search, activity and the person's account. Phones get the sections as a tab
 // bar at the bottom instead (BottomNav).
 export function AppHeader() {
   const tripId = useTripId();
@@ -75,7 +75,7 @@ export function AppHeader() {
         <div className="ml-auto flex items-center gap-1">
           <SearchPalette />
           <ActivitySheet compact />
-          <ThemeToggle compact />
+          <AccountSheet />
         </div>
       </div>
     </header>

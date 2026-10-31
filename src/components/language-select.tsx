@@ -33,7 +33,7 @@ export function LanguageSelect({ id }: { id: string }) {
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{t("language.label")}</Label>
       <Select value={locale} onValueChange={(v) => choose(v as Language)}>
-        <SelectTrigger id={id} className="w-full sm:w-48">
+        <SelectTrigger id={id} className="w-full">
           <SelectValue>{NAMES[locale]}</SelectValue>
         </SelectTrigger>
         <SelectContent>

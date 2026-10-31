@@ -59,7 +59,7 @@ export function TripSettings({ tripId }: { tripId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-6 text-sm">
+    <div className="flex max-w-2xl flex-col gap-6 text-sm">
       <form onSubmit={saveName} className="flex flex-col gap-3">
         <Field label={t("tripSettings.tripName")} htmlFor="trip-name">
           <Input

@@ -26,8 +26,8 @@ export function AboutSettings() {
   }
 
   return (
-    <section className="flex flex-col gap-2 border-t pt-4">
-      <h2 className="text-base font-semibold">{t("about.title")}</h2>
+    <section className="flex w-full flex-col gap-2">
+      <h3 className="text-sm font-medium">{t("about.title")}</h3>
       <p className="text-sm text-muted-foreground">
         {t("common.version", { version: APP_VERSION })}
       </p>
