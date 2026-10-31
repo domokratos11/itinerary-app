@@ -187,7 +187,7 @@ Tracks A and B are independent after M1. M0 needs you for the Google Cloud setup
 | M6  | Dec 1  | Photos and Live from Google, with credits and the Google logo                                                                                                                             | Tapping stays under the caps; caps reaching their limit shows a clear message   |
 | M7  | Dec 5  | Optional: Claude API script or GitHub Action, station pins                                                                                                                                | Only if still wanted                                                            |
 
-M1 to M6 are written and committed on `develop`. Tests, validation and the build pass, but nothing has called Google yet: see [maps-checklist.md](maps-checklist.md) for what's left. M7 was not built.
+**Status, Oct 31, 2026: this stage of development is finished.** M1 to M6 are deployed and the real map is live. M7 was not built. What's left is running the scripts, not building: see [maps-checklist.md](maps-checklist.md). The billing account is on Google's Free Trial, which ends Jan 29, 2027: nothing is billed unless it's upgraded, so the daily caps weren't confirmed. Upgrading needs them first.
 
 This leaves the full review from the earlier plan on Dec 10. If time runs short, cut from the bottom: M7, then M6. Each milestone ends with `npm run test`, `npm run validate` and `npm run build`.
 

@@ -1,8 +1,11 @@
 # Maps and research: what's left to do
 
-M1 to M6 are written and committed on `develop`. Tests, validation and the build pass, and the Day and City pages were checked in a browser without keys. No real Google calls have been made, and the screens that need sign-in haven't been opened. Work through this in order, because the order matters.
+**Development of this stage is finished (Oct 31, 2026).** M1 to M6 are deployed, the real map is live, and the signed-in test passed. Steps 1 to 6 are done. Steps 7 to 10 are running the scripts and checking the results: the map has no pins until step 7 runs.
 
-The commands use Git Bash syntax. In PowerShell, run `$env:TRIP_ID="<id>"` first, then the command without the `TRIP_ID=<id>` part.
+The commands use Git Bash syntax, which is the easiest place to run them. In PowerShell:
+
+- Run `$env:TRIP_ID="<id>"` first, then the command without the `TRIP_ID=<id>` part.
+- If it says `npm.ps1` or `gcloud.ps1` "cannot be loaded", use `npm.cmd` and `gcloud.cmd` instead.
 
 ## 1. Check the code
 
@@ -18,19 +21,19 @@ Do this **before** the merge. The new app writes new fields, and the current rul
 ## 3. Deploy
 
 - [x] Merge `develop` to `main`. Without keys the app works as before, plus the place editor, the Places tab and research. The map shows "The map isn't set up yet", and legs show straight-line distances.
-- [ ] Open the app and edit a place, as a member. If the save is refused, step 2 didn't take effect. This is the first real test of the place editor, the Places tab and the research review, since they need sign-in.
+- [x] Open the app and edit a place, as a member. If the save is refused, step 2 didn't take effect. This is the first real test of the place editor, the Places tab and the research review, since they need sign-in.
 
 ## 4. Set up Google Cloud
 
 You do this; it needs your card. Follow [maps-setup.md](maps-setup.md), about 20 minutes:
 
-- [ ] Billing account and a $1 budget alert
-- [ ] Two projects, `itinerary-maps-app` and `itinerary-maps-scripts`, neither of them the Firebase project
-- [ ] APIs enabled in each
-- [ ] Browser key and script key, with their restrictions
-- [ ] Daily caps. **Tell Claude if a row has no per-day option**, since the app's only limit is then its own.
-- [ ] Map ID
-- [ ] Script and browser keys in `.env`
+- [x] Billing account and a $1 budget alert
+- [x] Two projects, `itinerary-maps-app` and `itinerary-maps-scripts`, neither of them the Firebase project
+- [x] APIs enabled in each
+- [x] Browser key and script key, with their restrictions (tested: other sites and other APIs are refused)
+- [ ] Daily caps: not confirmed, and not needed on the Free Trial, which ends Jan 29, 2027. **Set them before ever upgrading to a paid account.** Tell Claude if a row has no per-day option.
+- [x] Map ID
+- [x] Script and browser keys in `.env`
 
 ## 5. Test the keys and trains
 
@@ -111,6 +114,7 @@ TRIP_ID=<id> npm run maps:refresh -- --all
 ```
 
 - [ ] Add **Jan 3** to your calendar and run the first command again during the trip. That keeps the coordinates inside the limit until you're home on Jan 12.
+- [ ] Add **Feb 3** to your calendar and run the first command one last time. The Free Trial ended on Jan 29, so it can't refresh anything and deletes the coordinates instead, as the 30-day limit requires. The place IDs stay. Use the date 31 days after your last refresh if it wasn't Jan 3.
 
 ## Good to know
 
@@ -118,4 +122,5 @@ TRIP_ID=<id> npm run maps:refresh -- --all
 - **Backups leave out Google's coordinates,** as they must. Run `maps:refresh` after restoring one.
 - **A place name chosen from Google's suggestions is stored,** so Add place has something to call it. Google's terms don't clearly allow storing it. You can rename it in the same form, and research can correct it.
 - **`favicon.ico` must hold RGBA images,** or `npm run build` fails with "The PNG is not in RGBA format". Browsers don't mind, so only the build shows it.
+- **The Free Trial ends Jan 29, 2027,** or sooner if the $300 credit runs out. After that the map and live details stop working and the rest of the app carries on. It can't be paused or extended.
 - **M7 wasn't built.** The Claude API script, the GitHub Action and station pins were optional.

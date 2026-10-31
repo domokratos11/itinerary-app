@@ -51,6 +51,8 @@ Use the site root, not `/itinerary-app/*`. Browsers send only the origin on cros
 
 ## 5. Daily caps
 
+**On Google's Free Trial you can skip this step.** Google doesn't bill during the trial, and when it ends everything stops unless you upgrade. Trial accounts can't request quota increases, but this step only lowers quotas. Set the caps before you ever upgrade to a paid account, because a budget alert doesn't stop spending.
+
 Go to **Google Maps Platform > Quotas**, pick the API from the dropdown, and lower the **per day** quota. When a cap is reached, requests fail until midnight Pacific time and nothing more is billed.
 
 `itinerary-maps-app`:
