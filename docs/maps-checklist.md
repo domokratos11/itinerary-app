@@ -1,13 +1,13 @@
 # Maps and research: what's left to do
 
-M1 to M6 are written and committed on `develop`. None of it has been run: no tests, no build, no real Google calls. Only the type check and lint have passed. Work through this in order, because the order matters.
+M1 to M6 are written and committed on `develop`. Tests, validation and the build pass, and the Day and City pages were checked in a browser without keys. No real Google calls have been made, and the screens that need sign-in haven't been opened. Work through this in order, because the order matters.
 
 The commands use Git Bash syntax. In PowerShell, run `$env:TRIP_ID="<id>"` first, then the command without the `TRIP_ID=<id>` part.
 
 ## 1. Check the code
 
-- [ ] Ask Claude to run `npm run test`, `npm run validate` and `npm run build`, and fix whatever fails. The new tests have never been run.
-- [ ] Ask Claude to push `develop` when they pass. **Don't merge to `main` yet.**
+- [x] Run `npm run test`, `npm run validate` and `npm run build`. All passed on Oct 30, 2026, with nothing to fix.
+- [ ] Ask Claude to push `develop`. **Don't merge to `main` yet.**
 
 ## 2. Publish the Firestore rules
 
@@ -18,7 +18,7 @@ Do this **before** the merge. The new app writes new fields, and the current rul
 ## 3. Deploy
 
 - [ ] Merge `develop` to `main`. Without keys the app works as before, plus the place editor, the Places tab and research. The map shows "The map isn't set up yet", and legs show straight-line distances.
-- [ ] Open the app and edit a place, as a member. If the save is refused, step 2 didn't take effect.
+- [ ] Open the app and edit a place, as a member. If the save is refused, step 2 didn't take effect. This is the first real test of the place editor, the Places tab and the research review, since they need sign-in.
 
 ## 4. Set up Google Cloud
 
