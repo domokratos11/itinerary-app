@@ -219,7 +219,8 @@ async function main() {
     if (!point) return;
     pointsByCity.set(cityId, [...(pointsByCity.get(cityId) ?? []), point]);
   };
-  for (const p of places) if (p.category !== "daytrip") addPoint(p.cityId, coords(p));
+  for (const p of places)
+    if (p.category !== "daytrip") addPoint(p.cityId, coords(p));
   for (const s of stays) addPoint(s.cityId, coords(s));
   for (const { target, location } of found)
     if (target.category !== "daytrip") addPoint(target.cityId, location);

@@ -89,7 +89,12 @@ import {
   restoreItem,
   updateItem,
 } from "@/lib/plan-actions";
+import { PlaceDetails } from "@/components/place-details";
 import { StopEditor, type StopChanges } from "@/components/stop-editor";
+import { TripMap } from "@/components/trip-map";
+import { dayMap, straightLines } from "@/domain/map-pins";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { nearbyByPlace } from "@/lib/catalog-filter";
 import { assignQueued, queueUpdate } from "@/lib/queue-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { homeHref } from "@/lib/links";
@@ -128,6 +133,8 @@ export function DayPlan(props: Props) {
   const queue = useQueue(tripId).items;
   const [dragging, setDragging] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "map">("list");
+  const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
   const wide = useMediaQuery("(min-width: 768px)");
   const stops = useMemo(
     () => itemsForDay(items, props.date),
@@ -387,6 +394,21 @@ export function DayPlan(props: Props) {
     place: placesById.get(item.placeId),
   }));
 
+  const map = dayMap(rows, props.start, props.end);
+  const mapLines = straightLines(map.route);
+  const mapNote =
+    map.unpinned > 0
+      ? `${map.unpinned} ${map.unpinned === 1 ? "stop has" : "stops have"} no map pin yet.`
+      : null;
+  const openPlace = openPlaceId ? placesById.get(openPlaceId) : undefined;
+  const openNearby = openPlace
+    ? (nearbyByPlace(trip.places)[openPlace.id] ?? []).map((n) => ({
+        id: n.id,
+        name: n.name,
+      }))
+    : [];
+  const showPhoneMap = !wide && view === "map";
+
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-2">
@@ -436,9 +458,34 @@ export function DayPlan(props: Props) {
           )}
           <FullDay start={props.start} end={props.end} stops={stops} />
         </div>
+        {!wide && (
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={view}
+            onValueChange={(value) => {
+              if (value) setView(value as "list" | "map");
+            }}
+            className="justify-start"
+          >
+            <ToggleGroupItem value="list">List</ToggleGroupItem>
+            <ToggleGroupItem value="map">Map</ToggleGroupItem>
+          </ToggleGroup>
+        )}
       </header>
 
-      {!wide && props.start && (
+      {showPhoneMap && (
+        <TripMap
+          pins={map.pins}
+          lines={mapLines}
+          onPinClick={setOpenPlaceId}
+          className="h-[65vh]"
+          note={mapNote}
+        />
+      )}
+
+      {!wide && !showPhoneMap && props.start && (
         <HotelRow label="Start" endpoint={props.start} />
       )}
 
@@ -450,7 +497,7 @@ export function DayPlan(props: Props) {
           onDragCancel={() => setDragging(null)}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-[minmax(0,1fr)_16rem] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="grid grid-cols-[minmax(0,1fr)_18rem] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_26rem]">
             <SortableContext
               items={rows.map((r) => r.item.id)}
               strategy={verticalListSortingStrategy}
@@ -473,6 +520,13 @@ export function DayPlan(props: Props) {
               </DroppableList>
             </SortableContext>
             <div className="sticky top-20 flex flex-col gap-4">
+              <TripMap
+                pins={map.pins}
+                lines={mapLines}
+                onPinClick={setOpenPlaceId}
+                className="h-72 xl:h-96"
+                note={mapNote}
+              />
               {props.start && <HotelRow label="Start" endpoint={props.start} />}
               {props.end && <HotelRow label="End" endpoint={props.end} />}
               <Reservations reservations={props.reservations} />
@@ -494,39 +548,52 @@ export function DayPlan(props: Props) {
           </DragOverlay>
         </DndContext>
       ) : (
-        <ol className="flex flex-col gap-3">
-          {rows.map((row, index) => (
-            <li key={row.item.id}>
-              <StopCard
-                item={row.item}
-                place={row.place}
-                origin={originFor(index)}
-                dayOptions={dayOptionsFor(row.place?.cityId)}
-                currentDate={props.date}
-                onRemove={() => remove(row.item)}
-                onEdit={() => setEditing(row.item.id)}
-                onMoveDay={(d) => moveToDay(row.item, d)}
-                buttons={{
-                  canUp: index > 0,
-                  canDown: index < rows.length - 1,
-                  onUp: () => stepBy(row.item, -1),
-                  onDown: () => stepBy(row.item, 1),
-                }}
-              />
-            </li>
-          ))}
-        </ol>
+        !showPhoneMap && (
+          <ol className="flex flex-col gap-3">
+            {rows.map((row, index) => (
+              <li key={row.item.id}>
+                <StopCard
+                  item={row.item}
+                  place={row.place}
+                  origin={originFor(index)}
+                  dayOptions={dayOptionsFor(row.place?.cityId)}
+                  currentDate={props.date}
+                  onRemove={() => remove(row.item)}
+                  onEdit={() => setEditing(row.item.id)}
+                  onMoveDay={(d) => moveToDay(row.item, d)}
+                  buttons={{
+                    canUp: index > 0,
+                    canDown: index < rows.length - 1,
+                    onUp: () => stepBy(row.item, -1),
+                    onDown: () => stepBy(row.item, 1),
+                  }}
+                />
+              </li>
+            ))}
+          </ol>
+        )
       )}
 
-      {stops.length === 0 && !wide && (
+      {stops.length === 0 && !wide && !showPhoneMap && (
         <p className="text-sm text-muted-foreground">
           No stops yet. Open a place from a city list and choose Add to day.
         </p>
       )}
 
-      {!wide && props.end && <HotelRow label="End" endpoint={props.end} />}
+      {!wide && !showPhoneMap && props.end && (
+        <HotelRow label="End" endpoint={props.end} />
+      )}
 
-      {!wide && <Reservations reservations={props.reservations} />}
+      {!wide && !showPhoneMap && (
+        <Reservations reservations={props.reservations} />
+      )}
+      <PlaceDetails
+        place={openPlace ?? null}
+        nearby={openNearby}
+        onOpenChange={(open) => {
+          if (!open) setOpenPlaceId(null);
+        }}
+      />
       {editingItem && (
         <StopEditor
           key={editingItem.id}

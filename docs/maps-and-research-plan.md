@@ -106,7 +106,7 @@ Neither loads automatically or appears in lists, which is what keeps them inside
 
 All new fields are optional in `firestore.rules` and default to null in Zod, the same way the queue's later fields were added, so existing documents stay valid. `isMember` guards `proposals` as well. `backup.ts`, `seed.ts` and the validators are updated with them. No Google hours, ratings, photos or routes are written anywhere.
 
-Code follows the existing pattern: a `MapsService` interface in `src/domain`, one Google implementation in `src/lib` and a memory one for tests. Screens never import the Maps SDK. The React wrapper would be `@vis.gl/react-google-maps`.
+Code follows the existing pattern: a `MapsService` interface in `src/domain`, one Google implementation in `src/lib` and a memory one for tests. Screens never import the Maps SDK. All SDK code lives in the Google implementation, including the map, so no React wrapper is needed; `@vis.gl/react-google-maps` would have added a second script loader for no gain.
 
 ## Track B: place data
 

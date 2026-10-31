@@ -240,7 +240,12 @@ export function placeRecordDefaults(): Pick<
   | "sources"
   | "lockedFields"
 > {
-  return { ...NO_MAP_FIELDS, nearestStation: null, sources: [], lockedFields: [] };
+  return {
+    ...NO_MAP_FIELDS,
+    nearestStation: null,
+    sources: [],
+    lockedFields: [],
+  };
 }
 
 export type CityRecord = z.infer<typeof CityRecordSchema>;

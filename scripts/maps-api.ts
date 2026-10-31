@@ -16,7 +16,9 @@ export function loadEnv(): void {
 export function scriptKey(): string {
   const key = process.env.GOOGLE_MAPS_SCRIPT_KEY;
   if (!key) {
-    console.error("Set GOOGLE_MAPS_SCRIPT_KEY in .env. See docs/maps-setup.md.");
+    console.error(
+      "Set GOOGLE_MAPS_SCRIPT_KEY in .env. See docs/maps-setup.md.",
+    );
     process.exit(1);
   }
   return key;

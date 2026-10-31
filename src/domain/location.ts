@@ -33,7 +33,8 @@ export function dueForRefresh(record: Located, now: Date): boolean {
   if (record.locationSource === "manual") return false;
   if (record.locationSource === null && record.lat !== null) return false;
   return (
-    record.lat === null || ageDays(record, now) >= COORDINATES_REFRESH_AFTER_DAYS
+    record.lat === null ||
+    ageDays(record, now) >= COORDINATES_REFRESH_AFTER_DAYS
   );
 }
 

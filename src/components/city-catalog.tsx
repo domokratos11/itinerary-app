@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PlaceDetails, type NearbyPlace } from "@/components/place-details";
+import { TripMap } from "@/components/trip-map";
+import { cityPins } from "@/domain/map-pins";
 import {
   CATEGORIES,
   PRIORITIES,
@@ -25,7 +27,9 @@ import { filterPlaces, type CatalogFilter } from "@/lib/catalog-filter";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
 import { isDraft } from "@/domain/queue";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { usePlanStore } from "@/lib/plan-store";
+import { cn } from "@/lib/utils";
 
 type Props = {
   city: City;
@@ -50,6 +54,11 @@ export function CityCatalog({
   const [filter, setFilter] = useState<CatalogFilter>(initialFilter);
   const [selectedId, setSelectedId] = useState<string | null>(initialPlaceId);
   const items = usePlanStore((s) => s.items);
+  const [view, setView] = useState<"list" | "map">("list");
+  // Wide enough for the map beside the grid; otherwise a switch.
+  const sideBySide = useMediaQuery("(min-width: 1280px)");
+  const showMap = sideBySide || view === "map";
+  const showList = sideBySide || view === "list";
 
   // Places with an active plan item are assigned; the rest are unassigned.
   const assigned = useMemo(
@@ -65,6 +74,8 @@ export function CityCatalog({
     [places, filter, assigned],
   );
   const selected = places.find((p) => p.id === selectedId) ?? null;
+  const pins = useMemo(() => cityPins(visible), [visible]);
+  const unpinned = visible.length - pins.length;
   // Estimated cost of this city's planned stops.
   const planned = useMemo(() => {
     const byId = new Map(places.map((p) => [p.id, p]));
@@ -81,6 +92,21 @@ export function CityCatalog({
           {visible.length} of {places.length} places
         </p>
         <CostLine places={planned} />
+        {!sideBySide && (
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={view}
+            onValueChange={(value) => {
+              if (value) setView(value as "list" | "map");
+            }}
+            className="mt-1 justify-start"
+          >
+            <ToggleGroupItem value="list">List</ToggleGroupItem>
+            <ToggleGroupItem value="map">Map</ToggleGroupItem>
+          </ToggleGroup>
+        )}
       </header>
 
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
@@ -148,45 +174,71 @@ export function CityCatalog({
           </div>
         </aside>
 
-        <div className="flex flex-col gap-3">
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {visible.map((place) => (
-              <li key={place.id}>
-                <Card
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSelectedId(place.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ")
-                      setSelectedId(place.id);
-                  }}
-                  className="h-full cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50"
-                >
-                  <CardHeader>
-                    <CardTitle className="text-base">{place.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">
-                      {CATEGORY_LABEL[place.category]}
-                    </Badge>
-                    <Badge variant="outline" className="text-foreground">
-                      {place.priority}
-                    </Badge>
-                    {assigned.has(place.id) && <Badge>In plan</Badge>}
-                    {isDraft(place) && (
-                      <Badge variant="outline" className="border-dashed">
-                        Not researched yet
-                      </Badge>
-                    )}
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
-          {visible.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No places match these filters.
-            </p>
+        <div
+          className={cn(
+            "flex flex-col gap-4",
+            sideBySide &&
+              "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start",
+          )}
+        >
+          {showList && (
+            <div className="flex flex-col gap-3">
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {visible.map((place) => (
+                  <li key={place.id}>
+                    <Card
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedId(place.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ")
+                          setSelectedId(place.id);
+                      }}
+                      className="h-full cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50"
+                    >
+                      <CardHeader>
+                        <CardTitle className="text-base">
+                          {place.name}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex flex-wrap gap-2">
+                        <Badge variant="secondary">
+                          {CATEGORY_LABEL[place.category]}
+                        </Badge>
+                        <Badge variant="outline" className="text-foreground">
+                          {place.priority}
+                        </Badge>
+                        {assigned.has(place.id) && <Badge>In plan</Badge>}
+                        {isDraft(place) && (
+                          <Badge variant="outline" className="border-dashed">
+                            Not researched yet
+                          </Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+              {visible.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No places match these filters.
+                </p>
+              )}
+            </div>
+          )}
+          {showMap && (
+            <div className={cn(sideBySide && "sticky top-20")}>
+              <TripMap
+                pins={pins}
+                onPinClick={setSelectedId}
+                className={sideBySide ? "h-[calc(100vh-7rem)]" : "h-[65vh]"}
+                note={
+                  unpinned > 0
+                    ? `${unpinned} of these ${visible.length} places have no map pin yet.`
+                    : null
+                }
+              />
+            </div>
           )}
         </div>
       </div>
