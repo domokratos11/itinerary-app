@@ -1,26 +1,25 @@
 import { deriveDays, type TripDay } from "./days";
+import type { Translate } from "./i18n";
 import { stayLocation, type Location } from "./plan";
-import {
-  NO_MAP_FIELDS,
-  placeRecordDefaults,
-  type City,
-  type CityRecord,
-  type Place,
-  type PlaceRecord,
-  type PlanItem,
-  type ReservationRecord,
-  type Stay,
-  type StayRecord,
-  type TripFile,
+import type {
+  CityRecord,
+  HolidayRecord,
+  Place,
+  PlaceRecord,
+  PlanItem,
+  ReservationRecord,
+  Stay,
+  StayRecord,
 } from "./schemas";
 
 // The trip's structure: everything except the plan items. Lives in
-// Firestore under trips/{tripId}; the data/ files are its seed.
+// Firestore under trips/{tripId}.
 export type TripData = {
   cities: CityRecord[];
   stays: StayRecord[];
   reservations: ReservationRecord[];
   places: PlaceRecord[];
+  holidays: HolidayRecord[];
 };
 
 export type TripCollection = keyof TripData;
@@ -29,45 +28,23 @@ export const TRIP_COLLECTIONS: TripCollection[] = [
   "stays",
   "reservations",
   "places",
+  "holidays",
 ];
 
 export type TripRecordOf = {
   [C in TripCollection]: TripData[C][number];
 };
 
-// Seed ids are stable, so running the seed twice finds the same documents.
+export const EMPTY_TRIP: TripData = {
+  cities: [],
+  stays: [],
+  reservations: [],
+  places: [],
+  holidays: [],
+};
+
 export function stayId(stay: Pick<Stay, "cityId" | "checkIn">): string {
   return `${stay.cityId}-${stay.checkIn}`;
-}
-
-export function seedTrip(
-  input: { cities: City[]; trip: TripFile; places: Place[] },
-  now: Date,
-): TripData {
-  const updatedAt = now.toISOString();
-  const base = { archived: false, updatedAt };
-  return {
-    cities: input.cities.map((c) => ({ ...c, ...base })),
-    stays: input.trip.stays.map((s) => ({
-      ...s,
-      id: stayId(s),
-      note: null,
-      ...NO_MAP_FIELDS,
-      ...base,
-    })),
-    reservations: input.trip.reservations.map((r, i) => ({
-      ...r,
-      id: `${r.type}-${r.date}-${i + 1}`,
-      ...base,
-    })),
-    places: input.places.map((p) => ({
-      ...p,
-      status: "researched" as const,
-      source: "catalog" as const,
-      ...placeRecordDefaults(),
-      ...base,
-    })),
-  };
 }
 
 // What screens show: archived records hidden, in a stable order. Cities
@@ -100,6 +77,7 @@ export function activeTrip(data: TripData): TripData {
     stays,
     reservations,
     places: data.places.filter((p) => !p.archived),
+    holidays: data.holidays.filter((h) => !h.archived),
   };
 }
 
@@ -110,11 +88,13 @@ export function tripDays(data: TripData): TripDay[] {
 export type Endpoint = { name: string; location: Location | null };
 
 // A hotel with no name yet ("To be decided") has no location to route to.
-export function endpointFor(stay: Stay | null): Endpoint | null {
+export function endpointFor(stay: Stay | null, tr: Translate): Endpoint | null {
   if (!stay) return null;
-  const undecided = stay.hotelName.toLowerCase().startsWith("to be decided");
+  const name = stay.hotelName.toLowerCase();
+  const undecided =
+    name.startsWith("to be decided") || name.startsWith("por decidir");
   return {
-    name: undecided ? "Hotel to be decided" : stay.hotelName,
+    name: undecided ? tr("leg.hotelUndecided") : stay.hotelName,
     location: undecided ? null : stayLocation(stay),
   };
 }

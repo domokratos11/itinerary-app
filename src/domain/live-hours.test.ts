@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "@/lib/i18n";
+
 import { hoursDifference, parseGoogleHours } from "./live-hours";
 
 describe("parseGoogleHours", () => {
@@ -36,17 +38,17 @@ describe("parseGoogleHours", () => {
 
 describe("hoursDifference", () => {
   it("is quiet when they agree or can't be compared", () => {
-    expect(hoursDifference("9:30-17:00", "9:30 AM – 5:00 PM")).toBeNull();
-    expect(hoursDifference(null, "9:30 AM – 5:00 PM")).toBeNull();
-    expect(hoursDifference("Varies", "9:30 AM – 5:00 PM")).toBeNull();
-    expect(hoursDifference("9:30-17:00", null)).toBeNull();
-    expect(hoursDifference("9:30-17:00", "Open 24 hours")).toBeNull();
+    expect(hoursDifference("9:30-17:00", "9:30 AM – 5:00 PM", t)).toBeNull();
+    expect(hoursDifference(null, "9:30 AM – 5:00 PM", t)).toBeNull();
+    expect(hoursDifference("Varies", "9:30 AM – 5:00 PM", t)).toBeNull();
+    expect(hoursDifference("9:30-17:00", null, t)).toBeNull();
+    expect(hoursDifference("9:30-17:00", "Open 24 hours", t)).toBeNull();
   });
 
   it("flags different hours and a closed day", () => {
-    expect(hoursDifference("9:30-17:00", "10:00 AM – 5:00 PM")).toMatch(
+    expect(hoursDifference("9:30-17:00", "10:00 AM – 5:00 PM", t)).toMatch(
       /Our notes say 09:30–17:00/,
     );
-    expect(hoursDifference("9:30-17:00", "Closed")).toMatch(/closed today/);
+    expect(hoursDifference("9:30-17:00", "Closed", t)).toMatch(/closed today/);
   });
 });

@@ -12,19 +12,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { LEG_MODE_LABEL } from "@/domain/legs";
+import type { MessageKey } from "@/domain/i18n";
 import {
   LEG_MODES,
   type LegMode,
   type Place,
   type PlanItem,
 } from "@/domain/schemas";
+import { t } from "@/lib/i18n";
 
 type Status = "planned" | "done" | "skipped";
-const STATUS_LABEL: Record<Status, string> = {
-  planned: "Planned",
-  done: "Done",
-  skipped: "Skipped",
+const STATUS_LABEL: Record<Status, MessageKey> = {
+  planned: "common.planned",
+  done: "common.done",
+  skipped: "common.skipped",
 };
 
 export type StopChanges = Pick<
@@ -81,8 +82,8 @@ export function StopEditor({
     <EditPanel
       open
       onOpenChange={(open) => !open && onCancel()}
-      title={place?.name ?? "Edit stop"}
-      description="Time, duration and notes for this stop."
+      title={place?.name ?? t("stop.edit")}
+      description={t("stop.description")}
       canSubmit={durationValid && legValid}
       onSubmit={() =>
         onSave({
@@ -103,7 +104,7 @@ export function StopEditor({
       }
     >
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Start time" htmlFor="stop-start">
+        <Field label={t("stop.startTime")} htmlFor="stop-start">
           <Input
             id="stop-start"
             type="time"
@@ -112,11 +113,11 @@ export function StopEditor({
           />
         </Field>
         <Field
-          label="Minutes"
+          label={t("stop.minutes")}
           htmlFor="stop-duration"
           hint={
             place?.durationMin
-              ? `Usually about ${place.durationMin} min`
+              ? t("stop.usually", { minutes: place.durationMin })
               : undefined
           }
         >
@@ -135,10 +136,10 @@ export function StopEditor({
       </div>
       {place?.openingHours && (
         <p className="text-xs text-muted-foreground">
-          Hours: {place.openingHours}
+          {t("stop.hours", { hours: place.openingHours })}
         </p>
       )}
-      <Field label="Note" htmlFor="stop-note">
+      <Field label={t("common.note")} htmlFor="stop-note">
         <Textarea
           id="stop-note"
           value={note}
@@ -147,9 +148,9 @@ export function StopEditor({
         />
       </Field>
       <Field
-        label="Getting here"
+        label={t("stop.gettingHere")}
         htmlFor="stop-leg-mode"
-        hint="Your own note, such as which train to take. Treated as an estimate."
+        hint={t("stop.gettingHereHint")}
       >
         <Select
           value={legMode}
@@ -159,10 +160,10 @@ export function StopEditor({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NO_NOTE}>No note</SelectItem>
+            <SelectItem value={NO_NOTE}>{t("stop.noNote")}</SelectItem>
             {LEG_MODES.map((mode) => (
               <SelectItem key={mode} value={mode}>
-                {LEG_MODE_LABEL[mode]}
+                {t(`legMode.${mode}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -171,7 +172,7 @@ export function StopEditor({
       {legMode !== NO_NOTE && (
         <>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Minutes" htmlFor="stop-leg-minutes">
+            <Field label={t("stop.minutes")} htmlFor="stop-leg-minutes">
               <Input
                 id="stop-leg-minutes"
                 type="number"
@@ -181,7 +182,7 @@ export function StopEditor({
                 onChange={(e) => setLegMinutes(e.target.value)}
               />
             </Field>
-            <Field label="Fare (¥)" htmlFor="stop-leg-fare">
+            <Field label={t("stop.fare")} htmlFor="stop-leg-fare">
               <Input
                 id="stop-leg-fare"
                 type="number"
@@ -192,7 +193,7 @@ export function StopEditor({
               />
             </Field>
           </div>
-          <Field label="Line or details" htmlFor="stop-leg-text">
+          <Field label={t("stop.lineOrDetails")} htmlFor="stop-leg-text">
             <Input
               id="stop-leg-text"
               value={legText}
@@ -202,7 +203,7 @@ export function StopEditor({
           </Field>
         </>
       )}
-      <Field label="Status" htmlFor="stop-status">
+      <Field label={t("stop.status")} htmlFor="stop-status">
         <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
           <SelectTrigger id="stop-status" className="w-full">
             <SelectValue />
@@ -210,7 +211,7 @@ export function StopEditor({
           <SelectContent>
             {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
               <SelectItem key={s} value={s}>
-                {STATUS_LABEL[s]}
+                {t(STATUS_LABEL[s])}
               </SelectItem>
             ))}
           </SelectContent>

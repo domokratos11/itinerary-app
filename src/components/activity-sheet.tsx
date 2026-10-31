@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { undoFor, type Activity } from "@/domain/activity";
+import { t } from "@/lib/i18n";
 import {
   DEFAULT_DEVICE_NAME,
   getDeviceName,
@@ -29,8 +30,6 @@ import { todayInTokyo } from "@/lib/tokyo-date";
 import { usePlacesById } from "@/lib/trip-store";
 import { useActivity } from "@/lib/use-activity";
 import { useTripId } from "@/lib/use-trip-id";
-
-const REFUSED = "That change was refused. Check the trip link.";
 
 const timeInTokyo = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Tokyo",
@@ -75,10 +74,10 @@ export function ActivitySheet({ compact = false }: { compact?: boolean }) {
     if (!tripId) return;
     undoActivity(tripId, entry, itemsById.get(entry.targetId ?? ""))
       .then((done) => {
-        if (done) toast.success("Undone");
-        else toast("That stop changed again since, so it can't be undone.");
+        if (done) toast.success(t("activity.undone"));
+        else toast(t("activity.cantUndo"));
       })
-      .catch(() => toast.error(REFUSED));
+      .catch(() => toast.error(t("common.refused")));
   }
 
   return (
@@ -87,48 +86,45 @@ export function ActivitySheet({ compact = false }: { compact?: boolean }) {
         <Button
           variant={compact ? "ghost" : "outline"}
           size={compact ? "icon-sm" : "sm"}
-          aria-label="Activity"
+          aria-label={t("activity.title")}
         >
           <History />
-          {!compact && "Activity"}
+          {!compact && t("activity.title")}
         </Button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader className="text-left">
-          <SheetTitle>Activity</SheetTitle>
-          <SheetDescription>
-            Every change to the trip, newest first (Japan time).
-          </SheetDescription>
+          <SheetTitle>{t("activity.title")}</SheetTitle>
+          <SheetDescription>{t("activity.description")}</SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-4 pb-6">
           <DeviceName />
           <Tabs defaultValue="activity">
             <TabsList className="w-full">
-              <TabsTrigger value="activity">Changes</TabsTrigger>
+              <TabsTrigger value="activity">
+                {t("activity.changes")}
+              </TabsTrigger>
               <TabsTrigger value="removed">
-                Removed stops ({removed.length})
+                {t("activity.removedStops", { count: removed.length })}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="activity" className="flex flex-col gap-4 pt-2">
-              {!tripId && (
-                <p className="text-sm text-muted-foreground">
-                  Open your shared link with ?trip= to see changes.
-                </p>
-              )}
               {error && (
                 <p className="text-sm text-destructive">
-                  Can&apos;t load the activity: {error}
+                  {t("activity.cantLoad", { error })}
                 </p>
               )}
               {tripId && !error && entries.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  No changes logged yet.
+                  {t("activity.none")}
                 </p>
               )}
               {groups.map(([date, list]) => (
                 <section key={date} className="flex flex-col gap-2">
                   <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    {date === todayInTokyo() ? "Today" : formatDayLabel(date)}
+                    {date === todayInTokyo()
+                      ? t("common.today")
+                      : formatDayLabel(date)}
                   </h3>
                   <ul className="flex flex-col gap-2">
                     {list.map((entry) => {
@@ -158,7 +154,7 @@ export function ActivitySheet({ compact = false }: { compact?: boolean }) {
                               variant="outline"
                               onClick={() => undo(entry)}
                             >
-                              Undo
+                              {t("common.undo")}
                             </Button>
                           )}
                         </li>
@@ -171,7 +167,7 @@ export function ActivitySheet({ compact = false }: { compact?: boolean }) {
             <TabsContent value="removed" className="pt-2">
               {removed.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No removed stops.
+                  {t("activity.noRemoved")}
                 </p>
               ) : (
                 <ul className="flex flex-col gap-2">
@@ -196,10 +192,10 @@ export function ActivitySheet({ compact = false }: { compact?: boolean }) {
                             restoreItem(tripId, {
                               ...item,
                               status: "planned",
-                            }).catch(() => toast.error(REFUSED))
+                            }).catch(() => toast.error(t("common.refused")))
                           }
                         >
-                          Restore
+                          {t("common.restore")}
                         </Button>
                       )}
                     </li>
@@ -228,20 +224,20 @@ function DeviceName() {
         if (!value.trim()) return;
         setDeviceName(value);
         setDraft(null);
-        toast.success(`Changes from here are signed “${value.trim()}”`);
+        toast.success(t("activity.deviceSigned", { name: value.trim() }));
       }}
     >
-      <Label htmlFor="device-name">This device&apos;s name</Label>
+      <Label htmlFor="device-name">{t("activity.deviceName")}</Label>
       <div className="flex gap-2">
         <Input
           id="device-name"
           value={value}
           maxLength={40}
-          placeholder="e.g. Rey's phone"
+          placeholder={t("activity.devicePlaceholder")}
           onChange={(e) => setDraft(e.target.value)}
         />
         <Button type="submit" variant="outline" disabled={draft === null}>
-          Save
+          {t("common.save")}
         </Button>
       </div>
     </form>

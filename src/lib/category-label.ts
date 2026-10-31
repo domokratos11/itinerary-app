@@ -1,10 +1,6 @@
 import type { Category } from "@/domain/schemas";
+import { t } from "@/lib/i18n";
 
-export const CATEGORY_LABEL: Record<Category, string> = {
-  lights: "Lights",
-  food: "Food",
-  shopping: "Shopping",
-  sight: "Sight",
-  daytrip: "Day trip",
-  temple: "Temple",
-};
+export function categoryLabel(category: Category): string {
+  return t(`category.${category}`);
+}

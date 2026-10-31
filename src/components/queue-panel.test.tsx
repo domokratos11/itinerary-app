@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueuePanel } from "@/components/queue-panel";
 import type { QueuedPlace } from "@/domain/queue";
 import { testPlace } from "@/domain/test-place";
-import { seed } from "@/lib/catalog";
+import { fixtureTrip } from "@/test/fixture-trip";
 import { useTripStore } from "@/lib/trip-store";
 import { assignQueued, queueAdd, queueUpdate } from "@/lib/queue-actions";
 import { toast } from "sonner";
@@ -33,7 +33,7 @@ describe("QueuePanel", () => {
     // A saved place nearby is what makes Nagoya the suggested city.
     useTripStore.setState({
       data: {
-        ...seed,
+        ...fixtureTrip,
         places: [testPlace({ cityId: "nagoya", lat: 35.17, lng: 136.9 })],
       },
     });
@@ -71,7 +71,7 @@ describe("QueuePanel", () => {
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        "That link was refused. Check the trip link.",
+        "That link was refused. Check your connection.",
       ),
     );
     expect(toast.success).not.toHaveBeenCalled();

@@ -22,14 +22,14 @@ import {
   type Category,
   type Priority,
 } from "@/domain/schemas";
-import { CATEGORY_LABEL } from "@/lib/category-label";
+import { t } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/category-label";
 import { mapsService } from "@/lib/maps-service-instance";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip, useTripStore } from "@/lib/trip-store";
 import { useOnline } from "@/lib/use-online";
 import { cn } from "@/lib/utils";
 
-const REFUSED = "That change was refused. Check the trip link.";
 const SEARCH_DELAY_MS = 350;
 const SEARCH_MIN_LENGTH = 3;
 
@@ -122,19 +122,22 @@ export function AddPlace({
       new Date(),
     );
     onClose();
-    saveRecord(tripId, "places", place, `added ${place.name}`).catch(() =>
-      toast.error(REFUSED),
-    );
-    toast(`Added ${place.name}`, {
+    saveRecord(
+      tripId,
+      "places",
+      place,
+      t("activity.addedPlace", { name: place.name }),
+    ).catch(() => toast.error(t("common.refused")));
+    toast(t("place.added", { name: place.name }), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
           archiveRecord(
             tripId,
             "places",
             place,
-            `removed ${place.name} again`,
-          ).catch(() => toast.error(REFUSED)),
+            t("activity.removedPlace", { name: place.name }),
+          ).catch(() => toast.error(t("common.refused"))),
       },
     });
   }
@@ -143,16 +146,16 @@ export function AddPlace({
     <EditPanel
       open
       onOpenChange={(open) => !open && onClose()}
-      title="Add place"
-      description="It's saved as a draft until it's researched."
-      submitLabel="Add"
+      title={t("common.addPlace")}
+      description={t("place.addDescription")}
+      submitLabel={t("common.add")}
       canSubmit={valid}
       onSubmit={() => void save()}
     >
-      <Field label="City" htmlFor="add-place-city">
+      <Field label={t("common.city")} htmlFor="add-place-city">
         <Select value={cityId} onValueChange={setCityId}>
           <SelectTrigger id="add-place-city" className="w-full">
-            <SelectValue placeholder="Choose a city" />
+            <SelectValue placeholder={t("common.chooseCity")} />
           </SelectTrigger>
           <SelectContent>
             {trip.cities.map((c) => (
@@ -164,14 +167,10 @@ export function AddPlace({
         </Select>
       </Field>
       <Field
-        label="Name or Google Maps link"
+        label={t("place.nameOrLink")}
         htmlFor="add-place-input"
         hint={
-          badLink
-            ? "That link isn't from Google Maps."
-            : chosen
-              ? "Matched to Google. You can still change the name below."
-              : undefined
+          badLink ? t("place.badLink") : chosen ? t("place.matched") : undefined
         }
       >
         <Input
@@ -215,7 +214,7 @@ export function AddPlace({
         </ul>
       )}
       {(looksLikeLink || chosen) && (
-        <Field label="Name" htmlFor="add-place-name">
+        <Field label={t("common.name")} htmlFor="add-place-name">
           <Input
             id="add-place-name"
             value={name}
@@ -226,7 +225,7 @@ export function AddPlace({
         </Field>
       )}
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Category" htmlFor="add-place-category">
+        <Field label={t("common.category")} htmlFor="add-place-category">
           <Select
             value={category}
             onValueChange={(v) => setCategory(v as Category)}
@@ -237,13 +236,13 @@ export function AddPlace({
             <SelectContent>
               {CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {CATEGORY_LABEL[c]}
+                  {categoryLabel(c)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Priority" htmlFor="add-place-priority">
+        <Field label={t("common.priority")} htmlFor="add-place-priority">
           <Select
             value={priority}
             onValueChange={(v) => setPriority(v as Priority)}
@@ -254,7 +253,7 @@ export function AddPlace({
             <SelectContent>
               {PRIORITIES.map((p) => (
                 <SelectItem key={p} value={p}>
-                  {p}
+                  {t(`priorities.${p}`)}
                 </SelectItem>
               ))}
             </SelectContent>

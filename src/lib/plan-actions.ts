@@ -2,6 +2,7 @@ import { undoFor, type Activity } from "@/domain/activity";
 import { markRemoved } from "@/domain/plan-repository";
 import { newPlanItem, keysForInsert } from "@/domain/plan";
 import type { PlanItem } from "@/domain/schemas";
+import { t } from "@/lib/i18n";
 import { logActivity, placeName } from "@/lib/activity-log";
 import { formatDayLabel } from "@/lib/format-day";
 import { usePlanStore } from "@/lib/plan-store";
@@ -63,7 +64,10 @@ export async function addPlaceAt(
     {
       kind: "added",
       targetId: item.id,
-      summary: `added ${placeName(placeId)} to ${formatDayLabel(date)}`,
+      summary: t("activity.addedToDay", {
+        name: placeName(placeId),
+        day: formatDayLabel(date),
+      }),
       after: item,
     },
     now,
@@ -92,8 +96,12 @@ export async function placeItem(
       targetId: item.id,
       summary:
         item.date === date
-          ? `reordered ${name} on ${formatDayLabel(date)}`
-          : `moved ${name} from ${formatDayLabel(item.date)} to ${formatDayLabel(date)}`,
+          ? t("activity.reordered", { name, day: formatDayLabel(date) })
+          : t("activity.moved", {
+              name,
+              from: formatDayLabel(item.date),
+              to: formatDayLabel(date),
+            }),
       before: item,
       after: moved,
     },
@@ -113,16 +121,22 @@ export async function updateItem(
   const updated = { ...item, ...changes, updatedAt: now.toISOString() };
   await saveAll(tripId, [updated]);
   const name = placeName(item.placeId);
-  const marked =
-    changes.status && changes.status !== item.status
-      ? `marked ${name} ${changes.status}`
-      : `edited ${name}`;
+  const day = formatDayLabel(item.date);
+  const status = changes.status;
+  const summary =
+    status && status !== item.status && status !== "removed"
+      ? t("activity.markedOn", {
+          name,
+          status: t(`common.${status}`).toLowerCase(),
+          day,
+        })
+      : t("activity.editedOn", { name, day });
   logActivity(
     tripId,
     {
       kind: "edited",
       targetId: item.id,
-      summary: `${marked} on ${formatDayLabel(item.date)}`,
+      summary,
       before: item,
       after: updated,
     },
@@ -142,7 +156,10 @@ export async function removeItem(
     {
       kind: "removed",
       targetId: item.id,
-      summary: `removed ${placeName(item.placeId)} from ${formatDayLabel(item.date)}`,
+      summary: t("activity.removedFrom", {
+        name: placeName(item.placeId),
+        day: formatDayLabel(item.date),
+      }),
       before: item,
       after: removed,
     },
@@ -163,7 +180,10 @@ export async function restoreItem(
     {
       kind: "restored",
       targetId: previous.id,
-      summary: `restored ${placeName(previous.placeId)} on ${formatDayLabel(previous.date)}`,
+      summary: t("activity.restoredOn", {
+        name: placeName(previous.placeId),
+        day: formatDayLabel(previous.date),
+      }),
       after: restored,
     },
     now,
@@ -186,7 +206,7 @@ export async function undoActivity(
     {
       kind: "undone",
       targetId: target.id,
-      summary: `undid: ${entry.summary}`,
+      summary: t("activity.undid", { summary: entry.summary }),
       before: current,
       after: target,
     },

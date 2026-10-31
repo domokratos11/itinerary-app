@@ -11,6 +11,7 @@ import {
   type DayLeg,
 } from "@/domain/legs";
 import type { WalkingLeg } from "@/domain/maps-service";
+import { t } from "@/lib/i18n";
 
 // The line between two stops: how far, how long on foot if it's walkable, and
 // for anything further a button that opens transit directions in the Maps app.
@@ -23,9 +24,9 @@ export function LegLine({
 }) {
   const far = leg.kind === "far";
   const summary = walking
-    ? formatWalk(walking.minutes, walking.meters)
+    ? formatWalk(walking.minutes, walking.meters, t)
     : leg.km !== null
-      ? formatDistance(leg.km)
+      ? formatDistance(leg.km, t)
       : null;
   const Icon = far ? TrainFront : Footprints;
 
@@ -47,7 +48,7 @@ export function LegLine({
                 rel="noopener noreferrer"
               >
                 <TrainFront />
-                Train directions
+                {t("leg.trainDirections")}
               </a>
             </Button>
           ) : (
@@ -58,12 +59,16 @@ export function LegLine({
               rel="noopener noreferrer"
             >
               {!summary && <Navigation className="size-4" aria-hidden />}
-              Directions
+              {t("common.directions")}
             </a>
           ))}
       </div>
-      {leg.note && <p>{formatLegNote(leg.note)} (estimate)</p>}
-      {far && leg.station && <p>Station: {formatStation(leg.station)}</p>}
+      {leg.note && (
+        <p>{t("leg.estimate", { note: formatLegNote(leg.note, t) })}</p>
+      )}
+      {far && leg.station && (
+        <p>{t("leg.station", { station: formatStation(leg.station, t) })}</p>
+      )}
     </div>
   );
 }

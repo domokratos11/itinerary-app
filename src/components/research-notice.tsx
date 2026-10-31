@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { t } from "@/lib/i18n";
 import { pageHref } from "@/lib/links";
 import { useProposals } from "@/lib/use-proposals";
 import { useTripId } from "@/lib/use-trip-id";
@@ -16,7 +17,7 @@ export function ResearchNotice() {
       href={pageHref("/settings/", tripId, { tab: "places" })}
       className="rounded-lg border bg-muted px-3 py-2 text-sm underline-offset-2 hover:underline"
     >
-      {ready} {ready === 1 ? "place has" : "places have"} research to review
+      {t("common.researchToReview", { count: ready })}
     </Link>
   );
 }

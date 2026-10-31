@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// Shared trip model. Catalog files in data/ are checked against these
-// schemas by `npm run validate`; the app imports the inferred types.
+// Shared trip model: what is stored in Firestore under trips/{tripId}. The
+// app imports the inferred types.
 
 export const CATEGORIES = [
   "lights",
@@ -33,8 +33,6 @@ export const CitySchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
 });
 
-export const CitiesFileSchema = z.array(CitySchema);
-
 // Fields a place can be missing until the research step fills them.
 // null means "not researched yet", not "free" or "none".
 export const PlaceSchema = z.object({
@@ -60,8 +58,6 @@ export const PlaceSchema = z.object({
   notes: z.string().nullable(),
 });
 
-export const PlacesFileSchema = z.array(PlaceSchema);
-
 export const StaySchema = z.object({
   cityId: z.string(),
   hotelName: z.string().min(1),
@@ -84,20 +80,15 @@ export const ReservationSchema = z.object({
   note: z.string().nullable(),
 });
 
-export const TripFileSchema = z.object({
-  stays: z.array(StaySchema),
-  reservations: z.array(ReservationSchema),
-});
+export const HOLIDAY_KINDS = ["holiday", "closures"] as const;
 
-// Holidays and closure periods in the trip window (data/holidays.json).
+// A holiday or closure period in this trip's window.
 export const HolidaySchema = z.object({
   date: isoDate,
   name: z.string().min(1),
-  kind: z.enum(["holiday", "closures"]),
+  kind: z.enum(HOLIDAY_KINDS),
   note: z.string().nullable(),
 });
-
-export const HolidaysFileSchema = z.array(HolidaySchema);
 
 export const LEG_MODES = ["train", "subway", "bus", "walk", "taxi"] as const;
 
@@ -123,9 +114,9 @@ export const PlanItemSchema = z.object({
   legNote: LegNoteSchema.nullable().default(null),
 });
 
-// Firestore records under trips/{tripId}. Each is the seed shape plus an
-// id where the seed has none, `archived` (records are never deleted) and
-// the time of the last change.
+// Firestore records under trips/{tripId}. Each is the shape above plus an
+// id where it has none, `archived` (records are never deleted) and the time
+// of the last change.
 const recordId = z
   .string()
   .regex(/^[a-z0-9-]+$/)
@@ -180,6 +171,11 @@ export const ReservationRecordSchema = ReservationSchema.extend({
   ...recordFields,
 });
 
+export const HolidayRecordSchema = HolidaySchema.extend({
+  id: recordId,
+  ...recordFields,
+});
+
 // A draft place was made from a queued link and is waiting for research.
 export const PlaceRecordSchema = PlaceSchema.extend({
   status: z.enum(PLACE_STATUSES),
@@ -190,6 +186,15 @@ export const PlaceRecordSchema = PlaceSchema.extend({
   // Fields edited by hand; research never changes them.
   lockedFields: z.array(z.string().min(1).max(40)).max(40).default([]),
   ...recordFields,
+});
+
+// A whole trip's structure in one object; the sample trip the tests use.
+export const TripDataSchema = z.object({
+  cities: z.array(CityRecordSchema),
+  stays: z.array(StayRecordSchema),
+  reservations: z.array(ReservationRecordSchema),
+  places: z.array(PlaceRecordSchema),
+  holidays: z.array(HolidayRecordSchema),
 });
 
 export const PROPOSAL_STATUSES = [
@@ -230,7 +235,7 @@ export const ProposalSchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 
-// The fields a place record has beyond the seed shape.
+// The fields a place record has beyond the basic place.
 export function placeRecordDefaults(): Pick<
   PlaceRecord,
   | "googlePlaceId"
@@ -251,6 +256,7 @@ export function placeRecordDefaults(): Pick<
 export type CityRecord = z.infer<typeof CityRecordSchema>;
 export type StayRecord = z.infer<typeof StayRecordSchema>;
 export type ReservationRecord = z.infer<typeof ReservationRecordSchema>;
+export type HolidayRecord = z.infer<typeof HolidayRecordSchema>;
 export type PlaceRecord = z.infer<typeof PlaceRecordSchema>;
 export type Proposal = z.infer<typeof ProposalSchema>;
 export type ProposalFields = z.infer<typeof ProposalFieldsSchema>;
@@ -264,7 +270,6 @@ export type Place = z.infer<typeof PlaceSchema>;
 export type Stay = z.infer<typeof StaySchema>;
 export type Reservation = z.infer<typeof ReservationSchema>;
 export type Holiday = z.infer<typeof HolidaySchema>;
-export type TripFile = z.infer<typeof TripFileSchema>;
 export type PlanItem = z.infer<typeof PlanItemSchema>;
 export type Category = (typeof CATEGORIES)[number];
 export type Priority = (typeof PRIORITIES)[number];

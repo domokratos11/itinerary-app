@@ -118,7 +118,6 @@ TRIP_ID=<id> npm run maps:refresh -- --all
 
 ## Good to know
 
-- **`npm run seed -- --force` now loses data.** It replaces places with the seed files, including place IDs, research, sources and locked fields. Don't use it after step 7.
 - **Backups leave out Google's coordinates,** as they must. Run `maps:refresh` after restoring one.
 - **A place name chosen from Google's suggestions is stored,** so Add place has something to call it. Google's terms don't clearly allow storing it. You can rename it in the same form, and research can correct it.
 - **`favicon.ico` must hold RGBA images,** or `npm run build` fails with "The PNG is not in RGBA format". Browsers don't mind, so only the build shows it.

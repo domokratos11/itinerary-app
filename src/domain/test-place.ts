@@ -1,6 +1,6 @@
 import { placeRecordDefaults, type PlaceRecord } from "./schemas";
 
-// A place for tests. The seed has none, the trip's places are made in the app.
+// A place for tests. The sample trip has none.
 export function testPlace(fields: Partial<PlaceRecord> = {}): PlaceRecord {
   return {
     id: "test-place",

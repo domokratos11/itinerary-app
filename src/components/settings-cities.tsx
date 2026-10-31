@@ -9,10 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { CityRecord } from "@/domain/schemas";
 import { uniqueId } from "@/domain/trip-edit";
+import { t } from "@/lib/i18n";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip, useTripStore } from "@/lib/trip-store";
-
-const REFUSED = "That change was refused. Check the trip link.";
 
 type Editing = { record: CityRecord | null } | null;
 
@@ -39,8 +38,10 @@ export function CitiesSettings({ tripId }: { tripId: string }) {
       tripId,
       "cities",
       record,
-      `${editing?.record ? "edited" : "added"} the city ${name}`,
-    ).catch(() => toast.error(REFUSED));
+      editing?.record
+        ? t("activity.editedCity", { name })
+        : t("activity.addedCity", { name }),
+    ).catch(() => toast.error(t("common.refused")));
     setEditing(null);
   }
 
@@ -49,25 +50,25 @@ export function CitiesSettings({ tripId }: { tripId: string }) {
       tripId,
       "cities",
       city,
-      `archived the city ${city.name}`,
-    ).catch(() => toast.error(REFUSED));
-    toast(`Archived ${city.name}`, {
+      t("activity.archivedCity", { name: city.name }),
+    ).catch(() => toast.error(t("common.refused")));
+    toast(t("common.archivedName", { name: city.name }), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
           saveRecord(
             tripId,
             "cities",
             city,
-            `restored the city ${city.name}`,
-          ).catch(() => toast.error(REFUSED)),
+            t("activity.restoredCity", { name: city.name }),
+          ).catch(() => toast.error(t("common.refused"))),
       },
     });
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <ul className="flex flex-col gap-2">
+      <ul className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
         {trip.cities.map((city) => {
           const stays = trip.stays.filter((s) => s.cityId === city.id).length;
           const places = trip.places.filter((p) => p.cityId === city.id).length;
@@ -85,13 +86,13 @@ export function CitiesSettings({ tripId }: { tripId: string }) {
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium">{city.name}</span>
                 <span className="text-muted-foreground">
-                  {stays} {stays === 1 ? "stay" : "stays"} · {places} places
+                  {t("citySettings.counts", { stays, places })}
                 </span>
               </span>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={`Edit ${city.name}`}
+                aria-label={t("common.editName", { name: city.name })}
                 onClick={() => setEditing({ record: city })}
               >
                 <Pencil />
@@ -99,12 +100,8 @@ export function CitiesSettings({ tripId }: { tripId: string }) {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={`Archive ${city.name}`}
-                title={
-                  inUse
-                    ? "Move or archive its stays and places first"
-                    : undefined
-                }
+                aria-label={t("citySettings.archiveAria", { name: city.name })}
+                title={inUse ? t("citySettings.inUse") : undefined}
                 disabled={inUse}
                 onClick={() => archive(city)}
               >
@@ -120,7 +117,7 @@ export function CitiesSettings({ tripId }: { tripId: string }) {
         onClick={() => setEditing({ record: null })}
       >
         <Plus />
-        Add city
+        {t("citySettings.add")}
       </Button>
       {editing && (
         <CityForm
@@ -151,11 +148,13 @@ export function CityForm({
     <EditPanel
       open
       onOpenChange={(open) => !open && onCancel()}
-      title={city ? `Edit ${city.name}` : "Add city"}
+      title={
+        city ? t("common.editName", { name: city.name }) : t("citySettings.add")
+      }
       canSubmit={valid}
       onSubmit={() => onSave(name.trim(), color)}
     >
-      <Field label="Name" htmlFor="city-name">
+      <Field label={t("common.name")} htmlFor="city-name">
         <Input
           id="city-name"
           value={name}
@@ -164,7 +163,11 @@ export function CityForm({
           required
         />
       </Field>
-      <Field label="Colour" htmlFor="city-color" hint="Used on day cards.">
+      <Field
+        label={t("citySettings.colour")}
+        htmlFor="city-color"
+        hint={t("citySettings.colourHint")}
+      >
         <Input
           id="city-color"
           type="color"

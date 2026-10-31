@@ -3,34 +3,23 @@
 import { Suspense } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { t } from "@/lib/i18n";
 import { usePlanStore } from "@/lib/plan-store";
-import { useTripId } from "@/lib/use-trip-id";
 
 function PlanStatus() {
-  const tripId = useTripId();
   const ready = usePlanStore((s) => s.ready);
   const error = usePlanStore((s) => s.error);
   const stops = usePlanStore(
     (s) => s.items.filter((i) => i.status !== "removed").length,
   );
 
-  if (!tripId) {
-    return (
-      <Badge
-        variant="outline"
-        className="h-auto py-1 text-left whitespace-normal"
-      >
-        Open your shared link with ?trip= to load the plan
-      </Badge>
-    );
-  }
   if (error) {
     return (
       <Badge
         variant="destructive"
         className="h-auto py-1 text-left whitespace-normal"
       >
-        Can&apos;t reach the plan: {error}
+        {t("home.planError", { error })}
       </Badge>
     );
   }
@@ -40,7 +29,7 @@ function PlanStatus() {
         variant="outline"
         className="h-auto py-1 text-left whitespace-normal"
       >
-        Loading plan…
+        {t("home.planLoading")}
       </Badge>
     );
   return (
@@ -48,7 +37,7 @@ function PlanStatus() {
       variant="secondary"
       className="h-auto py-1 text-left whitespace-normal"
     >
-      {stops} planned stops
+      {t("home.plannedStops", { count: stops })}
     </Badge>
   );
 }
@@ -61,7 +50,7 @@ export function TripPlanStatus() {
           variant="outline"
           className="h-auto py-1 text-left whitespace-normal"
         >
-          Loading plan…
+          {t("home.planLoading")}
         </Badge>
       }
     >

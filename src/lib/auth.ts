@@ -5,8 +5,14 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
 } from "firebase/auth";
-import { clearIndexedDbPersistence, terminate } from "firebase/firestore";
+import {
+  clearIndexedDbPersistence,
+  terminate,
+  waitForPendingWrites,
+} from "firebase/firestore";
 
+import type { MessageKey } from "@/domain/i18n";
+import { t } from "@/lib/i18n";
 import { getDb, getFirebaseAuth } from "@/lib/firebase";
 
 export type SignedInUser = {
@@ -45,27 +51,39 @@ export async function signInWithGoogle(): Promise<boolean> {
       code === "auth/cancelled-popup-request"
     )
       return false;
-    throw new Error(SIGN_IN_ERRORS[code] ?? "Sign-in failed. Try again.");
+    throw new Error(t(SIGN_IN_ERRORS[code] ?? "auth.failed"));
   }
 }
 
-const SIGN_IN_ERRORS: Record<string, string> = {
-  "auth/popup-blocked":
-    "The browser blocked the sign-in window. Allow pop-ups for this site and try again.",
-  "auth/unauthorized-domain":
-    "This site isn't allowed to sign in yet. Add it under Firebase → Authentication → Settings → Authorized domains.",
-  "auth/operation-not-allowed":
-    "Google sign-in is turned off. Enable it under Firebase → Authentication → Sign-in method.",
-  "auth/network-request-failed": "No connection. Sign in once you're online.",
+const SIGN_IN_ERRORS: Record<string, MessageKey> = {
+  "auth/popup-blocked": "auth.popupBlocked",
+  "auth/unauthorized-domain": "auth.unauthorizedDomain",
+  "auth/operation-not-allowed": "auth.operationNotAllowed",
+  "auth/network-request-failed": "auth.network",
 };
 
-// Also wipes the trip from this device's offline cache, then reloads so
-// nothing from the old session stays in memory. Edits not yet synced are
-// lost, so callers should say so.
-export async function signOut(): Promise<void> {
+// Signs out and wipes the trip from this device's offline cache. Edits not
+// yet synced are lost, so callers should say so.
+async function endSession(): Promise<void> {
   await firebaseSignOut(getFirebaseAuth());
   const db = getDb();
   await terminate(db);
   await clearIndexedDbPersistence(db);
+}
+
+// Reloads so nothing from the old session stays in memory.
+export async function signOut(): Promise<void> {
+  await endSession();
   window.location.reload();
+}
+
+const PENDING_WRITES_MS = 5000;
+
+// For a new version: gives unsynced edits a moment to upload first.
+export async function clearSession(): Promise<void> {
+  await Promise.race([
+    waitForPendingWrites(getDb()),
+    new Promise((resolve) => setTimeout(resolve, PENDING_WRITES_MS)),
+  ]);
+  await endSession();
 }

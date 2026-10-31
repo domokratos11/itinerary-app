@@ -1,9 +1,10 @@
 "use client";
 
+import { intlLocale } from "@/lib/i18n";
 import { useTrip } from "@/lib/trip-store";
 
 function formatDate(date: string): string {
-  return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString(intlLocale(), {
     month: "short",
     day: "numeric",
     year: "numeric",

@@ -6,7 +6,8 @@ import { BedDouble } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { groupDaysByStay } from "@/domain/trip";
-import { cityHref, dayHref } from "@/lib/links";
+import { intlLocale, t } from "@/lib/i18n";
+import { cityHref, dayHref, pageHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
 import { todayInTokyo } from "@/lib/tokyo-date";
 import { useCitiesById, useTrip, useTripDays } from "@/lib/trip-store";
@@ -19,7 +20,7 @@ const noopSubscribe = () => () => {};
 function dayParts(date: string) {
   const d = new Date(`${date}T00:00:00Z`);
   const part = (o: Intl.DateTimeFormatOptions) =>
-    d.toLocaleDateString("en-US", { ...o, timeZone: "UTC" });
+    d.toLocaleDateString(intlLocale(), { ...o, timeZone: "UTC" });
   return {
     weekday: part({ weekday: "short" }),
     day: part({ day: "numeric" }),
@@ -65,14 +66,18 @@ export function TripDays() {
   return (
     <section className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Days</h2>
+        <h2 className="text-lg font-semibold">{t("home.daysHeading")}</h2>
         <Button size="sm" variant="outline" onClick={jumpToToday}>
-          Today
+          {t("common.today")}
         </Button>
       </div>
       {days.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No stays yet. Add one in Settings to create the trip&apos;s days.
+          {t("home.noStaysBefore")}{" "}
+          <Link href={pageHref("/settings/", tripId)} className="underline">
+            {t("home.noStaysLink")}
+          </Link>{" "}
+          {t("home.noStaysAfter")}
         </p>
       )}
       {groups.map((group) => {
@@ -94,7 +99,7 @@ export function TripDays() {
                 </Link>
               ) : (
                 <span className="font-medium text-destructive">
-                  No hotel booked
+                  {t("home.noHotel")}
                 </span>
               )}
               {group.stay && (
@@ -117,6 +122,7 @@ export function TripDays() {
                   >
                     <Link
                       href={dayHref(day.date, tripId)}
+                      prefetch={false}
                       className={cn(
                         "flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50 hover:bg-muted/40",
                         isToday && "border-primary ring-2 ring-primary/20",
@@ -135,7 +141,7 @@ export function TripDays() {
                           {weekday}
                           {isToday && (
                             <span className="ml-2 text-xs text-primary">
-                              Today
+                              {t("common.today")}
                             </span>
                           )}
                         </span>
@@ -165,7 +171,7 @@ export function TripDays() {
                       >
                         {stops === 0
                           ? "—"
-                          : `${stops} ${stops === 1 ? "stop" : "stops"}`}
+                          : t("common.stops", { count: stops })}
                       </span>
                     </Link>
                   </li>

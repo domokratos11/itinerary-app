@@ -1,17 +1,16 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "@/lib/i18n";
+
 import { deriveDays } from "@/domain/days";
 import type { PlanItem, Stay } from "@/domain/schemas";
 import {
   activeTrip,
   endpointFor,
   groupDaysByStay,
-  seedTrip,
   strandedItems,
   type TripData,
 } from "@/domain/trip";
-import { testPlace } from "@/domain/test-place";
-import { cities, trip } from "@/lib/catalog";
 
 const NOW = new Date("2026-11-01T00:00:00.000Z");
 
@@ -39,26 +38,6 @@ const item = (overrides: Partial<PlanItem>): PlanItem => ({
   ...overrides,
 });
 
-describe("seedTrip", () => {
-  const data = seedTrip({ cities, trip, places: [testPlace()] }, NOW);
-
-  it("gives every record a unique id and marks nothing archived", () => {
-    for (const name of ["cities", "stays", "reservations", "places"] as const) {
-      const ids = data[name].map((r) => r.id);
-      expect(new Set(ids).size).toBe(ids.length);
-      expect(data[name].every((r) => !r.archived)).toBe(true);
-    }
-  });
-
-  it("uses stable stay ids from the city and check-in", () => {
-    expect(data.stays[0].id).toBe("tokyo-ueno-2026-12-17");
-  });
-
-  it("marks catalog places as researched", () => {
-    expect(data.places.every((p) => p.status === "researched")).toBe(true);
-  });
-});
-
 describe("activeTrip", () => {
   it("hides archived records and sorts stays and cities by check-in", () => {
     const base = {
@@ -81,24 +60,39 @@ describe("activeTrip", () => {
       ],
       reservations: [],
       places: [],
+      holidays: [
+        {
+          id: "gone",
+          date: "2027-01-01",
+          name: "Gone",
+          kind: "holiday",
+          note: null,
+          archived: true,
+          updatedAt: NOW.toISOString(),
+        },
+      ],
     };
     const active = activeTrip(data);
     expect(active.cities.map((c) => c.id)).toEqual(["nagoya", "osaka"]);
     expect(active.stays.map((s) => s.id)).toEqual(["a", "b"]);
+    expect(active.holidays).toEqual([]);
   });
 });
 
 describe("endpointFor", () => {
   it("has no location for a hotel still to be decided", () => {
-    const endpoint = endpointFor({
-      ...stay("hiroshima", "a", "b"),
-      hotelName: "To be decided",
-    });
+    const endpoint = endpointFor(
+      {
+        ...stay("hiroshima", "a", "b"),
+        hotelName: "To be decided",
+      },
+      t,
+    );
     expect(endpoint).toEqual({ name: "Hotel to be decided", location: null });
   });
 
   it("searches by hotel name when there are no coordinates", () => {
-    expect(endpointFor(stay("nagoya", "a", "b"))?.location).toEqual({
+    expect(endpointFor(stay("nagoya", "a", "b"), t)?.location).toEqual({
       query: "nagoya hotel Japan",
     });
   });

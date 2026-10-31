@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
 import { CityCatalog } from "@/components/city-catalog";
+import { t } from "@/lib/i18n";
 import { nearbyByPlace } from "@/lib/catalog-filter";
 import { homeHref } from "@/lib/links";
 import { useCitiesById, useTrip } from "@/lib/trip-store";
@@ -36,9 +37,9 @@ export function CityScreen() {
   if (!city || city.archived) {
     return (
       <div className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold">City not found</h1>
+        <h1 className="text-2xl font-semibold">{t("cities.notFound")}</h1>
         <Link href={homeHref(tripId)} className="text-sm underline">
-          ← Trip days
+          {t("common.backToDays")}
         </Link>
       </div>
     );

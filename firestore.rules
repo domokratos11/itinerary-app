@@ -1,9 +1,9 @@
 rules_version = '2';
 
-// Access needs both the trip ID and a Google sign-in whose email is on the
-// trip's member list; a leaked link alone opens nothing. Listing, creating
-// or deleting trips is never allowed. The scripts use the Admin SDK, which
-// these rules don't apply to.
+// Access needs a Google sign-in whose email is on the trip's member list; a
+// leaked link alone opens nothing. People see only their own trips, only the
+// emails in config/access can create one, and trips are never deleted. The
+// scripts use the Admin SDK, which these rules don't apply to.
 // Paste this file into Firebase console → Firestore → Rules, then Publish.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -134,6 +134,17 @@ service cloud.firestore {
         && isRecord(d);
     }
 
+    function isHoliday(d) {
+      return d.keys().hasOnly(['id', 'date', 'name', 'kind', 'note', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'date', 'name', 'kind', 'note', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && d.date is string && d.date.size() == 10
+        && shortString(d.name, 100) && d.name.size() > 0
+        && d.kind in ['holiday', 'closures']
+        && optionalString(d.note, 500)
+        && isRecord(d);
+    }
+
     function isPlace(d) {
       return d.keys().hasOnly(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'googlePlaceId', 'locationFetchedAt', 'locationSource', 'nearestStation', 'sources', 'lockedFields', 'archived', 'updatedAt'])
         && d.keys().hasAll(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'archived', 'updatedAt'])
@@ -174,19 +185,88 @@ service cloud.firestore {
         && optionalString(d.before, 4000) && optionalString(d.after, 4000);
     }
 
-    // Signed in with Google, and that email is on the trip document's
-    // `members` list (lowercase emails, edited only in the console). A
-    // missing trip fails too, so nobody can probe which IDs exist.
-    function isMember(tripId) {
+    function isSignedIn() {
       return request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.token.email.lower() in
+        && request.auth.token.email_verified == true;
+    }
+
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    // Signed in with Google, and that email is on the trip document's
+    // `members` list (lowercase emails). A missing trip fails too, so nobody
+    // can probe which IDs exist.
+    function isMember(tripId) {
+      return isSignedIn()
+        && myEmail() in
           get(/databases/$(database)/documents/trips/$(tripId)).data.get('members', []);
+    }
+
+    // The emails allowed to create trips, edited only in the console. Google
+    // sign-in accepts any account, so this keeps strangers from creating them.
+    function isTripCreator() {
+      return isSignedIn()
+        && myEmail() in
+          get(/databases/$(database)/documents/config/access).data.get('tripCreators', []);
+    }
+
+    // At most 20 people, and never a list that leaves out the person saving
+    // it, so nobody can lock themselves out.
+    function isMemberList(members) {
+      return members is list
+        && members.size() > 0 && members.size() <= 20
+        && myEmail() in members;
+    }
+
+    function isNewTrip(d) {
+      return d.keys().hasOnly(['name', 'members', 'createdBy', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['name', 'members', 'createdBy', 'createdAt', 'updatedAt'])
+        && shortString(d.name, 100) && d.name.size() > 0
+        && isMemberList(d.members)
+        && d.createdBy == myEmail()
+        && shortString(d.createdAt, 30)
+        && shortString(d.updatedAt, 30);
+    }
+
+    function isTripEdit(after, before) {
+      return after.diff(before).affectedKeys().hasOnly(['name', 'members', 'updatedAt'])
+        && shortString(after.get('name', 'unnamed'), 100)
+        && after.get('name', 'unnamed').size() > 0
+        && isMemberList(after.members)
+        && shortString(after.updatedAt, 30);
+    }
+
+    function isUserProfile(d) {
+      return d.keys().hasOnly(['language', 'lastTripId', 'updatedAt'])
+        && (!('language' in d) || d.language == null || d.language in ['en', 'es'])
+        && (!('lastTripId' in d) || optionalString(d.lastTripId, 128))
+        && shortString(d.updatedAt, 30);
+    }
+
+    // Who may create trips. Readable only by the people on the list, so
+    // nobody else can see it.
+    match /config/access {
+      allow get: if isSignedIn() && myEmail() in resource.data.get('tripCreators', []);
+      allow list, write: if false;
+    }
+
+    // One person's preferences.
+    match /users/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && isUserProfile(request.resource.data);
+      allow list, delete: if false;
     }
 
     match /trips/{tripId} {
       allow get: if isMember(tripId);
-      allow list, create, update, delete: if false;
+      // Only with the query where members array-contains your own email.
+      allow list: if isSignedIn() && myEmail() in resource.data.members;
+      allow create: if isTripCreator() && isNewTrip(request.resource.data);
+      allow update: if isMember(tripId)
+        && isTripEdit(request.resource.data, resource.data);
+      allow delete: if false;
 
       // The change log: written once, never edited or deleted.
       match /activity/{id} {
@@ -215,6 +295,13 @@ service cloud.firestore {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isReservation(request.resource.data) && request.resource.data.id == id;
+        allow delete: if false;
+      }
+
+      match /holidays/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isHoliday(request.resource.data) && request.resource.data.id == id;
         allow delete: if false;
       }
 

@@ -1,3 +1,4 @@
+import type { Translate } from "./i18n";
 import { parseHours } from "./plan";
 
 function to24Hour(hour: number, minute: string, meridiem: string): string {
@@ -29,14 +30,14 @@ export function parseGoogleHours(
 export function hoursDifference(
   stored: string | null,
   googleToday: string | null,
+  tr: Translate,
 ): string | null {
   if (!googleToday) return null;
   const ours = parseHours(stored);
   if (!ours) return null;
-  if (/^closed$/i.test(googleToday.trim()))
-    return "Google says it's closed today, but our notes give opening hours.";
+  if (/^closed$/i.test(googleToday.trim())) return tr("live.closedVsNotes");
   const theirs = parseGoogleHours(googleToday);
   if (!theirs) return null;
   if (theirs.open === ours.open && theirs.close === ours.close) return null;
-  return `Our notes say ${ours.open}–${ours.close}. Check before relying on either.`;
+  return tr("live.notesDiffer", { open: ours.open, close: ours.close });
 }

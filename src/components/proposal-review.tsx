@@ -9,13 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { proposalRows } from "@/domain/proposals";
 import type { PlaceRecord, Proposal } from "@/domain/schemas";
+import { t } from "@/lib/i18n";
 import {
   applyProposal,
   setProposalStatus,
   undoProposal,
 } from "@/lib/proposal-actions";
-
-const REFUSED = "That change was refused. Check the trip link.";
 
 // Old value against new value for each field, with its sources. Nothing
 // reaches the place until it's accepted here.
@@ -30,7 +29,7 @@ export function ProposalReview({
   place: PlaceRecord;
   onClose: () => void;
 }) {
-  const rows = proposalRows(place, proposal);
+  const rows = proposalRows(place, proposal, t);
   const [accepted, setAccepted] = useState<Set<string>>(
     () => new Set(rows.map((row) => row.field)),
   );
@@ -46,14 +45,14 @@ export function ProposalReview({
   function accept() {
     onClose();
     applyProposal(tripId, proposal, place, accepted).catch(() =>
-      toast.error(REFUSED),
+      toast.error(t("common.refused")),
     );
-    toast(`Updated ${place.name}`, {
+    toast(t("proposal.updated", { name: place.name }), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
           undoProposal(tripId, proposal, place).catch(() =>
-            toast.error(REFUSED),
+            toast.error(t("common.refused")),
           ),
       },
     });
@@ -62,14 +61,14 @@ export function ProposalReview({
   function dismiss() {
     onClose();
     setProposalStatus(tripId, proposal, "dismissed").catch(() =>
-      toast.error(REFUSED),
+      toast.error(t("common.refused")),
     );
-    toast(`Dismissed research for ${place.name}`, {
+    toast(t("proposal.dismissed", { name: place.name }), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
           setProposalStatus(tripId, proposal, "ready").catch(() =>
-            toast.error(REFUSED),
+            toast.error(t("common.refused")),
           ),
       },
     });
@@ -80,14 +79,18 @@ export function ProposalReview({
       open
       onOpenChange={(open) => !open && onClose()}
       title={place.name}
-      description="Choose what to keep. Check the sources for anything marked as a change."
-      submitLabel={chosen === rows.length ? "Accept all" : `Accept ${chosen}`}
+      description={t("proposal.description")}
+      submitLabel={
+        chosen === rows.length
+          ? t("proposal.acceptAll")
+          : t("proposal.acceptCount", { count: chosen })
+      }
       canSubmit={chosen > 0}
       onSubmit={accept}
     >
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Nothing new: this research has no values to add to the place.
+          {t("proposal.nothingNew")}
         </p>
       )}
       <ul className="flex flex-col gap-3">
@@ -97,7 +100,7 @@ export function ProposalReview({
               id={`proposal-${row.field}`}
               checked={accepted.has(row.field)}
               onCheckedChange={(on) => toggle(row.field, on === true)}
-              aria-label={`Accept ${row.label}`}
+              aria-label={t("proposal.acceptField", { field: row.label })}
               className="mt-0.5"
             />
             <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
@@ -109,7 +112,7 @@ export function ProposalReview({
                   {row.label}
                 </label>
                 {row.kind === "change" && (
-                  <Badge variant="destructive">Change</Badge>
+                  <Badge variant="destructive">{t("proposal.change")}</Badge>
                 )}
               </div>
               {row.kind === "change" && (
@@ -142,7 +145,7 @@ export function ProposalReview({
         className="self-start"
         onClick={dismiss}
       >
-        Dismiss this research
+        {t("proposal.dismiss")}
       </Button>
     </EditPanel>
   );

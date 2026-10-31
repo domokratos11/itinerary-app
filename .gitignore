@@ -46,3 +46,7 @@ next-env.d.ts
 # service-account keys for the scripts (never commit)
 *service-account*.json
 *-firebase-adminsdk-*.json
+
+# Firestore emulator logs from npm run test:rules
+firestore-debug.log
+ui-debug.log

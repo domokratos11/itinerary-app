@@ -6,6 +6,8 @@ import { useMemo, useSyncExternalStore } from "react";
 
 import { SECTIONS, useSection } from "@/components/app-header";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { t } from "@/lib/i18n";
+import { APP_VERSION } from "@/lib/app-reset";
 import { formatDayLabel } from "@/lib/format-day";
 import { dayHref, pageHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
@@ -38,7 +40,10 @@ export function AppSidebar() {
   return (
     <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] border-r bg-sidebar text-sidebar-foreground lg:block">
       <ScrollArea className="h-full">
-        <nav aria-label="Sections" className="flex flex-col gap-0.5 p-3">
+        <nav
+          aria-label={t("nav.sections")}
+          className="flex flex-col gap-0.5 p-3"
+        >
           {SECTIONS.map(({ path: href, label, icon: Icon }) => (
             <Link
               key={href}
@@ -51,13 +56,13 @@ export function AppSidebar() {
               )}
             >
               <Icon className="size-4" />
-              {label}
+              {t(label)}
             </Link>
           ))}
         </nav>
         <div className="px-3 pb-6">
           <h2 className="px-3 pt-2 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Days
+            {t("nav.days")}
           </h2>
           <ol className="flex flex-col">
             {days.map((d) => {
@@ -67,6 +72,7 @@ export function AppSidebar() {
                 <li key={d.date}>
                   <Link
                     href={dayHref(d.date, tripId)}
+                    prefetch={false}
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-sidebar-accent",
@@ -91,7 +97,7 @@ export function AppSidebar() {
                     </span>
                     {d.date === today && (
                       <span className="rounded bg-primary px-1.5 text-[10px] font-medium text-primary-foreground uppercase">
-                        Today
+                        {t("common.today")}
                       </span>
                     )}
                     {stops > 0 && (
@@ -104,6 +110,9 @@ export function AppSidebar() {
               );
             })}
           </ol>
+          <p className="px-3 pt-4 text-xs text-muted-foreground">
+            {t("common.version", { version: APP_VERSION })}
+          </p>
         </div>
       </ScrollArea>
     </aside>

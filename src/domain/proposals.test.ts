@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { t } from "@/lib/i18n";
+
 import {
   acceptProposal,
   cleanResearch,
@@ -38,15 +40,19 @@ describe("newProposal", () => {
 
 describe("proposalRows", () => {
   it("separates fills from changes and skips what doesn't apply", () => {
-    const rows = proposalRows(place, {
-      fields: {
-        costEstimateJPY: 600,
-        openingHours: "9:30-17:00",
-        durationMin: 60,
-        notes: "From research",
+    const rows = proposalRows(
+      place,
+      {
+        fields: {
+          costEstimateJPY: 600,
+          openingHours: "9:30-17:00",
+          durationMin: 60,
+          notes: "From research",
+        },
+        sources: [source("costEstimateJPY"), source("openingHours")],
       },
-      sources: [source("costEstimateJPY"), source("openingHours")],
-    });
+      t,
+    );
     expect(rows.map((r) => [r.field, r.kind])).toEqual([
       ["costEstimateJPY", "fill"],
       ["openingHours", "change"],

@@ -23,8 +23,9 @@ import {
   type CityRecord,
   type PlaceRecord,
 } from "@/domain/schemas";
+import { t } from "@/lib/i18n";
 import { filterPlaces, type CatalogFilter } from "@/lib/catalog-filter";
-import { CATEGORY_LABEL } from "@/lib/category-label";
+import { categoryLabel } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
 import { isDraft } from "@/domain/queue";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -36,8 +37,6 @@ import { Button } from "@/components/ui/button";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
-
-const REFUSED = "That change was refused. Check the trip link.";
 
 type Props = {
   city: CityRecord;
@@ -102,19 +101,19 @@ export function CityCatalog({
       tripId,
       "places",
       place,
-      `archived the place ${place.name}`,
-    ).catch(() => toast.error(REFUSED));
+      t("activity.archivedPlace", { name: place.name }),
+    ).catch(() => toast.error(t("common.refused")));
     setSelectedId(null);
-    toast(`Archived ${place.name}`, {
+    toast(t("common.archivedName", { name: place.name }), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
           saveRecord(
             tripId,
             "places",
             place,
-            `restored the place ${place.name}`,
-          ).catch(() => toast.error(REFUSED)),
+            t("activity.restoredPlace", { name: place.name }),
+          ).catch(() => toast.error(t("common.refused"))),
       },
     });
   }
@@ -125,8 +124,8 @@ export function CityCatalog({
       tripId,
       "cities",
       { ...city, name, color, updatedAt: new Date().toISOString() },
-      `edited the city ${name}`,
-    ).catch(() => toast.error(REFUSED));
+      t("activity.editedCity", { name }),
+    ).catch(() => toast.error(t("common.refused")));
     setEditingCity(false);
   }
 
@@ -140,24 +139,21 @@ export function CityCatalog({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Edit ${city.name}`}
-            disabled={!tripId}
+            aria-label={t("common.editName", { name: city.name })}
             onClick={() => setEditingCity(true)}
           >
             <Pencil />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!tripId}
-            onClick={() => setAdding(true)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
             <Plus />
-            Add place
+            {t("common.addPlace")}
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          {visible.length} of {places.length} places
+          {t("cities.placesShown", {
+            shown: visible.length,
+            total: places.length,
+          })}
         </p>
         <CostLine places={planned} />
         {!sideBySide && (
@@ -171,15 +167,14 @@ export function CityCatalog({
             }}
             className="mt-1 justify-start"
           >
-            <ToggleGroupItem value="list">List</ToggleGroupItem>
-            <ToggleGroupItem value="map">Map</ToggleGroupItem>
+            <ToggleGroupItem value="list">{t("common.list")}</ToggleGroupItem>
+            <ToggleGroupItem value="map">{t("common.map")}</ToggleGroupItem>
           </ToggleGroup>
         )}
       </header>
 
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:rounded-xl lg:border lg:bg-card lg:p-4">
-          <h2 className="hidden text-sm font-medium lg:block">Filter</h2>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-6">
           <ToggleGroup
             type="single"
             variant="outline"
@@ -194,15 +189,15 @@ export function CityCatalog({
             }}
             className="flex flex-wrap justify-start"
           >
-            <ToggleGroupItem value="all">All</ToggleGroupItem>
+            <ToggleGroupItem value="all">{t("cities.all")}</ToggleGroupItem>
             {CATEGORIES.map((c) => (
               <ToggleGroupItem key={c} value={c}>
-                {CATEGORY_LABEL[c]}
+                {categoryLabel(c)}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 lg:flex-col lg:items-start">
+          <div className="flex flex-wrap items-center justify-between gap-3 lg:justify-start lg:gap-6">
             <Select
               value={filter.priority}
               onValueChange={(value) =>
@@ -212,18 +207,18 @@ export function CityCatalog({
                 })
               }
             >
-              <SelectTrigger className="w-40 lg:w-full">
+              <SelectTrigger className="w-fit min-w-44">
                 <SelectValue>
                   {filter.priority === "all"
-                    ? "All priorities"
-                    : filter.priority}
+                    ? t("cities.allPriorities")
+                    : t(`priorities.${filter.priority}`)}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All priorities</SelectItem>
+                <SelectItem value="all">{t("cities.allPriorities")}</SelectItem>
                 {PRIORITIES.map((p) => (
                   <SelectItem key={p} value={p}>
-                    {p}
+                    {t(`priorities.${p}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -237,24 +232,32 @@ export function CityCatalog({
                   setFilter({ ...filter, unassignedOnly: checked })
                 }
               />
-              <Label htmlFor="unassigned-only">Unassigned only</Label>
+              <Label htmlFor="unassigned-only">
+                {t("cities.unassignedOnly")}
+              </Label>
             </div>
           </div>
-        </aside>
+        </div>
 
         <div
           className={cn(
             "flex flex-col gap-4",
             sideBySide &&
-              "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start",
+              "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start",
           )}
         >
           {showList && (
             <div className="flex flex-col gap-3">
-              <ul className="grid gap-3 sm:grid-cols-2">
+              <ul
+                className={cn(
+                  "grid gap-3",
+                  sideBySide ? "2xl:grid-cols-2" : "sm:grid-cols-2",
+                )}
+              >
                 {visible.map((place) => (
                   <li key={place.id}>
                     <Card
+                      size="sm"
                       role="button"
                       tabIndex={0}
                       onClick={() => setSelectedId(place.id)}
@@ -271,15 +274,17 @@ export function CityCatalog({
                       </CardHeader>
                       <CardContent className="flex flex-wrap gap-2">
                         <Badge variant="secondary">
-                          {CATEGORY_LABEL[place.category]}
+                          {categoryLabel(place.category)}
                         </Badge>
                         <Badge variant="outline" className="text-foreground">
-                          {place.priority}
+                          {t(`priorities.${place.priority}`)}
                         </Badge>
-                        {assigned.has(place.id) && <Badge>In plan</Badge>}
+                        {assigned.has(place.id) && (
+                          <Badge>{t("cities.inPlanBadge")}</Badge>
+                        )}
                         {isDraft(place) && (
                           <Badge variant="outline" className="border-dashed">
-                            Not researched yet
+                            {t("common.notResearched")}
                           </Badge>
                         )}
                       </CardContent>
@@ -290,8 +295,8 @@ export function CityCatalog({
               {visible.length === 0 && (
                 <p className="text-sm text-muted-foreground">
                   {places.length === 0
-                    ? "No places yet. Add the first one."
-                    : "No places match these filters."}
+                    ? t("cities.noPlaces")
+                    : t("cities.noMatches")}
                 </p>
               )}
             </div>
@@ -301,10 +306,14 @@ export function CityCatalog({
               <TripMap
                 pins={pins}
                 onPinClick={setSelectedId}
-                className={sideBySide ? "h-[calc(100vh-7rem)]" : "h-[65vh]"}
+                className={
+                  sideBySide
+                    ? "aspect-[4/3] max-h-[calc(100vh-7rem)]"
+                    : "h-[65vh]"
+                }
                 note={
                   unpinned > 0
-                    ? `${unpinned} of these ${visible.length} places have no map pin yet.`
+                    ? t("cities.unpinned", { unpinned, total: visible.length })
                     : null
                 }
               />

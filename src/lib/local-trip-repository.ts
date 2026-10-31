@@ -1,4 +1,9 @@
-import type { TripAccess, TripRepository } from "@/domain/trip-repository";
+import type {
+  TripAccess,
+  TripChanges,
+  TripRepository,
+  TripSummary,
+} from "@/domain/trip-repository";
 import {
   TRIP_COLLECTIONS,
   type TripCollection,
@@ -10,14 +15,18 @@ type Listener = <C extends TripCollection>(
   records: TripRecordOf[C][],
 ) => void;
 
-// In-memory trip for tests and previews. Same behaviour as the Firestore
-// version: every collection is sent on subscribe and after each save.
+// In-memory trip for tests. Same behaviour as the Firestore version: every collection is sent on subscribe and after each save.
 export class LocalTripRepository implements TripRepository {
   private data = new Map<string, Map<string, Map<string, unknown>>>();
   private listeners = new Map<string, Set<Listener>>();
+  private trips = new Map<string, TripSummary>();
+  private tripListeners = new Set<() => void>();
 
   // Every trip is open unless a test says otherwise.
-  constructor(private access: TripAccess = "member") {}
+  constructor(
+    private access: TripAccess = "member",
+    private creator = true,
+  ) {}
 
   watchAccess(
     _tripId: string,
@@ -25,6 +34,38 @@ export class LocalTripRepository implements TripRepository {
   ): () => void {
     onAccess(this.access);
     return () => {};
+  }
+
+  watchMyTrips(
+    email: string,
+    onTrips: (trips: TripSummary[]) => void,
+  ): () => void {
+    const notify = () =>
+      onTrips(
+        [...this.trips.values()].filter((t) => t.members.includes(email)),
+      );
+    this.tripListeners.add(notify);
+    notify();
+    return () => {
+      this.tripListeners.delete(notify);
+    };
+  }
+
+  async canCreateTrips(): Promise<boolean> {
+    return this.creator;
+  }
+
+  async createTrip(name: string, email: string): Promise<string> {
+    const id = `trip${String(this.trips.size + 1).padStart(6, "0")}`;
+    this.trips.set(id, { id, name, members: [email] });
+    this.tripListeners.forEach((notify) => notify());
+    return id;
+  }
+
+  async updateTrip(tripId: string, changes: TripChanges): Promise<void> {
+    const trip = this.trips.get(tripId);
+    if (trip) this.trips.set(tripId, { ...trip, ...changes });
+    this.tripListeners.forEach((notify) => notify());
   }
 
   subscribe(tripId: string, onRecords: Listener): () => void {

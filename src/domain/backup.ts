@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+import type { Translate } from "./i18n";
 import { withoutGoogleCoordinates } from "./location";
 import { QueuedPlaceSchema, type QueuedPlace } from "./queue";
 import {
   CityRecordSchema,
+  HolidayRecordSchema,
   PlaceRecordSchema,
   PlanItemSchema,
   ProposalSchema,
@@ -15,9 +17,10 @@ import {
 import type { TripData } from "./trip";
 
 // The whole trip in one file: Export in Settings writes it, Import restores
-// it into an empty trip. A copy can be kept in data/backups/ (validated), and
-// the repo is public, so a backup never holds coordinates from Google: they
-// may be kept for 30 days at most. maps:refresh fetches them again by place ID.
+// it into an empty trip. A backup can be kept for good, so it never holds
+// coordinates from Google: they may be kept for 30 days at most. maps:refresh
+// fetches them again by place ID. Backups made before holidays moved into the
+// trip have none.
 export const BackupSchema = z
   .object({
     version: z.literal(1),
@@ -26,6 +29,7 @@ export const BackupSchema = z
     stays: z.array(StayRecordSchema),
     reservations: z.array(ReservationRecordSchema),
     places: z.array(PlaceRecordSchema),
+    holidays: z.array(HolidayRecordSchema).default([]),
     items: z.array(PlanItemSchema),
     queue: z.array(QueuedPlaceSchema),
     proposals: z.array(ProposalSchema).default([]),
@@ -60,15 +64,13 @@ export function makeBackup(
   };
 }
 
-export function backupSummary(backup: Backup): string {
-  const n = (count: number, one: string, many = `${one}s`) =>
-    `${count} ${count === 1 ? one : many}`;
-  return [
-    n(backup.cities.length, "city", "cities"),
-    n(backup.stays.length, "stay"),
-    n(backup.reservations.length, "reservation"),
-    n(backup.places.length, "place"),
-    n(backup.items.filter((i) => i.status !== "removed").length, "stop"),
-    n(backup.queue.length, "queued link"),
-  ].join(", ");
+export function backupSummary(backup: Backup, tr: Translate): string {
+  return tr("backup.summary", {
+    cities: backup.cities.length,
+    stays: backup.stays.length,
+    reservations: backup.reservations.length,
+    places: backup.places.length,
+    stops: backup.items.filter((i) => i.status !== "removed").length,
+    queued: backup.queue.length,
+  });
 }

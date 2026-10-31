@@ -5,7 +5,6 @@ import { Archive, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { EditPanel, Field } from "@/components/edit-panel";
-import { PRIVATE_NOTE_HINT } from "@/components/settings-stays";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,11 +18,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { RESERVATION_TYPES, type ReservationRecord } from "@/domain/schemas";
 import { uniqueId } from "@/domain/trip-edit";
+import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip, useTripStore } from "@/lib/trip-store";
-
-const REFUSED = "That change was refused. Check the trip link.";
 
 type Editing = { record: ReservationRecord | null } | null;
 type ReservationType = ReservationRecord["type"];
@@ -38,8 +36,11 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
       tripId,
       "reservations",
       record,
-      `saved the ${record.type} on ${formatDayLabel(record.date)}`,
-    ).catch(() => toast.error(REFUSED));
+      t("activity.savedBooking", {
+        type: t(`reservationType.${record.type}`),
+        day: formatDayLabel(record.date),
+      }),
+    ).catch(() => toast.error(t("common.refused")));
     setEditing(null);
   }
 
@@ -48,25 +49,31 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
       tripId,
       "reservations",
       r,
-      `archived the ${r.type} on ${formatDayLabel(r.date)}`,
-    ).catch(() => toast.error(REFUSED));
-    toast("Reservation archived", {
+      t("activity.archivedBooking", {
+        type: t(`reservationType.${r.type}`),
+        day: formatDayLabel(r.date),
+      }),
+    ).catch(() => toast.error(t("common.refused")));
+    toast(t("bookings.archived"), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () =>
           saveRecord(
             tripId,
             "reservations",
             r,
-            `restored the ${r.type} on ${formatDayLabel(r.date)}`,
-          ).catch(() => toast.error(REFUSED)),
+            t("activity.restoredBooking", {
+              type: t(`reservationType.${r.type}`),
+              day: formatDayLabel(r.date),
+            }),
+          ).catch(() => toast.error(t("common.refused"))),
       },
     });
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <ul className="flex flex-col gap-2">
+      <ul className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
         {trip.reservations.map((r) => (
           <li
             key={r.id}
@@ -74,7 +81,9 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
           >
             <span className="min-w-0 flex-1">
               <span className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{r.type}</Badge>
+                <Badge variant="outline">
+                  {t(`reservationType.${r.type}`)}
+                </Badge>
                 <span className="font-medium">
                   {formatDayLabel(r.date)}
                   {r.time && ` · ${r.time}`}
@@ -92,7 +101,7 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label="Edit reservation"
+              aria-label={t("bookings.edit")}
               onClick={() => setEditing({ record: r })}
             >
               <Pencil />
@@ -100,7 +109,7 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label="Archive reservation"
+              aria-label={t("bookings.archiveAria")}
               onClick={() => archive(r)}
             >
               <Archive />
@@ -109,7 +118,7 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
         ))}
       </ul>
       {trip.reservations.length === 0 && (
-        <p className="text-sm text-muted-foreground">No reservations yet.</p>
+        <p className="text-sm text-muted-foreground">{t("bookings.none")}</p>
       )}
       <Button
         variant="outline"
@@ -117,7 +126,7 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
         onClick={() => setEditing({ record: null })}
       >
         <Plus />
-        Add reservation
+        {t("bookings.add")}
       </Button>
       {editing && (
         <ReservationForm
@@ -173,11 +182,11 @@ function ReservationForm({
     <EditPanel
       open
       onOpenChange={(open) => !open && onCancel()}
-      title={reservation ? "Edit reservation" : "Add reservation"}
+      title={reservation ? t("bookings.edit") : t("bookings.add")}
       canSubmit={valid}
       onSubmit={() => onSave(build())}
     >
-      <Field label="Type" htmlFor="res-type">
+      <Field label={t("common.type")} htmlFor="res-type">
         <Select
           value={type}
           onValueChange={(v) => setType(v as ReservationType)}
@@ -186,16 +195,16 @@ function ReservationForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {RESERVATION_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
+            {RESERVATION_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>
+                {t(`reservationType.${type}`)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Date" htmlFor="res-date">
+        <Field label={t("common.date")} htmlFor="res-date">
           <Input
             id="res-date"
             type="date"
@@ -204,7 +213,7 @@ function ReservationForm({
             required
           />
         </Field>
-        <Field label="Time (optional)" htmlFor="res-time">
+        <Field label={t("bookings.timeOptional")} htmlFor="res-time">
           <Input
             id="res-time"
             type="time"
@@ -214,7 +223,7 @@ function ReservationForm({
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="From" htmlFor="res-from">
+        <Field label={t("bookings.from")} htmlFor="res-from">
           <Input
             id="res-from"
             value={from}
@@ -222,7 +231,7 @@ function ReservationForm({
             onChange={(e) => setFrom(e.target.value)}
           />
         </Field>
-        <Field label="To" htmlFor="res-to">
+        <Field label={t("bookings.to")} htmlFor="res-to">
           <Input
             id="res-to"
             value={to}
@@ -232,9 +241,9 @@ function ReservationForm({
         </Field>
       </div>
       <Field
-        label="Note (optional)"
+        label={t("common.noteOptional")}
         htmlFor="res-note"
-        hint={PRIVATE_NOTE_HINT}
+        hint={t("stays.privateHint")}
       >
         <Textarea
           id="res-note"

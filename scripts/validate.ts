@@ -1,32 +1,33 @@
 /**
- * Validates every JSON file under data/ against its Zod schema.
- * Run with `npm run validate`. Exits with code 1 on any problem.
+ * Validates the JSON files kept in the repo against their Zod schemas: the
+ * sample trip the tests use and the app's text. Run with `npm run validate`.
+ * Exits with code 1 on any problem.
  *
- * Add a schema to SCHEMAS for each new kind of data file. A JSON file
- * with no matching schema is an error, so nothing ships unchecked.
+ * Add a schema to SCHEMAS for each new kind of file, and its folder to
+ * FOLDERS. A JSON file with no matching schema is an error, so nothing ships
+ * unchecked.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { z } from "zod";
 
-import {
-  CitiesFileSchema,
-  HolidaysFileSchema,
-  PlacesFileSchema,
-  TripFileSchema,
-} from "../src/domain/schemas";
-import { BackupSchema } from "../src/domain/backup";
+import { TripDataSchema } from "../src/domain/schemas";
 
 export type SchemaRule = { pattern: RegExp; schema: z.ZodType };
 
-// Paths are relative to data/, using forward slashes.
+const FOLDERS = ["src/test", "src/messages"];
+
+// The app's text. i18n.test.ts checks both languages have the same keys.
+const MessagesSchema: z.ZodType = z.record(
+  z.string(),
+  z.lazy(() => z.union([z.string().min(1), MessagesSchema])),
+);
+
+// Paths are relative to the repo root, using forward slashes.
 export const SCHEMAS: SchemaRule[] = [
-  { pattern: /^cities\.json$/, schema: CitiesFileSchema },
-  { pattern: /^trip\.json$/, schema: TripFileSchema },
-  { pattern: /^holidays\.json$/, schema: HolidaysFileSchema },
-  { pattern: /^backups\/[\w.-]+\.json$/, schema: BackupSchema },
-  { pattern: /^places\/[a-z0-9-]+\.json$/, schema: PlacesFileSchema },
+  { pattern: /^src\/test\/fixture-trip\.json$/, schema: TripDataSchema },
+  { pattern: /^src\/messages\/(en|es)\.json$/, schema: MessagesSchema },
 ];
 
 export function listJsonFiles(dir: string, base = dir): string[] {
@@ -60,17 +61,19 @@ export function validateFile(
 }
 
 function main() {
-  const dataDir = path.resolve(process.cwd(), "data");
-  const files = listJsonFiles(dataDir);
+  const root = process.cwd();
+  const files = FOLDERS.flatMap((folder) =>
+    listJsonFiles(path.join(root, folder), root),
+  );
   const errors = files.flatMap((f) =>
-    validateFile(f, readFileSync(path.join(dataDir, f), "utf8")),
+    validateFile(f, readFileSync(path.join(root, f), "utf8")),
   );
   if (errors.length) {
     console.error(errors.join("\n"));
-    console.error(`\n${errors.length} problem(s) in data/.`);
+    console.error(`\n${errors.length} problem(s) found.`);
     process.exit(1);
   }
-  console.log(`data/ is valid (${files.length} file(s) checked).`);
+  console.log(`JSON files are valid (${files.length} file(s) checked).`);
 }
 
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {

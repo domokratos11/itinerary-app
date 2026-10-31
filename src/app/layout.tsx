@@ -5,11 +5,13 @@ import { Suspense } from "react";
 
 import { AppHeader, BottomNav } from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
-import { AuthGate } from "@/components/auth-gate";
+import { AppGate } from "@/components/app-gate";
+import { LocaleRoot } from "@/components/locale-root";
 import { OfflineBanner } from "@/components/offline-banner";
 import { PlanSync } from "@/components/plan-sync";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { ThemeProvider } from "@/components/theme-provider";
+import { VersionGate } from "@/components/version-gate";
 import { Toaster } from "@/components/ui/sonner";
 import { BASE_PATH } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
@@ -33,14 +35,30 @@ const oxanium = Oxanium({
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "Japan Trip 2026–27",
-  description: "Our day-by-day plan for Japan, Dec 2026 – Jan 2027.",
+  title: "Trip Planner",
+  description: "A private day-by-day trip plan.",
   appleWebApp: {
     capable: true,
-    title: "Japan Trip",
+    title: "Trip Planner",
     statusBarStyle: "default",
   },
-  icons: { apple: `${BASE_PATH}/apple-touch-icon.png` },
+  // Spelled out because of the base path: browsers otherwise ask for
+  // /favicon.ico at the domain root, which isn't ours. The version makes them
+  // fetch it again, as they hold on to favicons for a long time.
+  icons: {
+    icon: [
+      {
+        url: `${BASE_PATH}/favicon.ico?v=${process.env.NEXT_PUBLIC_APP_VERSION}`,
+        sizes: "any",
+      },
+      {
+        url: `${BASE_PATH}/icon-192.png?v=${process.env.NEXT_PUBLIC_APP_VERSION}`,
+        type: "image/png",
+        sizes: "192x192",
+      },
+    ],
+    apple: `${BASE_PATH}/apple-touch-icon.png`,
+  },
 };
 
 export const viewport: Viewport = {
@@ -64,28 +82,41 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         geistMono.variable,
       )}
     >
-      <body className="flex min-h-full flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+      {/* Grammarly and similar extensions edit <body> before React loads.
+          These ask Grammarly to stay away; nothing here needs it. */}
+      <body
+        suppressHydrationWarning
+        data-gramm="false"
+        data-gramm_editor="false"
+        data-enable-grammarly="false"
+        className="flex min-h-full flex-col pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0"
+      >
         <ThemeProvider>
-          <ServiceWorkerRegister />
-          <Suspense fallback={null}>
-            <AppHeader />
-          </Suspense>
-          <OfflineBanner />
-          <Suspense fallback={null}>
-            <PlanSync />
-          </Suspense>
-          <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+          <VersionGate>
+            <ServiceWorkerRegister />
             <Suspense fallback={null}>
-              <AppSidebar />
+              <PlanSync />
             </Suspense>
-            <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-          </div>
-          <Suspense fallback={null}>
-            <BottomNav />
-          </Suspense>
-          <Suspense fallback={null}>
-            <AuthGate />
-          </Suspense>
+            {/* Nothing inside renders, in the static HTML or the browser, until
+                a signed-in member has their trip. */}
+            <LocaleRoot>
+              <AppGate>
+                <Suspense fallback={null}>
+                  <AppHeader />
+                </Suspense>
+                <OfflineBanner />
+                <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+                  <Suspense fallback={null}>
+                    <AppSidebar />
+                  </Suspense>
+                  <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+                </div>
+                <Suspense fallback={null}>
+                  <BottomNav />
+                </Suspense>
+              </AppGate>
+            </LocaleRoot>
+          </VersionGate>
           {/* On phones, keep toasts above the bottom tab bar. */}
           <Toaster
             mobileOffset={{

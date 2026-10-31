@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { makeBackup } from "@/domain/backup";
 import { testPlace } from "@/domain/test-place";
-import { seed } from "@/lib/catalog";
+import { fixtureTrip } from "@/test/fixture-trip";
 import { LocalPlanRepository } from "@/lib/local-plan-repository";
 import { LocalProposalRepository } from "@/lib/local-proposal-repository";
 import { LocalQueueRepository } from "@/lib/local-queue-repository";
@@ -67,7 +67,7 @@ describe("importBackup", () => {
     await importBackup(
       "trip-2",
       makeBackup(
-        { ...seed, places: [place] },
+        { ...fixtureTrip, places: [place] },
         [item],
         [queued],
         new Date("2026-11-02T00:00:00Z"),
@@ -79,10 +79,11 @@ describe("importBackup", () => {
       counts[name] = records.length;
     })();
     expect(counts).toEqual({
-      cities: seed.cities.length,
-      stays: seed.stays.length,
-      reservations: seed.reservations.length,
+      cities: fixtureTrip.cities.length,
+      stays: fixtureTrip.stays.length,
+      reservations: fixtureTrip.reservations.length,
       places: 1,
+      holidays: fixtureTrip.holidays.length,
     });
 
     let planned: unknown[] = [];

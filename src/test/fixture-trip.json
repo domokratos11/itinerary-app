@@ -1,0 +1,77 @@
+{
+  "cities": [
+    {
+      "id": "tokyo-ueno",
+      "name": "Tokyo (Ueno)",
+      "color": "#2563eb",
+      "archived": false,
+      "updatedAt": "2026-10-29T00:00:00.000Z"
+    },
+    {
+      "id": "nagoya",
+      "name": "Nagoya",
+      "color": "#16a34a",
+      "archived": false,
+      "updatedAt": "2026-10-29T00:00:00.000Z"
+    }
+  ],
+  "stays": [
+    {
+      "id": "tokyo-ueno-2026-12-17",
+      "cityId": "tokyo-ueno",
+      "hotelName": "Sample Hotel Tokyo",
+      "hotelMapsUrl": null,
+      "lat": null,
+      "lng": null,
+      "checkIn": "2026-12-17",
+      "checkOut": "2026-12-24",
+      "note": null,
+      "googlePlaceId": null,
+      "locationFetchedAt": null,
+      "locationSource": null,
+      "archived": false,
+      "updatedAt": "2026-10-29T00:00:00.000Z"
+    },
+    {
+      "id": "nagoya-2026-12-24",
+      "cityId": "nagoya",
+      "hotelName": "Sample Hotel Nagoya",
+      "hotelMapsUrl": null,
+      "lat": null,
+      "lng": null,
+      "checkIn": "2026-12-24",
+      "checkOut": "2026-12-27",
+      "note": null,
+      "googlePlaceId": null,
+      "locationFetchedAt": null,
+      "locationSource": null,
+      "archived": false,
+      "updatedAt": "2026-10-29T00:00:00.000Z"
+    }
+  ],
+  "reservations": [
+    {
+      "id": "flight-2026-12-15-1",
+      "type": "flight",
+      "date": "2026-12-15",
+      "time": null,
+      "from": "Home",
+      "to": "Tokyo",
+      "note": null,
+      "archived": false,
+      "updatedAt": "2026-10-29T00:00:00.000Z"
+    }
+  ],
+  "places": [],
+  "holidays": [
+    {
+      "id": "holiday-2027-01-01",
+      "date": "2027-01-01",
+      "name": "New Year's Day",
+      "kind": "holiday",
+      "note": "Most shops and sights are closed.",
+      "archived": false,
+      "updatedAt": "2026-10-29T00:00:00.000Z"
+    }
+  ]
+}

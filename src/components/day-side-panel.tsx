@@ -6,6 +6,7 @@ import { GripVertical, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TripDay } from "@/domain/days";
+import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { formatDayLabel } from "@/lib/format-day";
 
@@ -46,17 +47,17 @@ export function DaySidePanel({
     <aside className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Waiting to be placed</CardTitle>
+          <CardTitle className="text-sm">{t("day.waiting")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {waiting.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              Nothing waiting. Queue a Maps link on the home page.
+              {t("day.waitingNone")}
             </p>
           ) : (
             <>
               <p className="text-xs text-muted-foreground">
-                Drag one into the day.
+                {t("day.waitingDrag")}
               </p>
               <ul className="flex flex-col gap-2">
                 {waiting.map((w) => (
@@ -71,11 +72,11 @@ export function DaySidePanel({
       {otherDays.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Move to another day</CardTitle>
+            <CardTitle className="text-sm">{t("day.moveToAnother")}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             <p className="text-xs text-muted-foreground">
-              Drop a stop on a day to move it to the end of that day.
+              {t("day.moveToAnotherHint")}
             </p>
             <ul className="flex flex-col gap-1.5">
               {otherDays.map((d) => (
@@ -106,7 +107,7 @@ function WaitingItem({ waiting }: { waiting: Waiting }) {
       )}
       {...attributes}
       {...listeners}
-      aria-label={`Drag ${waiting.name} into the day`}
+      aria-label={t("day.dragInto", { name: waiting.name })}
     >
       <GripVertical className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
       <span className="min-w-0">

@@ -1,5 +1,6 @@
 import type { Backup } from "@/domain/backup";
 import { TRIP_COLLECTIONS } from "@/domain/trip";
+import { t } from "@/lib/i18n";
 import { logActivity } from "@/lib/activity-log";
 import { planRepository } from "@/lib/plan-repository-instance";
 import { proposalRepository } from "@/lib/proposal-repository-instance";
@@ -24,6 +25,8 @@ export async function importBackup(
   logActivity(tripId, {
     kind: "settings",
     targetId: null,
-    summary: `restored a backup from ${backup.exportedAt.slice(0, 10)}`,
+    summary: t("activity.restoredBackup", {
+      date: backup.exportedAt.slice(0, 10),
+    }),
   });
 }

@@ -76,8 +76,8 @@ import {
   queueDragId,
   useListDrop,
 } from "@/components/day-side-panel";
-import { holidays } from "@/lib/catalog";
-import { CATEGORY_LABEL } from "@/lib/category-label";
+import { t } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
 import { formatDayLabel } from "@/lib/format-day";
 import {
@@ -121,8 +121,6 @@ type Props = {
   reservations: Reservation[];
 };
 
-const REFUSED = "That change was refused. Check the trip link.";
-
 export function DayPlan(props: Props) {
   const tripId = useTripId();
   const items = usePlanStore((s) => s.items);
@@ -158,9 +156,9 @@ export function DayPlan(props: Props) {
     index: number,
     others: PlanItem[],
   ) {
-    if (!tripId) return toast.error("Open your shared link with ?trip= first.");
+    if (!tripId) return;
     placeItem(tripId, item, date, index, others).catch(() =>
-      toast.error(REFUSED),
+      toast.error(t("common.refused")),
     );
   }
 
@@ -178,14 +176,14 @@ export function DayPlan(props: Props) {
       .map((p) => ({
         dragId: placeDragId(p.id),
         name: p.name,
-        detail: "Not researched yet",
+        detail: t("common.notResearched"),
       }));
     const links = queue
       .filter((q) => q.status === "queued")
       .map((q) => ({
         dragId: queueDragId(q.id),
-        name: q.name ?? "Short link",
-        detail: "Queued link",
+        name: q.name ?? t("day.shortLink"),
+        detail: t("day.queuedLink"),
       }));
     return [...drafts, ...links];
   }, [items, trip.places, queue, props.cityIds]);
@@ -239,10 +237,12 @@ export function DayPlan(props: Props) {
 
   function nameOf(source: DragSource): string {
     if (source.kind === "stop")
-      return placesById.get(source.item.placeId)?.name ?? "This stop";
+      return placesById.get(source.item.placeId)?.name ?? t("day.thisStop");
     if (source.kind === "place")
-      return placesById.get(source.placeId)?.name ?? "This place";
-    return queue.find((q) => q.id === source.queueId)?.name ?? "This place";
+      return placesById.get(source.placeId)?.name ?? t("day.thisPlace");
+    return (
+      queue.find((q) => q.id === source.queueId)?.name ?? t("day.thisPlace")
+    );
   }
 
   function handleDragEnd({ active, over }: DragEndEvent) {
@@ -262,11 +262,16 @@ export function DayPlan(props: Props) {
     });
     if (plan.kind === "none") return;
     if (plan.kind === "refuse") {
-      const city = citiesById.get(source.cityId ?? "")?.name ?? "Its city";
+      const city =
+        citiesById.get(source.cityId ?? "")?.name ?? t("day.itsCity");
       toast.error(
         plan.reason === "not-a-day"
-          ? "That isn't one of the trip's days."
-          : `${city} isn't on ${formatDayLabel(plan.date)}, so ${nameOf(source)} can't go there.`,
+          ? t("day.notATripDayDrop")
+          : t("day.cityNotOnDay", {
+              city,
+              day: formatDayLabel(plan.date),
+              name: nameOf(source),
+            }),
       );
       return;
     }
@@ -277,9 +282,9 @@ export function DayPlan(props: Props) {
       const before = source.item;
       move(before, plan.date, plan.index, dayItems(plan.date));
       if (plan.date !== before.date)
-        toast(`Moved ${nameOf(source)} to ${label}`, {
+        toast(t("day.moved", { name: nameOf(source), day: label }), {
           action: {
-            label: "Undo",
+            label: t("common.undo"),
             onClick: () => undo(restoreItem(id, before)),
           },
         });
@@ -305,9 +310,9 @@ export function DayPlan(props: Props) {
           ).then((r) => r.stop!);
     added
       .then((stop) =>
-        toast(`Added ${nameOf(source)} to ${label}`, {
+        toast(t("common.addedToDay", { name: nameOf(source), day: label }), {
           action: {
-            label: "Undo",
+            label: t("common.undo"),
             onClick: () => {
               undo(removeItem(id, stop));
               if (source.kind === "queued") {
@@ -318,11 +323,11 @@ export function DayPlan(props: Props) {
           },
         }),
       )
-      .catch(() => toast.error(REFUSED));
+      .catch(() => toast.error(t("common.refused")));
   }
 
   function undo(write: Promise<void>) {
-    write.catch(() => toast.error("Couldn't undo that change."));
+    write.catch(() => toast.error(t("common.undoFailed")));
   }
 
   function stepBy(item: PlanItem, delta: number) {
@@ -344,15 +349,15 @@ export function DayPlan(props: Props) {
   }
 
   function remove(item: PlanItem) {
-    if (!tripId) return toast.error("Open your shared link with ?trip= first.");
+    if (!tripId) return;
     const id = tripId;
-    removeItem(id, item).catch(() => toast.error(REFUSED));
-    toast("Removed from the plan", {
+    removeItem(id, item).catch(() => toast.error(t("common.refused")));
+    toast(t("day.removed"), {
       action: {
-        label: "Undo",
+        label: t("common.undo"),
         onClick: () => {
           restoreItem(id, item).catch(() =>
-            toast.error("Couldn't undo that change."),
+            toast.error(t("common.undoFailed")),
           );
         },
       },
@@ -365,12 +370,14 @@ export function DayPlan(props: Props) {
     placesById,
   );
   const editingItem = stops.find((i) => i.id === editing);
-  const holiday = holidays.find((h) => h.date === props.date);
+  const holiday = trip.holidays.find((h) => h.date === props.date);
 
   function saveEdit(item: PlanItem, changes: StopChanges) {
     setEditing(null);
-    if (!tripId) return toast.error("Open your shared link with ?trip= first.");
-    updateItem(tripId, item, changes).catch(() => toast.error(REFUSED));
+    if (!tripId) return;
+    updateItem(tripId, item, changes).catch(() =>
+      toast.error(t("common.refused")),
+    );
   }
   const nextPlace = next ? placesById.get(next.placeId) : undefined;
 
@@ -403,9 +410,7 @@ export function DayPlan(props: Props) {
     return leg ? <LegLine leg={leg} walking={walking.get(key)} /> : null;
   };
   const mapNote =
-    map.unpinned > 0
-      ? `${map.unpinned} ${map.unpinned === 1 ? "stop has" : "stops have"} no map pin yet.`
-      : null;
+    map.unpinned > 0 ? t("day.mapNote", { count: map.unpinned }) : null;
   const openPlace = openPlaceId ? placesById.get(openPlaceId) : undefined;
   const openNearby = openPlace
     ? (nearbyByPlace(trip.places)[openPlace.id] ?? []).map((n) => ({
@@ -423,7 +428,7 @@ export function DayPlan(props: Props) {
             href={homeHref(tripId)}
             className="text-sm text-muted-foreground underline"
           >
-            ← Trip days
+            {t("common.backToDays")}
           </Link>
         </div>
         <h1 className="text-2xl font-semibold">{props.label}</h1>
@@ -435,7 +440,7 @@ export function DayPlan(props: Props) {
         )}
         {lateEnd && (
           <p className="text-sm text-destructive">
-            This day runs until {lateEnd}. Check the last train.
+            {t("day.runsLate", { time: lateEnd })}
           </p>
         )}
         <div className="flex flex-wrap gap-2">
@@ -454,12 +459,12 @@ export function DayPlan(props: Props) {
                 rel="noopener noreferrer"
               >
                 <Navigation />
-                Go to next stop
+                {t("day.goNext")}
               </a>
             </Button>
           ) : (
             <Button size="sm" disabled>
-              No planned stops left
+              {t("day.noStopsLeft")}
             </Button>
           )}
           <FullDay start={props.start} end={props.end} stops={stops} />
@@ -475,8 +480,8 @@ export function DayPlan(props: Props) {
             }}
             className="justify-start"
           >
-            <ToggleGroupItem value="list">List</ToggleGroupItem>
-            <ToggleGroupItem value="map">Map</ToggleGroupItem>
+            <ToggleGroupItem value="list">{t("common.list")}</ToggleGroupItem>
+            <ToggleGroupItem value="map">{t("common.map")}</ToggleGroupItem>
           </ToggleGroup>
         )}
       </header>
@@ -492,7 +497,7 @@ export function DayPlan(props: Props) {
       )}
 
       {!wide && !showPhoneMap && props.start && (
-        <HotelRow label="Start" endpoint={props.start} />
+        <HotelRow label={t("day.start")} endpoint={props.start} />
       )}
 
       {wide ? (
@@ -534,8 +539,12 @@ export function DayPlan(props: Props) {
                 className="h-72 xl:h-96"
                 note={mapNote}
               />
-              {props.start && <HotelRow label="Start" endpoint={props.start} />}
-              {props.end && <HotelRow label="End" endpoint={props.end} />}
+              {props.start && (
+                <HotelRow label={t("day.start")} endpoint={props.start} />
+              )}
+              {props.end && (
+                <HotelRow label={t("day.end")} endpoint={props.end} />
+              )}
               <Reservations reservations={props.reservations} />
               <DaySidePanel
                 waiting={waiting}
@@ -548,7 +557,8 @@ export function DayPlan(props: Props) {
             {dragging && parseDragId(dragging) ? (
               <DragPreview
                 name={
-                  waiting.find((w) => w.dragId === dragging)?.name ?? "Place"
+                  waiting.find((w) => w.dragId === dragging)?.name ??
+                  t("day.place")
                 }
               />
             ) : null}
@@ -583,13 +593,11 @@ export function DayPlan(props: Props) {
       )}
 
       {stops.length === 0 && !wide && !showPhoneMap && (
-        <p className="text-sm text-muted-foreground">
-          No stops yet. Open a place from a city list and choose Add to day.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("day.noStopsPhone")}</p>
       )}
 
       {!wide && !showPhoneMap && props.end && (
-        <HotelRow label="End" endpoint={props.end} />
+        <HotelRow label={t("day.end")} endpoint={props.end} />
       )}
 
       {!wide && !showPhoneMap && (
@@ -646,8 +654,7 @@ function DroppableList({
       {children}
       {empty && (
         <li className="text-center text-sm text-muted-foreground">
-          No stops yet. Drag a place here from the right, or open a city list
-          and choose Add to day.
+          {t("day.noStopsWide")}
         </li>
       )}
     </ol>
@@ -660,13 +667,13 @@ function Reservations({ reservations }: { reservations: Reservation[] }) {
   return (
     <section className="flex flex-col gap-2">
       <h2 className="text-sm font-medium text-muted-foreground uppercase">
-        Reservations
+        {t("day.reservations")}
       </h2>
       {reservations.map((r, i) => (
-        <Card key={`${r.type}-${i}`}>
-          <CardContent className="flex flex-col gap-1 py-4 text-sm">
+        <Card key={`${r.type}-${i}`} size="sm">
+          <CardContent className="flex flex-col gap-1 text-sm">
             <div className="flex items-center gap-2">
-              <Badge variant="outline">{r.type}</Badge>
+              <Badge variant="outline">{t(`reservationType.${r.type}`)}</Badge>
               {r.time && <span className="font-medium">{r.time}</span>}
             </div>
             <div>
@@ -682,11 +689,11 @@ function Reservations({ reservations }: { reservations: Reservation[] }) {
 
 function HotelRow({ label, endpoint }: { label: string; endpoint: Endpoint }) {
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between gap-3 py-4">
+    <Card size="sm">
+      <CardContent className="flex items-center justify-between gap-3">
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground uppercase">
-            {label} · Hotel
+            {t("day.hotelRow", { label })}
           </span>
           <span className="font-medium">{endpoint.name}</span>
         </div>
@@ -697,7 +704,7 @@ function HotelRow({ label, endpoint }: { label: string; endpoint: Endpoint }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Directions
+              {t("common.directions")}
             </a>
           </Button>
         )}
@@ -744,7 +751,7 @@ function SortableStop({
         handle={
           <button
             type="button"
-            aria-label="Drag to reorder"
+            aria-label={t("day.dragToReorder")}
             className="mt-0.5 cursor-grab touch-none rounded-sm text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
             {...attributes}
             {...listeners}
@@ -777,6 +784,7 @@ function StopCard({
     onDown: () => void;
   };
 }) {
+  const { holidays } = useTrip();
   const name = place?.name ?? item.placeId;
   const times = stopTimes(item, place);
   const minutes = item.durationMin ?? null;
@@ -785,19 +793,19 @@ function StopCard({
       ? `${times.start}–${times.end}`
       : times.start
     : minutes
-      ? `${minutes} min`
+      ? t("common.minutes", { minutes })
       : null;
   const finished = item.status === "done" || item.status === "skipped";
   const warnings = place
     ? [
-        ...stopWarnings(place, item.date),
-        ...holidayWarnings(place, item.date, holidays),
-        ...timeWarnings(item, place),
+        ...stopWarnings(place, item.date, t),
+        ...holidayWarnings(place, item.date, holidays, t),
+        ...timeWarnings(item, place, t),
       ]
     : [];
 
   return (
-    <Card className={cn(finished && "opacity-70")}>
+    <Card size="sm" className={cn(finished && "opacity-70")}>
       <CardHeader className="flex items-start gap-3">
         {handle}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -811,17 +819,19 @@ function StopCard({
           </CardTitle>
           <div className="flex flex-wrap gap-2">
             {place && (
-              <Badge variant="secondary">
-                {CATEGORY_LABEL[place.category]}
-              </Badge>
+              <Badge variant="secondary">{categoryLabel(place.category)}</Badge>
             )}
             {finished && (
-              <Badge>{item.status === "done" ? "Done" : "Skipped"}</Badge>
+              <Badge>
+                {item.status === "done"
+                  ? t("common.done")
+                  : t("common.skipped")}
+              </Badge>
             )}
             {meta && <Badge variant="outline">{meta}</Badge>}
             {place && isDraft(place) && (
               <Badge variant="outline" className="border-dashed">
-                Not researched yet
+                {t("common.notResearched")}
               </Badge>
             )}
             {!finished &&
@@ -840,7 +850,7 @@ function StopCard({
             <Button asChild variant="outline" size="sm">
               <a href={place.mapsUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink />
-                Map
+                {t("common.map")}
               </a>
             </Button>
           )}
@@ -849,7 +859,7 @@ function StopCard({
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label="Move up"
+                aria-label={t("day.moveUp")}
                 disabled={!buttons.canUp}
                 onClick={buttons.onUp}
               >
@@ -858,7 +868,7 @@ function StopCard({
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label="Move down"
+                aria-label={t("day.moveDown")}
                 disabled={!buttons.canDown}
                 onClick={buttons.onDown}
               >
@@ -869,7 +879,7 @@ function StopCard({
           {dayOptions.length > 1 && (
             <Select value={currentDate} onValueChange={onMoveDay}>
               <SelectTrigger size="sm" className="w-44">
-                <SelectValue placeholder="Move to…" />
+                <SelectValue placeholder={t("common.moveTo")} />
               </SelectTrigger>
               <SelectContent>
                 {dayOptions.map((d) => (
@@ -883,7 +893,7 @@ function StopCard({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Edit ${name}`}
+            aria-label={t("common.editName", { name })}
             className="ml-auto"
             onClick={onEdit}
           >
@@ -892,7 +902,7 @@ function StopCard({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Remove"
+            aria-label={t("day.remove")}
             onClick={onRemove}
           >
             <Trash2 />
@@ -931,23 +941,22 @@ function FullDay({
     <Sheet>
       <SheetTrigger asChild>
         <Button variant="outline" size="sm">
-          Full day
+          {t("day.fullDay")}
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
         <SheetHeader className="text-left">
-          <SheetTitle>Full day</SheetTitle>
-          <SheetDescription>Every leg, one tap each.</SheetDescription>
+          <SheetTitle>{t("day.fullDay")}</SheetTitle>
+          <SheetDescription>{t("day.fullDayDescription")}</SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-2 px-4 pb-6">
           {legs === null && (
             <p className="text-sm text-muted-foreground">
-              This day needs a hotel with a location before the full route can
-              be built.
+              {t("day.fullDayNeedsHotel")}
             </p>
           )}
           {legs?.length === 0 && (
-            <p className="text-sm text-muted-foreground">No stops yet.</p>
+            <p className="text-sm text-muted-foreground">{t("day.noStops")}</p>
           )}
           {legs?.map((leg) => (
             <a

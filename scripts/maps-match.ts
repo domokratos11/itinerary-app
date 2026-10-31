@@ -154,7 +154,7 @@ async function main() {
     })
     .filter((s) => !s.archived);
   if (places.length === 0 && stays.length === 0) {
-    console.error("Nothing in this trip yet. Run `npm run seed` first.");
+    console.error("Nothing in this trip yet. Add its cities and stays in the app first.");
     process.exit(1);
   }
 

@@ -20,20 +20,19 @@ import {
 } from "@/domain/maps-service";
 import type { PlaceRecord } from "@/domain/schemas";
 import { BASE_PATH } from "@/lib/base-path";
+import { intlLocale, t } from "@/lib/i18n";
 import { mapsService } from "@/lib/maps-service-instance";
 import { tryTap } from "@/lib/tap-limit";
 import { weekdayInTokyo } from "@/lib/tokyo-date";
 import { useOnline } from "@/lib/use-online";
 
-const LIMIT_MESSAGE = "Today's limit for this was reached. It's back tomorrow.";
-
 function messageFor(error: unknown): string {
   if (error instanceof MapsError) {
-    if (error.kind === "quota") return LIMIT_MESSAGE;
-    if (error.kind === "offline") return "You're offline.";
-    if (error.kind === "not-configured") return "Google Maps isn't set up yet.";
+    if (error.kind === "quota") return t("live.limit");
+    if (error.kind === "offline") return t("live.offline");
+    if (error.kind === "not-configured") return t("live.notConfigured");
   }
-  return "Google didn't answer. Try again later.";
+  return t("live.noAnswer");
 }
 
 // Required beside Google's data when no Google map is showing. Google allows
@@ -67,7 +66,7 @@ export function PlaceLive({ place }: { place: PlaceRecord }) {
   if (!online)
     return (
       <p className="text-sm text-muted-foreground">
-        Photos and live details need a connection.
+        {t("live.needsConnection")}
       </p>
     );
   return (
@@ -90,7 +89,7 @@ function LiveDetails({
   const [loading, setLoading] = useState(false);
 
   function load() {
-    if (!tryTap("live")) return setProblem(LIMIT_MESSAGE);
+    if (!tryTap("live")) return setProblem(t("live.limit"));
     setLoading(true);
     setProblem(null);
     mapsService
@@ -105,36 +104,41 @@ function LiveDetails({
       <div className="flex flex-col gap-1">
         <Button variant="outline" disabled={loading} onClick={load}>
           <Globe />
-          {loading ? "Asking Google…" : "Live from Google"}
+          {loading ? t("live.asking") : t("live.fromGoogle")}
         </Button>
         {problem && <p className="text-sm text-destructive">{problem}</p>}
       </div>
     );
 
-  const difference = hoursDifference(place.openingHours, live.todayHours);
+  const difference = hoursDifference(place.openingHours, live.todayHours, t);
   return (
     <section className="flex flex-col gap-1.5 rounded-lg border p-3 text-sm">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Live from Google
+          {t("live.fromGoogle")}
         </h3>
         <GoogleAttribution />
       </div>
       {live.openNow !== null && (
         <p className="font-medium">
-          {live.openNow ? "Open now" : "Closed now"}
+          {live.openNow ? t("live.openNow") : t("live.closedNow")}
         </p>
       )}
-      {live.todayHours && <p>Today: {live.todayHours}</p>}
+      {live.todayHours && (
+        <p>{t("live.todayHours", { hours: live.todayHours })}</p>
+      )}
       {live.rating !== null && (
         <p>
-          Rated {live.rating}
-          {live.ratingCount !== null &&
-            ` from ${live.ratingCount.toLocaleString("en-US")} reviews`}
+          {live.ratingCount !== null
+            ? t("live.ratedCount", {
+                rating: live.rating,
+                count: live.ratingCount.toLocaleString(intlLocale()),
+              })
+            : t("live.rated", { rating: live.rating })}
         </p>
       )}
       {live.openNow === null && !live.todayHours && live.rating === null && (
-        <p className="text-muted-foreground">Google has no details for this.</p>
+        <p className="text-muted-foreground">{t("live.noDetails")}</p>
       )}
       {difference && (
         <p className="rounded-md bg-muted px-2 py-1.5">{difference}</p>
@@ -146,7 +150,7 @@ function LiveDetails({
           rel="noopener noreferrer"
           className="text-xs underline"
         >
-          See it on Google Maps
+          {t("live.seeOnMaps")}
         </a>
       )}
     </section>
@@ -182,7 +186,7 @@ function Photos({ placeId }: { placeId: string }) {
   }, [api]);
 
   function load() {
-    if (!tryTap("photo")) return setProblem(LIMIT_MESSAGE);
+    if (!tryTap("photo")) return setProblem(t("live.limit"));
     setLoading(true);
     setProblem(null);
     mapsService
@@ -197,7 +201,7 @@ function Photos({ placeId }: { placeId: string }) {
       <div className="flex flex-col gap-1">
         <Button variant="outline" disabled={loading} onClick={load}>
           <ImageIcon />
-          {loading ? "Asking Google…" : "Show photo"}
+          {loading ? t("live.asking") : t("live.showPhoto")}
         </Button>
         {problem && <p className="text-sm text-destructive">{problem}</p>}
       </div>
@@ -205,7 +209,7 @@ function Photos({ placeId }: { placeId: string }) {
 
   if (photos.length === 0)
     return (
-      <p className="text-sm text-muted-foreground">Google has no photos.</p>
+      <p className="text-sm text-muted-foreground">{t("live.noPhotos")}</p>
     );
 
   const current = photos[index];
@@ -220,12 +224,15 @@ function Photos({ placeId }: { placeId: string }) {
                   // eslint-disable-next-line @next/next/no-img-element -- Google's URL, which can't be stored or optimised
                   <img
                     src={photo.url}
-                    alt={`Photo ${i + 1} of ${photos.length}`}
+                    alt={t("live.photoAlt", {
+                      index: i + 1,
+                      total: photos.length,
+                    })}
                     className="size-full object-cover"
                   />
                 ) : (
                   <p className="p-4 text-center text-sm text-muted-foreground">
-                    {blocked ? LIMIT_MESSAGE : "Loading…"}
+                    {blocked ? t("live.limit") : t("live.loading")}
                   </p>
                 )}
               </div>
@@ -251,7 +258,7 @@ function Photos({ placeId }: { placeId: string }) {
                 className="size-5 rounded-full"
               />
             )}
-            Photo by{" "}
+            {t("live.photoBy")}{" "}
             {current.authorUrl ? (
               <a
                 href={current.authorUrl}
@@ -273,11 +280,11 @@ function Photos({ placeId }: { placeId: string }) {
             rel="noopener noreferrer"
             className="underline"
           >
-            Original on Google Maps
+            {t("live.original")}
           </a>
         )}
         <span className="ml-auto">
-          {index + 1} of {photos.length}
+          {t("live.position", { index: index + 1, total: photos.length })}
         </span>
         <GoogleAttribution />
       </div>
