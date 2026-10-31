@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { QueuePanel } from "@/components/queue-panel";
 import type { QueuedPlace } from "@/domain/queue";
+import { testPlace } from "@/domain/test-place";
+import { seed } from "@/lib/catalog";
+import { useTripStore } from "@/lib/trip-store";
 import { assignQueued, queueAdd, queueUpdate } from "@/lib/queue-actions";
 import { toast } from "sonner";
 
@@ -27,6 +30,13 @@ const link = "https://maps.app.goo.gl/GJABpeNVfz7KcobC6";
 describe("QueuePanel", () => {
   beforeEach(() => {
     queueItems = [];
+    // A saved place nearby is what makes Nagoya the suggested city.
+    useTripStore.setState({
+      data: {
+        ...seed,
+        places: [testPlace({ cityId: "nagoya", lat: 35.17, lng: 136.9 })],
+      },
+    });
     vi.mocked(queueAdd).mockReset();
     vi.mocked(queueUpdate).mockReset().mockResolvedValue(undefined);
     vi.mocked(assignQueued).mockReset();

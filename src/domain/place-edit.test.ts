@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { seed } from "@/lib/catalog";
 import {
   applyPlaceEdit,
   changedFields,
@@ -12,10 +11,11 @@ import {
   validatePlaceForm,
 } from "./place-edit";
 import type { PlaceRecord } from "./schemas";
+import { testPlace } from "./test-place";
 
 const now = new Date("2026-11-10T00:00:00.000Z");
 const place: PlaceRecord = {
-  ...seed.places[0],
+  ...testPlace(),
   lat: 35.7,
   lng: 139.7,
   googlePlaceId: "abc",

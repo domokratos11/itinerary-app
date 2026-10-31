@@ -10,7 +10,8 @@ import {
   strandedItems,
   type TripData,
 } from "@/domain/trip";
-import { allPlaces, cities, trip } from "@/lib/catalog";
+import { testPlace } from "@/domain/test-place";
+import { cities, trip } from "@/lib/catalog";
 
 const NOW = new Date("2026-11-01T00:00:00.000Z");
 
@@ -39,7 +40,7 @@ const item = (overrides: Partial<PlanItem>): PlanItem => ({
 });
 
 describe("seedTrip", () => {
-  const data = seedTrip({ cities, trip, places: allPlaces }, NOW);
+  const data = seedTrip({ cities, trip, places: [testPlace()] }, NOW);
 
   it("gives every record a unique id and marks nothing archived", () => {
     for (const name of ["cities", "stays", "reservations", "places"] as const) {

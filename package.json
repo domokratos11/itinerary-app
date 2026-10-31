@@ -14,6 +14,7 @@
     "seed": "tsx scripts/seed.ts",
     "queue:pull": "tsx scripts/queue-pull.ts",
     "places:push": "tsx scripts/places-push.ts",
+    "places:reset": "tsx scripts/places-reset.ts",
     "research:pull": "tsx scripts/research-pull.ts",
     "research:push": "tsx scripts/research-push.ts",
     "maps:check": "tsx scripts/maps-check.ts",

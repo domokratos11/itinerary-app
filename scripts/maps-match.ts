@@ -153,8 +153,8 @@ async function main() {
       return r.success ? [r.data] : [];
     })
     .filter((s) => !s.archived);
-  if (places.length === 0) {
-    console.error("No places in this trip yet. Run `npm run seed` first.");
+  if (places.length === 0 && stays.length === 0) {
+    console.error("Nothing in this trip yet. Run `npm run seed` first.");
     process.exit(1);
   }
 
