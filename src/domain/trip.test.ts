@@ -33,6 +33,7 @@ const item = (overrides: Partial<PlanItem>): PlanItem => ({
   durationMin: null,
   note: null,
   status: "planned",
+  legNote: null,
   updatedAt: NOW.toISOString(),
   ...overrides,
 });
@@ -59,7 +60,14 @@ describe("seedTrip", () => {
 
 describe("activeTrip", () => {
   it("hides archived records and sorts stays and cities by check-in", () => {
-    const base = { archived: false, updatedAt: NOW.toISOString(), note: null };
+    const base = {
+      archived: false,
+      updatedAt: NOW.toISOString(),
+      note: null,
+      googlePlaceId: null,
+      locationFetchedAt: null,
+      locationSource: null,
+    };
     const data: TripData = {
       cities: [
         { id: "osaka", name: "Osaka", color: "#000000", ...base },

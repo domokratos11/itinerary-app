@@ -9,7 +9,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isPlanItem(d) {
-      return d.keys().hasOnly(['id', 'placeId', 'date', 'order', 'startTime', 'durationMin', 'note', 'status', 'updatedAt'])
+      return d.keys().hasOnly(['id', 'placeId', 'date', 'order', 'startTime', 'durationMin', 'note', 'status', 'updatedAt', 'legNote'])
         && d.keys().hasAll(['id', 'placeId', 'date', 'order', 'startTime', 'durationMin', 'note', 'status', 'updatedAt'])
         && d.id is string && d.id.size() > 0 && d.id.size() <= 64
         && d.placeId is string && d.placeId.size() > 0 && d.placeId.size() <= 64
@@ -19,7 +19,17 @@ service cloud.firestore {
         && (d.durationMin == null || (d.durationMin is int && d.durationMin > 0 && d.durationMin <= 1440))
         && (d.note == null || (d.note is string && d.note.size() <= 500))
         && d.status in ['planned', 'done', 'skipped', 'removed']
-        && d.updatedAt is string && d.updatedAt.size() <= 30;
+        && d.updatedAt is string && d.updatedAt.size() <= 30
+        && isLegNote(d.get('legNote', null));
+    }
+
+    function isLegNote(v) {
+      return v == null || (v is map
+        && v.keys().hasOnly(['mode', 'minutes', 'fareJPY', 'text'])
+        && v.keys().hasAll(['mode', 'minutes', 'fareJPY', 'text'])
+        && v.mode in ['train', 'subway', 'bus', 'walk', 'taxi']
+        && optionalNumber(v.minutes) && optionalNumber(v.fareJPY)
+        && optionalString(v.text, 200));
     }
 
     // status, cityId, placeId and updatedAt were added later, so links
@@ -56,6 +66,36 @@ service cloud.firestore {
       return d.archived is bool && shortString(d.updatedAt, 30);
     }
 
+    // Added later and optional, so older documents stay valid.
+    function hasValidMapFields(d) {
+      return optionalString(d.get('googlePlaceId', null), 300)
+        && optionalString(d.get('locationFetchedAt', null), 30)
+        && (d.get('locationSource', null) == null
+          || d.get('locationSource', null) in ['google', 'manual']);
+    }
+
+    function isNearestStation(v) {
+      return v == null || (v is map
+        && v.keys().hasOnly(['name', 'lines', 'walkMin'])
+        && v.keys().hasAll(['name', 'lines', 'walkMin'])
+        && shortString(v.name, 100) && v.name.size() > 0
+        && v.lines is list && v.lines.size() <= 8
+        && optionalNumber(v.walkMin));
+    }
+
+    function isProposal(d) {
+      return d.keys().hasOnly(['id', 'placeId', 'status', 'fields', 'sources', 'notes', 'requestedAt', 'updatedAt'])
+        && d.keys().hasAll(['id', 'placeId', 'status', 'fields', 'sources', 'notes', 'requestedAt', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.placeId, 64) && d.placeId.size() > 0
+        && d.status in ['requested', 'ready', 'applied', 'dismissed']
+        && d.fields is map && d.fields.size() <= 20
+        && d.sources is list && d.sources.size() <= 60
+        && optionalString(d.notes, 2000)
+        && shortString(d.requestedAt, 30)
+        && shortString(d.updatedAt, 30);
+    }
+
     function isCity(d) {
       return d.keys().hasOnly(['id', 'name', 'color', 'archived', 'updatedAt'])
         && d.keys().hasAll(['id', 'name', 'color', 'archived', 'updatedAt'])
@@ -66,7 +106,7 @@ service cloud.firestore {
     }
 
     function isStay(d) {
-      return d.keys().hasOnly(['id', 'cityId', 'hotelName', 'hotelMapsUrl', 'lat', 'lng', 'checkIn', 'checkOut', 'note', 'archived', 'updatedAt'])
+      return d.keys().hasOnly(['id', 'cityId', 'hotelName', 'hotelMapsUrl', 'lat', 'lng', 'checkIn', 'checkOut', 'note', 'googlePlaceId', 'locationFetchedAt', 'locationSource', 'archived', 'updatedAt'])
         && d.keys().hasAll(['id', 'cityId', 'hotelName', 'hotelMapsUrl', 'lat', 'lng', 'checkIn', 'checkOut', 'note', 'archived', 'updatedAt'])
         && shortString(d.id, 64) && d.id.size() > 0
         && shortString(d.cityId, 64)
@@ -77,6 +117,7 @@ service cloud.firestore {
         && d.checkOut is string && d.checkOut.size() == 10
         && d.checkOut > d.checkIn
         && optionalString(d.note, 500)
+        && hasValidMapFields(d)
         && isRecord(d);
     }
 
@@ -93,7 +134,7 @@ service cloud.firestore {
     }
 
     function isPlace(d) {
-      return d.keys().hasOnly(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'archived', 'updatedAt'])
+      return d.keys().hasOnly(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'googlePlaceId', 'locationFetchedAt', 'locationSource', 'nearestStation', 'sources', 'lockedFields', 'archived', 'updatedAt'])
         && d.keys().hasAll(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'archived', 'updatedAt'])
         && shortString(d.id, 64) && d.id.size() > 0
         && shortString(d.cityId, 64)
@@ -113,6 +154,10 @@ service cloud.firestore {
         && optionalString(d.notes, 2000)
         && d.status in ['draft', 'researched']
         && d.source in ['catalog', 'queue']
+        && hasValidMapFields(d)
+        && isNearestStation(d.get('nearestStation', null))
+        && d.get('sources', []) is list && d.get('sources', []).size() <= 60
+        && d.get('lockedFields', []) is list && d.get('lockedFields', []).size() <= 40
         && isRecord(d);
     }
 
@@ -176,6 +221,14 @@ service cloud.firestore {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isPlace(request.resource.data) && request.resource.data.id == id;
+        allow delete: if false;
+      }
+
+      // Research waiting for review. Dismissed, never deleted.
+      match /proposals/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isProposal(request.resource.data) && request.resource.data.id == id;
         allow delete: if false;
       }
 

@@ -54,7 +54,7 @@ So each place shows two kinds of information: **our notes** (stored, work offlin
 Step-by-step instructions are in [maps-setup.md](maps-setup.md).
 
 - **Two separate Google Cloud projects with their own billing,** one for the app and one for scripts. Linking a card to the Firebase project moves it from the free Spark plan to Blaze and removes the "can never be billed" guarantee.
-- **Browser key:** public, as with any static site. Allow only `https://domokratos11.github.io/itinerary-app/*` and `http://localhost:3000/*`, and only Maps JavaScript, Places (New), Routes and Maps Embed.
+- **Browser key:** public, as with any static site. Allow only `https://domokratos11.github.io/*` and `http://localhost:3000/*`, and only Maps JavaScript, Places (New), Routes and Maps Embed.
 - **Script key:** Places (New) only, kept in a git-ignored `.env`.
 - **Daily caps** on every API. A cap is what stops spending; a budget alert only sends an email. Caps apply per API method, not per price tier, so the app project caps Place Details at 60 a day and the app also limits tapping on its side (M6).
 

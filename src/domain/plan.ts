@@ -153,6 +153,7 @@ export function newPlanItem(input: {
     note: null,
     status: "planned",
     updatedAt: input.now.toISOString(),
+    legNote: null,
   };
 }
 

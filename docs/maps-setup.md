@@ -38,9 +38,11 @@ Under **APIs & Services > Credentials > Create credentials > API key**.
 **Browser key**, in `itinerary-maps-app`:
 
 - Application restriction: **Websites**, with both of these:
-  - `https://domokratos11.github.io/itinerary-app/*`
+  - `https://domokratos11.github.io/*`
   - `http://localhost:3000/*`
 - API restriction: **Restrict key** to Maps JavaScript API, Places API (New), Routes API and Maps Embed API.
+
+Use the site root, not `/itinerary-app/*`. Browsers send only the origin on cross-origin requests by default, so a path in the restriction can reject the app's own calls.
 
 **Script key**, in `itinerary-maps-scripts`:
 

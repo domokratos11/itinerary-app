@@ -29,6 +29,8 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 | `TRIP_ID=<id> npm run queue:pull`            | Export queued links and draft places to `research/` for the enrichment run |
 | `TRIP_ID=<id> npm run places:push -- <file>` | Write researched places back and mark them researched                      |
 | `npm run maps:check`                         | Check the Google keys and test train routes (`docs/maps-setup.md`)         |
+| `TRIP_ID=<id> npm run maps:match`            | Save place IDs and coordinates; reports doubtful matches to confirm        |
+| `TRIP_ID=<id> npm run maps:refresh`          | Refresh Google coordinates before the 30-day limit                         |
 | `npm run build`                              | Static export to `out/`                                                    |
 | `npm run lint` / `npm run format`            | ESLint / Prettier                                                          |
 
