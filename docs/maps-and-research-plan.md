@@ -112,7 +112,7 @@ Code follows the existing pattern: a `MapsService` interface in `src/domain`, on
 
 ### Administration: editing a place
 
-- **Edit button in Place details** opens a form (Drawer on phones, Sheet on desktop) with every field, using shadcn components and the existing Zod schema. Saves go through `saveRecord`, so they get the activity log and Undo. A field you change is added to `lockedFields`.
+- **Edit button in Place details** opens a form (Drawer on phones, Dialog on desktop, the same split as the other editors) with every field, using shadcn components and the existing Zod schema. Saves go through `saveRecord`, so they get the activity log and Undo. A field you change is added to `lockedFields`.
 - **Places tab in Settings:** a list by city with filters like **Missing cost**, **Missing hours**, **No map pin**, **Has research to review**. Tick several places and press **Research**.
 - **Add place:** type a name or paste a link, choose from Google's suggestions, and it is saved with its place ID as a draft.
 - **Completeness instead of status:** "needs research" is worked out from the fields that are actually empty, which fixes the blocker above without relying on the stored `researched` label.

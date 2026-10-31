@@ -63,8 +63,12 @@ export function PlaceEditor({
       action: {
         label: "Undo",
         onClick: () =>
-          saveRecord(tripId, "places", place, `undid an edit to ${place.name}`)
-            .catch(() => toast.error(REFUSED)),
+          saveRecord(
+            tripId,
+            "places",
+            place,
+            `undid an edit to ${place.name}`,
+          ).catch(() => toast.error(REFUSED)),
       },
     });
   }
@@ -162,11 +166,7 @@ export function PlaceEditor({
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Season from" htmlFor="place-season-from">
-          <Input
-            id="place-season-from"
-            type="date"
-            {...text("seasonFrom")}
-          />
+          <Input id="place-season-from" type="date" {...text("seasonFrom")} />
         </Field>
         <Field label="Season to" htmlFor="place-season-to">
           <Input id="place-season-to" type="date" {...text("seasonTo")} />

@@ -21,7 +21,7 @@ import {
   CATEGORIES,
   PRIORITIES,
   type City,
-  type Place,
+  type PlaceRecord,
 } from "@/domain/schemas";
 import { filterPlaces, type CatalogFilter } from "@/lib/catalog-filter";
 import { CATEGORY_LABEL } from "@/lib/category-label";
@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   city: City;
-  places: Place[];
+  places: PlaceRecord[];
   nearby: Record<string, NearbyPlace[]>;
   // Opens this place's details first (from search).
   initialPlaceId?: string | null;

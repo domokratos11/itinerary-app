@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SignOutButton } from "@/components/auth-gate";
 import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
+import { PlacesSettings } from "@/components/settings-places";
 import { ReservationsSettings } from "@/components/settings-reservations";
 import { StaysSettings } from "@/components/settings-stays";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +15,8 @@ import { homeHref } from "@/lib/links";
 import { useTripStore } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 
-// Trip settings: the cities, hotels and reservations the days are built
-// from. Every change is live for everyone on the trip.
+// Trip settings: the cities, hotels, places and reservations the trip is
+// built from. Every change is live for everyone on the trip.
 export function SettingsScreen() {
   const tripId = useTripId();
   const live = useTripStore((s) => s.live);
@@ -63,6 +64,7 @@ export function SettingsScreen() {
           <TabsList className="w-full">
             <TabsTrigger value="stays">Stays</TabsTrigger>
             <TabsTrigger value="cities">Cities</TabsTrigger>
+            <TabsTrigger value="places">Places</TabsTrigger>
             <TabsTrigger value="reservations">Bookings</TabsTrigger>
             <TabsTrigger value="backup">Backup</TabsTrigger>
           </TabsList>
@@ -71,6 +73,9 @@ export function SettingsScreen() {
           </TabsContent>
           <TabsContent value="cities" className="pt-2">
             <CitiesSettings tripId={tripId} />
+          </TabsContent>
+          <TabsContent value="places" className="pt-2">
+            <PlacesSettings tripId={tripId} />
           </TabsContent>
           <TabsContent value="reservations" className="pt-2">
             <ReservationsSettings tripId={tripId} />

@@ -53,8 +53,14 @@ export function TripMap({
 
   useEffect(() => {
     latest.current = { pins, lines, onPinClick };
-    view.current?.update(pins, lines);
-  }, [pins, lines, onPinClick]);
+  });
+
+  // Pins are rebuilt on every render of the screen; redraw only when they
+  // actually differ, so the map doesn't flicker.
+  const drawn = JSON.stringify([pins, lines]);
+  useEffect(() => {
+    view.current?.update(latest.current.pins, latest.current.lines);
+  }, [drawn]);
 
   // The colour scheme is fixed when a Google map is created, so a theme change
   // starts a new one. Coming back online tries again after a failed start.

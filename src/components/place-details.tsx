@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { ExternalLink } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { ExternalLink, Pencil } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,15 +20,18 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { AddToDay } from "@/components/add-to-day";
-import type { Place } from "@/domain/schemas";
+import { PlaceEditor } from "@/components/place-editor";
+import { mapsSearchUrl } from "@/domain/place-edit";
+import type { PlaceRecord } from "@/domain/schemas";
 import { isDraft } from "@/domain/queue";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { useTripId } from "@/lib/use-trip-id";
 
 export type NearbyPlace = { id: string; name: string };
 
 type Props = {
-  place: Place | null;
+  place: PlaceRecord | null;
   nearby: NearbyPlace[];
   onOpenChange: (open: boolean) => void;
 };
@@ -36,48 +39,79 @@ type Props = {
 // Phones get a bottom Drawer; wider screens get a side Sheet.
 export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
   const wide = useMediaQuery("(min-width: 768px)");
-  const open = place !== null;
+  const tripId = useTripId();
+  const [editing, setEditing] = useState<string | null>(null);
+  // The details step aside while the editor is open, so two panels never
+  // stack, and come back when it closes.
+  const isEditing = place !== null && editing === place.id;
+  const open = place !== null && !isEditing;
+  const onEdit = tripId && place ? () => setEditing(place.id) : null;
+  const editor = isEditing && tripId && (
+    <PlaceEditor
+      key={place.id}
+      tripId={tripId}
+      place={place}
+      onClose={() => setEditing(null)}
+    />
+  );
 
   if (wide) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="overflow-y-auto sm:max-w-md">
-          {place && (
-            <>
-              <SheetHeader className="text-left">
-                <SheetTitle className="text-xl">{place.name}</SheetTitle>
-                <SheetDescription className="sr-only">
-                  Place details
-                </SheetDescription>
-              </SheetHeader>
-              <PlaceBody place={place} nearby={nearby} />
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+      <>
+        {editor}
+        <Sheet open={open} onOpenChange={onOpenChange}>
+          <SheetContent side="right" className="overflow-y-auto sm:max-w-md">
+            {place && (
+              <>
+                <SheetHeader className="text-left">
+                  <SheetTitle className="text-xl">{place.name}</SheetTitle>
+                  <SheetDescription className="sr-only">
+                    Place details
+                  </SheetDescription>
+                </SheetHeader>
+                <PlaceBody place={place} nearby={nearby} onEdit={onEdit} />
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
+      </>
     );
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh]">
-        {place && (
-          <div className="overflow-y-auto px-4 pb-6">
-            <DrawerHeader className="px-0 text-left">
-              <DrawerTitle className="text-xl">{place.name}</DrawerTitle>
-              <DrawerDescription className="sr-only">
-                Place details
-              </DrawerDescription>
-            </DrawerHeader>
-            <PlaceBody place={place} nearby={nearby} />
-          </div>
-        )}
-      </DrawerContent>
-    </Drawer>
+    <>
+      {editor}
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="max-h-[85vh]">
+          {place && (
+            <div className="overflow-y-auto px-4 pb-6">
+              <DrawerHeader className="px-0 text-left">
+                <DrawerTitle className="text-xl">{place.name}</DrawerTitle>
+                <DrawerDescription className="sr-only">
+                  Place details
+                </DrawerDescription>
+              </DrawerHeader>
+              <PlaceBody place={place} nearby={nearby} onEdit={onEdit} />
+            </div>
+          )}
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 }
 
-function PlaceBody({ place, nearby }: { place: Place; nearby: NearbyPlace[] }) {
+function PlaceBody({
+  place,
+  nearby,
+  onEdit,
+}: {
+  place: PlaceRecord;
+  nearby: NearbyPlace[];
+  onEdit: (() => void) | null;
+}) {
+  const mapsLink = place.googlePlaceId
+    ? mapsSearchUrl(place.name, place.googlePlaceId)
+    : place.mapsUrl;
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
@@ -96,12 +130,18 @@ function PlaceBody({ place, nearby }: { place: Place; nearby: NearbyPlace[] }) {
       </div>
 
       <Button asChild>
-        <a href={place.mapsUrl} target="_blank" rel="noopener noreferrer">
+        <a href={mapsLink} target="_blank" rel="noopener noreferrer">
           <ExternalLink />
           Open in Google Maps
         </a>
       </Button>
       <AddToDay place={place} />
+      {onEdit && (
+        <Button variant="outline" onClick={onEdit}>
+          <Pencil />
+          Edit place
+        </Button>
+      )}
 
       {place.purpose && <Section label="Why go">{place.purpose}</Section>}
       {place.description && (
@@ -140,6 +180,19 @@ function PlaceBody({ place, nearby }: { place: Place; nearby: NearbyPlace[] }) {
       {place.seasonFrom && place.seasonTo && (
         <Section label="Season">
           {place.seasonFrom} to {place.seasonTo}
+        </Section>
+      )}
+      {place.nearestStation && (
+        <Section label="Nearest station">
+          {[
+            place.nearestStation.name,
+            place.nearestStation.lines.join(", "),
+            place.nearestStation.walkMin !== null
+              ? `${place.nearestStation.walkMin} min walk`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </Section>
       )}
       {place.notes && <Section label="Notes">{place.notes}</Section>}

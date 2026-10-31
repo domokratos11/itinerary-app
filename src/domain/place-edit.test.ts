@@ -158,7 +158,13 @@ describe("newDraftPlace", () => {
 
   it("treats coordinates from a pasted link as manual", () => {
     const made = newDraftPlace(
-      { ...base, lat: 35.7, lng: 139.7, googlePlaceId: null, fromGoogle: false },
+      {
+        ...base,
+        lat: 35.7,
+        lng: 139.7,
+        googlePlaceId: null,
+        fromGoogle: false,
+      },
       now,
     );
     expect(made.locationSource).toBe("manual");

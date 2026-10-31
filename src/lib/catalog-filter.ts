@@ -11,11 +11,11 @@ export const NEARBY_KM = 1;
 
 // A place is "unassigned" when no active plan item uses it, meaning it
 // doesn't fit any day yet.
-export function filterPlaces(
-  places: Place[],
+export function filterPlaces<P extends Place>(
+  places: P[],
   filter: CatalogFilter,
   assignedPlaceIds: ReadonlySet<string>,
-): Place[] {
+): P[] {
   return places.filter((p) => {
     if (filter.category !== "all" && p.category !== filter.category)
       return false;
