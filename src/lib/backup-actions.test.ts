@@ -59,6 +59,7 @@ describe("importBackup", () => {
       status: "queued" as const,
       cityId: null,
       placeId: null,
+      category: null,
       updatedAt: null,
     };
     await importBackup(

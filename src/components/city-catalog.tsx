@@ -20,7 +20,7 @@ import { cityPins } from "@/domain/map-pins";
 import {
   CATEGORIES,
   PRIORITIES,
-  type City,
+  type CityRecord,
   type PlaceRecord,
 } from "@/domain/schemas";
 import { filterPlaces, type CatalogFilter } from "@/lib/catalog-filter";
@@ -30,10 +30,19 @@ import { isDraft } from "@/domain/queue";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { usePlanStore } from "@/lib/plan-store";
 import { cn } from "@/lib/utils";
+import { AddPlace } from "@/components/add-place";
+import { CityForm } from "@/components/settings-cities";
+import { Button } from "@/components/ui/button";
+import { archiveRecord, saveRecord } from "@/lib/trip-actions";
+import { Pencil, Plus } from "lucide-react";
+import { toast } from "sonner";
+
+const REFUSED = "That change was refused. Check the trip link.";
 
 type Props = {
-  city: City;
+  city: CityRecord;
   places: PlaceRecord[];
+  tripId: string | null;
   nearby: Record<string, NearbyPlace[]>;
   // Opens this place's details first (from search).
   initialPlaceId?: string | null;
@@ -48,11 +57,14 @@ const initialFilter: CatalogFilter = {
 export function CityCatalog({
   city,
   places,
+  tripId,
   nearby,
   initialPlaceId = null,
 }: Props) {
   const [filter, setFilter] = useState<CatalogFilter>(initialFilter);
   const [selectedId, setSelectedId] = useState<string | null>(initialPlaceId);
+  const [adding, setAdding] = useState(false);
+  const [editingCity, setEditingCity] = useState(false);
   const items = usePlanStore((s) => s.items);
   const [view, setView] = useState<"list" | "map">("list");
   // Wide enough for the map beside the grid; otherwise a switch.
@@ -84,10 +96,66 @@ export function CityCatalog({
       .map((i) => byId.get(i.placeId));
   }, [items, places]);
 
+  function archivePlace(place: PlaceRecord) {
+    if (!tripId) return;
+    archiveRecord(
+      tripId,
+      "places",
+      place,
+      `archived the place ${place.name}`,
+    ).catch(() => toast.error(REFUSED));
+    setSelectedId(null);
+    toast(`Archived ${place.name}`, {
+      action: {
+        label: "Undo",
+        onClick: () =>
+          saveRecord(
+            tripId,
+            "places",
+            place,
+            `restored the place ${place.name}`,
+          ).catch(() => toast.error(REFUSED)),
+      },
+    });
+  }
+
+  function saveCity(name: string, color: string) {
+    if (!tripId) return;
+    saveRecord(
+      tripId,
+      "cities",
+      { ...city, name, color, updatedAt: new Date().toISOString() },
+      `edited the city ${name}`,
+    ).catch(() => toast.error(REFUSED));
+    setEditingCity(false);
+  }
+
   return (
     <>
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">{city.name}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold">
+            {city.name}
+          </h1>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Edit ${city.name}`}
+            disabled={!tripId}
+            onClick={() => setEditingCity(true)}
+          >
+            <Pencil />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!tripId}
+            onClick={() => setAdding(true)}
+          >
+            <Plus />
+            Add place
+          </Button>
+        </div>
         <p className="text-sm text-muted-foreground">
           {visible.length} of {places.length} places
         </p>
@@ -246,10 +314,26 @@ export function CityCatalog({
       <PlaceDetails
         place={selected}
         nearby={selected ? (nearby[selected.id] ?? []) : []}
+        inPlan={selected ? assigned.has(selected.id) : false}
         onOpenChange={(open) => {
           if (!open) setSelectedId(null);
         }}
+        onArchive={tripId ? archivePlace : undefined}
       />
+      {adding && tripId && (
+        <AddPlace
+          tripId={tripId}
+          defaultCityId={city.id}
+          onClose={() => setAdding(false)}
+        />
+      )}
+      {editingCity && (
+        <CityForm
+          city={city}
+          onCancel={() => setEditingCity(false)}
+          onSave={saveCity}
+        />
+      )}
     </>
   );
 }

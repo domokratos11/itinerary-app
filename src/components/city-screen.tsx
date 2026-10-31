@@ -49,6 +49,7 @@ export function CityScreen() {
       key={`${cityId}-${placeId ?? ""}`}
       city={city}
       places={places}
+      tripId={tripId}
       nearby={nearby}
       initialPlaceId={placeId}
     />

@@ -13,11 +13,13 @@ import { useTripStore } from "@/lib/trip-store";
 // write has the same shape the rules expect.
 export async function queueAdd(
   tripId: string,
-  input: Pick<QueuedPlace, "url" | "name" | "lat" | "lng" | "note">,
+  input: Pick<QueuedPlace, "url" | "name" | "lat" | "lng" | "note"> &
+    Partial<Pick<QueuedPlace, "category">>,
   now: Date = new Date(),
 ): Promise<void> {
   const id = crypto.randomUUID();
   await queueRepository.save(tripId, {
+    category: null,
     ...input,
     id,
     createdAt: now.toISOString(),
@@ -37,11 +39,13 @@ export async function queueAdd(
   );
 }
 
-// Saves an edited item (name, note, city or status).
+// Saves an edited item (name, note, city, category or status).
 export async function queueUpdate(
   tripId: string,
   item: QueuedPlace,
-  changes: Partial<Pick<QueuedPlace, "name" | "note" | "cityId" | "status">>,
+  changes: Partial<
+    Pick<QueuedPlace, "name" | "note" | "cityId" | "category" | "status">
+  >,
   now: Date = new Date(),
 ): Promise<void> {
   await queueRepository.save(tripId, {

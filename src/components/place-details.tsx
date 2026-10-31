@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ExternalLink, Pencil, Search } from "lucide-react";
+import { Archive, ExternalLink, Pencil, Search } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -41,10 +41,20 @@ type Props = {
   place: PlaceRecord | null;
   nearby: NearbyPlace[];
   onOpenChange: (open: boolean) => void;
+  // True when a plan item uses the place; it can't be archived then.
+  inPlan?: boolean;
+  // Left out where archiving doesn't apply, such as a stop in a day's plan.
+  onArchive?: (place: PlaceRecord) => void;
 };
 
 // Phones get a bottom Drawer; wider screens get a side Sheet.
-export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
+export function PlaceDetails({
+  place,
+  nearby,
+  inPlan = false,
+  onOpenChange,
+  onArchive,
+}: Props) {
   const wide = useMediaQuery("(min-width: 768px)");
   const tripId = useTripId();
   const [editing, setEditing] = useState<string | null>(null);
@@ -59,6 +69,15 @@ export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
       tripId={tripId}
       place={place}
       onClose={() => setEditing(null)}
+    />
+  );
+  const body = place && (
+    <PlaceBody
+      place={place}
+      nearby={nearby}
+      inPlan={inPlan}
+      onEdit={onEdit}
+      onArchive={onArchive ? () => onArchive(place) : null}
     />
   );
 
@@ -76,7 +95,7 @@ export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
                     Place details
                   </SheetDescription>
                 </SheetHeader>
-                <PlaceBody place={place} nearby={nearby} onEdit={onEdit} />
+                {body}
               </>
             )}
           </SheetContent>
@@ -98,7 +117,7 @@ export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
                   Place details
                 </DrawerDescription>
               </DrawerHeader>
-              <PlaceBody place={place} nearby={nearby} onEdit={onEdit} />
+              {body}
             </div>
           )}
         </DrawerContent>
@@ -110,11 +129,15 @@ export function PlaceDetails({ place, nearby, onOpenChange }: Props) {
 function PlaceBody({
   place,
   nearby,
+  inPlan,
   onEdit,
+  onArchive,
 }: {
   place: PlaceRecord;
   nearby: NearbyPlace[];
+  inPlan: boolean;
   onEdit: (() => void) | null;
+  onArchive: (() => void) | null;
 }) {
   const mapsLink = place.googlePlaceId
     ? mapsSearchUrl(place.name, place.googlePlaceId)
@@ -143,11 +166,32 @@ function PlaceBody({
         </a>
       </Button>
       <AddToDay place={place} />
-      {onEdit && (
-        <Button variant="outline" onClick={onEdit}>
-          <Pencil />
-          Edit place
-        </Button>
+      {(onEdit || onArchive) && (
+        <div className="flex gap-2">
+          {onEdit && (
+            <Button variant="outline" className="flex-1" onClick={onEdit}>
+              <Pencil />
+              Edit place
+            </Button>
+          )}
+          {onArchive && (
+            <Button
+              variant="outline"
+              className="flex-1"
+              disabled={inPlan}
+              title={inPlan ? "Remove it from the plan first" : undefined}
+              onClick={onArchive}
+            >
+              <Archive />
+              Archive
+            </Button>
+          )}
+        </div>
+      )}
+      {onArchive && inPlan && (
+        <p className="-mt-2 text-xs text-muted-foreground">
+          It&apos;s in the plan. Remove it from its day to archive it.
+        </p>
       )}
       <PlaceResearch place={place} />
       <PlaceLive key={place.id} place={place} />

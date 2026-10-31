@@ -27,6 +27,12 @@ export class FirestoreQueueRepository implements QueueRepository {
   }
 
   async save(tripId: string, item: QueuedPlace): Promise<void> {
-    await setDoc(doc(getDb(), "trips", tripId, "queue", item.id), item);
+    // Left out until a category is chosen, so links without one are still
+    // accepted by rules that predate the field.
+    const { category, ...rest } = item;
+    await setDoc(
+      doc(getDb(), "trips", tripId, "queue", item.id),
+      category ? { ...rest, category } : rest,
+    );
   }
 }

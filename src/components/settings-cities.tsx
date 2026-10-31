@@ -134,7 +134,7 @@ export function CitiesSettings({ tripId }: { tripId: string }) {
   );
 }
 
-function CityForm({
+export function CityForm({
   city,
   onCancel,
   onSave,

@@ -30,6 +30,7 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 | `TRIP_ID=<id> npm run places:push -- <file>` | Write researched places back and mark them researched                      |
 | `TRIP_ID=<id> npm run research:pull`         | Export research requests (`docs/research-run.md`)                          |
 | `TRIP_ID=<id> npm run research:push -- <file>` | Write research back as proposals to review; never changes a place directly |
+| `npm run research:merge -- <city-file> <results>` | Fill a `data/places` seed file from sourced research; never touches Firestore |
 | `npm run maps:check`                         | Check the Google keys and test train routes (`docs/maps-setup.md`)         |
 | `TRIP_ID=<id> npm run maps:match`            | Save place IDs and coordinates; reports doubtful matches to confirm        |
 | `TRIP_ID=<id> npm run maps:refresh`          | Refresh Google coordinates before the 30-day limit                         |
