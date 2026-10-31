@@ -2,6 +2,7 @@ import type { Backup } from "@/domain/backup";
 import { TRIP_COLLECTIONS } from "@/domain/trip";
 import { logActivity } from "@/lib/activity-log";
 import { planRepository } from "@/lib/plan-repository-instance";
+import { proposalRepository } from "@/lib/proposal-repository-instance";
 import { queueRepository } from "@/lib/queue-repository-instance";
 import { tripRepository } from "@/lib/trip-repository-instance";
 
@@ -18,6 +19,8 @@ export async function importBackup(
     ...backup.items.map((item) => planRepository.save(tripId, item)),
     ...backup.queue.map((item) => queueRepository.save(tripId, item)),
   ]);
+  if (backup.proposals.length)
+    await proposalRepository.saveMany(tripId, backup.proposals);
   logActivity(tripId, {
     kind: "settings",
     targetId: null,

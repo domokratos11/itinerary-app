@@ -99,6 +99,17 @@ export const HolidaySchema = z.object({
 
 export const HolidaysFileSchema = z.array(HolidaySchema);
 
+export const LEG_MODES = ["train", "subway", "bus", "walk", "taxi"] as const;
+
+// A hand-typed or researched note on how to reach a stop. Ours, so it can be
+// stored, unlike Google's route times. Treat these as estimates.
+export const LegNoteSchema = z.object({
+  mode: z.enum(LEG_MODES),
+  minutes: z.number().int().positive().max(1440).nullable(),
+  fareJPY: z.number().int().nonnegative().nullable(),
+  text: z.string().max(200).nullable(),
+});
+
 export const PlanItemSchema = z.object({
   id: z.string(),
   placeId: z.string(),
@@ -109,6 +120,7 @@ export const PlanItemSchema = z.object({
   note: z.string().nullable(),
   status: z.enum(PLAN_STATUSES),
   updatedAt: z.iso.datetime(),
+  legNote: LegNoteSchema.nullable().default(null),
 });
 
 // Firestore records under trips/{tripId}. Each is the seed shape plus an
@@ -123,11 +135,43 @@ const recordFields = { archived: z.boolean(), updatedAt: z.iso.datetime() };
 export const PLACE_STATUSES = ["draft", "researched"] as const;
 export const PLACE_SOURCES = ["catalog", "queue"] as const;
 
+export const LOCATION_SOURCES = ["google", "manual"] as const;
+
+// How a place or stay relates to Google. A place ID may be stored for good;
+// coordinates with source "google" for at most 30 days (see domain/location).
+// Fields added after launch default to null, so older documents stay valid.
+const mapFields = {
+  googlePlaceId: z.string().min(1).max(300).nullable().default(null),
+  locationFetchedAt: z.iso.datetime().nullable().default(null),
+  locationSource: z.enum(LOCATION_SOURCES).nullable().default(null),
+};
+
+export const NO_MAP_FIELDS = {
+  googlePlaceId: null,
+  locationFetchedAt: null,
+  locationSource: null,
+} as const;
+
+const httpsUrl = z.url({ protocol: /^https$/ }).max(500);
+
+export const NearestStationSchema = z.object({
+  name: z.string().min(1).max(100),
+  lines: z.array(z.string().min(1).max(60)).max(8),
+  walkMin: z.number().int().nonnegative().max(120).nullable(),
+});
+
+// Where one researched fact came from.
+export const FieldSourceSchema = z.object({
+  field: z.string().min(1).max(40),
+  url: httpsUrl,
+});
+
 export const CityRecordSchema = CitySchema.extend(recordFields);
 
 export const StayRecordSchema = StaySchema.extend({
   id: recordId,
   note: z.string().max(500).nullable(),
+  ...mapFields,
   ...recordFields,
 });
 
@@ -140,13 +184,80 @@ export const ReservationRecordSchema = ReservationSchema.extend({
 export const PlaceRecordSchema = PlaceSchema.extend({
   status: z.enum(PLACE_STATUSES),
   source: z.enum(PLACE_SOURCES),
+  ...mapFields,
+  nearestStation: NearestStationSchema.nullable().default(null),
+  sources: z.array(FieldSourceSchema).max(60).default([]),
+  // Fields edited by hand; research never changes them.
+  lockedFields: z.array(z.string().min(1).max(40)).max(40).default([]),
   ...recordFields,
 });
+
+export const PROPOSAL_STATUSES = [
+  "requested",
+  "ready",
+  "applied",
+  "dismissed",
+] as const;
+
+// Research never writes to a place. It writes one of these, and a person
+// accepts it field by field. Requested in the app, filled by a worker.
+export const ProposalFieldsSchema = z
+  .object({
+    purpose: z.string().max(1000).nullable(),
+    description: z.string().max(3000).nullable(),
+    tips: z.array(z.string().max(300)).max(30),
+    costEstimateJPY: z.number().int().nonnegative().nullable(),
+    durationMin: z.number().int().positive().nullable(),
+    openingHours: z.string().max(500).nullable(),
+    closedDates: z.array(isoDate).max(60),
+    seasonFrom: isoDate.nullable(),
+    seasonTo: isoDate.nullable(),
+    websiteUrl: httpsUrl.nullable(),
+    notes: z.string().max(2000).nullable(),
+    nearestStation: NearestStationSchema.nullable(),
+    verifiedAt: isoDate.nullable(),
+  })
+  .partial();
+
+export const ProposalSchema = z.object({
+  id: recordId,
+  placeId: recordId,
+  status: z.enum(PROPOSAL_STATUSES),
+  fields: ProposalFieldsSchema,
+  sources: z.array(FieldSourceSchema).max(60),
+  notes: z.string().max(2000).nullable(),
+  requestedAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+// The fields a place record has beyond the seed shape.
+export function placeRecordDefaults(): Pick<
+  PlaceRecord,
+  | "googlePlaceId"
+  | "locationFetchedAt"
+  | "locationSource"
+  | "nearestStation"
+  | "sources"
+  | "lockedFields"
+> {
+  return {
+    ...NO_MAP_FIELDS,
+    nearestStation: null,
+    sources: [],
+    lockedFields: [],
+  };
+}
 
 export type CityRecord = z.infer<typeof CityRecordSchema>;
 export type StayRecord = z.infer<typeof StayRecordSchema>;
 export type ReservationRecord = z.infer<typeof ReservationRecordSchema>;
 export type PlaceRecord = z.infer<typeof PlaceRecordSchema>;
+export type Proposal = z.infer<typeof ProposalSchema>;
+export type ProposalFields = z.infer<typeof ProposalFieldsSchema>;
+export type FieldSource = z.infer<typeof FieldSourceSchema>;
+export type NearestStation = z.infer<typeof NearestStationSchema>;
+export type LegNote = z.infer<typeof LegNoteSchema>;
+export type LegMode = (typeof LEG_MODES)[number];
 
 export type City = z.infer<typeof CitySchema>;
 export type Place = z.infer<typeof PlaceSchema>;

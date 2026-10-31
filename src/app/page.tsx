@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { ExportTrip } from "@/components/settings-backup";
 import { NeedsNewDay } from "@/components/needs-new-day";
+import { ResearchNotice } from "@/components/research-notice";
 import { TodayCard } from "@/components/today-card";
 import { TripDates } from "@/components/trip-dates";
 import { TripPlanStatus } from "@/components/trip-plan-status";
@@ -43,6 +44,9 @@ export default function Home() {
       </div>
       <Suspense fallback={null}>
         <NeedsNewDay />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ResearchNotice />
       </Suspense>
       <Suspense fallback={null}>
         <TripDays />

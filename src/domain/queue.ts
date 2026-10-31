@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 import { distanceKm, type LatLng } from "@/lib/geo";
-import { CATEGORIES, type Place, type PlaceRecord, type Stay } from "./schemas";
+import {
+  CATEGORIES,
+  placeRecordDefaults,
+  type Place,
+  type PlaceRecord,
+  type Stay,
+} from "./schemas";
 import { uniqueId } from "./trip-edit";
 
 export const QUEUE_STATUSES = ["queued", "promoted", "dismissed"] as const;
@@ -79,6 +85,8 @@ export function draftPlaceFrom(
     notes: null,
     status: "draft",
     source: "queue",
+    ...placeRecordDefaults(),
+    locationSource: item.lat !== null ? "manual" : null,
     archived: false,
     updatedAt: now.toISOString(),
   };

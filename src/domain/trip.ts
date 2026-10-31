@@ -1,15 +1,17 @@
 import { deriveDays, type TripDay } from "./days";
 import { stayLocation, type Location } from "./plan";
-import type {
-  City,
-  CityRecord,
-  Place,
-  PlaceRecord,
-  PlanItem,
-  ReservationRecord,
-  Stay,
-  StayRecord,
-  TripFile,
+import {
+  NO_MAP_FIELDS,
+  placeRecordDefaults,
+  type City,
+  type CityRecord,
+  type Place,
+  type PlaceRecord,
+  type PlanItem,
+  type ReservationRecord,
+  type Stay,
+  type StayRecord,
+  type TripFile,
 } from "./schemas";
 
 // The trip's structure: everything except the plan items. Lives in
@@ -50,6 +52,7 @@ export function seedTrip(
       ...s,
       id: stayId(s),
       note: null,
+      ...NO_MAP_FIELDS,
       ...base,
     })),
     reservations: input.trip.reservations.map((r, i) => ({
@@ -61,6 +64,7 @@ export function seedTrip(
       ...p,
       status: "researched" as const,
       source: "catalog" as const,
+      ...placeRecordDefaults(),
       ...base,
     })),
   };

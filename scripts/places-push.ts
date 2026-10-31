@@ -13,6 +13,7 @@ import { z } from "zod";
 import { adminDb } from "./admin-db";
 import { QueuedPlaceSchema } from "../src/domain/queue";
 import {
+  placeRecordDefaults,
   PlaceRecordSchema,
   PlaceSchema,
   type PlaceRecord,
@@ -44,6 +45,18 @@ async function main() {
       : null;
     const record: PlaceRecord = {
       ...place,
+      // What maps:match and the place editor saved is not in the file.
+      ...placeRecordDefaults(),
+      ...(before?.success
+        ? {
+            googlePlaceId: before.data.googlePlaceId,
+            locationFetchedAt: before.data.locationFetchedAt,
+            locationSource: before.data.locationSource,
+            nearestStation: before.data.nearestStation,
+            sources: before.data.sources,
+            lockedFields: before.data.lockedFields,
+          }
+        : {}),
       status: "researched",
       source: before?.success
         ? before.data.source

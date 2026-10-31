@@ -13,6 +13,7 @@ const item = (overrides: Partial<PlanItem> = {}): PlanItem => ({
   durationMin: null,
   note: null,
   status: "planned",
+  legNote: null,
   updatedAt: "2026-10-28T12:00:00.000Z",
   ...overrides,
 });

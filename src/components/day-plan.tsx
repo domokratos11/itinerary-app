@@ -53,7 +53,6 @@ import {
 } from "@/components/ui/sheet";
 import {
   directionsUrl,
-  distanceBetweenPlaces,
   holidayWarnings,
   itemsForDay,
   legsForDay,
@@ -63,7 +62,6 @@ import {
   stopTimes,
   stopWarnings,
   timeWarnings,
-  type Location,
 } from "@/domain/plan";
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
@@ -89,7 +87,16 @@ import {
   restoreItem,
   updateItem,
 } from "@/lib/plan-actions";
+import { PlaceDetails } from "@/components/place-details";
 import { StopEditor, type StopChanges } from "@/components/stop-editor";
+import { LegLine } from "@/components/leg-line";
+import { TripMap } from "@/components/trip-map";
+import { dayLegs } from "@/domain/legs";
+import { dayMap } from "@/domain/map-pins";
+import type { MapLine } from "@/domain/maps-service";
+import { useWalkingLegs } from "@/lib/use-walking-legs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { nearbyByPlace } from "@/lib/catalog-filter";
 import { assignQueued, queueUpdate } from "@/lib/queue-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { homeHref } from "@/lib/links";
@@ -116,8 +123,6 @@ type Props = {
 
 const REFUSED = "That change was refused. Check the trip link.";
 
-type Origin = { location: Location | null; place: Place | null };
-
 export function DayPlan(props: Props) {
   const tripId = useTripId();
   const items = usePlanStore((s) => s.items);
@@ -128,6 +133,8 @@ export function DayPlan(props: Props) {
   const queue = useQueue(tripId).items;
   const [dragging, setDragging] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "map">("list");
+  const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
   const wide = useMediaQuery("(min-width: 768px)");
   const stops = useMemo(
     () => itemsForDay(items, props.date),
@@ -352,14 +359,6 @@ export function DayPlan(props: Props) {
     });
   }
 
-  // Origin for a stop's directions: the stop before it, or the start hotel.
-  function originFor(index: number): Origin {
-    if (index === 0)
-      return { location: props.start?.location ?? null, place: null };
-    const prev = placesById.get(stops[index - 1].placeId) ?? null;
-    return { location: prev ? placeLocation(prev) : null, place: prev };
-  }
-
   const next = nextStop(stops);
   const lateEnd = dayRunsLate(
     stops.filter((i) => i.status === "planned"),
@@ -386,6 +385,35 @@ export function DayPlan(props: Props) {
     item,
     place: placesById.get(item.placeId),
   }));
+
+  const map = dayMap(rows, props.start, props.end);
+  const legs = dayLegs(rows, props.start, props.end);
+  const walking = useWalkingLegs(legs);
+  const mapLines = legs.flatMap((leg): MapLine[] => {
+    if (!leg.from || !leg.to) return [];
+    const route = walking.get(leg.key);
+    return [
+      route && route.path.length > 1
+        ? { path: route.path, kind: "walk" }
+        : { path: [leg.from, leg.to], kind: "straight" },
+    ];
+  });
+  const legLine = (key: string) => {
+    const leg = legs.find((l) => l.key === key);
+    return leg ? <LegLine leg={leg} walking={walking.get(key)} /> : null;
+  };
+  const mapNote =
+    map.unpinned > 0
+      ? `${map.unpinned} ${map.unpinned === 1 ? "stop has" : "stops have"} no map pin yet.`
+      : null;
+  const openPlace = openPlaceId ? placesById.get(openPlaceId) : undefined;
+  const openNearby = openPlace
+    ? (nearbyByPlace(trip.places)[openPlace.id] ?? []).map((n) => ({
+        id: n.id,
+        name: n.name,
+      }))
+    : [];
+  const showPhoneMap = !wide && view === "map";
 
   return (
     <div className="flex flex-col gap-4">
@@ -436,9 +464,34 @@ export function DayPlan(props: Props) {
           )}
           <FullDay start={props.start} end={props.end} stops={stops} />
         </div>
+        {!wide && (
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={view}
+            onValueChange={(value) => {
+              if (value) setView(value as "list" | "map");
+            }}
+            className="justify-start"
+          >
+            <ToggleGroupItem value="list">List</ToggleGroupItem>
+            <ToggleGroupItem value="map">Map</ToggleGroupItem>
+          </ToggleGroup>
+        )}
       </header>
 
-      {!wide && props.start && (
+      {showPhoneMap && (
+        <TripMap
+          pins={map.pins}
+          lines={mapLines}
+          onPinClick={setOpenPlaceId}
+          className="h-[65vh]"
+          note={mapNote}
+        />
+      )}
+
+      {!wide && !showPhoneMap && props.start && (
         <HotelRow label="Start" endpoint={props.start} />
       )}
 
@@ -450,19 +503,19 @@ export function DayPlan(props: Props) {
           onDragCancel={() => setDragging(null)}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-[minmax(0,1fr)_16rem] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="grid grid-cols-[minmax(0,1fr)_18rem] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_26rem]">
             <SortableContext
               items={rows.map((r) => r.item.id)}
               strategy={verticalListSortingStrategy}
             >
               <DroppableList empty={rows.length === 0}>
-                {rows.map((row, index) => (
+                {rows.map((row) => (
                   <SortableStop
                     key={row.item.id}
                     id={row.item.id}
                     item={row.item}
                     place={row.place}
-                    origin={originFor(index)}
+                    leg={legLine(row.item.id)}
                     dayOptions={dayOptionsFor(row.place?.cityId)}
                     currentDate={props.date}
                     onRemove={() => remove(row.item)}
@@ -470,9 +523,17 @@ export function DayPlan(props: Props) {
                     onMoveDay={(d) => moveToDay(row.item, d)}
                   />
                 ))}
+                {rows.length > 0 && <li>{legLine("end")}</li>}
               </DroppableList>
             </SortableContext>
             <div className="sticky top-20 flex flex-col gap-4">
+              <TripMap
+                pins={map.pins}
+                lines={mapLines}
+                onPinClick={setOpenPlaceId}
+                className="h-72 xl:h-96"
+                note={mapNote}
+              />
               {props.start && <HotelRow label="Start" endpoint={props.start} />}
               {props.end && <HotelRow label="End" endpoint={props.end} />}
               <Reservations reservations={props.reservations} />
@@ -494,39 +555,53 @@ export function DayPlan(props: Props) {
           </DragOverlay>
         </DndContext>
       ) : (
-        <ol className="flex flex-col gap-3">
-          {rows.map((row, index) => (
-            <li key={row.item.id}>
-              <StopCard
-                item={row.item}
-                place={row.place}
-                origin={originFor(index)}
-                dayOptions={dayOptionsFor(row.place?.cityId)}
-                currentDate={props.date}
-                onRemove={() => remove(row.item)}
-                onEdit={() => setEditing(row.item.id)}
-                onMoveDay={(d) => moveToDay(row.item, d)}
-                buttons={{
-                  canUp: index > 0,
-                  canDown: index < rows.length - 1,
-                  onUp: () => stepBy(row.item, -1),
-                  onDown: () => stepBy(row.item, 1),
-                }}
-              />
-            </li>
-          ))}
-        </ol>
+        !showPhoneMap && (
+          <ol className="flex flex-col gap-3">
+            {rows.map((row, index) => (
+              <li key={row.item.id} className="flex flex-col gap-3">
+                {legLine(row.item.id)}
+                <StopCard
+                  item={row.item}
+                  place={row.place}
+                  dayOptions={dayOptionsFor(row.place?.cityId)}
+                  currentDate={props.date}
+                  onRemove={() => remove(row.item)}
+                  onEdit={() => setEditing(row.item.id)}
+                  onMoveDay={(d) => moveToDay(row.item, d)}
+                  buttons={{
+                    canUp: index > 0,
+                    canDown: index < rows.length - 1,
+                    onUp: () => stepBy(row.item, -1),
+                    onDown: () => stepBy(row.item, 1),
+                  }}
+                />
+              </li>
+            ))}
+            {rows.length > 0 && <li>{legLine("end")}</li>}
+          </ol>
+        )
       )}
 
-      {stops.length === 0 && !wide && (
+      {stops.length === 0 && !wide && !showPhoneMap && (
         <p className="text-sm text-muted-foreground">
           No stops yet. Open a place from a city list and choose Add to day.
         </p>
       )}
 
-      {!wide && props.end && <HotelRow label="End" endpoint={props.end} />}
+      {!wide && !showPhoneMap && props.end && (
+        <HotelRow label="End" endpoint={props.end} />
+      )}
 
-      {!wide && <Reservations reservations={props.reservations} />}
+      {!wide && !showPhoneMap && (
+        <Reservations reservations={props.reservations} />
+      )}
+      <PlaceDetails
+        place={openPlace ?? null}
+        nearby={openNearby}
+        onOpenChange={(open) => {
+          if (!open) setOpenPlaceId(null);
+        }}
+      />
       {editingItem && (
         <StopEditor
           key={editingItem.id}
@@ -634,7 +709,6 @@ function HotelRow({ label, endpoint }: { label: string; endpoint: Endpoint }) {
 type StopProps = {
   item: PlanItem;
   place: Place | undefined;
-  origin: Origin;
   dayOptions: { date: string; label: string }[];
   currentDate: string;
   onRemove: () => void;
@@ -644,7 +718,11 @@ type StopProps = {
 
 // Wide screens: drag the grip to reorder, or focus it and use Space and the
 // arrow keys.
-function SortableStop({ id, ...props }: StopProps & { id: string }) {
+function SortableStop({
+  id,
+  leg,
+  ...props
+}: StopProps & { id: string; leg: ReactNode }) {
   const {
     attributes,
     listeners,
@@ -659,7 +737,8 @@ function SortableStop({ id, ...props }: StopProps & { id: string }) {
     opacity: isDragging ? 0.6 : 1,
   };
   return (
-    <li ref={setNodeRef} style={style}>
+    <li ref={setNodeRef} style={style} className="flex flex-col gap-3">
+      {leg}
       <StopCard
         {...props}
         handle={
@@ -682,7 +761,6 @@ function SortableStop({ id, ...props }: StopProps & { id: string }) {
 function StopCard({
   item,
   place,
-  origin,
   dayOptions,
   currentDate,
   onRemove,
@@ -700,11 +778,6 @@ function StopCard({
   };
 }) {
   const name = place?.name ?? item.placeId;
-  const distance =
-    place && origin.place ? distanceBetweenPlaces(origin.place, place) : null;
-  const directions = place
-    ? directionsUrl(placeLocation(place), origin.location ?? undefined)
-    : null;
   const times = stopTimes(item, place);
   const minutes = item.durationMin ?? null;
   const meta = times
@@ -762,19 +835,6 @@ function StopCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {item.note && <p className="text-sm">{item.note}</p>}
-        {directions && (
-          <div className="text-sm text-muted-foreground">
-            {distance !== null && <span>{distance.toFixed(1)} km away · </span>}
-            <a
-              className="underline"
-              href={directions}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Directions{origin.place ? ` from ${origin.place.name}` : ""}
-            </a>
-          </div>
-        )}
         <div className="flex flex-wrap items-center gap-2">
           {place && (
             <Button asChild variant="outline" size="sm">

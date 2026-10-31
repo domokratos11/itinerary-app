@@ -15,6 +15,7 @@ import {
 import { importBackup } from "@/lib/backup-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
+import { useProposals } from "@/lib/use-proposals";
 import { useQueue } from "@/lib/use-queue";
 import { useTripId } from "@/lib/use-trip-id";
 
@@ -28,9 +29,10 @@ export function ExportTrip({
   const data = useTripStore((s) => s.data);
   const items = usePlanStore((s) => s.items);
   const queue = useQueue(tripId).items;
+  const proposals = useProposals(tripId);
 
   function download() {
-    const backup = makeBackup(data, items, queue, new Date());
+    const backup = makeBackup(data, items, queue, new Date(), proposals);
     const blob = new Blob([JSON.stringify(backup, null, 2) + "\n"], {
       type: "application/json",
     });
@@ -85,7 +87,9 @@ export function BackupSettings({ tripId }: { tripId: string }) {
         <h3 className="font-medium">Export</h3>
         <p className="text-muted-foreground">
           The whole trip in one file: cities, stays, reservations, places, the
-          plan and the queue. Keep a copy in data/backups/ in the repo.
+          plan and the queue. Keep a copy in data/backups/ in the repo. Map pins
+          from Google are left out, as its terms require; run maps:refresh after
+          restoring to get them back.
         </p>
         <div>
           <ExportTrip />

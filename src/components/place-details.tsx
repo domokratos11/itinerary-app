@@ -1,7 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { Archive, ExternalLink, Pencil } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Archive, ExternalLink, Pencil, Search } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,80 +22,107 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { AddToDay } from "@/components/add-to-day";
+import { PlaceEditor } from "@/components/place-editor";
+import { PlaceLive } from "@/components/place-live";
+import { mapsSearchUrl } from "@/domain/place-edit";
+import { isOpenProposal } from "@/domain/proposals";
 import type { PlaceRecord } from "@/domain/schemas";
 import { isDraft } from "@/domain/queue";
 import { CATEGORY_LABEL } from "@/lib/category-label";
+import { pageHref } from "@/lib/links";
+import { requestResearch } from "@/lib/proposal-actions";
+import { useProposals } from "@/lib/use-proposals";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { useTripId } from "@/lib/use-trip-id";
 
 export type NearbyPlace = { id: string; name: string };
 
 type Props = {
   place: PlaceRecord | null;
   nearby: NearbyPlace[];
-  // True when a plan item uses the place; it can't be archived then.
-  inPlan: boolean;
   onOpenChange: (open: boolean) => void;
-  onEdit: (place: PlaceRecord) => void;
-  onArchive: (place: PlaceRecord) => void;
+  // True when a plan item uses the place; it can't be archived then.
+  inPlan?: boolean;
+  // Left out where archiving doesn't apply, such as a stop in a day's plan.
+  onArchive?: (place: PlaceRecord) => void;
 };
 
 // Phones get a bottom Drawer; wider screens get a side Sheet.
 export function PlaceDetails({
   place,
   nearby,
-  inPlan,
+  inPlan = false,
   onOpenChange,
-  onEdit,
   onArchive,
 }: Props) {
+  const wide = useMediaQuery("(min-width: 768px)");
+  const tripId = useTripId();
+  const [editing, setEditing] = useState<string | null>(null);
+  // The details step aside while the editor is open, so two panels never
+  // stack, and come back when it closes.
+  const isEditing = place !== null && editing === place.id;
+  const open = place !== null && !isEditing;
+  const onEdit = tripId && place ? () => setEditing(place.id) : null;
+  const editor = isEditing && tripId && (
+    <PlaceEditor
+      key={place.id}
+      tripId={tripId}
+      place={place}
+      onClose={() => setEditing(null)}
+    />
+  );
   const body = place && (
     <PlaceBody
       place={place}
       nearby={nearby}
       inPlan={inPlan}
-      onEdit={() => onEdit(place)}
-      onArchive={() => onArchive(place)}
+      onEdit={onEdit}
+      onArchive={onArchive ? () => onArchive(place) : null}
     />
   );
-  const wide = useMediaQuery("(min-width: 768px)");
-  const open = place !== null;
 
   if (wide) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="overflow-y-auto sm:max-w-md">
-          {place && (
-            <>
-              <SheetHeader className="text-left">
-                <SheetTitle className="text-xl">{place.name}</SheetTitle>
-                <SheetDescription className="sr-only">
-                  Place details
-                </SheetDescription>
-              </SheetHeader>
-              {body}
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+      <>
+        {editor}
+        <Sheet open={open} onOpenChange={onOpenChange}>
+          <SheetContent side="right" className="overflow-y-auto sm:max-w-md">
+            {place && (
+              <>
+                <SheetHeader className="text-left">
+                  <SheetTitle className="text-xl">{place.name}</SheetTitle>
+                  <SheetDescription className="sr-only">
+                    Place details
+                  </SheetDescription>
+                </SheetHeader>
+                {body}
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
+      </>
     );
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh]">
-        {place && (
-          <div className="overflow-y-auto px-4 pb-6">
-            <DrawerHeader className="px-0 text-left">
-              <DrawerTitle className="text-xl">{place.name}</DrawerTitle>
-              <DrawerDescription className="sr-only">
-                Place details
-              </DrawerDescription>
-            </DrawerHeader>
-            {body}
-          </div>
-        )}
-      </DrawerContent>
-    </Drawer>
+    <>
+      {editor}
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="max-h-[85vh]">
+          {place && (
+            <div className="overflow-y-auto px-4 pb-6">
+              <DrawerHeader className="px-0 text-left">
+                <DrawerTitle className="text-xl">{place.name}</DrawerTitle>
+                <DrawerDescription className="sr-only">
+                  Place details
+                </DrawerDescription>
+              </DrawerHeader>
+              {body}
+            </div>
+          )}
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 }
 
@@ -107,9 +136,12 @@ function PlaceBody({
   place: PlaceRecord;
   nearby: NearbyPlace[];
   inPlan: boolean;
-  onEdit: () => void;
-  onArchive: () => void;
+  onEdit: (() => void) | null;
+  onArchive: (() => void) | null;
 }) {
+  const mapsLink = place.googlePlaceId
+    ? mapsSearchUrl(place.name, place.googlePlaceId)
+    : place.mapsUrl;
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
@@ -128,33 +160,41 @@ function PlaceBody({
       </div>
 
       <Button asChild>
-        <a href={place.mapsUrl} target="_blank" rel="noopener noreferrer">
+        <a href={mapsLink} target="_blank" rel="noopener noreferrer">
           <ExternalLink />
           Open in Google Maps
         </a>
       </Button>
       <AddToDay place={place} />
-      <div className="flex gap-2">
-        <Button variant="outline" className="flex-1" onClick={onEdit}>
-          <Pencil />
-          Edit
-        </Button>
-        <Button
-          variant="outline"
-          className="flex-1"
-          disabled={inPlan}
-          title={inPlan ? "Remove it from the plan first" : undefined}
-          onClick={onArchive}
-        >
-          <Archive />
-          Archive
-        </Button>
-      </div>
-      {inPlan && (
+      {(onEdit || onArchive) && (
+        <div className="flex gap-2">
+          {onEdit && (
+            <Button variant="outline" className="flex-1" onClick={onEdit}>
+              <Pencil />
+              Edit place
+            </Button>
+          )}
+          {onArchive && (
+            <Button
+              variant="outline"
+              className="flex-1"
+              disabled={inPlan}
+              title={inPlan ? "Remove it from the plan first" : undefined}
+              onClick={onArchive}
+            >
+              <Archive />
+              Archive
+            </Button>
+          )}
+        </div>
+      )}
+      {onArchive && inPlan && (
         <p className="-mt-2 text-xs text-muted-foreground">
           It&apos;s in the plan. Remove it from its day to archive it.
         </p>
       )}
+      <PlaceResearch place={place} />
+      <PlaceLive key={place.id} place={place} />
 
       {place.purpose && <Section label="Why go">{place.purpose}</Section>}
       {place.description && (
@@ -195,6 +235,19 @@ function PlaceBody({
           {place.seasonFrom} to {place.seasonTo}
         </Section>
       )}
+      {place.nearestStation && (
+        <Section label="Nearest station">
+          {[
+            place.nearestStation.name,
+            place.nearestStation.lines.join(", "),
+            place.nearestStation.walkMin !== null
+              ? `${place.nearestStation.walkMin} min walk`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </Section>
+      )}
       {place.notes && <Section label="Notes">{place.notes}</Section>}
       {place.websiteUrl && (
         <Section label="Website">
@@ -221,6 +274,44 @@ function PlaceBody({
         )}
       </Section>
     </div>
+  );
+}
+
+// Asks for research on this place, or says where that has got to.
+function PlaceResearch({ place }: { place: PlaceRecord }) {
+  const tripId = useTripId();
+  const proposals = useProposals(tripId);
+  if (!tripId) return null;
+  const open = proposals.find(
+    (p) => p.placeId === place.id && isOpenProposal(p),
+  );
+  if (open?.status === "ready")
+    return (
+      <Link
+        href={pageHref("/settings/", tripId, { tab: "places" })}
+        className="text-sm underline"
+      >
+        Research is ready to review in Settings
+      </Link>
+    );
+  if (open)
+    return (
+      <p className="text-sm text-muted-foreground">
+        Research requested. It arrives after the next research run.
+      </p>
+    );
+  return (
+    <Button
+      variant="outline"
+      onClick={() =>
+        requestResearch(tripId, [place], proposals).catch(() =>
+          toast.error("That change was refused. Check the trip link."),
+        )
+      }
+    >
+      <Search />
+      Research this place
+    </Button>
   );
 }
 

@@ -234,6 +234,14 @@ function StayForm({
       checkIn,
       checkOut,
       note: note.trim() || null,
+      // A new link replaces what maps:match found for the old one.
+      googlePlaceId: sameLink ? (stay?.googlePlaceId ?? null) : null,
+      locationFetchedAt: sameLink ? (stay?.locationFetchedAt ?? null) : null,
+      locationSource: sameLink
+        ? (stay?.locationSource ?? null)
+        : lat !== null
+          ? "manual"
+          : null,
       archived: false,
       updatedAt: new Date().toISOString(),
     };

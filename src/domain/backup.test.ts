@@ -16,6 +16,7 @@ describe("backup", () => {
         durationMin: 60,
         note: null,
         status: "planned",
+        legNote: null,
         updatedAt: "2026-11-01T00:00:00.000Z",
       },
     ],
@@ -36,5 +37,39 @@ describe("backup", () => {
     expect(backupSummary(backup)).toBe(
       `6 cities, 6 stays, 4 reservations, ${seed.places.length} places, 1 stop, 0 queued links`,
     );
+  });
+});
+
+describe("Google coordinates in backups", () => {
+  const google = {
+    ...seed.places[0],
+    lat: 35.7,
+    lng: 139.7,
+    googlePlaceId: "abc",
+    locationFetchedAt: "2026-11-01T00:00:00.000Z",
+    locationSource: "google" as const,
+  };
+
+  it("leaves them out and keeps the place ID", () => {
+    const backup = makeBackup(
+      { ...seed, places: [google] },
+      [],
+      [],
+      new Date("2026-11-02T00:00:00.000Z"),
+    );
+    expect(backup.places[0]).toMatchObject({
+      lat: null,
+      lng: null,
+      googlePlaceId: "abc",
+      locationSource: null,
+    });
+    expect(BackupSchema.safeParse(backup).success).toBe(true);
+  });
+
+  it("refuses a file that contains them", () => {
+    const backup = makeBackup(seed, [], [], new Date());
+    expect(
+      BackupSchema.safeParse({ ...backup, places: [google] }).success,
+    ).toBe(false);
   });
 });
