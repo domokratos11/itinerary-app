@@ -147,7 +147,7 @@ App: "3 places have research to review"
   -> saved through saveRecord, with activity log and Undo
 ```
 
-`proposals/{id}` holds `placeId` (or a name and link for a new place), `status` (`requested`, `ready`, `applied`, `dismissed`), `fields`, `sources`, `notes`, `requestedAt` and `updatedAt`.
+`proposals/{id}` holds `placeId` (Add place always saves a draft first, so a proposal never needs a name and link instead), `status` (`requested`, `ready`, `applied`, `dismissed`), `fields`, `sources`, `notes`, `requestedAt` and `updatedAt`.
 
 Rules for the research worker:
 

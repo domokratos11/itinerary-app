@@ -15,19 +15,19 @@ Why two projects: Google's quotas are per API method, not per price tier, so Pla
 
 Create both and link them to the billing account:
 
-| Project name | Used by |
-| --- | --- |
-| `itinerary-maps-app` | The website (browser key) |
+| Project name             | Used by                                                    |
+| ------------------------ | ---------------------------------------------------------- |
+| `itinerary-maps-app`     | The website (browser key)                                  |
 | `itinerary-maps-scripts` | `maps:match`, `maps:refresh` on your computer (script key) |
 
 ## 3. Enable the APIs
 
 Under **APIs & Services > Library**:
 
-| Project | Enable |
-| --- | --- |
-| `itinerary-maps-app` | Maps JavaScript API, Places API (New), Routes API, Maps Embed API |
-| `itinerary-maps-scripts` | Places API (New) |
+| Project                  | Enable                                                            |
+| ------------------------ | ----------------------------------------------------------------- |
+| `itinerary-maps-app`     | Maps JavaScript API, Places API (New), Routes API, Maps Embed API |
+| `itinerary-maps-scripts` | Places API (New)                                                  |
 
 Pick **Places API (New)**, not the one called just "Places API". If the console offers to create a key while you enable an API, skip it and use step 4 so the restrictions get set.
 
@@ -55,22 +55,22 @@ Go to **Google Maps Platform > Quotas**, pick the API from the dropdown, and low
 
 `itinerary-maps-app`:
 
-| API | Method | Per day | Worst month if it hits the cap every day |
-| --- | --- | --- | --- |
-| Maps JavaScript API | Map loads | 300 | Free (9,000 of 10,000) |
-| Places API (New) | Place Details (`GetPlace`) | 60 | About $16 (1,800 at the top tier, 1,000 free) |
-| Places API (New) | Photo media (`GetPhotoMedia`) | 30 | Free (900 of 1,000) |
-| Places API (New) | Text Search (`SearchText`) | 50 | Free at the tier the app uses |
-| Places API (New) | Nearby Search (`SearchNearby`) | 30 | Free (900 of 5,000) |
-| Places API (New) | Autocomplete | 100 | Free (3,000 of 10,000) |
-| Routes API | Compute Routes | 200 | Free (6,000 of 10,000) |
+| API                 | Method                         | Per day | Worst month if it hits the cap every day      |
+| ------------------- | ------------------------------ | ------- | --------------------------------------------- |
+| Maps JavaScript API | Map loads                      | 300     | Free (9,000 of 10,000)                        |
+| Places API (New)    | Place Details (`GetPlace`)     | 60      | About $16 (1,800 at the top tier, 1,000 free) |
+| Places API (New)    | Photo media (`GetPhotoMedia`)  | 30      | Free (900 of 1,000)                           |
+| Places API (New)    | Text Search (`SearchText`)     | 50      | Free at the tier the app uses                 |
+| Places API (New)    | Nearby Search (`SearchNearby`) | 30      | Free (900 of 5,000)                           |
+| Places API (New)    | Autocomplete                   | 100     | Free (3,000 of 10,000)                        |
+| Routes API          | Compute Routes                 | 200     | Free (6,000 of 10,000)                        |
 
 `itinerary-maps-scripts`:
 
-| API | Method | Per day |
-| --- | --- | --- |
-| Places API (New) | Place Details (`GetPlace`) | 500 |
-| Places API (New) | Text Search (`SearchText`) | 500 |
+| API              | Method                     | Per day |
+| ---------------- | -------------------------- | ------- |
+| Places API (New) | Place Details (`GetPlace`) | 500     |
+| Places API (New) | Text Search (`SearchText`) | 500     |
 
 **Google's docs are unclear on one point.** The Places page describes only per-minute limits, while the cost page says to lower the per-day quota. If a row above has no per-day option, tell me which ones, so the app can enforce a limit itself and the plan can be adjusted.
 

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ExternalLink, Pencil } from "lucide-react";
+import { ExternalLink, Pencil, Search } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,9 +24,13 @@ import {
 import { AddToDay } from "@/components/add-to-day";
 import { PlaceEditor } from "@/components/place-editor";
 import { mapsSearchUrl } from "@/domain/place-edit";
+import { isOpenProposal } from "@/domain/proposals";
 import type { PlaceRecord } from "@/domain/schemas";
 import { isDraft } from "@/domain/queue";
 import { CATEGORY_LABEL } from "@/lib/category-label";
+import { pageHref } from "@/lib/links";
+import { requestResearch } from "@/lib/proposal-actions";
+import { useProposals } from "@/lib/use-proposals";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTripId } from "@/lib/use-trip-id";
 
@@ -142,6 +148,7 @@ function PlaceBody({
           Edit place
         </Button>
       )}
+      <PlaceResearch place={place} />
 
       {place.purpose && <Section label="Why go">{place.purpose}</Section>}
       {place.description && (
@@ -221,6 +228,44 @@ function PlaceBody({
         )}
       </Section>
     </div>
+  );
+}
+
+// Asks for research on this place, or says where that has got to.
+function PlaceResearch({ place }: { place: PlaceRecord }) {
+  const tripId = useTripId();
+  const proposals = useProposals(tripId);
+  if (!tripId) return null;
+  const open = proposals.find(
+    (p) => p.placeId === place.id && isOpenProposal(p),
+  );
+  if (open?.status === "ready")
+    return (
+      <Link
+        href={pageHref("/settings/", tripId, { tab: "places" })}
+        className="text-sm underline"
+      >
+        Research is ready to review in Settings
+      </Link>
+    );
+  if (open)
+    return (
+      <p className="text-sm text-muted-foreground">
+        Research requested. It arrives after the next research run.
+      </p>
+    );
+  return (
+    <Button
+      variant="outline"
+      onClick={() =>
+        requestResearch(tripId, [place], proposals).catch(() =>
+          toast.error("That change was refused. Check the trip link."),
+        )
+      }
+    >
+      <Search />
+      Research this place
+    </Button>
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { SignOutButton } from "@/components/auth-gate";
 import { BackupSettings } from "@/components/settings-backup";
@@ -19,6 +20,7 @@ import { useTripId } from "@/lib/use-trip-id";
 // built from. Every change is live for everyone on the trip.
 export function SettingsScreen() {
   const tripId = useTripId();
+  const tab = useSearchParams().get("tab") ?? "stays";
   const live = useTripStore((s) => s.live);
   const error = useTripStore((s) => s.error);
   const seeded = Object.values(live).some(Boolean);
@@ -60,7 +62,7 @@ export function SettingsScreen() {
           Open your shared link with ?trip= to edit the trip.
         </p>
       ) : (
-        <Tabs defaultValue="stays">
+        <Tabs defaultValue={tab}>
           <TabsList className="w-full">
             <TabsTrigger value="stays">Stays</TabsTrigger>
             <TabsTrigger value="cities">Cities</TabsTrigger>

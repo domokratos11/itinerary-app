@@ -3,12 +3,19 @@ import { describe, expect, it, vi } from "vitest";
 import { makeBackup } from "@/domain/backup";
 import { seed } from "@/lib/catalog";
 import { LocalPlanRepository } from "@/lib/local-plan-repository";
+import { LocalProposalRepository } from "@/lib/local-proposal-repository";
 import { LocalQueueRepository } from "@/lib/local-queue-repository";
 import { LocalTripRepository } from "@/lib/local-trip-repository";
 
 const plans = new LocalPlanRepository();
 const queue = new LocalQueueRepository();
 const trips = new LocalTripRepository();
+const proposals = new LocalProposalRepository();
+vi.mock("@/lib/proposal-repository-instance", () => ({
+  get proposalRepository() {
+    return proposals;
+  },
+}));
 vi.mock("@/lib/plan-repository-instance", () => ({
   get planRepository() {
     return plans;
