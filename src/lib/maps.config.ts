@@ -3,6 +3,6 @@
 // restrictions and by daily caps. See docs/maps-setup.md. While either is null
 // the app works without the map and live details.
 export const mapsConfig: { browserKey: string | null; mapId: string | null } = {
-  browserKey: null,
-  mapId: null,
+  browserKey: "AIzaSyB5VIwmjqu3_7CbSj0TxjPyRUGSVzue_LI",
+  mapId: "b943b63d9a547e4ddd8fce4f",
 };
