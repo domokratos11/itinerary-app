@@ -9,43 +9,43 @@ There are two separate tracks:
 
 ## What the code shows today
 
-| Finding | Why it matters |
-| --- | --- |
-| Only 12 of 227 places have coordinates (all in Nagoya) | A map can't show the other 215 until they are matched to Google places. This comes first. |
-| Only 9 places have a cost, 12 a duration and 11 a description | This is why Ueno Zoo says "Not researched yet". |
+| Finding                                                            | Why it matters                                                                                                                                               |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Only 12 of 227 places have coordinates (all in Nagoya)             | A map can't show the other 215 until they are matched to Google places. This comes first.                                                                    |
+| Only 9 places have a cost, 12 a duration and 11 a description      | This is why Ueno Zoo says "Not researched yet".                                                                                                              |
 | `seedTrip` marks every catalog place `researched`, even empty ones | `queue:pull` only exports `draft` places, so Ueno Zoo and the other empty places **never reach the research run**. This is the real blocker in today's flow. |
-| The app has no screen for editing a place | Cities, stays and bookings can be edited in Settings. Places can only change through scripts. |
-| Plan items and places have no travel information | `geo.ts` only gives straight-line distance, and directions are a link out to Maps. |
+| The app has no screen for editing a place                          | Cities, stays and bookings can be edited in Settings. Places can only change through scripts.                                                                |
+| Plan items and places have no travel information                   | `geo.ts` only gives straight-line distance, and directions are a link out to Maps.                                                                           |
 
 ## What Google allows, and what shapes this design
 
-**Trains are the main limitation.** The Routes API has a `TRANSIT` mode, but developers consistently report empty results for Japan, or a walking route returned instead. Google's documentation doesn't state this limit for Japan, so M0 tests it with one real call. The plan assumes it fails. The Google Maps *app* does show Japanese trains, so links out to it keep working.
+**Trains are the main limitation.** The Routes API has a `TRANSIT` mode, but developers consistently report empty results for Japan, or a walking route returned instead. Google's documentation doesn't state this limit for Japan, so M0 tests it with one real call. The plan assumes it fails. The Google Maps _app_ does show Japanese trains, so links out to it keep working.
 
 **Google's data mostly can't be stored.** This corrects something said earlier in this project: Places data can't fill the research fields permanently, because Google's policy forbids storing it.
 
-| Data | Store in Firestore? | Source |
-| --- | --- | --- |
-| Google place ID | Yes, indefinitely | Places policy |
-| Latitude and longitude | Up to 30 days, then refresh or delete | Service terms 14.3, current text (see "M0 results") |
-| Hours, rating, price level, website from Google | No, fetch live | Places policy |
-| Photos and their URLs | No, fetch live, and show the photographer's credit | Places policy and photo docs |
-| Route times and distances | No, keep in memory for the session | Service terms 19.3 allow caching only latitude and longitude from Routes |
-| Our own research from official sites, and anything you type | Yes, it is ours | |
+| Data                                                        | Store in Firestore?                                | Source                                                                   |
+| ----------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
+| Google place ID                                             | Yes, indefinitely                                  | Places policy                                                            |
+| Latitude and longitude                                      | Up to 30 days, then refresh or delete              | Service terms 14.3, current text (see "M0 results")                      |
+| Hours, rating, price level, website from Google             | No, fetch live                                     | Places policy                                                            |
+| Photos and their URLs                                       | No, fetch live, and show the photographer's credit | Places policy and photo docs                                             |
+| Route times and distances                                   | No, keep in memory for the session                 | Service terms 19.3 allow caching only latitude and longitude from Routes |
+| Our own research from official sites, and anything you type | Yes, it is ours                                    |                                                                          |
 
 So each place shows two kinds of information: **our notes** (stored, work offline) and **live from Google** (fetched when asked, online only). If Google's data appears without a Google map, the Google logo must be shown too.
 
 **Cost at this size is very likely $0, as long as daily caps are set:**
 
-| Use | Google product and tier | Free per month | Expected use |
-| --- | --- | --- | --- |
-| Match 227 places to place IDs | Text Search, IDs only | Unlimited | Once |
-| Load photo references | Place Details, IDs only | Unlimited | Each open |
-| Coordinates | Place Details Essentials | 10,000 | About 230 a month |
-| Show a map | Dynamic Maps | 10,000 | Hundreds |
-| Walking time and distance | Compute Routes Essentials | 10,000 | Hundreds |
-| Open status, rating, hours | Place Details Enterprise | **1,000** | Only when tapped |
-| Photo images | Place Details Photos | **1,000** | Only when tapped |
-| One route in an iframe | Maps Embed | Unlimited | Optional |
+| Use                           | Google product and tier   | Free per month | Expected use      |
+| ----------------------------- | ------------------------- | -------------- | ----------------- |
+| Match 227 places to place IDs | Text Search, IDs only     | Unlimited      | Once              |
+| Load photo references         | Place Details, IDs only   | Unlimited      | Each open         |
+| Coordinates                   | Place Details Essentials  | 10,000         | About 230 a month |
+| Show a map                    | Dynamic Maps              | 10,000         | Hundreds          |
+| Walking time and distance     | Compute Routes Essentials | 10,000         | Hundreds          |
+| Open status, rating, hours    | Place Details Enterprise  | **1,000**      | Only when tapped  |
+| Photo images                  | Place Details Photos      | **1,000**      | Only when tapped  |
+| One route in an iframe        | Maps Embed                | Unlimited      | Optional          |
 
 ## Track A: the map
 
@@ -60,11 +60,11 @@ Step-by-step instructions are in [maps-setup.md](maps-setup.md).
 
 ### What you will see
 
-| Screen | Phone (390px) | Desktop |
-| --- | --- | --- |
-| Day | A `List / Map` switch. The map has numbered pins in stop order, the hotel as start and end, and the walking route. | Map in the right column, list in the centre |
-| City | A `List / Map` switch. Pins are coloured by category, with must-see places emphasised, and follow the existing filters. | Map beside the grid |
-| Tapping a pin | Opens the existing Place details | Same |
+| Screen        | Phone (390px)                                                                                                           | Desktop                                     |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Day           | A `List / Map` switch. The map has numbered pins in stop order, the hotel as start and end, and the walking route.      | Map in the right column, list in the centre |
+| City          | A `List / Map` switch. Pins are coloured by category, with must-see places emphasised, and follow the existing filters. | Map beside the grid                         |
+| Tapping a pin | Opens the existing Place details                                                                                        | Same                                        |
 
 Between two stops on the day list, a line shows the leg:
 
@@ -90,19 +90,19 @@ In Place details:
 - **Photos** show one image when you tap **Show photo**, then a swipeable gallery of up to 10, each with its photographer's credit and a link to the original on Google Maps.
 - **Live from Google** shows open status, rating and today's hours when you tap it. If it disagrees with our stored hours, the app flags the difference.
 
-Neither loads automatically or appears in lists, which is what keeps them inside the 1,000-a-month allowance.
+Neither loads automatically or appears in lists, which is what keeps them inside the 1,000-a-month allowance. Each device also stops at 15 of each a day, because a Cloud cap can't target one price tier.
 
 ### Firestore changes
 
-| Where | New field | Notes |
-| --- | --- | --- |
-| `places`, `stays` | `googlePlaceId` | Stored indefinitely |
-| `places`, `stays` | `locationFetchedAt`, `locationSource` (`google`, `manual`) | Only `google` coordinates are refreshed |
-| `places` | `nearestStation` (`name`, `lines`, `walkMin`) | From research, ours |
-| `places` | `sources` (`field`, `url`) | Where each researched fact came from |
-| `places` | `lockedFields` | Fields you edited by hand; research never changes them |
-| `items` | `legNote` (`mode`, `minutes`, `fareJPY`, `text`) | Optional train note for reaching this stop |
-| new `proposals/{id}` | See Track B | Research waiting for your review |
+| Where                | New field                                                  | Notes                                                  |
+| -------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| `places`, `stays`    | `googlePlaceId`                                            | Stored indefinitely                                    |
+| `places`, `stays`    | `locationFetchedAt`, `locationSource` (`google`, `manual`) | Only `google` coordinates are refreshed                |
+| `places`             | `nearestStation` (`name`, `lines`, `walkMin`)              | From research, ours                                    |
+| `places`             | `sources` (`field`, `url`)                                 | Where each researched fact came from                   |
+| `places`             | `lockedFields`                                             | Fields you edited by hand; research never changes them |
+| `items`              | `legNote` (`mode`, `minutes`, `fareJPY`, `text`)           | Optional train note for reaching this stop             |
+| new `proposals/{id}` | See Track B                                                | Research waiting for your review                       |
 
 All new fields are optional in `firestore.rules` and default to null in Zod, the same way the queue's later fields were added, so existing documents stay valid. `isMember` guards `proposals` as well. `backup.ts`, `seed.ts` and the validators are updated with them. No Google hours, ratings, photos or routes are written anywhere.
 
@@ -119,14 +119,14 @@ Code follows the existing pattern: a `MapsService` interface in `src/domain`, on
 
 ### Lookup: the options compared
 
-| Option | Effort for you | Cost | Verdict |
-| --- | --- | --- | --- |
-| Separate tool, then copy and paste | High, per place | Low | No, this is what you want to avoid |
-| Google Places API to fill the fields | Low | $0 | **Not allowed to store it.** Only useful live. |
-| Backend (Firebase Functions, Cloudflare Worker) | Low after setup | Needs Blaze or a new host | No, breaks CLAUDE.md rule 1 |
-| **Claude Code run** on your computer, using `research:pull` and `research:push` | One command, then review | Uses your Claude plan, no API key | **Start here** |
-| Script with the Claude API and web search | One command, then review | Roughly $25 to $35 for 215 places at Opus 5.5 (estimate, measure on 5 first) | Good if you want it repeatable without Claude Code |
-| GitHub Action on a timer, running that script | Press Research in the app; results arrive within the hour | Same API cost, plus secrets in GitHub | Optional later, only if phone-only use matters |
+| Option                                                                          | Effort for you                                            | Cost                                                                         | Verdict                                            |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------- |
+| Separate tool, then copy and paste                                              | High, per place                                           | Low                                                                          | No, this is what you want to avoid                 |
+| Google Places API to fill the fields                                            | Low                                                       | $0                                                                           | **Not allowed to store it.** Only useful live.     |
+| Backend (Firebase Functions, Cloudflare Worker)                                 | Low after setup                                           | Needs Blaze or a new host                                                    | No, breaks CLAUDE.md rule 1                        |
+| **Claude Code run** on your computer, using `research:pull` and `research:push` | One command, then review                                  | Uses your Claude plan, no API key                                            | **Start here**                                     |
+| Script with the Claude API and web search                                       | One command, then review                                  | Roughly $25 to $35 for 215 places at Opus 5.5 (estimate, measure on 5 first) | Good if you want it repeatable without Claude Code |
+| GitHub Action on a timer, running that script                                   | Press Research in the app; results arrive within the hour | Same API cost, plus secrets in GitHub                                        | Optional later, only if phone-only use matters     |
 
 The estimate assumes about 3 searches ($10 per 1,000) and 15,000 to 30,000 input tokens per place at $4 per million, plus about 1,000 output tokens at $20 per million. Sonnet 5.5 at half the token price would lower it. Batches cut token costs by 50% but searches are throttled.
 
@@ -160,52 +160,54 @@ Rules for the research worker:
 
 Checked 2026-10-30 against the [service terms](https://cloud.google.com/maps-platform/terms/maps-service-terms) (last modified Oct 28, 2026).
 
-| Question | Answer | Effect on the plan |
-| --- | --- | --- |
-| Can coordinates be stored? | Yes, "for up to 30 consecutive calendar days, after which Customer must delete" them (14.3). | `maps:refresh` stays. Google coordinates are also left out of `data/` and backups, since the repo is public and those copies would outlive 30 days. Coordinates you supply yourself (`manual`) are unaffected. |
-| Can route times be stored? | No. Only latitude and longitude from Routes may be cached (19.3). | As planned, memory only. |
-| Other map providers? | Places and Routes content can't be used with a non-Google map (14.2, 19.2). | Rules out Leaflet for this data. |
-| Can a cap target one price tier? | No. [Quotas are per API method](https://developers.google.com/maps/documentation/places/web-service/usage-and-billing), and a field mask decides the tier. Whether Places (New) offers a per-day quota for every method still has to be seen in the console. | Two projects, a 60-a-day app cap on Place Details (about $16 in the worst month), and a limit inside the app. |
-| Nearby Search tier? | Pro at minimum (5,000 free a month), no IDs-only tier. `train_station` and `subway_station` are valid filters. | Station pins are affordable if wanted in M7. |
-| Photo credit rules? | Author credit where space allows, plus a link to the original on Google Maps through `googleMapsUri`. | Added to M6. |
-| Prices in this plan? | All match the [current price list](https://developers.google.com/maps/billing-and-pricing/pricing). Autocomplete, used by Add place, has 10,000 free a month. | None. |
-| Does Routes `TRANSIT` work in Japan? | Not tested yet, needs the keys. | |
-| Does Embed `mode=transit` work in Japan? | Not tested yet, needs the keys. | |
+| Question                                 | Answer                                                                                                                                                                                                                                                       | Effect on the plan                                                                                                                                                                                             |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Can coordinates be stored?               | Yes, "for up to 30 consecutive calendar days, after which Customer must delete" them (14.3).                                                                                                                                                                 | `maps:refresh` stays. Google coordinates are also left out of `data/` and backups, since the repo is public and those copies would outlive 30 days. Coordinates you supply yourself (`manual`) are unaffected. |
+| Can route times be stored?               | No. Only latitude and longitude from Routes may be cached (19.3).                                                                                                                                                                                            | As planned, memory only.                                                                                                                                                                                       |
+| Other map providers?                     | Places and Routes content can't be used with a non-Google map (14.2, 19.2).                                                                                                                                                                                  | Rules out Leaflet for this data.                                                                                                                                                                               |
+| Can a cap target one price tier?         | No. [Quotas are per API method](https://developers.google.com/maps/documentation/places/web-service/usage-and-billing), and a field mask decides the tier. Whether Places (New) offers a per-day quota for every method still has to be seen in the console. | Two projects, a 60-a-day app cap on Place Details (about $16 in the worst month), and a limit inside the app.                                                                                                  |
+| Nearby Search tier?                      | Pro at minimum (5,000 free a month), no IDs-only tier. `train_station` and `subway_station` are valid filters.                                                                                                                                               | Station pins are affordable if wanted in M7.                                                                                                                                                                   |
+| Photo credit rules?                      | Author credit where space allows, plus a link to the original on Google Maps through `googleMapsUri`.                                                                                                                                                        | Added to M6.                                                                                                                                                                                                   |
+| Prices in this plan?                     | All match the [current price list](https://developers.google.com/maps/billing-and-pricing/pricing). Autocomplete, used by Add place, has 10,000 free a month.                                                                                                | None.                                                                                                                                                                                                          |
+| Does Routes `TRANSIT` work in Japan?     | Not tested yet, needs the keys.                                                                                                                                                                                                                              |                                                                                                                                                                                                                |
+| Does Embed `mode=transit` work in Japan? | Not tested yet, needs the keys.                                                                                                                                                                                                                              |                                                                                                                                                                                                                |
 
 ## Milestones
 
 Tracks A and B are independent after M1. M0 needs you for the Google Cloud setup.
 
-| # | Target | Work | Done when |
-| --- | --- | --- | --- |
-| M0 | Nov 2 | Cloud project, keys, caps, Map ID. Test transit in Routes and Embed. Confirm the coordinate-storage rule and Nearby Search tier. Rewrite CLAUDE.md rule 4 and the "no embedded map" line. | Results recorded here and the layers adjusted |
-| M1 | Nov 5 | Schema and rules changes. `maps:match` script: place ID and coordinates for all places, with a report of doubtful matches to confirm. `maps:refresh` for the 30-day rule. | Nearly all places have a pin; rules published |
-| M2 | Nov 10 | Map on Day and City pages, numbered pins, `List / Map` switch | Works at 390px and on desktop, in light and dark, and offline shows the message |
-| M3 | Nov 14 | Place editor, Places tab, completeness filters, Add place | A place can be fully edited in the app, with Undo |
-| M4 | Nov 20 | Proposals, review screen, `research:pull` / `research:push`. Test on 5 places, then run all of them. | Ueno Zoo has cost and duration with sources; nothing changed without review |
-| M5 | Nov 26 | Walking legs, distances, train button, `legNote`, nearest station | A full day shows each leg |
-| M6 | Dec 1 | Photos and Live from Google, with credits and the Google logo | Tapping stays under the caps; caps reaching their limit shows a clear message |
-| M7 | Dec 5 | Optional: Claude API script or GitHub Action, station pins | Only if still wanted |
+| #   | Target | Work                                                                                                                                                                                      | Done when                                                                       |
+| --- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| M0  | Nov 2  | Cloud project, keys, caps, Map ID. Test transit in Routes and Embed. Confirm the coordinate-storage rule and Nearby Search tier. Rewrite CLAUDE.md rule 4 and the "no embedded map" line. | Results recorded here and the layers adjusted                                   |
+| M1  | Nov 5  | Schema and rules changes. `maps:match` script: place ID and coordinates for all places, with a report of doubtful matches to confirm. `maps:refresh` for the 30-day rule.                 | Nearly all places have a pin; rules published                                   |
+| M2  | Nov 10 | Map on Day and City pages, numbered pins, `List / Map` switch                                                                                                                             | Works at 390px and on desktop, in light and dark, and offline shows the message |
+| M3  | Nov 14 | Place editor, Places tab, completeness filters, Add place                                                                                                                                 | A place can be fully edited in the app, with Undo                               |
+| M4  | Nov 20 | Proposals, review screen, `research:pull` / `research:push`. Test on 5 places, then run all of them.                                                                                      | Ueno Zoo has cost and duration with sources; nothing changed without review     |
+| M5  | Nov 26 | Walking legs, distances, train button, `legNote`, nearest station                                                                                                                         | A full day shows each leg                                                       |
+| M6  | Dec 1  | Photos and Live from Google, with credits and the Google logo                                                                                                                             | Tapping stays under the caps; caps reaching their limit shows a clear message   |
+| M7  | Dec 5  | Optional: Claude API script or GitHub Action, station pins                                                                                                                                | Only if still wanted                                                            |
+
+M1 to M6 are written and committed on `develop`, without being run: see [maps-checklist.md](maps-checklist.md) for what's left. M7 was not built.
 
 This leaves the full review from the earlier plan on Dec 10. If time runs short, cut from the bottom: M7, then M6. Each milestone ends with `npm run test`, `npm run validate` and `npm run build`.
 
 ## Risks
 
-| Risk | Mitigation |
-| --- | --- |
-| A card is on file and Maps is billable | Separate project, daily caps on every API, tap-only premium features |
-| The public key is copied | Referrer and API restrictions, plus the same caps |
+| Risk                                    | Mitigation                                                                               |
+| --------------------------------------- | ---------------------------------------------------------------------------------------- |
+| A card is on file and Maps is billable  | Separate project, daily caps on every API, tap-only premium features                     |
+| The public key is copied                | Referrer and API restrictions, plus the same caps                                        |
 | A place matches the wrong Google result | `maps:match` checks distance to the city and reports doubtful matches for you to confirm |
-| Research is wrong or out of date | Sources shown, review required, Live from Google as a cross-check |
-| Research overwrites your edits | `lockedFields`, and only empty fields are filled by default |
-| Weak signal in Japan | The list, stored research and offline cache all work without the map |
-| Stale coordinates past 30 days | `maps:refresh` run before and during the trip |
+| Research is wrong or out of date        | Sources shown, review required, Live from Google as a cross-check                        |
+| Research overwrites your edits          | `lockedFields`, and only empty fields are filled by default                              |
+| Weak signal in Japan                    | The list, stored research and offline cache all work without the map                     |
+| Stale coordinates past 30 days          | `maps:refresh` run before and during the trip                                            |
 
 ## Decisions for you
 
-1. **Billing:** OK with a card on a separate Google Cloud project, with caps? *Recommended: yes. Without it, none of Track A is possible.*
-2. **Research worker:** start with Claude Code on your computer? *Recommended: yes. Add the API or GitHub Action only if you miss it.*
-3. **Trains:** OK with links to the Maps app plus stored notes if M0 confirms the API returns nothing? *Recommended: yes.*
+1. **Billing:** OK with a card on a separate Google Cloud project, with caps? _Recommended: yes. Without it, none of Track A is possible._
+2. **Research worker:** start with Claude Code on your computer? _Recommended: yes. Add the API or GitHub Action only if you miss it._
+3. **Trains:** OK with links to the Maps app plus stored notes if M0 confirms the API returns nothing? _Recommended: yes._
 
 ## Sources
 

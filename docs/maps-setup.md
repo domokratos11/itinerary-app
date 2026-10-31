@@ -85,8 +85,9 @@ Create a file named `.env` in the repo folder. It is git-ignored.
 ```text
 GOOGLE_MAPS_BROWSER_KEY=...
 GOOGLE_MAPS_SCRIPT_KEY=...
-GOOGLE_MAPS_MAP_ID=...
 ```
+
+Then put the browser key and Map ID in `src/lib/maps.config.ts`, which is committed. They ship in the page anyway. The script key never goes there.
 
 ## 8. Check it
 

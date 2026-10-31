@@ -58,6 +58,7 @@ export type PlacePhoto = {
   url: string;
   authorName: string | null;
   authorUrl: string | null;
+  authorPhotoUrl: string | null;
   // The original on Google Maps, which must stay reachable.
   mapsUrl: string | null;
 };

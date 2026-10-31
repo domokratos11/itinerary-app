@@ -248,6 +248,7 @@ export class GoogleMapsService implements MapsService {
           url: photo.getURI({ maxWidth: PHOTO_WIDTH }),
           authorName: author?.displayName ?? null,
           authorUrl: author?.uri ?? null,
+          authorPhotoUrl: author?.photoURI ?? null,
           mapsUrl: photo.googleMapsURI ?? null,
         };
       });

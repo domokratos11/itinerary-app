@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { AddToDay } from "@/components/add-to-day";
 import { PlaceEditor } from "@/components/place-editor";
+import { PlaceLive } from "@/components/place-live";
 import { mapsSearchUrl } from "@/domain/place-edit";
 import { isOpenProposal } from "@/domain/proposals";
 import type { PlaceRecord } from "@/domain/schemas";
@@ -149,6 +150,7 @@ function PlaceBody({
         </Button>
       )}
       <PlaceResearch place={place} />
+      <PlaceLive key={place.id} place={place} />
 
       {place.purpose && <Section label="Why go">{place.purpose}</Section>}
       {place.description && (
