@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { APP_VERSION } from "@/lib/app-reset";
 import { signInWithGoogle, signOut } from "@/lib/auth";
 import { useAuthStore } from "@/lib/auth-store";
 import { BASE_PATH } from "@/lib/base-path";
@@ -79,7 +80,7 @@ export function AppGate({ children }: { children: ReactNode }) {
 }
 
 // Shown while the answer is on its way. Says nothing about any trip.
-function Splash() {
+export function Splash() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <Image
@@ -87,7 +88,7 @@ function Splash() {
         alt=""
         width={96}
         height={96}
-        priority
+        loading="eager"
         className="animate-pulse"
       />
     </div>
@@ -112,6 +113,7 @@ function Screen({ title, children }: { title: string; children: ReactNode }) {
         </CardHeader>
         <CardContent className="flex flex-col gap-4 text-sm text-muted-foreground">
           {children}
+          <p className="text-center text-xs">Version {APP_VERSION}</p>
         </CardContent>
       </Card>
     </div>

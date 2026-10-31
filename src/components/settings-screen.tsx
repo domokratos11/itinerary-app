@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { SignOutButton } from "@/components/app-gate";
+import { AboutSettings } from "@/components/settings-about";
 import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
 import { HolidaysSettings } from "@/components/settings-holidays";
@@ -85,6 +86,7 @@ export function SettingsScreen() {
       )}
 
       <AccountSettings />
+      <AboutSettings />
     </div>
   );
 }

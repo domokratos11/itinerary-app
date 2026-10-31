@@ -5,7 +5,11 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
 } from "firebase/auth";
-import { clearIndexedDbPersistence, terminate } from "firebase/firestore";
+import {
+  clearIndexedDbPersistence,
+  terminate,
+  waitForPendingWrites,
+} from "firebase/firestore";
 
 import { getDb, getFirebaseAuth } from "@/lib/firebase";
 
@@ -59,13 +63,28 @@ const SIGN_IN_ERRORS: Record<string, string> = {
   "auth/network-request-failed": "No connection. Sign in once you're online.",
 };
 
-// Also wipes the trip from this device's offline cache, then reloads so
-// nothing from the old session stays in memory. Edits not yet synced are
-// lost, so callers should say so.
-export async function signOut(): Promise<void> {
+// Signs out and wipes the trip from this device's offline cache. Edits not
+// yet synced are lost, so callers should say so.
+async function endSession(): Promise<void> {
   await firebaseSignOut(getFirebaseAuth());
   const db = getDb();
   await terminate(db);
   await clearIndexedDbPersistence(db);
+}
+
+// Reloads so nothing from the old session stays in memory.
+export async function signOut(): Promise<void> {
+  await endSession();
   window.location.reload();
+}
+
+const PENDING_WRITES_MS = 5000;
+
+// For a new version: gives unsynced edits a moment to upload first.
+export async function clearSession(): Promise<void> {
+  await Promise.race([
+    waitForPendingWrites(getDb()),
+    new Promise((resolve) => setTimeout(resolve, PENDING_WRITES_MS)),
+  ]);
+  await endSession();
 }

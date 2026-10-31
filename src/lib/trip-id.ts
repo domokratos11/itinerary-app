@@ -53,14 +53,18 @@ export function chooseTrip(input: {
   return input.trips.length === 1 ? input.trips[0] : null;
 }
 
+function loadPage(path: string): void {
+  window.location.href = new URL(path, window.location.origin).href;
+}
+
 // A full page load, so nothing from the previous trip stays in memory.
 export function openTrip(tripId: string): void {
   rememberTripId(tripId);
-  window.location.href = `${BASE_PATH}/?trip=${encodeURIComponent(tripId)}`;
+  loadPage(`${BASE_PATH}/?trip=${encodeURIComponent(tripId)}`);
 }
 
 // Back to the user's own trips, from a link that didn't work out.
 export function openMyTrips(): void {
   forgetTripId();
-  window.location.href = `${BASE_PATH}/`;
+  loadPage(`${BASE_PATH}/`);
 }

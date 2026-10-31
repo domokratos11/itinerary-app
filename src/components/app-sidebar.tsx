@@ -6,6 +6,7 @@ import { useMemo, useSyncExternalStore } from "react";
 
 import { SECTIONS, useSection } from "@/components/app-header";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { APP_VERSION } from "@/lib/app-reset";
 import { formatDayLabel } from "@/lib/format-day";
 import { dayHref, pageHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
@@ -67,6 +68,7 @@ export function AppSidebar() {
                 <li key={d.date}>
                   <Link
                     href={dayHref(d.date, tripId)}
+                    prefetch={false}
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-sidebar-accent",
@@ -104,6 +106,9 @@ export function AppSidebar() {
               );
             })}
           </ol>
+          <p className="px-3 pt-4 text-xs text-muted-foreground">
+            Version {APP_VERSION}
+          </p>
         </div>
       </ScrollArea>
     </aside>

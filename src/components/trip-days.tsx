@@ -121,6 +121,7 @@ export function TripDays() {
                   >
                     <Link
                       href={dayHref(day.date, tripId)}
+                      prefetch={false}
                       className={cn(
                         "flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50 hover:bg-muted/40",
                         isToday && "border-primary ring-2 ring-primary/20",

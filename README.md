@@ -23,6 +23,17 @@ bundled with the app: what you see is what Firestore has.
 The trip ID stays out of the repo. See Security setup below for who can
 open a trip.
 
+## Versions
+
+The version shows on the sign-in screen, at the bottom of the sidebar and in
+Settings → About. It comes from git, so nothing is edited by hand: `main`
+carries the tag `v1.0.0`, and each merge after it adds one to the last number
+(1.0.1, 1.0.2, ...). For a new major or minor version, tag `main` (`v1.1.0`).
+
+When a device finds a different version, it uploads unsynced edits, clears its
+storage and caches, and asks for sign-in again. Language, theme and device name
+stay. Without signal nothing is cleared. Settings → About can check by hand.
+
 ## Security setup
 
 The app shows nothing until someone signs in with Google, and a trip opens
