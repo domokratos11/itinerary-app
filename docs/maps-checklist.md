@@ -7,17 +7,17 @@ The commands use Git Bash syntax. In PowerShell, run `$env:TRIP_ID="<id>"` first
 ## 1. Check the code
 
 - [x] Run `npm run test`, `npm run validate` and `npm run build`. All passed on Oct 30, 2026, with nothing to fix.
-- [ ] Ask Claude to push `develop`. **Don't merge to `main` yet.**
+- [x] Push `develop`.
 
 ## 2. Publish the Firestore rules
 
 Do this **before** the merge. The new app writes new fields, and the current rules refuse them, so saves would fail.
 
-- [ ] Paste `firestore.rules` into Firebase console > Firestore > Rules, then Publish.
+- [x] Paste `firestore.rules` into Firebase console > Firestore > Rules, then Publish.
 
 ## 3. Deploy
 
-- [ ] Merge `develop` to `main`. Without keys the app works as before, plus the place editor, the Places tab and research. The map shows "The map isn't set up yet", and legs show straight-line distances.
+- [x] Merge `develop` to `main`. Without keys the app works as before, plus the place editor, the Places tab and research. The map shows "The map isn't set up yet", and legs show straight-line distances.
 - [ ] Open the app and edit a place, as a member. If the save is refused, step 2 didn't take effect. This is the first real test of the place editor, the Places tab and the research review, since they need sign-in.
 
 ## 4. Set up Google Cloud
