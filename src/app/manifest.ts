@@ -8,8 +8,8 @@ export const dynamic = "force-static";
 // include the GitHub Pages sub-path, which Next does not add here.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Japan Trip 2026–27",
-    short_name: "Japan Trip",
+    name: "Trip Planner",
+    short_name: "Trip Planner",
     start_url: `${BASE_PATH}/`,
     scope: `${BASE_PATH}/`,
     display: "standalone",

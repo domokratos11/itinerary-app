@@ -1,13 +1,22 @@
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
+  query,
   setDoc,
+  updateDoc,
+  where,
   writeBatch,
 } from "firebase/firestore";
-import type { z } from "zod";
+import { z } from "zod";
 
-import type { TripAccess, TripRepository } from "@/domain/trip-repository";
+import type {
+  TripAccess,
+  TripChanges,
+  TripRepository,
+  TripSummary,
+} from "@/domain/trip-repository";
 import {
   TRIP_COLLECTIONS,
   type TripCollection,
@@ -29,6 +38,11 @@ const SCHEMAS: { [C in TripCollection]: z.ZodType<TripRecordOf[C]> } = {
   places: PlaceRecordSchema,
   holidays: HolidayRecordSchema,
 };
+
+const TripDocSchema = z.object({
+  name: z.string().nullable().default(null),
+  members: z.array(z.string()).default([]),
+});
 
 // Reads and writes
 // trips/{tripId}/{cities,stays,reservations,places,holidays}/{id}.
@@ -52,6 +66,61 @@ export class FirestoreTripRepository implements TripRepository {
         if (error.code === "permission-denied") onAccess("denied");
       },
     );
+  }
+
+  // The rules allow listing only trips with the user's own email on them,
+  // and only with this exact query.
+  watchMyTrips(
+    email: string,
+    onTrips: (trips: TripSummary[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void {
+    const mine = query(
+      collection(getDb(), "trips"),
+      where("members", "array-contains", email),
+    );
+    return onSnapshot(
+      mine,
+      (snapshot) => {
+        if (snapshot.empty && snapshot.metadata.fromCache) return;
+        onTrips(
+          snapshot.docs.flatMap((d) => {
+            const parsed = TripDocSchema.safeParse(d.data());
+            return parsed.success ? [{ id: d.id, ...parsed.data }] : [];
+          }),
+        );
+      },
+      (error) => onError?.(error),
+    );
+  }
+
+  // Readable only by the emails on its list, so a refusal means no.
+  async canCreateTrips(): Promise<boolean> {
+    try {
+      return (await getDoc(doc(getDb(), "config", "access"))).exists();
+    } catch {
+      return false;
+    }
+  }
+
+  async createTrip(name: string, email: string): Promise<string> {
+    const trip = doc(collection(getDb(), "trips"));
+    const now = new Date().toISOString();
+    await setDoc(trip, {
+      name,
+      members: [email],
+      createdBy: email,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return trip.id;
+  }
+
+  async updateTrip(tripId: string, changes: TripChanges): Promise<void> {
+    await updateDoc(doc(getDb(), "trips", tripId), {
+      ...changes,
+      updatedAt: new Date().toISOString(),
+    });
   }
 
   subscribe(

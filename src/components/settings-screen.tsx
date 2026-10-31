@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { SignOutButton } from "@/components/auth-gate";
+import { SignOutButton } from "@/components/app-gate";
 import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
 import { HolidaysSettings } from "@/components/settings-holidays";
 import { PlacesSettings } from "@/components/settings-places";
 import { ReservationsSettings } from "@/components/settings-reservations";
 import { StaysSettings } from "@/components/settings-stays";
+import { TripSettings } from "@/components/settings-trip";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthStore } from "@/lib/auth-store";
@@ -48,11 +49,7 @@ export function SettingsScreen() {
         )}
       </header>
 
-      {!tripId ? (
-        <p className="text-sm text-muted-foreground">
-          Open your shared link with ?trip= to edit the trip.
-        </p>
-      ) : (
+      {tripId && (
         <Tabs defaultValue={tab}>
           <TabsList className="h-auto w-full flex-wrap">
             <TabsTrigger value="stays">Stays</TabsTrigger>
@@ -60,6 +57,7 @@ export function SettingsScreen() {
             <TabsTrigger value="places">Places</TabsTrigger>
             <TabsTrigger value="reservations">Bookings</TabsTrigger>
             <TabsTrigger value="holidays">Holidays</TabsTrigger>
+            <TabsTrigger value="trip">Trip</TabsTrigger>
             <TabsTrigger value="backup">Backup</TabsTrigger>
           </TabsList>
           <TabsContent value="stays" className="pt-2">
@@ -77,13 +75,16 @@ export function SettingsScreen() {
           <TabsContent value="holidays" className="pt-2">
             <HolidaysSettings tripId={tripId} />
           </TabsContent>
+          <TabsContent value="trip" className="pt-2">
+            <TripSettings tripId={tripId} />
+          </TabsContent>
           <TabsContent value="backup" className="pt-2">
             <BackupSettings tripId={tripId} />
           </TabsContent>
         </Tabs>
       )}
 
-      {tripId && <AccountSettings />}
+      <AccountSettings />
     </div>
   );
 }

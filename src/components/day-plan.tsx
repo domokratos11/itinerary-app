@@ -157,7 +157,7 @@ export function DayPlan(props: Props) {
     index: number,
     others: PlanItem[],
   ) {
-    if (!tripId) return toast.error("Open your shared link with ?trip= first.");
+    if (!tripId) return;
     placeItem(tripId, item, date, index, others).catch(() =>
       toast.error(REFUSED),
     );
@@ -343,7 +343,7 @@ export function DayPlan(props: Props) {
   }
 
   function remove(item: PlanItem) {
-    if (!tripId) return toast.error("Open your shared link with ?trip= first.");
+    if (!tripId) return;
     const id = tripId;
     removeItem(id, item).catch(() => toast.error(REFUSED));
     toast("Removed from the plan", {
@@ -368,7 +368,7 @@ export function DayPlan(props: Props) {
 
   function saveEdit(item: PlanItem, changes: StopChanges) {
     setEditing(null);
-    if (!tripId) return toast.error("Open your shared link with ?trip= first.");
+    if (!tripId) return;
     updateItem(tripId, item, changes).catch(() => toast.error(REFUSED));
   }
   const nextPlace = next ? placesById.get(next.placeId) : undefined;

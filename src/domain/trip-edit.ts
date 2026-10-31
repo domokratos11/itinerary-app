@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { deriveDays } from "./days";
 import type { Place, PlanItem, Stay } from "./schemas";
 import { strandedItems } from "./trip";
@@ -88,4 +90,10 @@ export function uniqueId(name: string, taken: Iterable<string>): string {
     const id = `${base}-${n}`;
     if (!used.has(id)) return id;
   }
+}
+
+// A member's email as the rules compare it, or null if it isn't one.
+export function memberEmail(input: string): string | null {
+  const email = input.trim().toLowerCase();
+  return z.email().safeParse(email).success ? email : null;
 }

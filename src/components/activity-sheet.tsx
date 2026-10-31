@@ -110,11 +110,6 @@ export function ActivitySheet({ compact = false }: { compact?: boolean }) {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="activity" className="flex flex-col gap-4 pt-2">
-              {!tripId && (
-                <p className="text-sm text-muted-foreground">
-                  Open your shared link with ?trip= to see changes.
-                </p>
-              )}
               {error && (
                 <p className="text-sm text-destructive">
                   Can&apos;t load the activity: {error}

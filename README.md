@@ -25,20 +25,25 @@ open a trip.
 
 ## Security setup
 
-The trip opens only for people who sign in with Google **and** whose
-email is on the trip's member list. A leaked link alone shows nothing.
+The app shows nothing until someone signs in with Google, and a trip opens
+only when their email is on its member list. A leaked link alone shows
+nothing. After sign-in the app finds the person's trips by itself; with
+several, it asks which one, and the name in the header switches between
+them. **New trip** is in the same menu, and Settings → Trip changes a trip's
+name and members.
 One-time steps in the [Firebase console](https://console.firebase.google.com/):
 
 1. **Turn on Google sign-in:** Authentication → Sign-in method → Google →
    Enable.
 2. **Allow the site:** Authentication → Settings → Authorized domains →
    add `domokratos11.github.io` (`localhost` is there already).
-3. **Add the members:** Firestore → `trips/<your trip id>` → add a field
-   `members` of type _array_, with one lowercase email per entry. The
-   emails stay in Firestore, never in the repo. Add or remove people
-   here at any time.
+3. **Say who can create trips:** Firestore → create the document
+   `config/access` with a field `tripCreators` of type _array_, with one
+   lowercase email per entry. Google sign-in accepts any account, so this
+   stops strangers from creating trips. The emails stay in Firestore, never
+   in the repo. Everyone else can only open trips they were added to.
 4. **Publish the rules:** paste `firestore.rules` into Firestore → Rules
-   and Publish. Do step 3 first, or everyone is locked out until you do.
+   and Publish.
 5. **App Check (recommended):** it makes Firestore accept requests only
    from this app, not from scripts that copy its config.
    - Create a reCAPTCHA v3 key for `domokratos11.github.io` and

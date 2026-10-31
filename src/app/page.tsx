@@ -6,6 +6,7 @@ import { TodayCard } from "@/components/today-card";
 import { TripDates } from "@/components/trip-dates";
 import { TripPlanStatus } from "@/components/trip-plan-status";
 import { TripDays } from "@/components/trip-days";
+import { TripName } from "@/components/trip-name";
 import {
   Card,
   CardContent,
@@ -23,7 +24,9 @@ export default function Home() {
         <Card>
           <CardHeader>
             <CardTitle>
-              <h1 className="text-2xl">Japan Trip 2026–27</h1>
+              <h1 className="text-2xl">
+                <TripName />
+              </h1>
             </CardTitle>
             <CardDescription>
               <TripDates />

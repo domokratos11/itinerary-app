@@ -44,10 +44,7 @@ export function AddToDay({ place }: { place: Place }) {
 
   function pick(date: string) {
     setOpen(false);
-    if (!tripId) {
-      toast.error("Open your shared link with ?trip= first.");
-      return;
-    }
+    if (!tripId) return;
     // Not awaited: the local cache applies the change at once, and the save
     // completes later when online. Only a refused write is reported.
     addPlaceToDay(tripId, place.id, date, itemsForDay(items, date)).catch(() =>

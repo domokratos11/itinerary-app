@@ -128,13 +128,7 @@ export function QueuePanel() {
       });
   }
 
-  if (!tripId) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Open your shared link with ?trip= to queue places.
-      </p>
-    );
-  }
+  if (!tripId) return null;
 
   return (
     <Card>

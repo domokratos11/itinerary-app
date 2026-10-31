@@ -141,7 +141,6 @@ export function CityCatalog({
             variant="ghost"
             size="icon-sm"
             aria-label={`Edit ${city.name}`}
-            disabled={!tripId}
             onClick={() => setEditingCity(true)}
           >
             <Pencil />
@@ -149,7 +148,6 @@ export function CityCatalog({
           <Button
             variant="outline"
             size="sm"
-            disabled={!tripId}
             onClick={() => setAdding(true)}
           >
             <Plus />

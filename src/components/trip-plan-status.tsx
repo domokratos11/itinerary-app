@@ -4,26 +4,14 @@ import { Suspense } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { usePlanStore } from "@/lib/plan-store";
-import { useTripId } from "@/lib/use-trip-id";
 
 function PlanStatus() {
-  const tripId = useTripId();
   const ready = usePlanStore((s) => s.ready);
   const error = usePlanStore((s) => s.error);
   const stops = usePlanStore(
     (s) => s.items.filter((i) => i.status !== "removed").length,
   );
 
-  if (!tripId) {
-    return (
-      <Badge
-        variant="outline"
-        className="h-auto py-1 text-left whitespace-normal"
-      >
-        Open your shared link with ?trip= to load the plan
-      </Badge>
-    );
-  }
   if (error) {
     return (
       <Badge

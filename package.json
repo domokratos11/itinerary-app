@@ -8,6 +8,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:rules": "npx -y firebase-tools@13 emulators:exec --only firestore --project demo-itinerary \"vitest run --config vitest.rules.config.mts\"",
     "validate": "tsx scripts/validate.ts",
     "queue:pull": "tsx scripts/queue-pull.ts",
     "places:push": "tsx scripts/places-push.ts",
@@ -39,11 +40,13 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "sonner": "^2.0.8",
+    "use-intl": "^4.14.9",
     "vaul": "^1.1.2",
     "zod": "^4.6.7",
     "zustand": "^5.0.16"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@tailwindcss/turbopack": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
