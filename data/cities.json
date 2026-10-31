@@ -1,8 +1,0 @@
-[
-  { "id": "tokyo-ueno", "name": "Tokyo (Ueno)", "color": "#2563eb" },
-  { "id": "nagoya", "name": "Nagoya", "color": "#16a34a" },
-  { "id": "hiroshima", "name": "Hiroshima", "color": "#dc2626" },
-  { "id": "osaka", "name": "Osaka", "color": "#ea580c" },
-  { "id": "kawaguchiko", "name": "Kawaguchiko", "color": "#0891b2" },
-  { "id": "tokyo-asakusa", "name": "Tokyo (Asakusa)", "color": "#7c3aed" }
-]

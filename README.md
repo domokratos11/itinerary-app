@@ -17,18 +17,11 @@ Project rules for Claude Code are in [CLAUDE.md](CLAUDE.md).
 
 The app reads and writes the trip in Firestore. When `firestore.rules`
 changes, paste it into Firebase console → Firestore → Rules and Publish;
-until then, edits to the new parts (settings, queue edits, activity) are
-refused, and the app keeps showing the bundled `data/` files.
+until then, edits to the new parts are refused. Nothing about a trip is
+bundled with the app: what you see is what Firestore has.
 
-To copy `data/` into a trip right away (optional: the first edit in
-Settings copies it too):
-
-```bash
-TRIP_ID=<your trip id> npm run seed
-```
-
-The trip ID stays out of the repo; it lives only in the shared link. See
-Security setup below for who can open it.
+The trip ID stays out of the repo. See Security setup below for who can
+open a trip.
 
 ## Security setup
 
@@ -60,7 +53,7 @@ One-time steps in the [Firebase console](https://console.firebase.google.com/):
 6. **Stay on the Spark plan.** It can never be billed. If you ever move
    to Blaze, set a budget alert in Google Cloud → Billing first.
 
-**Scripts** (`seed`, `queue:pull`, `places:push`) skip the rules through
+**Scripts** (`queue:pull`, `places:push`) skip the rules through
 the Admin SDK and use your own Google Cloud login. Run this once per
 machine (needs the [gcloud CLI](https://cloud.google.com/sdk/docs/install)):
 

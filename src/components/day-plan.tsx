@@ -76,7 +76,6 @@ import {
   queueDragId,
   useListDrop,
 } from "@/components/day-side-panel";
-import { holidays } from "@/lib/catalog";
 import { CATEGORY_LABEL } from "@/lib/category-label";
 import { CostLine } from "@/components/cost-line";
 import { formatDayLabel } from "@/lib/format-day";
@@ -365,7 +364,7 @@ export function DayPlan(props: Props) {
     placesById,
   );
   const editingItem = stops.find((i) => i.id === editing);
-  const holiday = holidays.find((h) => h.date === props.date);
+  const holiday = trip.holidays.find((h) => h.date === props.date);
 
   function saveEdit(item: PlanItem, changes: StopChanges) {
     setEditing(null);
@@ -777,6 +776,7 @@ function StopCard({
     onDown: () => void;
   };
 }) {
+  const { holidays } = useTrip();
   const name = place?.name ?? item.placeId;
   const times = stopTimes(item, place);
   const minutes = item.durationMin ?? null;

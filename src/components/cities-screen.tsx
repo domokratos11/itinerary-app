@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDayLabel } from "@/lib/format-day";
-import { cityHref } from "@/lib/links";
+import { cityHref, pageHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTrip } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
@@ -27,6 +27,18 @@ export function CitiesScreen() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Cities</h1>
+      {trip.cities.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          No cities yet.{" "}
+          <Link
+            href={pageHref("/settings/", tripId, { tab: "cities" })}
+            className="underline"
+          >
+            Add one in Settings
+          </Link>
+          .
+        </p>
+      )}
       <ul className="grid gap-3 sm:grid-cols-2">
         {trip.cities.map((city) => {
           const stays = trip.stays.filter((s) => s.cityId === city.id);

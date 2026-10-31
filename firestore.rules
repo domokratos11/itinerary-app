@@ -134,6 +134,17 @@ service cloud.firestore {
         && isRecord(d);
     }
 
+    function isHoliday(d) {
+      return d.keys().hasOnly(['id', 'date', 'name', 'kind', 'note', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'date', 'name', 'kind', 'note', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && d.date is string && d.date.size() == 10
+        && shortString(d.name, 100) && d.name.size() > 0
+        && d.kind in ['holiday', 'closures']
+        && optionalString(d.note, 500)
+        && isRecord(d);
+    }
+
     function isPlace(d) {
       return d.keys().hasOnly(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'googlePlaceId', 'locationFetchedAt', 'locationSource', 'nearestStation', 'sources', 'lockedFields', 'archived', 'updatedAt'])
         && d.keys().hasAll(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'archived', 'updatedAt'])
@@ -215,6 +226,13 @@ service cloud.firestore {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isReservation(request.resource.data) && request.resource.data.id == id;
+        allow delete: if false;
+      }
+
+      match /holidays/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isHoliday(request.resource.data) && request.resource.data.id == id;
         allow delete: if false;
       }
 

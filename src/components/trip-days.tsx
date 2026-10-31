@@ -6,7 +6,7 @@ import { BedDouble } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { groupDaysByStay } from "@/domain/trip";
-import { cityHref, dayHref } from "@/lib/links";
+import { cityHref, dayHref, pageHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
 import { todayInTokyo } from "@/lib/tokyo-date";
 import { useCitiesById, useTrip, useTripDays } from "@/lib/trip-store";
@@ -72,7 +72,11 @@ export function TripDays() {
       </div>
       {days.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No stays yet. Add one in Settings to create the trip&apos;s days.
+          No stays yet.{" "}
+          <Link href={pageHref("/settings/", tripId)} className="underline">
+            Add one in Settings
+          </Link>{" "}
+          to create the trip&apos;s days.
         </p>
       )}
       {groups.map((group) => {

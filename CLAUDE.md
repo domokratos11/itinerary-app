@@ -9,8 +9,8 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 1. **Next.js static export only; anything needing a server is not allowed.** `next.config.ts` sets `output: 'export'`, `basePath: '/itinerary-app'` (must equal the repo name), `trailingSlash: true`, `images.unoptimized: true`. No Server Actions, no middleware/proxy, no Route Handlers that read the request, no ISR, no cookies/headers/redirects/rewrites. Every dynamic route must have `generateStaticParams` (and `dynamicParams = false`). Pages whose subject can change at runtime (days, cities) are one static page reading a query parameter instead (`/day/?date=`, `/city/?id=`).
 2. **shadcn/ui components first.** Build a custom component only when shadcn has no fit. Components live in `src/components/ui`. Add new ones with `npx shadcn@latest add <name>`.
 3. **Client vs Server Components.** Anything using browser APIs, Firestore or Zustand is a Client Component (`'use client'`). Pages stay Server Components that render the static shell; trip data comes from the client stores (`lib/trip-store`, `lib/plan-store`), with `useSearchParams` inside a `Suspense` boundary.
-4. **Google Maps follows Google's storage terms.** See `docs/maps-and-research-plan.md`. Screens reach the Maps SDK and APIs only through the `MapsService` interface (`src/domain/maps-service.ts`); the SDK is one lazily added script tag, not a wrapper library. Store only place IDs (indefinitely) and Google coordinates (at most 30 days, refreshed by `maps:refresh`, never copied to `data/` or backups). Hours, ratings, photos and route times or distances stay in memory. Google data appears only on a Google map or with the Google logo, never on another map provider. The browser key is public and restricted; the script key stays in the git-ignored `.env`. Google Cloud stays in its own projects, never billing on the Firebase project. Links out still use plain Maps URLs (`https://www.google.com/maps/search/?api=1&query=...`, `https://www.google.com/maps/dir/?api=1&...`).
-5. **Firestore is the source of truth for the trip; `data/*.json` is the seed and backup.** Cities, stays, reservations and places live under `trips/{tripId}/{cities,stays,reservations,places}`. The `data/` files are bundled as the fallback the app shows until a collection has data, are copied in with `npm run seed`, and are validated with Zod: `npm run validate`. Every JSON file in `data/` must have a schema registered in `scripts/validate.ts`; unregistered files fail.
+4. **Google Maps follows Google's storage terms.** See `docs/maps-and-research-plan.md`. Screens reach the Maps SDK and APIs only through the `MapsService` interface (`src/domain/maps-service.ts`); the SDK is one lazily added script tag, not a wrapper library. Store only place IDs (indefinitely) and Google coordinates (at most 30 days, refreshed by `maps:refresh`, never copied to the repo or backups). Hours, ratings, photos and route times or distances stay in memory. Google data appears only on a Google map or with the Google logo, never on another map provider. The browser key is public and restricted; the script key stays in the git-ignored `.env`. Google Cloud stays in its own projects, never billing on the Firebase project. Links out still use plain Maps URLs (`https://www.google.com/maps/search/?api=1&query=...`, `https://www.google.com/maps/dir/?api=1&...`).
+5. **Firestore is the only source of the trip.** Cities, stays, reservations, places and holidays live under `trips/{tripId}/{cities,stays,reservations,places,holidays}`, and nothing about a trip is bundled with the app: an empty collection shows as empty. Tests use in-memory repositories and the made-up sample trip in `src/test/fixture-trip.json`, never the real database; nothing outside tests imports it. `npm run validate` checks the JSON files kept in the repo; every one needs a schema registered in `scripts/validate.ts`.
 6. **The editable plan lives in Firestore** under `trips/{tripId}/items`, accessed only through a `PlanRepository` interface; the trip's structure goes through `TripRepository`. Screens never import the Firebase SDK directly. Records are never deleted: plan items are marked `removed`, proposals `dismissed`, everything else `archived`. Research reaches a place only through a proposal someone accepted (`trips/{tripId}/proposals`, through `ProposalRepository`).
 7. **Time zone.** "Today" and all trip dates are computed in `Asia/Tokyo` time, never the device's local time zone.
 8. **Mobile-first.** Design for a 390px-wide screen first, then widen.
@@ -24,14 +24,12 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 | -------------------------------------------- | -------------------------------------------------------------------------- |
 | `npm run dev`                                | Dev server at `http://localhost:3000/itinerary-app/`                       |
 | `npm run test`                               | Vitest + React Testing Library                                             |
-| `npm run validate`                           | Zod check of every file in `data/`                                         |
-| `TRIP_ID=<id> npm run seed`                  | Copy `data/` into the trip in Firestore (`--force` overwrites)             |
+| `npm run validate`                           | Zod check of the JSON files kept in the repo                               |
 | `TRIP_ID=<id> npm run queue:pull`            | Export queued links and draft places to `research/` for the enrichment run |
 | `TRIP_ID=<id> npm run places:push -- <file>` | Write researched places back and mark them researched                      |
 | `TRIP_ID=<id> npm run places:reset`          | Show what clearing all places would change; `-- --apply` archives them and removes their stops |
 | `TRIP_ID=<id> npm run research:pull`         | Export research requests (`docs/research-run.md`)                          |
 | `TRIP_ID=<id> npm run research:push -- <file>` | Write research back as proposals to review; never changes a place directly |
-| `npm run research:merge -- <city-file> <results>` | Fill a `data/places` seed file from sourced research; never touches Firestore |
 | `npm run maps:check`                         | Check the Google keys and test train routes (`docs/maps-setup.md`)         |
 | `TRIP_ID=<id> npm run maps:match`            | Save place IDs and coordinates; reports doubtful matches to confirm        |
 | `TRIP_ID=<id> npm run maps:refresh`          | Refresh Google coordinates before the 30-day limit                         |
@@ -44,9 +42,8 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 - `src/components/ui`: shadcn/ui components
 - `src/domain`: schemas, pure trip and plan logic, repository interfaces
 - `src/lib`: Firestore repositories, Zustand stores, actions, helpers (`cn`)
-- `data/`: seed JSON (validated)
-- `scripts/`: Node scripts run with tsx (`validate.ts`, `seed.ts`)
-- `legacy/`: V3 planning files, kept as source material for the migration (personal data removed)
+- `src/test`: test setup and the sample trip
+- `scripts/`: Node scripts run with tsx
 - `public/.nojekyll`: copied into `out/` so GitHub Pages serves `_next/`
 
 Deploys: `.github/workflows/deploy.yml` runs tests, validation and the build on every push to `main`, then publishes `out/` to GitHub Pages.

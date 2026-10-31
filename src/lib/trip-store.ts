@@ -7,17 +7,17 @@ import type { TripDay } from "@/domain/days";
 import type { CityRecord, PlaceRecord } from "@/domain/schemas";
 import {
   activeTrip,
+  EMPTY_TRIP,
   tripDays,
   type TripCollection,
   type TripData,
   type TripRecordOf,
 } from "@/domain/trip";
-import { seed } from "@/lib/catalog";
 
 type TripState = {
   data: TripData;
-  // Collections that came from Firestore. The rest still show the seed.
-  live: Record<TripCollection, boolean>;
+  // Collections Firestore has answered for, empty or not.
+  loaded: Record<TripCollection, boolean>;
   error: string | null;
   setCollection: <C extends TripCollection>(
     collection: C,
@@ -32,32 +32,26 @@ type TripState = {
   reset: () => void;
 };
 
-const notLive = {
+const notLoaded = {
   cities: false,
   stays: false,
   reservations: false,
   places: false,
+  holidays: false,
 };
 
-// Fed by the Firestore listener in use-trip-sync. An empty collection keeps
-// the seed, so a trip that hasn't been seeded yet still shows the files.
+// Fed by the Firestore listener in use-trip-sync. Firestore is the only
+// source: an empty collection shows as empty.
 export const useTripStore = create<TripState>()((set) => ({
-  data: seed,
-  live: notLive,
+  data: EMPTY_TRIP,
+  loaded: notLoaded,
   error: null,
   setCollection: (name, records) =>
-    set((state) =>
-      records.length === 0
-        ? {
-            live: { ...state.live, [name]: false },
-            data: { ...state.data, [name]: seed[name] },
-          }
-        : {
-            live: { ...state.live, [name]: true },
-            data: { ...state.data, [name]: records },
-            error: null,
-          },
-    ),
+    set((state) => ({
+      loaded: { ...state.loaded, [name]: true },
+      data: { ...state.data, [name]: records },
+      error: null,
+    })),
   apply: (name, record) =>
     set((state) => {
       const rows = state.data[name] as TripRecordOf[typeof name][];
@@ -67,7 +61,7 @@ export const useTripStore = create<TripState>()((set) => ({
       return { data: { ...state.data, [name]: next } };
     }),
   setError: (message) => set({ error: message }),
-  reset: () => set({ data: seed, live: notLive, error: null }),
+  reset: () => set({ data: EMPTY_TRIP, loaded: notLoaded, error: null }),
 }));
 
 // The trip as screens see it: archived records hidden, sorted.

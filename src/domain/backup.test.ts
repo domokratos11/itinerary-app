@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { BackupSchema, backupSummary, makeBackup } from "@/domain/backup";
 import { testPlace } from "@/domain/test-place";
-import { seed } from "@/lib/catalog";
+import { fixtureTrip } from "@/test/fixture-trip";
 
 const place = testPlace();
-const trip = { ...seed, places: [place] };
+const trip = { ...fixtureTrip, places: [place] };
 
 describe("backup", () => {
   const backup = makeBackup(
@@ -39,8 +39,14 @@ describe("backup", () => {
 
   it("summarises what a backup holds", () => {
     expect(backupSummary(backup)).toBe(
-      "6 cities, 6 stays, 4 reservations, 1 place, 1 stop, 0 queued links",
+      "2 cities, 2 stays, 1 reservation, 1 place, 1 stop, 0 queued links",
     );
+  });
+
+  it("still reads a backup from before holidays moved into the trip", () => {
+    const older = JSON.parse(JSON.stringify(backup));
+    delete older.holidays;
+    expect(BackupSchema.parse(older).holidays).toEqual([]);
   });
 });
 
@@ -56,7 +62,7 @@ describe("Google coordinates in backups", () => {
 
   it("leaves them out and keeps the place ID", () => {
     const backup = makeBackup(
-      { ...seed, places: [google] },
+      { ...fixtureTrip, places: [google] },
       [],
       [],
       new Date("2026-11-02T00:00:00.000Z"),
@@ -71,7 +77,7 @@ describe("Google coordinates in backups", () => {
   });
 
   it("refuses a file that contains them", () => {
-    const backup = makeBackup(seed, [], [], new Date());
+    const backup = makeBackup(fixtureTrip, [], [], new Date());
     expect(
       BackupSchema.safeParse({ ...backup, places: [google] }).success,
     ).toBe(false);

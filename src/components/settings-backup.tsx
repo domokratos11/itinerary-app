@@ -12,6 +12,7 @@ import {
   makeBackup,
   type Backup,
 } from "@/domain/backup";
+import { TRIP_COLLECTIONS } from "@/domain/trip";
 import { importBackup } from "@/lib/backup-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
@@ -54,11 +55,11 @@ export function ExportTrip({
 // Settings → Backup. Import only goes into a trip with nothing saved yet,
 // so a backup never overwrites someone's work.
 export function BackupSettings({ tripId }: { tripId: string }) {
-  const live = useTripStore((s) => s.live);
+  const data = useTripStore((s) => s.data);
   const items = usePlanStore((s) => s.items);
   const queue = useQueue(tripId).items;
   const empty =
-    !Object.values(live).some(Boolean) &&
+    TRIP_COLLECTIONS.every((name) => data[name].length === 0) &&
     items.length === 0 &&
     queue.length === 0;
   const fileInput = useRef<HTMLInputElement>(null);
@@ -87,8 +88,8 @@ export function BackupSettings({ tripId }: { tripId: string }) {
         <h3 className="font-medium">Export</h3>
         <p className="text-muted-foreground">
           The whole trip in one file: cities, stays, reservations, places, the
-          plan and the queue. Keep a copy in data/backups/ in the repo. Map pins
-          from Google are left out, as its terms require; run maps:refresh after
+          plan and the queue. Keep it somewhere private, not in the public repo.
+          Map pins from Google are left out, as its terms require; run maps:refresh after
           restoring to get them back.
         </p>
         <div>
@@ -100,7 +101,7 @@ export function BackupSettings({ tripId }: { tripId: string }) {
         <p className="text-muted-foreground">
           {empty
             ? "Restore a backup into this trip. Only works while the trip has nothing saved yet."
-            : "This trip already has saved changes, so a backup can't be imported here. Create a new trip in Firebase and open its link to restore into it."}
+            : "This trip already has saved changes, so a backup can't be imported here. Create a new trip to restore into it."}
         </p>
         <input
           ref={fileInput}

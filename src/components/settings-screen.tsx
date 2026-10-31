@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { SignOutButton } from "@/components/auth-gate";
 import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
+import { HolidaysSettings } from "@/components/settings-holidays";
 import { PlacesSettings } from "@/components/settings-places";
 import { ReservationsSettings } from "@/components/settings-reservations";
 import { StaysSettings } from "@/components/settings-stays";
@@ -21,9 +22,7 @@ import { useTripId } from "@/lib/use-trip-id";
 export function SettingsScreen() {
   const tripId = useTripId();
   const tab = useSearchParams().get("tab") ?? "stays";
-  const live = useTripStore((s) => s.live);
   const error = useTripStore((s) => s.error);
-  const seeded = Object.values(live).some(Boolean);
 
   return (
     <div className="flex flex-col gap-4">
@@ -39,21 +38,13 @@ export function SettingsScreen() {
           The days are built from the stays: change a hotel&apos;s dates and the
           days follow.
         </p>
-        {error ? (
+        {error && (
           <Badge
             variant="destructive"
             className="h-auto py-1 whitespace-normal"
           >
             Can&apos;t reach the trip: {error}
           </Badge>
-        ) : (
-          !seeded &&
-          tripId && (
-            <Badge variant="outline" className="h-auto py-1 whitespace-normal">
-              Showing the built-in trip. Your first change here copies it into
-              the shared database.
-            </Badge>
-          )
         )}
       </header>
 
@@ -63,11 +54,12 @@ export function SettingsScreen() {
         </p>
       ) : (
         <Tabs defaultValue={tab}>
-          <TabsList className="w-full">
+          <TabsList className="h-auto w-full flex-wrap">
             <TabsTrigger value="stays">Stays</TabsTrigger>
             <TabsTrigger value="cities">Cities</TabsTrigger>
             <TabsTrigger value="places">Places</TabsTrigger>
             <TabsTrigger value="reservations">Bookings</TabsTrigger>
+            <TabsTrigger value="holidays">Holidays</TabsTrigger>
             <TabsTrigger value="backup">Backup</TabsTrigger>
           </TabsList>
           <TabsContent value="stays" className="pt-2">
@@ -81,6 +73,9 @@ export function SettingsScreen() {
           </TabsContent>
           <TabsContent value="reservations" className="pt-2">
             <ReservationsSettings tripId={tripId} />
+          </TabsContent>
+          <TabsContent value="holidays" className="pt-2">
+            <HolidaysSettings tripId={tripId} />
           </TabsContent>
           <TabsContent value="backup" className="pt-2">
             <BackupSettings tripId={tripId} />
