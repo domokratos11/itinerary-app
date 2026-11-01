@@ -32,6 +32,7 @@ import { TodayCard } from "@/components/today-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Yen, YEN_VALUES } from "@/components/yen";
 import { formatYen, spendByDay, totalsByPayer } from "@/domain/budget";
 import {
   cityFigures,
@@ -78,7 +79,7 @@ function Tile({
   children,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -333,15 +334,19 @@ export function DashboardScreen() {
             summary.over > 0 ? t("budget.overBy") : t("dashboard.budgetLeft")
           }
           value={
-            summary.over > 0
-              ? formatYen(summary.over)
-              : summary.left === null
-                ? t("budget.notSet")
-                : formatYen(summary.left)
+            summary.over > 0 ? (
+              <Yen yen={summary.over} />
+            ) : summary.left === null ? (
+              t("budget.notSet")
+            ) : (
+              <Yen yen={summary.left} />
+            )
           }
         >
           <Hint>
-            {t("dashboard.spentSoFar", { yen: formatYen(summary.spent) })}
+            <Yen yen={summary.spent}>
+              {t("dashboard.spentSoFar", { yen: formatYen(summary.spent) })}
+            </Yen>
           </Hint>
         </Tile>
         <Tile
@@ -443,7 +448,7 @@ export function DashboardScreen() {
               center={formatYen(summary.spent)}
               centerLabel={t("budget.spent")}
               label={t("budget.byCategory")}
-              format={formatYen}
+              {...YEN_VALUES}
             />
           )}
         </Panel>
@@ -460,7 +465,7 @@ export function DashboardScreen() {
               name={t("budget.spent")}
               label={t("dashboard.spendPerDay")}
               tick={dayTick}
-              format={formatYen}
+              {...YEN_VALUES}
             />
           )}
           {spending.outside > 0 && (
@@ -482,7 +487,7 @@ export function DashboardScreen() {
                 value: p.paid,
                 color: "var(--primary)",
               }))}
-              format={formatYen}
+              {...YEN_VALUES}
             />
           )}
         </Panel>
@@ -632,7 +637,7 @@ export function DashboardScreen() {
               value: f.estimateYen,
               color: cityColor(f.cityId),
             }))}
-            format={formatYen}
+            {...YEN_VALUES}
           />
         </Panel>
         <Panel

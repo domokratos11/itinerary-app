@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Globe, ImageIcon } from "lucide-react";
 
+import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -104,10 +105,12 @@ function LiveDetails({
   if (!live)
     return (
       <div className="flex flex-col gap-1">
-        <Button variant="outline" disabled={loading} onClick={load}>
-          <Globe />
-          {loading ? t("live.asking") : t("live.fromGoogle")}
-        </Button>
+        <Tip label={t("live.tipFromGoogle")}>
+          <Button variant="outline" disabled={loading} onClick={load}>
+            <Globe />
+            {loading ? t("live.asking") : t("live.fromGoogle")}
+          </Button>
+        </Tip>
         {problem && <p className="text-sm text-destructive">{problem}</p>}
       </div>
     );
@@ -201,10 +204,12 @@ function Photos({ placeId }: { placeId: string }) {
   if (!photos)
     return (
       <div className="flex flex-col gap-1">
-        <Button variant="outline" disabled={loading} onClick={load}>
-          <ImageIcon />
-          {loading ? t("live.asking") : t("live.showPhoto")}
-        </Button>
+        <Tip label={t("live.tipShowPhoto")}>
+          <Button variant="outline" disabled={loading} onClick={load}>
+            <ImageIcon />
+            {loading ? t("live.asking") : t("live.showPhoto")}
+          </Button>
+        </Tip>
         {problem && <p className="text-sm text-destructive">{problem}</p>}
       </div>
     );

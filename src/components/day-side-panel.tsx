@@ -1,10 +1,10 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { GripVertical } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TripDay } from "@/domain/days";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -29,65 +29,64 @@ export type Waiting = {
   detail: string;
 };
 
-// Wide screens only: things waiting to be placed (drag them into the day)
-// and the other days of this city (drop a stop on one to move it there).
-export function DaySidePanel({
-  waiting,
+// One column of the day page on wide screens: its title stays put and the
+// rest scrolls, so a long list never pushes the map away.
+export function DayColumn({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="flex min-h-0 flex-col rounded-xl border bg-muted/30">
+      <h2 className="px-3 pt-3 pb-2 text-sm font-medium">{title}</h2>
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">{children}</div>
+    </section>
+  );
+}
+
+// Things waiting to be placed: drag them into the day.
+export function WaitingColumn({ waiting }: { waiting: Waiting[] }) {
+  return (
+    <DayColumn title={t("day.waiting")}>
+      <p className="pb-2 text-xs text-muted-foreground">
+        {waiting.length === 0 ? t("day.waitingNone") : t("day.waitingDrag")}
+      </p>
+      <ul className="flex flex-col gap-2">
+        {waiting.map((w) => (
+          <WaitingItem key={w.dragId} waiting={w} />
+        ))}
+      </ul>
+    </DayColumn>
+  );
+}
+
+// The other days of this city: drop a stop on one to move it there.
+export function OtherDaysColumn({
   otherDays,
   stopCounts,
 }: {
-  waiting: Waiting[];
   otherDays: TripDay[];
   stopCounts: Map<string, number>;
 }) {
   return (
-    <aside className="flex flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">{t("day.waiting")}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          {waiting.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              {t("day.waitingNone")}
-            </p>
-          ) : (
-            <>
-              <p className="text-xs text-muted-foreground">
-                {t("day.waitingDrag")}
-              </p>
-              <ul className="flex flex-col gap-2">
-                {waiting.map((w) => (
-                  <WaitingItem key={w.dragId} waiting={w} />
-                ))}
-              </ul>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {otherDays.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">{t("day.moveToAnother")}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <p className="text-xs text-muted-foreground">
-              {t("day.moveToAnotherHint")}
-            </p>
-            <ul className="flex flex-col gap-1.5">
-              {otherDays.map((d) => (
-                <DayDrop
-                  key={d.date}
-                  date={d.date}
-                  stops={stopCounts.get(d.date) ?? 0}
-                />
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-    </aside>
+    <DayColumn title={t("day.moveToAnother")}>
+      <p className="pb-2 text-xs text-muted-foreground">
+        {otherDays.length === 0
+          ? t("day.noOtherDays")
+          : t("day.moveToAnotherHint")}
+      </p>
+      <ul className="flex flex-col gap-1.5">
+        {otherDays.map((d) => (
+          <DayDrop
+            key={d.date}
+            date={d.date}
+            stops={stopCounts.get(d.date) ?? 0}
+          />
+        ))}
+      </ul>
+    </DayColumn>
   );
 }
 

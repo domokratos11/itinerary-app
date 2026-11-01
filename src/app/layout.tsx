@@ -3,7 +3,7 @@ import "./globals.css";
 import { Geist_Mono, Oxanium } from "next/font/google";
 import { Suspense } from "react";
 
-import { AppHeader, BottomNav } from "@/components/app-header";
+import { AppHeader, BottomNav, VersionTag } from "@/components/app-header";
 import { AppSidebar, AppSidebarProvider } from "@/components/app-sidebar";
 import { AppGate } from "@/components/app-gate";
 import { LocaleRoot } from "@/components/locale-root";
@@ -117,6 +117,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   <Suspense fallback={null}>
                     <BottomNav />
                   </Suspense>
+                  <VersionTag />
                 </AppSidebarProvider>
               </AppGate>
             </LocaleRoot>

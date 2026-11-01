@@ -1,6 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import {
+  BedDouble,
+  CalendarOff,
+  DatabaseBackup,
+  Eraser,
+  Globe,
+  MapPin,
+  Ticket,
+  Users,
+} from "lucide-react";
 
 import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
@@ -10,17 +21,89 @@ import { PlacesSettings } from "@/components/settings-places";
 import { ReservationsSettings } from "@/components/settings-reservations";
 import { StaysSettings } from "@/components/settings-stays";
 import { TripSettings } from "@/components/settings-trip";
+import { Tip } from "@/components/tip";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { t } from "@/lib/i18n";
 import { useTripStore } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 
+const SECTIONS = [
+  {
+    value: "stays",
+    label: "settings.tabStays",
+    hint: "settings.hintStays",
+    icon: BedDouble,
+    Panel: StaysSettings,
+  },
+  {
+    value: "cities",
+    label: "settings.tabCities",
+    hint: "settings.hintCities",
+    icon: Globe,
+    Panel: CitiesSettings,
+  },
+  {
+    value: "places",
+    label: "settings.tabPlaces",
+    hint: "settings.hintPlaces",
+    icon: MapPin,
+    Panel: PlacesSettings,
+  },
+  {
+    value: "reservations",
+    label: "settings.tabBookings",
+    hint: "settings.hintBookings",
+    icon: Ticket,
+    Panel: ReservationsSettings,
+  },
+  {
+    value: "holidays",
+    label: "settings.tabHolidays",
+    hint: "settings.hintHolidays",
+    icon: CalendarOff,
+    Panel: HolidaysSettings,
+  },
+  {
+    value: "trip",
+    label: "settings.tabTrip",
+    hint: "settings.hintTrip",
+    icon: Users,
+    Panel: TripSettings,
+  },
+  {
+    value: "backup",
+    label: "settings.tabBackup",
+    hint: "settings.hintBackup",
+    icon: DatabaseBackup,
+    Panel: BackupSettings,
+  },
+  {
+    value: "cleanup",
+    label: "settings.tabCleanup",
+    hint: "settings.hintCleanup",
+    icon: Eraser,
+    Panel: CleanupSettings,
+  },
+] as const;
+
 // Trip settings: the cities, hotels, places and reservations the trip is
-// built from. Every change is live for everyone on the trip.
+// built from. Every change is live for everyone on the trip. There are too
+// many sections for a row of tabs: phones choose from a menu, wider screens
+// from a list down the side, and more can be added to either.
 export function SettingsScreen() {
   const tripId = useTripId();
-  const tab = useSearchParams().get("tab") ?? "stays";
+  const asked = useSearchParams().get("tab");
+  const [section, setSection] = useState(
+    SECTIONS.find((s) => s.value === asked)?.value ?? "stays",
+  );
   const error = useTripStore((s) => s.error);
 
   return (
@@ -39,47 +122,51 @@ export function SettingsScreen() {
       </header>
 
       {tripId && (
-        <Tabs defaultValue={tab}>
-          <TabsList className="w-full flex-wrap justify-start gap-y-1 rounded-2xl group-data-horizontal/tabs:h-auto lg:w-fit">
-            <TabsTrigger value="stays">{t("settings.tabStays")}</TabsTrigger>
-            <TabsTrigger value="cities">{t("settings.tabCities")}</TabsTrigger>
-            <TabsTrigger value="places">{t("settings.tabPlaces")}</TabsTrigger>
-            <TabsTrigger value="reservations">
-              {t("settings.tabBookings")}
-            </TabsTrigger>
-            <TabsTrigger value="holidays">
-              {t("settings.tabHolidays")}
-            </TabsTrigger>
-            <TabsTrigger value="trip">{t("settings.tabTrip")}</TabsTrigger>
-            <TabsTrigger value="backup">{t("settings.tabBackup")}</TabsTrigger>
-            <TabsTrigger value="cleanup">
-              {t("settings.tabCleanup")}
-            </TabsTrigger>
+        <Tabs
+          value={section}
+          onValueChange={(v) => setSection(v as typeof section)}
+          orientation="vertical"
+          className="flex-col gap-4 md:flex-row md:items-start md:gap-6"
+        >
+          <Select
+            value={section}
+            onValueChange={(v) => setSection(v as typeof section)}
+          >
+            <SelectTrigger
+              aria-label={t("settings.section")}
+              className="w-full md:hidden"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SECTIONS.map(({ value, label, icon: Icon }) => (
+                <SelectItem key={value} value={value}>
+                  <Icon />
+                  {t(label)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <TabsList className="sticky top-20 hidden w-52 shrink-0 items-stretch md:flex">
+            {SECTIONS.map(({ value, label, hint, icon: Icon }) => (
+              <TabsTrigger key={value} value={value} className="flex-none">
+                {/* On the inside: a tooltip's trigger would take over the
+                    tab's own selected state. */}
+                <Tip side="right" label={t(hint)}>
+                  <span className="flex w-full items-center gap-2">
+                    <Icon />
+                    {t(label)}
+                  </span>
+                </Tip>
+              </TabsTrigger>
+            ))}
           </TabsList>
-          <TabsContent value="stays" className="pt-2">
-            <StaysSettings tripId={tripId} />
-          </TabsContent>
-          <TabsContent value="cities" className="pt-2">
-            <CitiesSettings tripId={tripId} />
-          </TabsContent>
-          <TabsContent value="places" className="pt-2">
-            <PlacesSettings tripId={tripId} />
-          </TabsContent>
-          <TabsContent value="reservations" className="pt-2">
-            <ReservationsSettings tripId={tripId} />
-          </TabsContent>
-          <TabsContent value="holidays" className="pt-2">
-            <HolidaysSettings tripId={tripId} />
-          </TabsContent>
-          <TabsContent value="trip" className="pt-2">
-            <TripSettings tripId={tripId} />
-          </TabsContent>
-          <TabsContent value="backup" className="pt-2">
-            <BackupSettings tripId={tripId} />
-          </TabsContent>
-          <TabsContent value="cleanup" className="pt-2">
-            <CleanupSettings tripId={tripId} />
-          </TabsContent>
+          {SECTIONS.map(({ value, hint, Panel }) => (
+            <TabsContent key={value} value={value} className="w-full min-w-0">
+              <p className="pb-4 text-sm text-muted-foreground">{t(hint)}</p>
+              <Panel tripId={tripId} />
+            </TabsContent>
+          ))}
         </Tabs>
       )}
     </div>

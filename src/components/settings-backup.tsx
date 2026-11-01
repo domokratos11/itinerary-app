@@ -5,16 +5,13 @@ import { Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { EditPanel } from "@/components/edit-panel";
+import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
-import {
-  BackupSchema,
-  backupSummary,
-  makeBackup,
-  type Backup,
-} from "@/domain/backup";
+import { BackupSchema, backupSummary, type Backup } from "@/domain/backup";
 import { TRIP_COLLECTIONS } from "@/domain/trip";
 import { t } from "@/lib/i18n";
-import { importBackup } from "@/lib/backup-actions";
+import { useActiveTrip } from "@/lib/auth-store";
+import { collectBackup, importBackup } from "@/lib/backup-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
 import { useProposals } from "@/lib/use-proposals";
@@ -30,9 +27,18 @@ export function ExportTrip({
   const data = useTripStore((s) => s.data);
   const items = usePlanStore((s) => s.items);
   const proposals = useProposals(tripId);
+  const trip = useActiveTrip();
 
-  function download() {
-    const backup = makeBackup(data, items, new Date(), proposals);
+  async function download() {
+    if (!tripId) return;
+    let backup: Backup;
+    try {
+      backup = await collectBackup(tripId, trip, data, items, proposals);
+    } catch {
+      // A file missing part of the trip would look complete, so there's none.
+      toast.error(t("backup.exportFailed"));
+      return;
+    }
     const blob = new Blob([JSON.stringify(backup, null, 2) + "\n"], {
       type: "application/json",
     });
@@ -44,10 +50,12 @@ export function ExportTrip({
   }
 
   return (
-    <Button variant={variant} size="sm" onClick={download}>
-      <Download />
-      {t("backup.exportTrip")}
-    </Button>
+    <Tip label={t("backup.tipExport")}>
+      <Button variant={variant} size="sm" onClick={download}>
+        <Download />
+        {t("backup.exportTrip")}
+      </Button>
+    </Tip>
   );
 }
 

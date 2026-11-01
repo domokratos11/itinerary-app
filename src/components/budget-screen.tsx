@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Archive, Pencil, Plus, Target } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tip } from "@/components/tip";
+import { Yen, YEN_VALUES } from "@/components/yen";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -106,7 +108,7 @@ export function GaugeCenter({ summary }: { summary: BudgetSummary }) {
   return (
     <>
       <span className="text-xl font-semibold tabular-nums">
-        {formatYen(over ? summary.over : (summary.left ?? summary.spent))}
+        <Yen yen={over ? summary.over : (summary.left ?? summary.spent)} />
       </span>
       <span className="text-xs text-muted-foreground">
         {over
@@ -125,7 +127,7 @@ export function Figure({
   hint,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   hint?: string;
 }) {
   return (
@@ -143,20 +145,22 @@ export function SummaryFigures({ summary }: { summary: BudgetSummary }) {
       <Figure
         label={t("budget.budget")}
         value={
-          summary.budget === null
-            ? t("budget.notSet")
-            : formatYen(summary.budget)
+          summary.budget === null ? (
+            t("budget.notSet")
+          ) : (
+            <Yen yen={summary.budget} />
+          )
         }
       />
-      <Figure label={t("budget.spent")} value={formatYen(summary.spent)} />
+      <Figure label={t("budget.spent")} value={<Yen yen={summary.spent} />} />
       <Figure
         label={t("budget.committed")}
-        value={formatYen(summary.committed)}
+        value={<Yen yen={summary.committed} />}
         hint={t("budget.committedHint")}
       />
       <Figure
         label={t("budget.forecast")}
-        value={formatYen(summary.forecast)}
+        value={<Yen yen={summary.forecast} />}
         hint={
           summary.unpriced > 0
             ? t("budget.forecastUnpriced", { count: summary.unpriced })
@@ -166,7 +170,7 @@ export function SummaryFigures({ summary }: { summary: BudgetSummary }) {
       {summary.safePerDay !== null && (
         <Figure
           label={t("budget.safePerDay")}
-          value={formatYen(summary.safePerDay)}
+          value={<Yen yen={summary.safePerDay} />}
         />
       )}
     </div>
@@ -220,14 +224,18 @@ export function BudgetScreen() {
           <p className="text-sm text-muted-foreground">{t("budget.intro")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setSettingTargets(true)}>
-            <Target />
-            {t("budget.setBudget")}
-          </Button>
-          <Button onClick={() => setEditing({ expense: null })}>
-            <Plus />
-            {t("budget.addExpense")}
-          </Button>
+          <Tip label={t("budget.tipSetBudget")}>
+            <Button variant="outline" onClick={() => setSettingTargets(true)}>
+              <Target />
+              {t("budget.setBudget")}
+            </Button>
+          </Tip>
+          <Tip label={t("budget.tipAddExpense")}>
+            <Button onClick={() => setEditing({ expense: null })}>
+              <Plus />
+              {t("budget.addExpense")}
+            </Button>
+          </Tip>
         </div>
       </header>
 
@@ -267,7 +275,7 @@ export function BudgetScreen() {
                 center={formatYen(summary.spent)}
                 centerLabel={t("budget.spent")}
                 label={t("budget.byCategory")}
-                format={formatYen}
+                {...YEN_VALUES}
               />
             )}
           </CardContent>
@@ -303,7 +311,7 @@ export function BudgetScreen() {
                   value: p.paid,
                   color: "var(--primary)",
                 }))}
-                format={formatYen}
+                {...YEN_VALUES}
               />
             )}
           </CardContent>
@@ -409,12 +417,14 @@ function TargetRow({ row }: { row: CategoryTotal }) {
               : "text-muted-foreground tabular-nums"
           }
         >
-          {target === null
-            ? formatYen(paid)
-            : t("budget.ofTarget", {
-                paid: formatYen(paid),
-                target: formatYen(target),
-              })}
+          <Yen yen={paid}>
+            {target === null
+              ? formatYen(paid)
+              : t("budget.ofTarget", {
+                  paid: formatYen(paid),
+                  target: formatYen(target),
+                })}
+          </Yen>
         </span>
       </span>
       {target !== null && (
@@ -454,7 +464,7 @@ function ExpenseRow({
       </span>
       <span className="flex flex-col items-end gap-1">
         <span className="font-medium tabular-nums">
-          {formatYen(expense.amountJPY)}
+          <Yen yen={expense.amountJPY} />
         </span>
         {expense.status === "planned" && (
           <Badge variant="outline">{t("budget.planned")}</Badge>

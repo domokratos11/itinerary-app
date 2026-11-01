@@ -22,12 +22,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  BedDouble,
   ChevronDown,
   ChevronUp,
   ExternalLink,
   GripVertical,
   Navigation,
   Pencil,
+  Ticket,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -69,13 +71,17 @@ import type { Endpoint } from "@/domain/trip";
 import { planDrop, type DragSource, type DropTarget } from "@/domain/drop";
 import { isDraft } from "@/domain/place-edit";
 import {
-  DaySidePanel,
+  DayColumn,
   DragPreview,
   LIST_ID,
+  OtherDaysColumn,
   parseDragId,
   placeDragId,
   useListDrop,
+  WaitingColumn,
 } from "@/components/day-side-panel";
+import { LogCostButton, placePrefill } from "@/components/expense-form";
+import { Tip } from "@/components/tip";
 import { t } from "@/lib/i18n";
 import { CostLine } from "@/components/cost-line";
 import { formatDayLabel } from "@/lib/format-day";
@@ -371,19 +377,29 @@ export function DayPlan(props: Props) {
       }))
     : [];
   const showPhoneMap = !wide && view === "map";
+  const draggingName = dragging
+    ? parseDragId(dragging)
+      ? waiting.find((w) => w.dragId === dragging)?.name
+      : rows.find((r) => r.item.id === dragging)?.place?.name
+    : null;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:h-[calc(100svh-6.5rem-1px)] md:min-h-[38rem] lg:h-[calc(100svh-7.5rem-1px)]">
       <header className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <Link
-            href={daysHref(tripId)}
-            className="text-sm text-muted-foreground underline"
-          >
-            {t("common.backToDays")}
-          </Link>
+        <Link
+          href={daysHref(tripId)}
+          className="text-sm text-muted-foreground underline"
+        >
+          {t("common.backToDays")}
+        </Link>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h1 className="text-2xl font-semibold">{props.label}</h1>
+          {props.cityNames.map((name) => (
+            <Badge key={name} variant="secondary">
+              {name}
+            </Badge>
+          ))}
         </div>
-        <h1 className="text-2xl font-semibold">{props.label}</h1>
         <CostLine places={stops.map((i) => placesById.get(i.placeId))} />
         {holiday && (
           <p className="rounded-md bg-muted px-3 py-2 text-sm">
@@ -396,30 +412,27 @@ export function DayPlan(props: Props) {
           </p>
         )}
         <div className="flex flex-wrap gap-2">
-          {props.cityNames.map((name) => (
-            <Badge key={name} variant="secondary">
-              {name}
-            </Badge>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-2">
           {nextPlace ? (
-            <Button asChild size="sm">
-              <a
-                href={directionsUrl(placeLocation(nextPlace))}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Navigation />
-                {t("day.goNext")}
-              </a>
-            </Button>
+            <Tip label={t("day.tipGoNext", { name: nextPlace.name })}>
+              <Button asChild size="sm">
+                <a
+                  href={directionsUrl(placeLocation(nextPlace))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Navigation />
+                  {t("day.goNext")}
+                </a>
+              </Button>
+            </Tip>
           ) : (
             <Button size="sm" disabled>
               {t("day.noStopsLeft")}
             </Button>
           )}
           <FullDay start={props.start} end={props.end} stops={stops} />
+          <HotelButtons start={props.start} end={props.end} />
+          {wide && <BookingsButton reservations={props.reservations} />}
         </div>
         {!wide && (
           <ToggleGroup
@@ -448,10 +461,6 @@ export function DayPlan(props: Props) {
         />
       )}
 
-      {!wide && !showPhoneMap && props.start && (
-        <HotelRow label={t("day.start")} endpoint={props.start} />
-      )}
-
       {wide ? (
         <DndContext
           sensors={sensors}
@@ -460,59 +469,48 @@ export function DayPlan(props: Props) {
           onDragCancel={() => setDragging(null)}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-[minmax(0,1fr)_18rem] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_26rem]">
-            <SortableContext
-              items={rows.map((r) => r.item.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <DroppableList empty={rows.length === 0}>
-                {rows.map((row) => (
-                  <SortableStop
-                    key={row.item.id}
-                    id={row.item.id}
-                    item={row.item}
-                    place={row.place}
-                    leg={legLine(row.item.id)}
-                    dayOptions={dayOptionsFor(row.place?.cityId)}
-                    currentDate={props.date}
-                    onRemove={() => remove(row.item)}
-                    onEdit={() => setEditing(row.item.id)}
-                    onMoveDay={(d) => moveToDay(row.item, d)}
-                  />
-                ))}
-                {rows.length > 0 && <li>{legLine("end")}</li>}
-              </DroppableList>
-            </SortableContext>
-            <div className="sticky top-20 flex flex-col gap-4">
-              <TripMap
-                pins={map.pins}
-                lines={mapLines}
-                onPinClick={setOpenPlaceId}
-                className="h-72 xl:h-96"
-                note={mapNote}
-              />
-              {props.start && (
-                <HotelRow label={t("day.start")} endpoint={props.start} />
-              )}
-              {props.end && (
-                <HotelRow label={t("day.end")} endpoint={props.end} />
-              )}
-              <Reservations reservations={props.reservations} />
-              <DaySidePanel
-                waiting={waiting}
-                otherDays={otherDays}
-                stopCounts={stopCounts}
-              />
-            </div>
+          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4">
+            <DayColumn title={t("day.stopsColumn")}>
+              <SortableContext
+                items={rows.map((r) => r.item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <DroppableList empty={rows.length === 0}>
+                  {rows.map((row) => (
+                    <SortableStop
+                      key={row.item.id}
+                      id={row.item.id}
+                      item={row.item}
+                      place={row.place}
+                      leg={legLine(row.item.id)}
+                      dayOptions={dayOptionsFor(row.place?.cityId)}
+                      currentDate={props.date}
+                      onRemove={() => remove(row.item)}
+                      onEdit={() => setEditing(row.item.id)}
+                      onMoveDay={(d) => moveToDay(row.item, d)}
+                    />
+                  ))}
+                  {rows.length > 0 && <li>{legLine("end")}</li>}
+                </DroppableList>
+              </SortableContext>
+            </DayColumn>
+            <WaitingColumn waiting={waiting} />
+            <OtherDaysColumn otherDays={otherDays} stopCounts={stopCounts} />
           </div>
+          <div className="h-[24%] min-h-40 shrink-0">
+            <TripMap
+              pins={map.pins}
+              lines={mapLines}
+              onPinClick={setOpenPlaceId}
+              className="min-h-0 flex-1"
+              note={mapNote}
+            />
+          </div>
+          {/* The columns clip what's inside them, so what's being dragged
+              follows the pointer above them. */}
           <DragOverlay>
-            {dragging && parseDragId(dragging) ? (
-              <DragPreview
-                name={
-                  waiting.find((w) => w.dragId === dragging)?.name ??
-                  t("day.place")
-                }
-              />
+            {dragging ? (
+              <DragPreview name={draggingName ?? t("day.place")} />
             ) : null}
           </DragOverlay>
         </DndContext>
@@ -546,10 +544,6 @@ export function DayPlan(props: Props) {
 
       {stops.length === 0 && !wide && !showPhoneMap && (
         <p className="text-sm text-muted-foreground">{t("day.noStopsPhone")}</p>
-      )}
-
-      {!wide && !showPhoneMap && props.end && (
-        <HotelRow label={t("day.end")} endpoint={props.end} />
       )}
 
       {!wide && !showPhoneMap && (
@@ -598,7 +592,7 @@ function DroppableList({
     <ol
       ref={setNodeRef}
       className={cn(
-        "flex min-h-24 flex-col gap-3 rounded-xl",
+        "flex min-h-full flex-col gap-3 rounded-xl",
         empty && "items-center justify-center border border-dashed p-6",
         isOver && "bg-primary/5 ring-2 ring-primary/30",
       )}
@@ -639,29 +633,88 @@ function Reservations({ reservations }: { reservations: Reservation[] }) {
   );
 }
 
-function HotelRow({ label, endpoint }: { label: string; endpoint: Endpoint }) {
+// Wide screens: the day's bookings behind a button, to leave room for the plan.
+function BookingsButton({ reservations }: { reservations: Reservation[] }) {
+  if (reservations.length === 0) return null;
   return (
-    <Card size="sm">
-      <CardContent className="flex items-center justify-between gap-3">
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase">
-            {t("day.hotelRow", { label })}
-          </span>
-          <span className="font-medium">{endpoint.name}</span>
-        </div>
-        {endpoint.location && (
-          <Button asChild variant="outline" size="sm">
-            <a
-              href={directionsUrl(endpoint.location)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t("common.directions")}
-            </a>
+    <Sheet>
+      <Tip label={t("day.tipBookings")}>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Ticket />
+            {t("day.bookings", { count: reservations.length })}
           </Button>
-        )}
-      </CardContent>
-    </Card>
+        </SheetTrigger>
+      </Tip>
+      <SheetContent side="right">
+        <SheetHeader className="text-left">
+          <SheetTitle>{t("day.reservations")}</SheetTitle>
+          <SheetDescription className="sr-only">
+            {t("day.tipBookings")}
+          </SheetDescription>
+        </SheetHeader>
+        <SheetBody>
+          <Reservations reservations={reservations} />
+        </SheetBody>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// Directions to the day's hotel. Most days start and end at the same one, and
+// that needs only one button.
+function HotelButtons({
+  start,
+  end,
+}: {
+  start: Endpoint | null;
+  end: Endpoint | null;
+}) {
+  if (start && end && start.name === end.name)
+    return <HotelButton text={start.name} endpoint={start} />;
+  return (
+    <>
+      {start && (
+        <HotelButton
+          text={t("day.hotelEndpoint", {
+            label: t("day.start"),
+            name: start.name,
+          })}
+          endpoint={start}
+        />
+      )}
+      {end && (
+        <HotelButton
+          text={t("day.hotelEndpoint", { label: t("day.end"), name: end.name })}
+          endpoint={end}
+        />
+      )}
+    </>
+  );
+}
+
+function HotelButton({ text, endpoint }: { text: string; endpoint: Endpoint }) {
+  const label = <span className="max-w-48 truncate">{text}</span>;
+  if (!endpoint.location)
+    return (
+      <Button variant="outline" size="sm" disabled>
+        <BedDouble />
+        {label}
+      </Button>
+    );
+  return (
+    <Tip label={t("day.tipHotel", { name: endpoint.name })}>
+      <Button asChild variant="outline" size="sm">
+        <a
+          href={directionsUrl(endpoint.location)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <BedDouble />
+          {label}
+        </a>
+      </Button>
+    </Tip>
   );
 }
 
@@ -701,15 +754,17 @@ function SortableStop({
       <StopCard
         {...props}
         handle={
-          <button
-            type="button"
-            aria-label={t("day.dragToReorder")}
-            className="mt-0.5 cursor-grab touch-none rounded-sm text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical />
-          </button>
+          <Tip label={t("day.dragToReorder")}>
+            <button
+              type="button"
+              aria-label={t("day.dragToReorder")}
+              className="mt-0.5 cursor-grab touch-none rounded-sm text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical />
+            </button>
+          </Tip>
         }
       />
     </li>
@@ -737,6 +792,7 @@ function StopCard({
   };
 }) {
   const { holidays } = useTrip();
+  const tripId = useTripId();
   const name = place?.name ?? item.placeId;
   const times = stopTimes(item, place);
   const minutes = item.durationMin ?? null;
@@ -802,12 +858,18 @@ function StopCard({
         {item.note && <p className="text-sm">{item.note}</p>}
         <div className="flex flex-wrap items-center gap-2">
           {place && (
-            <Button asChild variant="outline" size="sm">
-              <a href={place.mapsUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink />
-                {t("common.map")}
-              </a>
-            </Button>
+            <Tip label={t("place.tipOpenInMaps")}>
+              <Button asChild variant="outline" size="sm">
+                <a
+                  href={place.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink />
+                  {t("common.map")}
+                </a>
+              </Button>
+            </Tip>
           )}
           {buttons && (
             <>
@@ -845,11 +907,18 @@ function StopCard({
               </SelectContent>
             </Select>
           )}
+          {place && tripId && (
+            <LogCostButton
+              tripId={tripId}
+              prefill={{ ...placePrefill(place), date: item.date }}
+              className="ml-auto"
+            />
+          )}
           <Button
             variant="ghost"
             size="icon-sm"
             aria-label={t("common.editName", { name })}
-            className="ml-auto"
+            className={cn(!(place && tripId) && "ml-auto")}
             onClick={onEdit}
           >
             <Pencil />
@@ -894,11 +963,13 @@ function FullDay({
 
   return (
     <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
-          {t("day.fullDay")}
-        </Button>
-      </SheetTrigger>
+      <Tip label={t("day.tipFullDay")}>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="sm">
+            {t("day.fullDay")}
+          </Button>
+        </SheetTrigger>
+      </Tip>
       <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
         <SheetHeader className="text-left">
           <SheetTitle>{t("day.fullDay")}</SheetTitle>

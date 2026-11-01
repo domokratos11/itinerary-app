@@ -1,3 +1,4 @@
+import { Yen } from "@/components/yen";
 import { costTotal } from "@/domain/plan";
 import type { Place } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
@@ -9,12 +10,14 @@ export function CostLine({ places }: { places: (Place | undefined)[] }) {
   const { yen, unpriced } = costTotal(places);
   return (
     <p className="text-sm text-muted-foreground">
-      {unpriced > 0
-        ? t("misc.costEstimateUnpriced", {
-            yen: yen.toLocaleString("en-US"),
-            count: unpriced,
-          })
-        : t("misc.costEstimate", { yen: yen.toLocaleString("en-US") })}
+      <Yen yen={yen}>
+        {unpriced > 0
+          ? t("misc.costEstimateUnpriced", {
+              yen: yen.toLocaleString("en-US"),
+              count: unpriced,
+            })
+          : t("misc.costEstimate", { yen: yen.toLocaleString("en-US") })}
+      </Yen>
     </p>
   );
 }

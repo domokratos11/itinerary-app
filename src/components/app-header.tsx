@@ -13,9 +13,10 @@ import {
 import { AccountSheet } from "@/components/account-sheet";
 import { ActivitySheet } from "@/components/activity-sheet";
 import { SearchPalette } from "@/components/search-palette";
+import { Tip } from "@/components/tip";
 import { TripSwitcher } from "@/components/trip-switcher";
 import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { APP_VERSION } from "@/lib/app-reset";
 import { t } from "@/lib/i18n";
 import { pageHref } from "@/lib/links";
 import { cn } from "@/lib/utils";
@@ -25,25 +26,35 @@ export const SECTIONS = [
   {
     path: "/",
     label: "nav.dashboard",
+    hint: "nav.hintDashboard",
     icon: LayoutDashboard,
     match: ["/"],
   },
   {
     path: "/days/",
     label: "nav.days",
+    hint: "nav.hintDays",
     icon: CalendarDays,
     match: ["/days/", "/day/"],
   },
   {
     path: "/cities/",
     label: "nav.cities",
+    hint: "nav.hintCities",
     icon: MapPinned,
     match: ["/cities/", "/city/"],
   },
-  { path: "/budget/", label: "nav.budget", icon: Wallet, match: ["/budget/"] },
+  {
+    path: "/budget/",
+    label: "nav.budget",
+    hint: "nav.hintBudget",
+    icon: Wallet,
+    match: ["/budget/"],
+  },
   {
     path: "/settings/",
     label: "nav.settings",
+    hint: "nav.hintSettings",
     icon: Settings,
     match: ["/settings/"],
   },
@@ -68,30 +79,27 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="flex h-14 w-full items-center gap-2 px-4 lg:px-6">
-        <SidebarTrigger
-          aria-label={t("nav.toggleSidebar")}
-          className="hidden lg:inline-flex"
-        />
         <TripSwitcher />
         <nav
           aria-label={t("nav.sections")}
           className="ml-4 hidden gap-1 md:flex lg:hidden"
         >
-          {SECTIONS.map(({ path, label, icon: Icon }) => (
-            <Button
-              key={path}
-              asChild
-              variant={active === path ? "secondary" : "ghost"}
-              size="sm"
-            >
-              <Link
-                href={pageHref(path, tripId)}
-                aria-current={active === path ? "page" : undefined}
+          {SECTIONS.map(({ path, label, hint, icon: Icon }) => (
+            <Tip key={path} label={t(hint)}>
+              <Button
+                asChild
+                variant={active === path ? "secondary" : "ghost"}
+                size="sm"
               >
-                <Icon />
-                {t(label)}
-              </Link>
-            </Button>
+                <Link
+                  href={pageHref(path, tripId)}
+                  aria-current={active === path ? "page" : undefined}
+                >
+                  <Icon />
+                  {t(label)}
+                </Link>
+              </Button>
+            </Tip>
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-1">
@@ -101,6 +109,16 @@ export function AppHeader() {
         </div>
       </div>
     </header>
+  );
+}
+
+// Bottom right on wider screens. Phones find it in Settings, as the corner
+// belongs to the tab bar there.
+export function VersionTag() {
+  return (
+    <p className="pointer-events-none fixed right-2 bottom-1 z-30 hidden rounded bg-background/80 px-1.5 text-[11px] text-muted-foreground md:block">
+      {t("common.version", { version: APP_VERSION })}
+    </p>
   );
 }
 

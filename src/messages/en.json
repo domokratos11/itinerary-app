@@ -61,7 +61,8 @@
     "archivedName": "Archived {name}",
     "addStay": "Add stay",
     "googleMapsLink": "Google Maps link",
-    "editName": "Edit {name}"
+    "editName": "Edit {name}",
+    "tipAddPlace": "Add a place by name or by pasting a Google Maps link"
   },
   "nav": {
     "sections": "Sections",
@@ -70,7 +71,13 @@
     "settings": "Settings",
     "dashboard": "Dashboard",
     "budget": "Budget",
-    "toggleSidebar": "Shrink or expand the sidebar"
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "hintDashboard": "The trip at a glance: countdown, budget, plan and what needs attention",
+    "hintDays": "Every day of the trip and what's planned on it",
+    "hintCities": "The places to visit in each city",
+    "hintBudget": "What's been spent and what's left, shared by everyone",
+    "hintSettings": "Hotels, cities, places, bookings, members and backups"
   },
   "category": {
     "lights": "Lights",
@@ -181,7 +188,6 @@
     "noStopsLeft": "No planned stops left",
     "start": "Start",
     "end": "End",
-    "hotelRow": "{label} · Hotel",
     "noStopsPhone": "No stops yet. Open a place from a city list and choose Add to day.",
     "noStopsWide": "No stops yet. Drag a place here from the right, or open a city list and choose Add to day.",
     "reservations": "Reservations",
@@ -207,7 +213,15 @@
     "waitingDrag": "Drag one into the day.",
     "moveToAnother": "Move to another day",
     "moveToAnotherHint": "Drop a stop on a day to move it to the end of that day.",
-    "dragInto": "Drag {name} into the day"
+    "dragInto": "Drag {name} into the day",
+    "stopsColumn": "Stops",
+    "noOtherDays": "No other days in this city.",
+    "hotelEndpoint": "{label}: {name}",
+    "tipHotel": "Directions to {name}",
+    "bookings": "{count, plural, one {# booking} other {# bookings}}",
+    "tipBookings": "The flights, trains and tickets booked for this day",
+    "tipGoNext": "Directions to the next stop: {name}",
+    "tipFullDay": "Directions for each leg of the day, from hotel to hotel"
   },
   "warnings": {
     "closedOnDay": "Closed on this day",
@@ -271,7 +285,10 @@
     "latitude": "Latitude",
     "longitude": "Longitude",
     "checkField": "Check this field: {problem}",
-    "whyWeWant": "Why we want it"
+    "whyWeWant": "Why we want it",
+    "tipOpenInMaps": "Open this place in Google Maps",
+    "tipResearch": "Ask for this place to be looked up at the next research run",
+    "tipAddToDay": "Put this place on one of its city's days"
   },
   "live": {
     "limit": "Today's limit for this was reached. It's back tomorrow.",
@@ -296,7 +313,9 @@
     "original": "Original on Google Maps",
     "position": "{index} of {total}",
     "closedVsNotes": "Google says it's closed today, but our notes give opening hours.",
-    "notesDiffer": "Our notes say {open}–{close}. Check before relying on either."
+    "notesDiffer": "Our notes say {open}–{close}. Check before relying on either.",
+    "tipFromGoogle": "Today's hours and rating from Google. Nothing is saved.",
+    "tipShowPhoto": "Photos from Google. Nothing is saved."
   },
   "map": {
     "notConfigured": "The map isn't set up yet.",
@@ -318,7 +337,16 @@
     "account": "Account",
     "aGoogleAccount": "a Google account",
     "signOutHint": "Signing out removes the trip from this device. Changes made offline that haven't synced yet are lost.",
-    "tabCleanup": "Clean up"
+    "tabCleanup": "Clean up",
+    "section": "Settings section",
+    "hintStays": "Where you sleep each night. These set which city each day belongs to.",
+    "hintCities": "The cities of the trip and their colours.",
+    "hintPlaces": "Every place, with research waiting for review.",
+    "hintBookings": "Flights, trains, tours and tickets, shown on their day.",
+    "hintHolidays": "Holidays and closures that can affect your plans.",
+    "hintTrip": "The trip's name and who can open it.",
+    "hintBackup": "Download the whole trip as a file, or restore one into an empty trip.",
+    "hintCleanup": "Permanently delete what's archived or finished, and the change history."
   },
   "about": {
     "title": "About",
@@ -433,14 +461,16 @@
     "restored": "Backup restored",
     "refused": "The backup was refused. Check your connection.",
     "exportTitle": "Export",
-    "exportBody": "The whole trip in one file: cities, stays, reservations, places, expenses and the plan. Keep it somewhere private, not in the public repo. Map pins from Google are left out, as its terms require; run maps:refresh after restoring to get them back.",
+    "exportBody": "The whole trip in one file: cities, stays, reservations, places, expenses, the budget, the plan, research and the change history, archived and removed records included. It also holds the trip's name and member emails, so keep it somewhere private, not in the public repo. Map pins from Google are left out, as its terms require; run maps:refresh after restoring to get them back.",
     "importTitle": "Import",
     "importEmpty": "Restore a backup into this trip. Only works while the trip has nothing saved yet.",
     "importFull": "This trip already has saved changes, so a backup can't be imported here. Create a new trip to restore into it.",
     "choose": "Choose a backup file",
     "restoreTitle": "Restore this backup?",
     "exportedOn": "Exported {date}",
-    "summary": "{cities, plural, one {# city} other {# cities}}, {stays, plural, one {# stay} other {# stays}}, {reservations, plural, one {# reservation} other {# reservations}}, {places, plural, one {# place} other {# places}}, {stops, plural, one {# stop} other {# stops}}"
+    "summary": "{cities, plural, one {# city} other {# cities}}, {stays, plural, one {# stay} other {# stays}}, {reservations, plural, one {# reservation} other {# reservations}}, {places, plural, one {# place} other {# places}}, {stops, plural, one {# stop} other {# stops}}, {expenses, plural, one {# expense} other {# expenses}}, {history, plural, one {# history entry} other {# history entries}}",
+    "exportFailed": "The backup couldn't be made, because part of the trip couldn't be read. Check your connection.",
+    "tipExport": "Download the whole trip as one file"
   },
   "search": {
     "title": "Search",
@@ -449,7 +479,8 @@
     "nothing": "Nothing found.",
     "days": "Days",
     "hotels": "Hotels",
-    "places": "Places"
+    "places": "Places",
+    "tip": "Find a day or place"
   },
   "activity": {
     "title": "Activity",
@@ -575,7 +606,11 @@
     "planned": "Planned",
     "paidBy": "Paid by",
     "nobody": "Not assigned",
-    "archiveName": "Archive {name}"
+    "archiveName": "Archive {name}",
+    "usdHint": "≈ {usd} USD (1 USD = ¥{rate})",
+    "tipSetBudget": "Set the total, a target per category and how many are travelling",
+    "tipAddExpense": "Record something bought or still to pay",
+    "tipLogCost": "Add this place to the Budget, with its name and category filled in"
   },
   "dashboard": {
     "title": "Dashboard",

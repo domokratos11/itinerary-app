@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ActivitySchema, type Activity } from "./activity";
 import type { Translate } from "./i18n";
 import { withoutGoogleCoordinates } from "./location";
 import {
@@ -8,6 +9,7 @@ import {
   HolidayRecordSchema,
   PlaceRecordSchema,
   PlanItemSchema,
+  BudgetSchema,
   ProposalSchema,
   ReservationRecordSchema,
   StayRecordSchema,
@@ -19,8 +21,21 @@ import type { TripData } from "./trip";
 // The whole trip in one file: Export in Settings writes it, Import restores
 // it into an empty trip. A backup can be kept for good, so it never holds
 // coordinates from Google: they may be kept for 30 days at most. maps:refresh
-// fetches them again by place ID. Backups made before holidays moved into the
-// trip have none, and a queue in an older backup is ignored.
+// fetches them again by place ID. Older backups lack the parts added since.
+// Restoring never changes who has access, so the trip's name and members, and
+// the old Queue's links (which can no longer be written), stay in the file only.
+const TripDetailsSchema = z.object({
+  name: z.string().nullable(),
+  members: z.array(z.string()),
+  budget: BudgetSchema.nullable(),
+});
+
+export type BackupExtras = {
+  trip: z.infer<typeof TripDetailsSchema> | null;
+  activity: Activity[];
+  queue: Record<string, unknown>[];
+};
+
 export const BackupSchema = z
   .object({
     version: z.literal(1),
@@ -33,6 +48,9 @@ export const BackupSchema = z
     expenses: z.array(ExpenseRecordSchema).default([]),
     items: z.array(PlanItemSchema),
     proposals: z.array(ProposalSchema).default([]),
+    trip: TripDetailsSchema.nullable().default(null),
+    activity: z.array(ActivitySchema).default([]),
+    queue: z.array(z.looseObject({})).default([]),
   })
   .refine(
     (b) =>
@@ -50,6 +68,7 @@ export function makeBackup(
   items: PlanItem[],
   now: Date,
   proposals: Proposal[] = [],
+  extras: BackupExtras = { trip: null, activity: [], queue: [] },
 ): Backup {
   return {
     version: 1,
@@ -59,6 +78,7 @@ export function makeBackup(
     places: trip.places.map(withoutGoogleCoordinates),
     items,
     proposals,
+    ...extras,
   };
 }
 
@@ -69,5 +89,7 @@ export function backupSummary(backup: Backup, tr: Translate): string {
     reservations: backup.reservations.length,
     places: backup.places.length,
     stops: backup.items.filter((i) => i.status !== "removed").length,
+    expenses: backup.expenses.length,
+    history: backup.activity.length,
   });
 }

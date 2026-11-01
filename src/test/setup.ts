@@ -10,6 +10,16 @@ vi.mock("@/lib/activity-repository-instance", async () => {
   return { activityRepository: new LocalActivityRepository() };
 });
 
+// Tooltips measure themselves with this, and jsdom doesn't have it.
+vi.stubGlobal(
+  "ResizeObserver",
+  class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
+);
+
 afterEach(() => {
   cleanup();
 });

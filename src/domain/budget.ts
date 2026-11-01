@@ -20,6 +20,17 @@ export function formatYen(yen: number): string {
   return `¥${yen.toLocaleString("en-US")}`;
 }
 
+// A fixed rate, only for the rough dollar hint: amounts stay in yen. Change it
+// here when the rate moves.
+export const YEN_PER_USD = 157.58;
+
+export function formatUsd(yen: number): string {
+  return (yen / YEN_PER_USD).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+}
+
 // The spending category a place, booking or hotel starts out with.
 export function categoryForPlace(category: Category): ExpenseCategory {
   if (category === "food") return "food";

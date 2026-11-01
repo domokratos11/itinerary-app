@@ -61,7 +61,8 @@
     "archivedName": "Se archivó {name}",
     "addStay": "Agregar hospedaje",
     "googleMapsLink": "Enlace de Google Maps",
-    "editName": "Editar {name}"
+    "editName": "Editar {name}",
+    "tipAddPlace": "Agrega un lugar por nombre o pegando un enlace de Google Maps"
   },
   "nav": {
     "sections": "Secciones",
@@ -70,7 +71,13 @@
     "settings": "Ajustes",
     "dashboard": "Panel",
     "budget": "Presupuesto",
-    "toggleSidebar": "Reducir o ampliar la barra lateral"
+    "collapse": "Contraer",
+    "expand": "Expandir",
+    "hintDashboard": "El viaje de un vistazo: cuenta regresiva, presupuesto, plan y lo que requiere atención",
+    "hintDays": "Cada día del viaje y lo planeado para él",
+    "hintCities": "Los lugares por visitar en cada ciudad",
+    "hintBudget": "Lo gastado y lo que queda, compartido entre todos",
+    "hintSettings": "Hoteles, ciudades, lugares, reservaciones, miembros y respaldos"
   },
   "category": {
     "lights": "Iluminaciones",
@@ -181,7 +188,6 @@
     "noStopsLeft": "No quedan paradas planeadas",
     "start": "Inicio",
     "end": "Fin",
-    "hotelRow": "{label} · Hotel",
     "noStopsPhone": "Aún no hay paradas. Abre un lugar de la lista de una ciudad y elige Agregar al día.",
     "noStopsWide": "Aún no hay paradas. Arrastra aquí un lugar desde la derecha, o abre la lista de una ciudad y elige Agregar al día.",
     "reservations": "Reservaciones",
@@ -207,7 +213,15 @@
     "waitingDrag": "Arrastra uno al día.",
     "moveToAnother": "Mover a otro día",
     "moveToAnotherHint": "Suelta una parada en un día para moverla al final de ese día.",
-    "dragInto": "Arrastra {name} al día"
+    "dragInto": "Arrastra {name} al día",
+    "stopsColumn": "Paradas",
+    "noOtherDays": "No hay otros días en esta ciudad.",
+    "hotelEndpoint": "{label}: {name}",
+    "tipHotel": "Cómo llegar a {name}",
+    "bookings": "{count, plural, one {# reservación} other {# reservaciones}}",
+    "tipBookings": "Los vuelos, trenes y boletos reservados para este día",
+    "tipGoNext": "Cómo llegar a la siguiente parada: {name}",
+    "tipFullDay": "Indicaciones para cada tramo del día, de hotel a hotel"
   },
   "warnings": {
     "closedOnDay": "Cerrado este día",
@@ -271,7 +285,10 @@
     "latitude": "Latitud",
     "longitude": "Longitud",
     "checkField": "Revisa este campo: {problem}",
-    "whyWeWant": "Por qué nos interesa"
+    "whyWeWant": "Por qué nos interesa",
+    "tipOpenInMaps": "Abre este lugar en Google Maps",
+    "tipResearch": "Pide que se investigue este lugar en la próxima investigación",
+    "tipAddToDay": "Pon este lugar en uno de los días de su ciudad"
   },
   "live": {
     "limit": "Se alcanzó el límite de hoy para esto. Vuelve mañana.",
@@ -296,7 +313,9 @@
     "original": "Original en Google Maps",
     "position": "{index} de {total}",
     "closedVsNotes": "Google dice que hoy está cerrado, pero nuestras notas indican un horario.",
-    "notesDiffer": "Nuestras notas dicen {open}–{close}. Revísalo antes de confiar en alguno."
+    "notesDiffer": "Nuestras notas dicen {open}–{close}. Revísalo antes de confiar en alguno.",
+    "tipFromGoogle": "El horario de hoy y la calificación de Google. No se guarda nada.",
+    "tipShowPhoto": "Fotos de Google. No se guarda nada."
   },
   "map": {
     "notConfigured": "El mapa aún no está configurado.",
@@ -318,7 +337,16 @@
     "account": "Cuenta",
     "aGoogleAccount": "una cuenta de Google",
     "signOutHint": "Al cerrar sesión se quita el viaje de este dispositivo. Los cambios hechos sin conexión que aún no se sincronizan se pierden.",
-    "tabCleanup": "Limpieza"
+    "tabCleanup": "Limpieza",
+    "section": "Sección de ajustes",
+    "hintStays": "Dónde duermen cada noche. Esto define a qué ciudad pertenece cada día.",
+    "hintCities": "Las ciudades del viaje y sus colores.",
+    "hintPlaces": "Todos los lugares, con la investigación por revisar.",
+    "hintBookings": "Vuelos, trenes, tours y boletos, que aparecen en su día.",
+    "hintHolidays": "Feriados y cierres que pueden afectar sus planes.",
+    "hintTrip": "El nombre del viaje y quién puede abrirlo.",
+    "hintBackup": "Descarga todo el viaje como archivo, o restaura uno en un viaje vacío.",
+    "hintCleanup": "Elimina para siempre lo archivado o terminado, y el historial de cambios."
   },
   "about": {
     "title": "Acerca de",
@@ -433,14 +461,16 @@
     "restored": "Respaldo restaurado",
     "refused": "No se aceptó el respaldo. Revisa tu conexión.",
     "exportTitle": "Exportar",
-    "exportBody": "Todo el viaje en un archivo: ciudades, hospedajes, reservaciones, lugares, gastos y el plan. Guárdalo en un lugar privado, no en el repositorio público. Los marcadores de Google se omiten, como exigen sus términos; ejecuta maps:refresh después de restaurar para recuperarlos.",
+    "exportBody": "Todo el viaje en un archivo: ciudades, hospedajes, reservaciones, lugares, gastos, el presupuesto, el plan, la investigación y el historial de cambios, incluidos los registros archivados y eliminados. También contiene el nombre del viaje y los correos de sus miembros, así que guárdalo en un lugar privado, no en el repositorio público. Los puntos del mapa de Google se omiten, como exigen sus términos; ejecuta maps:refresh después de restaurar para recuperarlos.",
     "importTitle": "Importar",
     "importEmpty": "Restaura un respaldo en este viaje. Solo funciona mientras el viaje no tenga nada guardado.",
     "importFull": "Este viaje ya tiene cambios guardados, así que no se puede importar un respaldo aquí. Crea un viaje nuevo para restaurarlo.",
     "choose": "Elegir un archivo de respaldo",
     "restoreTitle": "¿Restaurar este respaldo?",
     "exportedOn": "Exportado el {date}",
-    "summary": "{cities, plural, one {# ciudad} other {# ciudades}}, {stays, plural, one {# hospedaje} other {# hospedajes}}, {reservations, plural, one {# reservación} other {# reservaciones}}, {places, plural, one {# lugar} other {# lugares}}, {stops, plural, one {# parada} other {# paradas}}"
+    "summary": "{cities, plural, one {# ciudad} other {# ciudades}}, {stays, plural, one {# hospedaje} other {# hospedajes}}, {reservations, plural, one {# reservación} other {# reservaciones}}, {places, plural, one {# lugar} other {# lugares}}, {stops, plural, one {# parada} other {# paradas}}, {expenses, plural, one {# gasto} other {# gastos}}, {history, plural, one {# entrada de historial} other {# entradas de historial}}",
+    "exportFailed": "No se pudo crear el respaldo porque no se pudo leer parte del viaje. Revisa tu conexión.",
+    "tipExport": "Descarga todo el viaje en un archivo"
   },
   "search": {
     "title": "Buscar",
@@ -449,7 +479,8 @@
     "nothing": "No se encontró nada.",
     "days": "Días",
     "hotels": "Hoteles",
-    "places": "Lugares"
+    "places": "Lugares",
+    "tip": "Busca un día o lugar"
   },
   "activity": {
     "title": "Actividad",
@@ -575,7 +606,11 @@
     "planned": "Previsto",
     "paidBy": "Pagado por",
     "nobody": "Sin asignar",
-    "archiveName": "Archivar {name}"
+    "archiveName": "Archivar {name}",
+    "usdHint": "≈ {usd} USD (1 USD = ¥{rate})",
+    "tipSetBudget": "Define el total, una meta por categoría y cuántos viajan",
+    "tipAddExpense": "Registra algo comprado o por pagar",
+    "tipLogCost": "Agrega este lugar al presupuesto, con su nombre y categoría ya puestos"
   },
   "dashboard": {
     "title": "Panel",

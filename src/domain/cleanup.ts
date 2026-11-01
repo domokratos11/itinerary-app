@@ -133,6 +133,8 @@ export type RemoteLeftovers = {
 
 export interface CleanupRepository {
   countRemote(tripId: string): Promise<RemoteLeftovers>;
+  // The old Queue's links as they are, for a backup.
+  queueLinks(tripId: string): Promise<Record<string, unknown>[]>;
   // Deletes these rows; the rules refuse any that aren't retired.
   remove(
     tripId: string,

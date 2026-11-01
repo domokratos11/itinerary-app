@@ -11,6 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -86,9 +87,11 @@ export function AddToDay({ place }: { place: Place }) {
 
   return (
     <>
-      <Button className="w-full" onClick={() => setOpen(true)}>
-        {t("common.addToDay")}
-      </Button>
+      <Tip label={t("place.tipAddToDay")}>
+        <Button className="w-full" onClick={() => setOpen(true)}>
+          {t("common.addToDay")}
+        </Button>
+      </Tip>
       {wide ? (
         <CommandDialog
           open={open}
