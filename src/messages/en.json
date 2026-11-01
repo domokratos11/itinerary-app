@@ -209,7 +209,7 @@
     "moved": "Moved {name} to {day}",
     "mapNote": "{count, plural, one {# stop has} other {# stops have}} no map pin yet.",
     "waiting": "Waiting to be placed",
-    "waitingNone": "Nothing waiting. Draft places you add to this city show up here.",
+    "waitingNone": "Every place in this city is already on a day.",
     "waitingDrag": "Drag one into the day.",
     "moveToAnother": "Move to another day",
     "moveToAnotherHint": "Drop a stop on a day to move it to the end of that day.",

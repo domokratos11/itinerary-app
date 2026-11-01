@@ -4,7 +4,10 @@ import type { ReactNode } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { GripVertical } from "lucide-react";
 
+import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { Badge } from "@/components/ui/badge";
+import { isDraft } from "@/domain/place-edit";
+import type { Place } from "@/domain/schemas";
 import type { TripDay } from "@/domain/days";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -25,10 +28,23 @@ export function parseDragId(
 
 export type Waiting = {
   dragId: string;
-  placeId: string;
-  name: string;
-  detail: string;
+  place: Place;
 };
+
+// What tells one waiting place from another at a glance.
+export function WaitingTags({ place }: { place: Place }) {
+  return (
+    <span className="flex flex-wrap gap-1">
+      <CategoryBadge category={place.category} />
+      <PriorityBadge priority={place.priority} />
+      {isDraft(place) && (
+        <Badge variant="outline" className="border-dashed">
+          {t("common.notResearched")}
+        </Badge>
+      )}
+    </span>
+  );
+}
 
 // One column of the day page on wide screens: its title stays put and the
 // rest scrolls, so a long list never pushes the map away.
@@ -104,12 +120,12 @@ function WaitingItem({ waiting }: { waiting: Waiting }) {
       )}
       {...attributes}
       {...listeners}
-      aria-label={t("day.dragInto", { name: waiting.name })}
+      aria-label={t("day.dragInto", { name: waiting.place.name })}
     >
       <GripVertical className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-      <span className="min-w-0">
-        <span className="block truncate font-medium">{waiting.name}</span>
-        <span className="text-xs text-muted-foreground">{waiting.detail}</span>
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="truncate font-medium">{waiting.place.name}</span>
+        <WaitingTags place={waiting.place} />
       </span>
     </li>
   );
