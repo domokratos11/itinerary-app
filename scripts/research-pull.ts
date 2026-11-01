@@ -6,20 +6,49 @@
  * first requests research for every place with empty fields, optionally only
  * --city <id> and at most --limit <n>.
  *
- * Writes research/proposals-<date>.json (git-ignored).
+ * Requests for a place that has been archived can't be researched, so they are
+ * dismissed and listed. Writes research/proposals-<date>.json (git-ignored),
+ * or -2, -3 and so on when that file exists, so a list still being researched
+ * is never overwritten. With nothing waiting it writes no file.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { adminDb } from "./admin-db";
 import { missingFields, needsResearch } from "../src/domain/place-edit";
 import { isOpenProposal, newProposal } from "../src/domain/proposals";
-import { PlaceRecordSchema, ProposalSchema } from "../src/domain/schemas";
+import {
+  PlaceRecordSchema,
+  ProposalSchema,
+  type Proposal,
+} from "../src/domain/schemas";
 import { parseTripId } from "../src/lib/trip-id";
 
 function argument(name: string): string | null {
   const index = process.argv.indexOf(`--${name}`);
   return index >= 0 ? (process.argv[index + 1] ?? null) : null;
+}
+
+// Requests whose place is archived or gone. `livePlaceIds` comes from the raw
+// documents, so a place that merely fails the schema doesn't count as gone.
+export function orphanedRequests(
+  proposals: Proposal[],
+  livePlaceIds: ReadonlySet<string>,
+): Proposal[] {
+  return proposals.filter(
+    (p) => p.status === "requested" && !livePlaceIds.has(p.placeId),
+  );
+}
+
+// The first name for this date that `taken` says is free.
+export function freeFileName(
+  date: string,
+  taken: (name: string) => boolean,
+): string {
+  let name = `proposals-${date}.json`;
+  for (let n = 2; taken(name); n += 1) name = `proposals-${date}-${n}.json`;
+  return name;
 }
 
 async function main() {
@@ -30,12 +59,16 @@ async function main() {
   }
   const db = adminDb();
 
-  const places = (await db.collection(`trips/${tripId}/places`).get()).docs
+  const placeDocs = (await db.collection(`trips/${tripId}/places`).get()).docs;
+  const places = placeDocs
     .flatMap((d) => {
       const r = PlaceRecordSchema.safeParse(d.data());
       return r.success ? [r.data] : [];
     })
     .filter((p) => !p.archived);
+  const livePlaceIds = new Set(
+    placeDocs.filter((d) => d.data().archived !== true).map((d) => d.id),
+  );
   const cityNames = new Map(
     (await db.collection(`trips/${tripId}/cities`).get()).docs.map((d) => [
       d.id,
@@ -48,6 +81,15 @@ async function main() {
     const r = ProposalSchema.safeParse(d.data());
     return r.success ? [r.data] : [];
   });
+
+  const stamp = new Date().toISOString();
+  for (const orphan of orphanedRequests(proposals, livePlaceIds)) {
+    await db
+      .doc(`trips/${tripId}/proposals/${orphan.id}`)
+      .update({ status: "dismissed", updatedAt: stamp });
+    orphan.status = "dismissed";
+    console.log(`${orphan.placeId}: place is archived, request dismissed`);
+  }
 
   if (process.argv.includes("--all-missing")) {
     const open = new Set(
@@ -104,19 +146,25 @@ async function main() {
       ];
     });
 
+  console.log(`${requests.length} requests waiting for research`);
+  if (requests.length === 0) process.exit(0);
+
   const dir = path.resolve(process.cwd(), "research");
   mkdirSync(dir, { recursive: true });
   const file = path.join(
     dir,
-    `proposals-${new Date().toISOString().slice(0, 10)}.json`,
+    freeFileName(new Date().toISOString().slice(0, 10), (name) =>
+      existsSync(path.join(dir, name)),
+    ),
   );
   writeFileSync(file, JSON.stringify(requests, null, 2) + "\n");
-  console.log(`${requests.length} requests waiting for research`);
   console.log(`Written to ${path.relative(process.cwd(), file)}`);
   process.exit(0);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
