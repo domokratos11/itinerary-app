@@ -221,7 +221,11 @@
     "bookings": "{count, plural, one {# reservación} other {# reservaciones}}",
     "tipBookings": "Los vuelos, trenes y boletos reservados para este día",
     "tipGoNext": "Cómo llegar a la siguiente parada: {name}",
-    "tipFullDay": "Indicaciones para cada tramo del día, de hotel a hotel"
+    "tipFullDay": "Indicaciones para cada tramo del día, de hotel a hotel",
+    "waitingTab": "En espera ({count})",
+    "waitingTap": "Toca uno para agregarlo a este día.",
+    "addWaitingTitle": "¿Agregar {name} a {day}?",
+    "addWaitingBody": "Se agrega al final del día, y puedes reordenarlo desde la lista."
   },
   "warnings": {
     "closedOnDay": "Cerrado este día",
@@ -398,7 +402,20 @@
     "selectName": "Seleccionar {name}",
     "review": "Revisar investigación",
     "noPin": "Sin marcador",
-    "archiveAria": "Archivar {name}"
+    "archiveAria": "Archivar {name}",
+    "accepted": "Investigado y aceptado",
+    "acceptedOn": "Investigación revisada y aceptada. Datos verificados por última vez el {date}.",
+    "acceptedTip": "Investigación revisada y aceptada.",
+    "missingCount": "Faltan {count}",
+    "acceptAll": "Aceptar todo ({count})",
+    "acceptCount": "Aceptar investigación ({count})",
+    "tipAcceptAll": "Acepta toda la investigación terminada, en todas las ciudades",
+    "tipAcceptChosen": "Acepta la investigación terminada de los lugares seleccionados",
+    "acceptTitle": "¿Aceptar la investigación de {count, plural, one {# lugar} other {# lugares}}?",
+    "acceptBody": "Cada valor investigado se guarda en su lugar. Puedes deshacerlo justo después.",
+    "acceptCorrections": "Cada valor investigado se guarda en su lugar, y {count, plural, one {# de ellos reemplaza un valor existente} other {# de ellos reemplazan valores existentes}}. Para revisarlos primero, usa Revisar investigación en cada lugar. Puedes deshacerlo justo después.",
+    "acceptConfirm": "Aceptar",
+    "acceptedCount": "Investigación aceptada de {count, plural, one {# lugar} other {# lugares}}"
   },
   "placeFilter": {
     "all": "Todos los lugares",

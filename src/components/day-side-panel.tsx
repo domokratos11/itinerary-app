@@ -25,6 +25,7 @@ export function parseDragId(
 
 export type Waiting = {
   dragId: string;
+  placeId: string;
   name: string;
   detail: string;
 };

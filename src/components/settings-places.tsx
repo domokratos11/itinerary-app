@@ -1,12 +1,29 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Archive, Pencil, Plus, Search } from "lucide-react";
+import {
+  Archive,
+  BadgeCheck,
+  CheckCheck,
+  Pencil,
+  Plus,
+  Search,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AddPlace } from "@/components/add-place";
 import { PlaceEditor } from "@/components/place-editor";
 import { ProposalReview } from "@/components/proposal-review";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
@@ -25,9 +42,18 @@ import {
   PLACE_FILTERS,
   type PlaceFilter,
 } from "@/domain/place-edit";
+import {
+  placeFacts,
+  researchToAccept,
+  type ResearchToAccept,
+} from "@/domain/proposals";
 import type { PlaceRecord, Proposal } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
-import { requestResearch } from "@/lib/proposal-actions";
+import {
+  applyProposals,
+  requestResearch,
+  undoProposals,
+} from "@/lib/proposal-actions";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip } from "@/lib/trip-store";
 import { useProposals } from "@/lib/use-proposals";
@@ -41,6 +67,7 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
   const [adding, setAdding] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [reviewing, setReviewing] = useState<string | null>(null);
+  const [accepting, setAccepting] = useState<ResearchToAccept[] | null>(null);
   const proposals = useProposals(tripId);
   const ready = useMemo(
     () =>
@@ -59,6 +86,17 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
     [proposals],
   );
   const reviewable = useMemo(() => new Set(ready.keys()), [ready]);
+  const accepted = useMemo(
+    () =>
+      new Set(
+        proposals.filter((p) => p.status === "applied").map((p) => p.placeId),
+      ),
+    [proposals],
+  );
+  const finished = useMemo(
+    () => researchToAccept(proposals, trip.places, t),
+    [proposals, trip.places],
+  );
 
   const visible = useMemo(
     () =>
@@ -72,6 +110,13 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
   // nobody can see.
   const chosen = visible.filter((p) => selected.has(p.id));
   const allChosen = visible.length > 0 && chosen.length === visible.length;
+  const shownFinished = finished.filter((r) =>
+    chosen.some((p) => p.id === r.place.id),
+  );
+  const corrections = (accepting ?? []).reduce(
+    (sum, r) => sum + r.corrections,
+    0,
+  );
   const reviewProposal = reviewing ? ready.get(reviewing) : undefined;
   const reviewPlace = trip.places.find((p) => p.id === reviewing);
 
@@ -93,6 +138,23 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
       )
       .catch(() => toast.error(t("common.refused")));
     setSelected(new Set());
+  }
+
+  function acceptAll(research: ResearchToAccept[]) {
+    setAccepting(null);
+    setSelected(new Set());
+    applyProposals(tripId, research).catch(() =>
+      toast.error(t("common.refused")),
+    );
+    toast(t("placeSettings.acceptedCount", { count: research.length }), {
+      action: {
+        label: t("common.undo"),
+        onClick: () =>
+          undoProposals(tripId, research).catch(() =>
+            toast.error(t("common.undoFailed")),
+          ),
+      },
+    });
   }
 
   function archive(place: PlaceRecord) {
@@ -119,13 +181,26 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
   return (
     <div className="flex flex-col gap-3">
       {ready.size > 0 && (
-        <Button
-          variant="outline"
-          className="h-auto justify-start py-2 whitespace-normal"
-          onClick={() => setFilter("review")}
-        >
-          {t("common.researchToReview", { count: ready.size })}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="h-auto flex-1 justify-start py-2 whitespace-normal"
+            onClick={() => setFilter("review")}
+          >
+            {t("common.researchToReview", { count: ready.size })}
+          </Button>
+          {finished.length > 0 && (
+            <Tip label={t("placeSettings.tipAcceptAll")}>
+              <Button
+                className="h-auto py-2"
+                onClick={() => setAccepting(finished)}
+              >
+                <CheckCheck />
+                {t("placeSettings.acceptAll", { count: finished.length })}
+              </Button>
+            </Tip>
+          )}
+        </div>
       )}
       <div className="grid gap-2 sm:grid-cols-2 lg:max-w-2xl">
         <Select value={cityId} onValueChange={setCityId}>
@@ -182,6 +257,16 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
               ? t("placeSettings.researchCount", { count: chosen.length })
               : t("placeSettings.research")}
           </Button>
+          {shownFinished.length > 0 && (
+            <Tip label={t("placeSettings.tipAcceptChosen")}>
+              <Button size="sm" onClick={() => setAccepting(shownFinished)}>
+                <CheckCheck />
+                {t("placeSettings.acceptCount", {
+                  count: shownFinished.length,
+                })}
+              </Button>
+            </Tip>
+          )}
           <Tip label={t("common.tipAddPlace")}>
             <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
               <Plus />
@@ -199,6 +284,7 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
             checked={selected.has(place.id)}
             requested={requested.has(place.id)}
             canReview={ready.has(place.id)}
+            accepted={accepted.has(place.id)}
             onCheck={(on) => toggle(place.id, on)}
             onReview={() => setReviewing(place.id)}
             onEdit={() => setEditing(place)}
@@ -229,6 +315,33 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
           onClose={() => setReviewing(null)}
         />
       )}
+      <AlertDialog
+        open={accepting !== null}
+        onOpenChange={(open) => !open && setAccepting(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("placeSettings.acceptTitle", {
+                count: accepting?.length ?? 0,
+              })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {corrections > 0
+                ? t("placeSettings.acceptCorrections", { count: corrections })
+                : t("placeSettings.acceptBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => accepting && acceptAll(accepting)}
+            >
+              {t("placeSettings.acceptConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {adding && (
         <AddPlace
           tripId={tripId}
@@ -245,6 +358,7 @@ function PlaceRow({
   checked,
   requested,
   canReview,
+  accepted,
   onCheck,
   onReview,
   onEdit,
@@ -254,12 +368,16 @@ function PlaceRow({
   checked: boolean;
   requested: boolean;
   canReview: boolean;
+  accepted: boolean;
   onCheck: (on: boolean) => void;
   onReview: () => void;
   onEdit: () => void;
   onArchive: () => void;
 }) {
   const missing = missingFields(place);
+  const facts = placeFacts(place, t).join(" · ");
+  // Newer research waiting says more than an older acceptance.
+  const showAccepted = accepted && !canReview && !requested;
   return (
     <li className="flex items-start gap-3 rounded-lg border p-3 text-sm">
       <Checkbox
@@ -269,7 +387,33 @@ function PlaceRow({
         className="mt-0.5"
       />
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="font-medium">{place.name}</span>
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-medium">{place.name}</span>
+          {showAccepted && (
+            <Tip
+              label={
+                place.verifiedAt
+                  ? t("placeSettings.acceptedOn", { date: place.verifiedAt })
+                  : t("placeSettings.acceptedTip")
+              }
+            >
+              <Badge
+                variant="outline"
+                className="border-transparent bg-[#16a34a] text-white"
+              >
+                <BadgeCheck />
+                {t("placeSettings.accepted")}
+              </Badge>
+            </Tip>
+          )}
+        </span>
+        {facts && (
+          <Tip label={facts}>
+            <span className="truncate text-xs text-muted-foreground">
+              {facts}
+            </span>
+          </Tip>
+        )}
         <span className="flex flex-wrap gap-1.5">
           {canReview && (
             <Button size="xs" onClick={onReview}>
@@ -282,15 +426,30 @@ function PlaceRow({
           {!hasPin(place) && (
             <Badge variant="outline">{t("placeSettings.noPin")}</Badge>
           )}
-          {missing.map((field) => (
-            <Badge
-              key={field}
-              variant="outline"
-              className="border-dashed text-muted-foreground"
-            >
-              {t(`missingField.${field}`)}
-            </Badge>
-          ))}
+          {showAccepted
+            ? missing.length > 0 && (
+                <Tip
+                  label={missing
+                    .map((field) => t(`missingField.${field}`))
+                    .join(", ")}
+                >
+                  <Badge
+                    variant="outline"
+                    className="border-dashed text-muted-foreground"
+                  >
+                    {t("placeSettings.missingCount", { count: missing.length })}
+                  </Badge>
+                </Tip>
+              )
+            : missing.map((field) => (
+                <Badge
+                  key={field}
+                  variant="outline"
+                  className="border-dashed text-muted-foreground"
+                >
+                  {t(`missingField.${field}`)}
+                </Badge>
+              ))}
         </span>
       </span>
       <Button

@@ -157,6 +157,51 @@ export function acceptProposal(
   };
 }
 
+export type ResearchToAccept = {
+  proposal: Proposal;
+  place: PlaceRecord;
+  // Every field it would set, as a review with nothing unticked would.
+  fields: Set<string>;
+  // How many of those replace a value the place already has.
+  corrections: number;
+};
+
+// The finished research of these places, ready to accept in one go. Research
+// on a place that's been archived stays for its own review.
+export function researchToAccept(
+  proposals: Proposal[],
+  places: PlaceRecord[],
+  tr: Translate,
+): ResearchToAccept[] {
+  const byId = new Map(places.map((place) => [place.id, place]));
+  return proposals.flatMap((proposal) => {
+    const place = byId.get(proposal.placeId);
+    if (proposal.status !== "ready" || !place) return [];
+    const rows = proposalRows(place, proposal, tr);
+    return [
+      {
+        proposal,
+        place,
+        fields: new Set<string>(rows.map((row) => row.field)),
+        corrections: rows.filter((row) => row.kind === "change").length,
+      },
+    ];
+  });
+}
+
+// What's most worth knowing about a place, for a one-line summary.
+export function placeFacts(place: PlaceRecord, tr: Translate): string[] {
+  const facts: ProposalField[] = [
+    "costEstimateJPY",
+    "durationMin",
+    "openingHours",
+    "nearestStation",
+  ];
+  return facts.flatMap((field) =>
+    isEmpty(place[field]) ? [] : [formatProposalValue(field, place[field], tr)],
+  );
+}
+
 // One entry of a finished research file.
 export const ResearchResultSchema = z.object({
   proposalId: z.string().min(1),

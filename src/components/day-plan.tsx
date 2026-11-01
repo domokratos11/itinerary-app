@@ -29,12 +29,23 @@ import {
   GripVertical,
   Navigation,
   Pencil,
+  Plus,
   Ticket,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,6 +85,7 @@ import {
   DayColumn,
   DragPreview,
   LIST_ID,
+  type Waiting,
   OtherDaysColumn,
   parseDragId,
   placeDragId,
@@ -98,7 +110,7 @@ import { StopEditor, type StopChanges } from "@/components/stop-editor";
 import { LegLine } from "@/components/leg-line";
 import { TripMap } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
-import { dayMap } from "@/domain/map-pins";
+import { dayMap, stopColor } from "@/domain/map-pins";
 import type { MapLine } from "@/domain/maps-service";
 import { useWalkingLegs } from "@/lib/use-walking-legs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -134,7 +146,8 @@ export function DayPlan(props: Props) {
   const tripDays = useTripDays();
   const [dragging, setDragging] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const [view, setView] = useState<"list" | "map">("list");
+  const [view, setView] = useState<"list" | "map" | "waiting">("list");
+  const [adding, setAdding] = useState<Waiting | null>(null);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
   const wide = useMediaQuery("(min-width: 768px)");
   const stops = useMemo(
@@ -178,6 +191,7 @@ export function DayPlan(props: Props) {
       )
       .map((p) => ({
         dragId: placeDragId(p.id),
+        placeId: p.id,
         name: p.name,
         detail: t("common.notResearched"),
       }));
@@ -272,9 +286,21 @@ export function DayPlan(props: Props) {
       return;
     }
 
-    addPlaceAt(id, source.placeId, plan.date, plan.index, dayItems(plan.date))
+    addToDay(source.placeId, plan.date, plan.index, dayItems(plan.date));
+  }
+
+  function addToDay(
+    placeId: string,
+    date: string,
+    index: number,
+    dayItems: PlanItem[],
+  ) {
+    if (!tripId) return;
+    const id = tripId;
+    const name = placesById.get(placeId)?.name ?? t("day.thisPlace");
+    addPlaceAt(id, placeId, date, index, dayItems)
       .then((stop) =>
-        toast(t("common.addedToDay", { name: nameOf(source), day: label }), {
+        toast(t("common.addedToDay", { name, day: formatDayLabel(date) }), {
           action: {
             label: t("common.undo"),
             onClick: () => undo(removeItem(id, stop)),
@@ -377,6 +403,7 @@ export function DayPlan(props: Props) {
       }))
     : [];
   const showPhoneMap = !wide && view === "map";
+  const showPhoneList = !wide && view === "list";
   const draggingName = dragging
     ? parseDragId(dragging)
       ? waiting.find((w) => w.dragId === dragging)?.name
@@ -384,7 +411,7 @@ export function DayPlan(props: Props) {
     : null;
 
   return (
-    <div className="flex flex-col gap-4 md:h-[calc(100svh-6.5rem-1px)] md:min-h-[38rem] lg:h-[calc(100svh-7.5rem-1px)]">
+    <div className="flex flex-col gap-4 md:h-[calc((100svh-6.5rem-1px)*1.24)] md:min-h-[48rem] lg:h-[calc((100svh-7.5rem-1px)*1.24)]">
       <header className="flex flex-col gap-2">
         <Link
           href={daysHref(tripId)}
@@ -441,12 +468,15 @@ export function DayPlan(props: Props) {
             size="sm"
             value={view}
             onValueChange={(value) => {
-              if (value) setView(value as "list" | "map");
+              if (value) setView(value as typeof view);
             }}
             className="justify-start"
           >
             <ToggleGroupItem value="list">{t("common.list")}</ToggleGroupItem>
             <ToggleGroupItem value="map">{t("common.map")}</ToggleGroupItem>
+            <ToggleGroupItem value="waiting">
+              {t("day.waitingTab", { count: waiting.length })}
+            </ToggleGroupItem>
           </ToggleGroup>
         )}
       </header>
@@ -476,10 +506,11 @@ export function DayPlan(props: Props) {
                 strategy={verticalListSortingStrategy}
               >
                 <DroppableList empty={rows.length === 0}>
-                  {rows.map((row) => (
+                  {rows.map((row, index) => (
                     <SortableStop
                       key={row.item.id}
                       id={row.item.id}
+                      number={index + 1}
                       item={row.item}
                       place={row.place}
                       leg={legLine(row.item.id)}
@@ -497,7 +528,7 @@ export function DayPlan(props: Props) {
             <WaitingColumn waiting={waiting} />
             <OtherDaysColumn otherDays={otherDays} stopCounts={stopCounts} />
           </div>
-          <div className="h-[24%] min-h-40 shrink-0">
+          <div className="h-[38.7%] min-h-80 shrink-0">
             <TripMap
               pins={map.pins}
               lines={mapLines}
@@ -515,12 +546,13 @@ export function DayPlan(props: Props) {
           </DragOverlay>
         </DndContext>
       ) : (
-        !showPhoneMap && (
+        showPhoneList && (
           <ol className="flex flex-col gap-3">
             {rows.map((row, index) => (
               <li key={row.item.id} className="flex flex-col gap-3">
                 {legLine(row.item.id)}
                 <StopCard
+                  number={index + 1}
                   item={row.item}
                   place={row.place}
                   dayOptions={dayOptionsFor(row.place?.cityId)}
@@ -542,13 +574,45 @@ export function DayPlan(props: Props) {
         )
       )}
 
-      {stops.length === 0 && !wide && !showPhoneMap && (
+      {stops.length === 0 && showPhoneList && (
         <p className="text-sm text-muted-foreground">{t("day.noStopsPhone")}</p>
       )}
 
-      {!wide && !showPhoneMap && (
-        <Reservations reservations={props.reservations} />
+      {!wide && view === "waiting" && (
+        <PhoneWaiting waiting={waiting} onChoose={setAdding} />
       )}
+      <AlertDialog
+        open={adding !== null}
+        onOpenChange={(open) => !open && setAdding(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("day.addWaitingTitle", {
+                name: adding?.name ?? "",
+                day: props.label,
+              })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("day.addWaitingBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (adding)
+                  addToDay(adding.placeId, props.date, stops.length, stops);
+                setAdding(null);
+              }}
+            >
+              {t("common.addToDay")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {showPhoneList && <Reservations reservations={props.reservations} />}
       <PlaceDetails
         place={openPlace ?? null}
         nearby={openNearby}
@@ -604,6 +668,42 @@ function DroppableList({
         </li>
       )}
     </ol>
+  );
+}
+
+// Phones can't drag, so a place waiting is added by tapping it.
+function PhoneWaiting({
+  waiting,
+  onChoose,
+}: {
+  waiting: Waiting[];
+  onChoose: (place: Waiting) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-2">
+      <p className="text-sm text-muted-foreground">
+        {waiting.length === 0 ? t("day.waitingNone") : t("day.waitingTap")}
+      </p>
+      <ul className="flex flex-col gap-2">
+        {waiting.map((w) => (
+          <li key={w.dragId}>
+            <Button
+              variant="outline"
+              className="h-auto w-full justify-between gap-3 rounded-lg py-3 text-left whitespace-normal"
+              onClick={() => onChoose(w)}
+            >
+              <span className="min-w-0">
+                <span className="block font-medium">{w.name}</span>
+                <span className="block text-xs font-normal text-muted-foreground">
+                  {w.detail}
+                </span>
+              </span>
+              <Plus />
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -719,6 +819,8 @@ function HotelButton({ text, endpoint }: { text: string; endpoint: Endpoint }) {
 }
 
 type StopProps = {
+  // Its place in the day, the same number as its pin on the map.
+  number: number;
   item: PlanItem;
   place: Place | undefined;
   dayOptions: { date: string; label: string }[];
@@ -773,6 +875,7 @@ function SortableStop({
 
 // Phones use the up/down buttons instead of dragging.
 function StopCard({
+  number,
   item,
   place,
   dayOptions,
@@ -816,6 +919,13 @@ function StopCard({
     <Card size="sm" className={cn(finished && "opacity-70")}>
       <CardHeader className="flex items-start gap-3">
         {handle}
+        <span
+          aria-hidden
+          className="flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white tabular-nums"
+          style={{ backgroundColor: stopColor(item.status) }}
+        >
+          {number}
+        </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <CardTitle
             className={cn(

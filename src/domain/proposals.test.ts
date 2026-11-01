@@ -7,11 +7,51 @@ import {
   cleanResearch,
   isOpenProposal,
   newProposal,
+  placeFacts,
   proposalRows,
+  researchToAccept,
   ResearchResultSchema,
 } from "./proposals";
 import { ProposalSchema, type PlaceRecord } from "./schemas";
 import { testPlace } from "./test-place";
+
+describe("researchToAccept", () => {
+  const base = testPlace({ id: "a", durationMin: 60 });
+  const proposal = {
+    ...newProposal("p1", "a", new Date("2026-11-20T00:00:00.000Z")),
+    status: "ready" as const,
+    fields: { durationMin: 90, websiteUrl: "https://example.com" },
+  };
+
+  it("takes every new value and counts the corrections", () => {
+    const [found] = researchToAccept([proposal], [base], t);
+    expect([...found.fields].sort()).toEqual(["durationMin", "websiteUrl"]);
+    expect(found.corrections).toBe(1);
+  });
+
+  it("leaves out unfinished research and places no longer listed", () => {
+    expect(
+      researchToAccept([{ ...proposal, status: "requested" }], [base], t),
+    ).toEqual([]);
+    expect(researchToAccept([proposal], [], t)).toEqual([]);
+  });
+});
+
+describe("placeFacts", () => {
+  it("lists only what the place has", () => {
+    expect(placeFacts(testPlace(), t)).toEqual([]);
+    expect(
+      placeFacts(
+        testPlace({
+          costEstimateJPY: 600,
+          durationMin: 120,
+          openingHours: "9:30-17:00",
+        }),
+        t,
+      ),
+    ).toEqual(["¥600", t("common.minutes", { minutes: 120 }), "9:30-17:00"]);
+  });
+});
 
 const now = new Date("2026-11-20T00:00:00.000Z");
 const place: PlaceRecord = {
