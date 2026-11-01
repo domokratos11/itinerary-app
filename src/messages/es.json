@@ -209,7 +209,7 @@
     "moved": "Se movió {name} a {day}",
     "mapNote": "{count, plural, one {# parada aún no tiene} other {# paradas aún no tienen}} marcador en el mapa.",
     "waiting": "Por colocar",
-    "waitingNone": "Nada pendiente. Aquí aparecen los lugares en borrador que agregues a esta ciudad.",
+    "waitingNone": "Todos los lugares de esta ciudad ya están en un día.",
     "waitingDrag": "Arrastra uno al día.",
     "moveToAnother": "Mover a otro día",
     "moveToAnotherHint": "Suelta una parada en un día para moverla al final de ese día.",

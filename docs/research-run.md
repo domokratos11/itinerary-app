@@ -12,7 +12,7 @@ Requests come from pressing **Research** in the app. That button only leaves a r
 TRIP_ID=<id> npm run research:pull -- --all-missing --limit 5
 ```
 
-Leave out `--limit` for all of them. This writes `research/proposals-<date>.json`, which is git-ignored.
+Leave out `--limit` for all of them. This writes `research/proposals-<date>.json`, which is git-ignored. If that file already exists it writes `-2`, `-3` and so on, and with nothing waiting it writes no file. Requests for a place that has since been archived are dismissed and listed.
 
 ## 2. Do the research
 

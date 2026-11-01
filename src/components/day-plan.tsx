@@ -76,6 +76,7 @@ import {
   stopTimes,
   stopWarnings,
   timeWarnings,
+  waitingPlaces,
 } from "@/domain/plan";
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
@@ -91,6 +92,7 @@ import {
   placeDragId,
   useListDrop,
   WaitingColumn,
+  WaitingTags,
 } from "@/components/day-side-panel";
 import { LogCostButton, placePrefill } from "@/components/expense-form";
 import { Tip } from "@/components/tip";
@@ -180,22 +182,14 @@ export function DayPlan(props: Props) {
 
   // Wide screens: what can be dragged in from the side panel, and the other
   // days of this day's cities to drop a stop on.
-  const waiting = useMemo(() => {
-    const planned = new Set(
-      items.filter((i) => i.status !== "removed").map((i) => i.placeId),
-    );
-    return trip.places
-      .filter(
-        (p) =>
-          isDraft(p) && props.cityIds.includes(p.cityId) && !planned.has(p.id),
-      )
-      .map((p) => ({
-        dragId: placeDragId(p.id),
-        placeId: p.id,
-        name: p.name,
-        detail: t("common.notResearched"),
-      }));
-  }, [items, trip.places, props.cityIds]);
+  const waiting = useMemo(
+    () =>
+      waitingPlaces(trip.places, items, props.cityIds).map((place) => ({
+        dragId: placeDragId(place.id),
+        place,
+      })),
+    [items, trip.places, props.cityIds],
+  );
   const otherDays = tripDays.filter(
     (d) =>
       d.date !== props.date && d.cityIds.some((c) => props.cityIds.includes(c)),
@@ -406,7 +400,7 @@ export function DayPlan(props: Props) {
   const showPhoneList = !wide && view === "list";
   const draggingName = dragging
     ? parseDragId(dragging)
-      ? waiting.find((w) => w.dragId === dragging)?.name
+      ? waiting.find((w) => w.dragId === dragging)?.place.name
       : rows.find((r) => r.item.id === dragging)?.place?.name
     : null;
 
@@ -589,7 +583,7 @@ export function DayPlan(props: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {t("day.addWaitingTitle", {
-                name: adding?.name ?? "",
+                name: adding?.place.name ?? "",
                 day: props.label,
               })}
             </AlertDialogTitle>
@@ -602,7 +596,7 @@ export function DayPlan(props: Props) {
             <AlertDialogAction
               onClick={() => {
                 if (adding)
-                  addToDay(adding.placeId, props.date, stops.length, stops);
+                  addToDay(adding.place.id, props.date, stops.length, stops);
                 setAdding(null);
               }}
             >
@@ -692,11 +686,9 @@ function PhoneWaiting({
               className="h-auto w-full justify-between gap-3 rounded-lg py-3 text-left whitespace-normal"
               onClick={() => onChoose(w)}
             >
-              <span className="min-w-0">
-                <span className="block font-medium">{w.name}</span>
-                <span className="block text-xs font-normal text-muted-foreground">
-                  {w.detail}
-                </span>
+              <span className="flex min-w-0 flex-col gap-1.5">
+                <span className="font-medium">{w.place.name}</span>
+                <WaitingTags place={w.place} />
               </span>
               <Plus />
             </Button>

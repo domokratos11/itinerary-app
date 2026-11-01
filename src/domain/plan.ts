@@ -1,7 +1,13 @@
 import { evenKeys, keyAfter, keyBetween } from "@/lib/order";
 import { distanceKm, type LatLng } from "@/lib/geo";
 import type { Translate } from "./i18n";
-import type { Holiday, PlanItem, Place, Stay } from "./schemas";
+import {
+  PRIORITIES,
+  type Holiday,
+  type PlanItem,
+  type Place,
+  type Stay,
+} from "./schemas";
 
 // Active plan items (not soft-deleted) on one date, in their saved order.
 // Order keys are fractional strings, so a plain string sort is correct.
@@ -9,6 +15,24 @@ export function itemsForDay(items: PlanItem[], date: string): PlanItem[] {
   return items
     .filter((i) => i.date === date && i.status !== "removed")
     .sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0));
+}
+
+// The places of these cities that aren't on any day yet, researched or not,
+// must-sees first. A stop removed from the plan puts its place back here.
+export function waitingPlaces<
+  T extends Pick<Place, "id" | "cityId" | "priority">,
+>(
+  places: T[],
+  items: Pick<PlanItem, "placeId" | "status">[],
+  cityIds: string[],
+): T[] {
+  const planned = new Set(
+    items.filter((i) => i.status !== "removed").map((i) => i.placeId),
+  );
+  const rank = (place: T) => PRIORITIES.indexOf(place.priority);
+  return places
+    .filter((p) => cityIds.includes(p.cityId) && !planned.has(p.id))
+    .sort((a, b) => rank(a) - rank(b));
 }
 
 // The stays that start and end a day. On a normal day both are the same

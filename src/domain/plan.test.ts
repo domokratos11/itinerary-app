@@ -18,8 +18,43 @@ import {
   stopTimes,
   stopWarnings,
   timeWarnings,
+  waitingPlaces,
 } from "@/domain/plan";
 import type { PlanItem, Place, Stay } from "@/domain/schemas";
+
+describe("waitingPlaces", () => {
+  const place = (id: string, cityId: string, priority: Place["priority"]) => ({
+    id,
+    cityId,
+    priority,
+  });
+  const stop = (placeId: string, status: PlanItem["status"]) => ({
+    placeId,
+    status,
+  });
+
+  it("lists the city's places on no day, must-sees first", () => {
+    const places = [
+      place("maybe", "tokyo", "maybe"),
+      place("must", "tokyo", "must"),
+      place("elsewhere", "kyoto", "must"),
+      place("on-a-day", "tokyo", "must"),
+    ];
+    expect(
+      waitingPlaces(places, [stop("on-a-day", "planned")], ["tokyo"]).map(
+        (p) => p.id,
+      ),
+    ).toEqual(["must", "maybe"]);
+  });
+
+  it("puts a place back when its stop is removed", () => {
+    const places = [place("a", "tokyo", "want")];
+    expect(waitingPlaces(places, [stop("a", "removed")], ["tokyo"])).toEqual(
+      places,
+    );
+    expect(waitingPlaces(places, [stop("a", "done")], ["tokyo"])).toEqual([]);
+  });
+});
 
 const stay = (cityId: string, checkIn: string, checkOut: string): Stay => ({
   cityId,
