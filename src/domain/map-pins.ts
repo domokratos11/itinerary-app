@@ -6,6 +6,11 @@ import type { Endpoint } from "./trip";
 
 const STOP_COLOR = "#2563eb";
 const FINISHED_COLOR = "#6b7280";
+
+// A stop's pin colour, also used for its number on the card.
+export function stopColor(status: PlanItem["status"]): string {
+  return status === "planned" ? STOP_COLOR : FINISHED_COLOR;
+}
 const HOTEL_COLOR = "#111827";
 
 export function placePoint(place: {
@@ -88,7 +93,7 @@ export function dayMap(
       position,
       title: place.name,
       label: String(index + 1),
-      color: item.status === "planned" ? STOP_COLOR : FINISHED_COLOR,
+      color: stopColor(item.status),
       emphasised: false,
       clickable: true,
     });

@@ -221,7 +221,11 @@
     "bookings": "{count, plural, one {# booking} other {# bookings}}",
     "tipBookings": "The flights, trains and tickets booked for this day",
     "tipGoNext": "Directions to the next stop: {name}",
-    "tipFullDay": "Directions for each leg of the day, from hotel to hotel"
+    "tipFullDay": "Directions for each leg of the day, from hotel to hotel",
+    "waitingTab": "Waiting ({count})",
+    "waitingTap": "Tap one to add it to this day.",
+    "addWaitingTitle": "Add {name} to {day}?",
+    "addWaitingBody": "It goes at the end of the day, and you can reorder it from the list."
   },
   "warnings": {
     "closedOnDay": "Closed on this day",
@@ -398,7 +402,20 @@
     "selectName": "Select {name}",
     "review": "Review research",
     "noPin": "No map pin",
-    "archiveAria": "Archive {name}"
+    "archiveAria": "Archive {name}",
+    "accepted": "Researched and accepted",
+    "acceptedOn": "Research reviewed and accepted. Facts last checked {date}.",
+    "acceptedTip": "Research reviewed and accepted.",
+    "missingCount": "{count} missing",
+    "acceptAll": "Accept all ({count})",
+    "acceptCount": "Accept research ({count})",
+    "tipAcceptAll": "Accept all finished research, in every city",
+    "tipAcceptChosen": "Accept the finished research of the selected places",
+    "acceptTitle": "Accept research for {count, plural, one {# place} other {# places}}?",
+    "acceptBody": "Every researched value goes into its place. You can undo this right after.",
+    "acceptCorrections": "Every researched value goes into its place, and {count, plural, one {# of them replaces a value} other {# of them replace values}} already there. To check those first, use Review research on each place. You can undo this right after.",
+    "acceptConfirm": "Accept",
+    "acceptedCount": "Accepted research for {count, plural, one {# place} other {# places}}"
   },
   "placeFilter": {
     "all": "All places",

@@ -2,6 +2,7 @@ import {
   acceptProposal,
   isOpenProposal,
   newProposal,
+  type ResearchToAccept,
 } from "@/domain/proposals";
 import type { PlaceRecord, Proposal } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
@@ -52,6 +53,31 @@ export async function applyProposal(
   await proposalRepository.saveMany(tripId, [
     withStatus(proposal, "applied", now),
   ]);
+}
+
+// Accepts several in one go, as if each had been reviewed with every box ticked.
+export async function applyProposals(
+  tripId: string,
+  research: ResearchToAccept[],
+  now: Date = new Date(),
+): Promise<void> {
+  await Promise.all(
+    research.map(({ proposal, place, fields }) =>
+      applyProposal(tripId, proposal, place, fields, now),
+    ),
+  );
+}
+
+export async function undoProposals(
+  tripId: string,
+  research: ResearchToAccept[],
+  now: Date = new Date(),
+): Promise<void> {
+  await Promise.all(
+    research.map(({ proposal, place }) =>
+      undoProposal(tripId, proposal, place, now),
+    ),
+  );
 }
 
 export async function undoProposal(
