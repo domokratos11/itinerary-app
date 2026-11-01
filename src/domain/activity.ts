@@ -42,6 +42,9 @@ export interface ActivityRepository {
     onError?: (error: Error) => void,
   ): () => void;
   add(tripId: string, entry: Activity): Promise<void>;
+  // The whole log, for a backup, and putting one back.
+  all(tripId: string): Promise<Activity[]>;
+  saveMany(tripId: string, entries: Activity[]): Promise<void>;
 }
 
 function parseItem(json: string | null): PlanItem | null {

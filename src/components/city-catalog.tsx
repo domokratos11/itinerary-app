@@ -39,6 +39,7 @@ import { usePlanStore } from "@/lib/plan-store";
 import { cn } from "@/lib/utils";
 import { AddPlace } from "@/components/add-place";
 import { CityForm } from "@/components/settings-cities";
+import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { Pencil, Plus } from "lucide-react";
@@ -150,10 +151,12 @@ export function CityCatalog({
           >
             <Pencil />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
-            <Plus />
-            {t("common.addPlace")}
-          </Button>
+          <Tip label={t("common.tipAddPlace")}>
+            <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
+              <Plus />
+              {t("common.addPlace")}
+            </Button>
+          </Tip>
         </div>
         <p className="text-sm text-muted-foreground">
           {t("cities.placesShown", {

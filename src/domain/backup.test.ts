@@ -40,22 +40,50 @@ describe("backup", () => {
 
   it("summarises what a backup holds", () => {
     expect(backupSummary(backup, t)).toBe(
-      "2 cities, 2 stays, 1 reservation, 1 place, 1 stop",
+      "2 cities, 2 stays, 1 reservation, 1 place, 1 stop, 0 expenses, 0 history entries",
     );
   });
 
-  it("ignores the queue in a backup from when there was one", () => {
-    const older = {
-      ...JSON.parse(JSON.stringify(backup)),
-      queue: [{ id: "q" }],
-    };
-    expect(BackupSchema.parse(older)).not.toHaveProperty("queue");
+  it("keeps the trip's details, history and old queue links", () => {
+    const full = makeBackup(
+      trip,
+      [],
+      new Date("2026-11-02T00:00:00.000Z"),
+      [],
+      {
+        trip: {
+          name: "Peru",
+          members: ["ana@example.com"],
+          budget: { totalJPY: 1000, byCategory: {}, travellers: 2 },
+        },
+        activity: [
+          {
+            id: "a1",
+            at: "2026-11-01T00:00:00.000Z",
+            device: "Phone",
+            kind: "settings",
+            targetId: null,
+            summary: "Saved",
+            before: null,
+            after: null,
+          },
+        ],
+        queue: [{ id: "q", url: "https://maps.app.goo.gl/x", extra: 1 }],
+      },
+    );
+    expect(BackupSchema.parse(JSON.parse(JSON.stringify(full)))).toEqual(full);
   });
 
   it("still reads a backup from before holidays moved into the trip", () => {
     const older = JSON.parse(JSON.stringify(backup));
     delete older.holidays;
-    expect(BackupSchema.parse(older).holidays).toEqual([]);
+    delete older.trip;
+    delete older.activity;
+    delete older.queue;
+    const parsed = BackupSchema.parse(older);
+    expect(parsed.holidays).toEqual([]);
+    expect(parsed.trip).toBeNull();
+    expect(parsed.activity).toEqual([]);
   });
 });
 

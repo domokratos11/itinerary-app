@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AppHeader, BottomNav } from "@/components/app-header";
+import { AppHeader, BottomNav, VersionTag } from "@/components/app-header";
 import { AppSidebar, AppSidebarProvider } from "@/components/app-sidebar";
 import { CitiesScreen } from "@/components/cities-screen";
 import { CityScreen } from "@/components/city-screen";
@@ -52,7 +52,8 @@ const place = testPlace({ cityId: "nagoya" });
 const SCREENS: [string, () => ReactNode, string, string][] = [
   ["header", () => <AppHeader />, "Peru", "Peru"],
   ["bottom nav", () => <BottomNav />, "Settings", "Ajustes"],
-  ["sidebar", () => <AppSidebar />, "Version 1.2.3", "Versión 1.2.3"],
+  ["sidebar", () => <AppSidebar />, "Collapse", "Contraer"],
+  ["version", () => <VersionTag />, "Version 1.2.3", "Versión 1.2.3"],
   ["days", () => <TripDays />, "Days", "Días"],
   ["today", () => <TodayCard />, "Day 1", "Día 1"],
   ["cities", () => <CitiesScreen />, "Cities", "Ciudades"],

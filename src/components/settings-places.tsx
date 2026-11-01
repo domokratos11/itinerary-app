@@ -8,6 +8,7 @@ import { AddPlace } from "@/components/add-place";
 import { PlaceEditor } from "@/components/place-editor";
 import { ProposalReview } from "@/components/proposal-review";
 import { Badge } from "@/components/ui/badge";
+import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -181,10 +182,12 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
               ? t("placeSettings.researchCount", { count: chosen.length })
               : t("placeSettings.research")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
-            <Plus />
-            {t("common.addPlace")}
-          </Button>
+          <Tip label={t("common.tipAddPlace")}>
+            <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
+              <Plus />
+              {t("common.addPlace")}
+            </Button>
+          </Tip>
         </div>
       </div>
 

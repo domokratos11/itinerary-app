@@ -20,7 +20,9 @@ import {
   type ExpenseCategory,
   type ExpenseRecord,
   type ExpenseStatus,
+  type Place,
 } from "@/domain/schemas";
+import { categoryForPlace } from "@/domain/budget";
 import { EXPENSE_COLOR } from "@/domain/taxonomy";
 import { useActiveTrip, useAuthStore } from "@/lib/auth-store";
 import { t } from "@/lib/i18n";
@@ -43,6 +45,18 @@ export type ExpensePrefill = Partial<
     | "stayId"
   >
 >;
+
+// Logging a place: its name and matching category, and its estimate if known.
+export function placePrefill(place: Place): ExpensePrefill {
+  return {
+    title: place.name,
+    category: categoryForPlace(place.category),
+    placeId: place.id,
+    ...(place.costEstimateJPY !== null && {
+      amountJPY: place.costEstimateJPY,
+    }),
+  };
+}
 
 export function personLabel(email: string | null): string {
   return email ? email.split("@")[0] : t("budget.nobody");
@@ -224,13 +238,15 @@ export function ExpenseForm({
   );
 }
 
-// An icon button that logs the cost of a booking or hotel.
+// An icon button that logs the cost of a stop, booking or hotel.
 export function LogCostButton({
   tripId,
   prefill,
+  className,
 }: {
   tripId: string;
   prefill: ExpensePrefill;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -239,7 +255,7 @@ export function LogCostButton({
         variant="ghost"
         size="icon-sm"
         aria-label={t("budget.logCost")}
-        title={t("budget.logCost")}
+        className={className}
         onClick={() => setOpen(true)}
       >
         <Wallet />

@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { SECTIONS, useSection } from "@/components/app-header";
+import { Tip } from "@/components/tip";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
@@ -15,10 +18,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { t } from "@/lib/i18n";
-import { APP_VERSION } from "@/lib/app-reset";
 import { formatDayLabel } from "@/lib/format-day";
 import { dayHref, pageHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
@@ -88,21 +91,19 @@ export function AppSidebar() {
         <SidebarGroup>
           <nav aria-label={t("nav.sections")}>
             <SidebarMenu>
-              {SECTIONS.map(({ path: href, label, icon: Icon }) => (
+              {SECTIONS.map(({ path: href, label, hint, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={section === href}
-                    tooltip={t(label)}
-                  >
-                    <Link
-                      href={pageHref(href, tripId)}
-                      aria-current={section === href ? "page" : undefined}
-                    >
-                      <Icon />
-                      <span>{t(label)}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  <Tip side="right" label={t(hint)}>
+                    <SidebarMenuButton asChild isActive={section === href}>
+                      <Link
+                        href={pageHref(href, tripId)}
+                        aria-current={section === href ? "page" : undefined}
+                      >
+                        <Icon />
+                        <span>{t(label)}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </Tip>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -134,7 +135,7 @@ export function AppSidebar() {
                         {d.cityIds.map((id) => (
                           <span
                             key={id}
-                            className="size-2 rounded-full"
+                            className="size-2 rounded-full not-dark:group-data-active/menu-button:ring-1 not-dark:group-data-active/menu-button:ring-white/80"
                             style={{
                               backgroundColor:
                                 citiesById.get(id)?.color ?? "#64748b",
@@ -144,7 +145,7 @@ export function AppSidebar() {
                       </span>
                       <span className="flex-1 truncate">{label}</span>
                       {d.date === today && (
-                        <span className="rounded bg-primary px-1.5 text-[10px] font-medium text-primary-foreground uppercase group-data-[collapsible=icon]:hidden">
+                        <span className="rounded bg-primary px-1.5 text-[10px] font-medium text-primary-foreground uppercase group-data-[collapsible=icon]:hidden not-dark:group-data-active/menu-button:bg-background not-dark:group-data-active/menu-button:text-primary">
                           {t("common.today")}
                         </span>
                       )}
@@ -157,11 +158,27 @@ export function AppSidebar() {
               );
             })}
           </SidebarMenu>
-          <p className="px-2 pt-4 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-            {t("common.version", { version: APP_VERSION })}
-          </p>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <CollapseButton />
+      </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function CollapseButton() {
+  const { open, toggleSidebar } = useSidebar();
+  const label = open ? t("nav.collapse") : t("nav.expand");
+  const Icon = open ? PanelLeftClose : PanelLeftOpen;
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={label} onClick={toggleSidebar}>
+          <Icon />
+          <span>{label}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }

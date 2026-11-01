@@ -21,6 +21,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { Tip } from "@/components/tip";
 import { Progress } from "@/components/ui/progress";
 import { darkStep } from "@/domain/taxonomy";
 
@@ -42,13 +43,30 @@ function configFor(series: Pick<Series, "key" | "label" | "color">[]) {
   return config;
 }
 
+function ChartValue({
+  value,
+  format,
+  hint,
+}: {
+  value: number;
+  format: (value: number) => string;
+  hint?: (value: number) => string;
+}) {
+  const shown = (
+    <span className="text-muted-foreground tabular-nums">{format(value)}</span>
+  );
+  return hint ? <Tip label={hint(value)}>{shown}</Tip> : shown;
+}
+
 // A label, its colour and value, so nothing is told by colour alone.
 export function SeriesLegend({
   series,
   format = String,
+  hint,
 }: {
   series: Series[];
   format?: (value: number) => string;
+  hint?: (value: number) => string;
 }) {
   return (
     <ul className="flex flex-col gap-1.5 text-sm">
@@ -64,9 +82,7 @@ export function SeriesLegend({
             />
           )}
           <span className="min-w-0 flex-1 truncate">{label}</span>
-          <span className="text-muted-foreground tabular-nums">
-            {format(value)}
-          </span>
+          <ChartValue value={value} format={format} hint={hint} />
         </li>
       ))}
     </ul>
@@ -77,12 +93,14 @@ export function SeriesLegend({
 export function DonutChart({
   series,
   center,
+  hint,
   centerLabel,
   label,
   format = String,
 }: {
   series: Series[];
   center: string;
+  hint?: (value: number) => string;
   centerLabel: string;
   label: string;
   format?: (value: number) => string;
@@ -107,6 +125,7 @@ export function DonutChart({
                     <span>{item.payload.label}</span>
                     <span className="tabular-nums">
                       {format(Number(value))}
+                      {hint && ` · ${hint(Number(value))}`}
                     </span>
                   </span>
                 )}
@@ -152,7 +171,7 @@ export function DonutChart({
           </Pie>
         </PieChart>
       </ChartContainer>
-      <SeriesLegend series={shown} format={format} />
+      <SeriesLegend series={shown} format={format} hint={hint} />
     </div>
   );
 }
@@ -211,6 +230,7 @@ export function ColumnChart({
   label,
   tick,
   format = String,
+  hint,
 }: {
   data: { key: string; value: number }[];
   color: string;
@@ -218,6 +238,7 @@ export function ColumnChart({
   label: string;
   tick: (key: string) => string;
   format?: (value: number) => string;
+  hint?: (value: number) => string;
 }) {
   return (
     <ChartContainer
@@ -245,7 +266,10 @@ export function ColumnChart({
             <ChartTooltipContent
               labelFormatter={(value) => tick(String(value))}
               formatter={(value) => (
-                <span className="tabular-nums">{format(Number(value))}</span>
+                <span className="tabular-nums">
+                  {format(Number(value))}
+                  {hint && ` · ${hint(Number(value))}`}
+                </span>
               )}
             />
           }
@@ -317,10 +341,12 @@ export function BarList({
   rows,
   max,
   format = String,
+  hint,
 }: {
   rows: Series[];
   max?: number;
   format?: (value: number) => string;
+  hint?: (value: number) => string;
 }) {
   const top = max ?? Math.max(1, ...rows.map((r) => r.value));
   return (
@@ -330,9 +356,7 @@ export function BarList({
           <span className="flex items-center gap-2">
             {Icon && <Icon className="size-4 shrink-0" style={{ color }} />}
             <span className="min-w-0 flex-1 truncate">{label}</span>
-            <span className="text-muted-foreground tabular-nums">
-              {format(value)}
-            </span>
+            <ChartValue value={value} format={format} hint={hint} />
           </span>
           <Progress
             value={Math.min(100, (value / top) * 100)}

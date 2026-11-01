@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BedDouble, CalendarDays, Search } from "lucide-react";
 
+import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -58,19 +59,21 @@ export function SearchPalette() {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setOpen(true)}
-        aria-label={t("search.title")}
-        className="text-muted-foreground"
-      >
-        <Search />
-        <span className="hidden lg:inline">{t("search.title")}</span>
-        <kbd className="hidden rounded border px-1 text-[10px] lg:inline">
-          Ctrl K
-        </kbd>
-      </Button>
+      <Tip label={t("search.tip")}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setOpen(true)}
+          aria-label={t("search.title")}
+          className="text-muted-foreground"
+        >
+          <Search />
+          <span className="hidden lg:inline">{t("search.title")}</span>
+          <kbd className="hidden rounded border px-1 text-[10px] lg:inline">
+            Ctrl K
+          </kbd>
+        </Button>
+      </Tip>
       <CommandDialog
         open={open}
         onOpenChange={setOpen}

@@ -1,11 +1,13 @@
 import {
   collection,
   doc,
+  getDocs,
   limit as take,
   onSnapshot,
   orderBy,
   query,
   setDoc,
+  writeBatch,
 } from "firebase/firestore";
 
 import {
@@ -44,5 +46,26 @@ export class FirestoreActivityRepository implements ActivityRepository {
 
   async add(tripId: string, entry: Activity): Promise<void> {
     await setDoc(doc(getDb(), "trips", tripId, "activity", entry.id), entry);
+  }
+
+  async all(tripId: string): Promise<Activity[]> {
+    const rows = await getDocs(
+      collection(getDb(), "trips", tripId, "activity"),
+    );
+    return rows.docs.flatMap((d) => {
+      const result = ActivitySchema.safeParse(d.data());
+      return result.success ? [result.data] : [];
+    });
+  }
+
+  // A write batch holds at most 500 writes.
+  async saveMany(tripId: string, entries: Activity[]): Promise<void> {
+    const db = getDb();
+    for (let i = 0; i < entries.length; i += 450) {
+      const batch = writeBatch(db);
+      for (const entry of entries.slice(i, i + 450))
+        batch.set(doc(db, "trips", tripId, "activity", entry.id), entry);
+      await batch.commit();
+    }
   }
 }

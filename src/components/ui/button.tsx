@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
+import { Tip } from "@/components/tip";
 import { Slot } from "radix-ui";
 
 const buttonVariants = cva(
@@ -49,8 +50,7 @@ function Button({
     asChild?: boolean;
   }) {
   const Comp = asChild ? Slot.Root : "button";
-
-  return (
+  const button = (
     <Comp
       data-slot="button"
       data-variant={variant}
@@ -58,6 +58,13 @@ function Button({
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
+  );
+  // An icon alone says little, so its label also shows on hover.
+  const label = props["aria-label"];
+  return label && size?.startsWith("icon") ? (
+    <Tip label={label}>{button}</Tip>
+  ) : (
+    button
   );
 }
 

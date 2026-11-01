@@ -25,6 +25,14 @@ export class LocalActivityRepository implements ActivityRepository {
     for (const notify of this.listeners.get(tripId) ?? []) notify();
   }
 
+  async all(tripId: string): Promise<Activity[]> {
+    return [...(this.trips.get(tripId) ?? [])];
+  }
+
+  async saveMany(tripId: string, entries: Activity[]): Promise<void> {
+    for (const entry of entries) await this.add(tripId, entry);
+  }
+
   private newest(tripId: string, limit: number): Activity[] {
     return [...(this.trips.get(tripId) ?? [])]
       .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))

@@ -33,6 +33,11 @@ export class FirestoreCleanupRepository implements CleanupRepository {
     };
   }
 
+  async queueLinks(tripId: string): Promise<Record<string, unknown>[]> {
+    const rows = await getDocs(collection(getDb(), "trips", tripId, "queue"));
+    return rows.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }
+
   async remove(
     tripId: string,
     name: CleanupCollection,

@@ -23,8 +23,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { AddToDay } from "@/components/add-to-day";
-import { ExpenseForm } from "@/components/expense-form";
-import { categoryForPlace } from "@/domain/budget";
+import { ExpenseForm, placePrefill } from "@/components/expense-form";
+import { Tip } from "@/components/tip";
+import { Yen } from "@/components/yen";
 import { PlaceEditor } from "@/components/place-editor";
 import { PlaceLive } from "@/components/place-live";
 import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
@@ -81,14 +82,7 @@ export function PlaceDetails({
       key={place.id}
       tripId={tripId}
       expense={null}
-      prefill={{
-        title: place.name,
-        category: categoryForPlace(place.category),
-        placeId: place.id,
-        ...(place.costEstimateJPY !== null && {
-          amountJPY: place.costEstimateJPY,
-        }),
-      }}
+      prefill={placePrefill(place)}
       onClose={() => setLogging(null)}
     />
   );
@@ -185,18 +179,22 @@ function PlaceBody({
         )}
       </div>
 
-      <Button asChild>
-        <a href={mapsLink} target="_blank" rel="noopener noreferrer">
-          <ExternalLink />
-          {t("place.openInMaps")}
-        </a>
-      </Button>
+      <Tip label={t("place.tipOpenInMaps")}>
+        <Button asChild>
+          <a href={mapsLink} target="_blank" rel="noopener noreferrer">
+            <ExternalLink />
+            {t("place.openInMaps")}
+          </a>
+        </Button>
+      </Tip>
       <AddToDay place={place} />
       {onLogCost && (
-        <Button variant="outline" onClick={onLogCost}>
-          <Wallet />
-          {t("budget.logCost")}
-        </Button>
+        <Tip label={t("budget.tipLogCost")}>
+          <Button variant="outline" onClick={onLogCost}>
+            <Wallet />
+            {t("budget.logCost")}
+          </Button>
+        </Tip>
       )}
       {(onEdit || onArchive) && (
         <div className="flex gap-2">
@@ -245,7 +243,11 @@ function PlaceBody({
       )}
 
       <Section label={t("common.cost")}>
-        {formatCost(place.costEstimateJPY)}
+        {place.costEstimateJPY ? (
+          <Yen yen={place.costEstimateJPY} />
+        ) : (
+          formatCost(place.costEstimateJPY)
+        )}
       </Section>
       <Section label={t("common.timeNeeded")}>
         {place.durationMin === null
@@ -344,24 +346,25 @@ function PlaceResearch({ place }: { place: PlaceRecord }) {
       </p>
     );
   return (
-    <Button
-      variant="outline"
-      onClick={() =>
-        requestResearch(tripId, [place], proposals).catch(() =>
-          toast.error(t("common.refused")),
-        )
-      }
-    >
-      <Search />
-      {t("place.research")}
-    </Button>
+    <Tip label={t("place.tipResearch")}>
+      <Button
+        variant="outline"
+        onClick={() =>
+          requestResearch(tripId, [place], proposals).catch(() =>
+            toast.error(t("common.refused")),
+          )
+        }
+      >
+        <Search />
+        {t("place.research")}
+      </Button>
+    </Tip>
   );
 }
 
 function formatCost(yen: number | null): string {
   if (yen === null) return t("common.notResearched");
-  if (yen === 0) return t("common.free");
-  return `¥${yen.toLocaleString("en-US")}`;
+  return t("common.free");
 }
 
 function Section({ label, children }: { label: string; children: ReactNode }) {

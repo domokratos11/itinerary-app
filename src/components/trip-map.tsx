@@ -103,7 +103,7 @@ export function TripMap({
       : failure;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex h-full flex-col gap-1.5">
       <div
         className={cn(
           "relative overflow-hidden rounded-xl border bg-muted",
