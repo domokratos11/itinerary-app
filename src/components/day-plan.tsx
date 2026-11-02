@@ -27,6 +27,7 @@ import {
   ChevronUp,
   ExternalLink,
   GripVertical,
+  Info,
   Navigation,
   Pencil,
   Plus,
@@ -513,6 +514,7 @@ export function DayPlan(props: Props) {
                       onRemove={() => remove(row.item)}
                       onEdit={() => setEditing(row.item.id)}
                       onMoveDay={(d) => moveToDay(row.item, d)}
+                      onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
                     />
                   ))}
                   {rows.length > 0 && <li>{legLine("end")}</li>}
@@ -554,6 +556,7 @@ export function DayPlan(props: Props) {
                   onRemove={() => remove(row.item)}
                   onEdit={() => setEditing(row.item.id)}
                   onMoveDay={(d) => moveToDay(row.item, d)}
+                  onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
                   buttons={{
                     canUp: index > 0,
                     canDown: index < rows.length - 1,
@@ -820,6 +823,7 @@ type StopProps = {
   onRemove: () => void;
   onEdit: () => void;
   onMoveDay: (date: string) => void;
+  onOpenPlace: () => void;
 };
 
 // Wide screens: drag the grip to reorder, or focus it and use Space and the
@@ -875,6 +879,7 @@ function StopCard({
   onRemove,
   onEdit,
   onMoveDay,
+  onOpenPlace,
   handle,
   buttons,
 }: StopProps & {
@@ -925,7 +930,22 @@ function StopCard({
               item.status === "done" && "line-through",
             )}
           >
-            {name}
+            {place ? (
+              <button
+                type="button"
+                aria-label={t("day.openDetails", { name })}
+                onClick={onOpenPlace}
+                className="rounded-sm text-left underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                {name}
+                <Info
+                  aria-hidden
+                  className="ml-1.5 inline size-4 align-[-0.125em] text-muted-foreground"
+                />
+              </button>
+            ) : (
+              name
+            )}
           </CardTitle>
           <div className="flex flex-wrap gap-2">
             {place && (

@@ -195,6 +195,7 @@
     "moveUp": "Subir",
     "moveDown": "Bajar",
     "remove": "Quitar",
+    "openDetails": "Ver los detalles de {name}",
     "removed": "Se quitó del plan",
     "fullDay": "Día completo",
     "fullDayDescription": "Cada tramo, a un toque.",

@@ -195,6 +195,7 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "remove": "Remove",
+    "openDetails": "See the details of {name}",
     "removed": "Removed from the plan",
     "fullDay": "Full day",
     "fullDayDescription": "Every leg, one tap each.",
