@@ -25,8 +25,8 @@ open a trip.
 
 ## Versions
 
-The version shows on the sign-in screen, at the bottom of the sidebar and in
-the account panel. It comes from git, so nothing is edited by hand: `main`
+The version shows on the sign-in screen, in the bottom-right corner on wide
+screens and in the account panel. It comes from git, so nothing is edited by hand: `main`
 carries the tag `v1.0.0`, and each merge after it adds one to the last number
 (1.0.1, 1.0.2, ...). For a new major or minor version, tag `main` (`v1.1.0`).
 
@@ -77,7 +77,7 @@ One-time steps in the [Firebase console](https://console.firebase.google.com/):
 6. **Stay on the Spark plan.** It can never be billed. If you ever move
    to Blaze, set a budget alert in Google Cloud → Billing first.
 
-**Scripts** (`queue:pull`, `places:push`) skip the rules through
+**Scripts** (`drafts:pull`, `research:pull`, `research:push`, `places:push`, `maps:match`) skip the rules through
 the Admin SDK and use your own Google Cloud login. Run this once per
 machine (needs the [gcloud CLI](https://cloud.google.com/sdk/docs/install)):
 
@@ -85,5 +85,5 @@ machine (needs the [gcloud CLI](https://cloud.google.com/sdk/docs/install)):
 gcloud auth application-default login
 ```
 
-Signing out (Settings → Account) removes the trip's offline copy from
+Signing out (the account panel) removes the trip's offline copy from
 that device.

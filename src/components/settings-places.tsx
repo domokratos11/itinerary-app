@@ -202,7 +202,7 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
           )}
         </div>
       )}
-      <div className="grid gap-2 sm:grid-cols-2 lg:max-w-2xl">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:max-w-2xl">
         <Select value={cityId} onValueChange={setCityId}>
           <SelectTrigger aria-label={t("common.city")} className="w-full">
             <SelectValue placeholder={t("common.chooseCity")} />
@@ -276,7 +276,7 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
         </div>
       </div>
 
-      <ul className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2 2xl:grid-cols-3">
         {visible.map((place) => (
           <PlaceRow
             key={place.id}

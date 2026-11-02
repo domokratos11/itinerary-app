@@ -24,6 +24,7 @@ describe("resetApp", () => {
     localStorage.setItem("locale", "es");
     localStorage.setItem("theme", "dark");
     localStorage.setItem("device-name", "Ana's phone");
+    localStorage.setItem("hide-amounts", "true");
     sessionStorage.setItem("anything", "x");
   });
 
@@ -37,6 +38,7 @@ describe("resetApp", () => {
     expect(localStorage.getItem("locale")).toBe("es");
     expect(localStorage.getItem("theme")).toBe("dark");
     expect(localStorage.getItem("device-name")).toBe("Ana's phone");
+    expect(localStorage.getItem("hide-amounts")).toBe("true");
     expect(storedVersion()).toBe("1.0.1");
     expect(triedVersion()).toBe("1.0.1");
     expect(replace).toHaveBeenCalledWith(expect.stringContaining("?v=1.0.1"));

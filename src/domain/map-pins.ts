@@ -22,7 +22,7 @@ export function placePoint(place: {
     : null;
 }
 
-function endpointPoint(endpoint: Endpoint | null): LatLng | null {
+export function endpointPoint(endpoint: Endpoint | null): LatLng | null {
   const location = endpoint?.location;
   return location && "lat" in location ? location : null;
 }
@@ -72,7 +72,7 @@ export function dayMap(
     title: name,
     label: "H",
     color: HOTEL_COLOR,
-    emphasised: false,
+    emphasised: true,
     clickable: false,
   });
 

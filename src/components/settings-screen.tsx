@@ -9,6 +9,7 @@ import {
   Eraser,
   Globe,
   MapPin,
+  Plane,
   Ticket,
   Users,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import {
 import { BackupSettings } from "@/components/settings-backup";
 import { CitiesSettings } from "@/components/settings-cities";
 import { CleanupSettings } from "@/components/settings-cleanup";
+import { FlightsSettings } from "@/components/settings-flights";
 import { HolidaysSettings } from "@/components/settings-holidays";
 import { PlacesSettings } from "@/components/settings-places";
 import { ReservationsSettings } from "@/components/settings-reservations";
@@ -56,6 +58,13 @@ const SECTIONS = [
     hint: "settings.hintPlaces",
     icon: MapPin,
     Panel: PlacesSettings,
+  },
+  {
+    value: "flights",
+    label: "settings.tabFlights",
+    hint: "settings.hintFlights",
+    icon: Plane,
+    Panel: FlightsSettings,
   },
   {
     value: "reservations",

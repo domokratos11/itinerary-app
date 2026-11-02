@@ -12,7 +12,6 @@ import {
   itemsForDay,
   nextStop,
   placeLocation,
-  stopTimes,
 } from "@/domain/plan";
 import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
@@ -77,7 +76,6 @@ export function TodayCard() {
   const stops = itemsForDay(items, phase.date);
   const next = nextStop(stops);
   const place = next ? placesById.get(next.placeId) : undefined;
-  const times = next ? stopTimes(next, place) : null;
   const done = stops.filter((s) => s.status !== "planned").length;
   const day = days.find((d) => d.date === phase.date);
 
@@ -99,9 +97,7 @@ export function TodayCard() {
         {place && next ? (
           <div className="flex flex-col gap-1">
             <span className="text-xs tracking-wide text-muted-foreground uppercase">
-              {times
-                ? t("home.nextStopAt", { time: times.start })
-                : t("home.nextStop")}
+              {t("home.nextStop")}
             </span>
             <span className="text-lg font-medium">{place.name}</span>
           </div>

@@ -89,7 +89,7 @@ export function EditPanel({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh]">
+      <DrawerContent className="max-h-[90dvh]">
         <form onSubmit={submit} className="flex min-h-0 flex-col">
           <DrawerHeader className="text-left">
             <DrawerTitle>{title}</DrawerTitle>
@@ -100,7 +100,7 @@ export function EditPanel({
           <div className="flex flex-col gap-4 overflow-y-auto px-4">
             {children}
           </div>
-          <DrawerFooter className="flex-row justify-end">
+          <DrawerFooter className="flex-row justify-end pb-[calc(1rem+env(safe-area-inset-bottom))]">
             {actions}
           </DrawerFooter>
         </form>

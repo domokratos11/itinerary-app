@@ -3,10 +3,8 @@
 import { Footprints, Navigation, TrainFront } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Yen } from "@/components/yen";
 import {
   formatDistance,
-  formatLegNote,
   formatStation,
   formatWalk,
   type DayLeg,
@@ -19,9 +17,12 @@ import { t } from "@/lib/i18n";
 export function LegLine({
   leg,
   walking,
+  label,
 }: {
   leg: DayLeg;
   walking: WalkingLeg | undefined;
+  // Says what the leg joins, for the ones to and from the hotel.
+  label?: string | null;
 }) {
   const far = leg.kind === "far";
   const summary = walking
@@ -33,6 +34,7 @@ export function LegLine({
 
   return (
     <div className="flex flex-col gap-1 px-1 text-sm text-muted-foreground">
+      {label && <p className="text-xs font-medium">{label}</p>}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         {summary && (
           <span className="flex items-center gap-1.5">
@@ -64,17 +66,6 @@ export function LegLine({
             </a>
           ))}
       </div>
-      {leg.note && (
-        <p>
-          {leg.note.fareJPY !== null ? (
-            <Yen yen={leg.note.fareJPY}>
-              {t("leg.estimate", { note: formatLegNote(leg.note, t) })}
-            </Yen>
-          ) : (
-            t("leg.estimate", { note: formatLegNote(leg.note, t) })
-          )}
-        </p>
-      )}
       {far && leg.station && (
         <p>{t("leg.station", { station: formatStation(leg.station, t) })}</p>
       )}

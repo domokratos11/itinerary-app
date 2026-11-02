@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { EditPanel, Field } from "@/components/edit-panel";
+import { PlaceSuggestions } from "@/components/place-suggestions";
 import { CategoryOption, PriorityOption } from "@/components/tag-badges";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -26,11 +26,7 @@ import { t } from "@/lib/i18n";
 import { mapsService } from "@/lib/maps-service-instance";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip, useTripStore } from "@/lib/trip-store";
-import { useOnline } from "@/lib/use-online";
-import { cn } from "@/lib/utils";
-
-const SEARCH_DELAY_MS = 350;
-const SEARCH_MIN_LENGTH = 3;
+import { usePlaceSuggestions } from "@/lib/use-place-suggestions";
 
 // Type a name or paste a Maps link. A name offers Google's suggestions when
 // the map is set up and there is signal; without them it is still saved, and
@@ -46,14 +42,12 @@ export function AddPlace({
 }) {
   const trip = useTrip();
   const allPlaces = useTripStore((s) => s.data.places);
-  const online = useOnline();
   const [cityId, setCityId] = useState(defaultCityId);
   const [input, setInput] = useState("");
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   const [category, setCategory] = useState<Category>("sight");
   const [priority, setPriority] = useState<Priority>("want");
-  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [chosen, setChosen] = useState<PlaceSuggestion | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -63,36 +57,11 @@ export function AddPlace({
   const badLink = looksLikeLink && !link;
   const finalName = (looksLikeLink ? name : chosen ? name : trimmed).trim();
   const valid = cityId !== "" && finalName !== "" && !badLink && !saving;
-  const canSearch =
-    mapsService.isConfigured() &&
-    online &&
-    !looksLikeLink &&
-    !chosen &&
-    trimmed.length >= SEARCH_MIN_LENGTH;
-
-  useEffect(() => {
-    if (!canSearch) return;
-    let stopped = false;
-    const timer = setTimeout(() => {
-      mapsService
-        .suggestPlaces(trimmed)
-        .then((found) => {
-          if (!stopped) setSuggestions(found);
-        })
-        .catch(() => {
-          if (!stopped) setSuggestions([]);
-        });
-    }, SEARCH_DELAY_MS);
-    return () => {
-      stopped = true;
-      clearTimeout(timer);
-    };
-  }, [canSearch, trimmed]);
+  const suggestions = usePlaceSuggestions(input, !looksLikeLink && !chosen);
 
   function choose(suggestion: PlaceSuggestion) {
     setChosen(suggestion);
     setName(suggestion.name);
-    setSuggestions([]);
   }
 
   async function save() {
@@ -183,7 +152,6 @@ export function AddPlace({
             const value = e.target.value;
             setInput(value);
             setChosen(null);
-            setSuggestions([]);
             const parsed = /^https?:\/\//i.test(value.trim())
               ? parseMapsLink(value)
               : null;
@@ -191,29 +159,7 @@ export function AddPlace({
           }}
         />
       </Field>
-      {canSearch && suggestions.length > 0 && (
-        <ul className="flex flex-col gap-1">
-          {suggestions.map((s) => (
-            <li key={s.placeId}>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => choose(s)}
-                className={cn(
-                  "h-auto w-full flex-col items-start gap-0 py-2 text-left whitespace-normal",
-                )}
-              >
-                <span className="font-medium">{s.name}</span>
-                {s.detail && (
-                  <span className="text-xs font-normal text-muted-foreground">
-                    {s.detail}
-                  </span>
-                )}
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <PlaceSuggestions suggestions={suggestions} onChoose={choose} />
       {(looksLikeLink || chosen) && (
         <Field label={t("common.name")} htmlFor="add-place-name">
           <Input

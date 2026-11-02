@@ -104,28 +104,13 @@ export const HolidaySchema = z.object({
   note: z.string().nullable(),
 });
 
-export const LEG_MODES = ["train", "subway", "bus", "walk", "taxi"] as const;
-
-// A hand-typed or researched note on how to reach a stop. Ours, so it can be
-// stored, unlike Google's route times. Treat these as estimates.
-export const LegNoteSchema = z.object({
-  mode: z.enum(LEG_MODES),
-  minutes: z.number().int().positive().max(1440).nullable(),
-  fareJPY: z.number().int().nonnegative().nullable(),
-  text: z.string().max(200).nullable(),
-});
-
 export const PlanItemSchema = z.object({
   id: z.string(),
   placeId: z.string(),
   date: isoDate,
   order: z.string(),
-  startTime: z.string().nullable(),
-  durationMin: z.number().int().positive().nullable(),
-  note: z.string().nullable(),
   status: z.enum(PLAN_STATUSES),
   updatedAt: z.iso.datetime(),
-  legNote: LegNoteSchema.nullable().default(null),
 });
 
 // Firestore records under trips/{tripId}. Each is the shape above plus an
@@ -190,6 +175,31 @@ export const HolidayRecordSchema = HolidaySchema.extend({
   ...recordFields,
 });
 
+export const FLIGHT_CURRENCIES = ["USD", "JPY"] as const;
+
+const airportCode = z.string().regex(/^[A-Z]{3}$/);
+const clockTime = z.string().regex(/^\d{2}:\d{2}$/);
+
+// One flight, with dates and times local to each airport, as on the ticket.
+export const FlightRecordSchema = z.object({
+  id: recordId,
+  airline: z.string().min(1).max(100),
+  flightNumber: z.string().min(1).max(20),
+  departDate: isoDate,
+  departTime: clockTime,
+  departAirport: airportCode,
+  departCity: z.string().max(100).nullable(),
+  arriveDate: isoDate,
+  arriveTime: clockTime,
+  arriveAirport: airportCode,
+  arriveCity: z.string().max(100).nullable(),
+  confirmation: z.string().max(40).nullable(),
+  costAmount: z.number().nonnegative().nullable(),
+  costCurrency: z.enum(FLIGHT_CURRENCIES),
+  note: z.string().max(500).nullable(),
+  ...recordFields,
+});
+
 // A draft place is waiting for research.
 export const PlaceRecordSchema = PlaceSchema.extend({
   status: z.enum(PLACE_STATUSES),
@@ -239,6 +249,7 @@ export const TripDataSchema = z.object({
   places: z.array(PlaceRecordSchema),
   holidays: z.array(HolidayRecordSchema),
   expenses: z.array(ExpenseRecordSchema).default([]),
+  flights: z.array(FlightRecordSchema).default([]),
 });
 
 export const PROPOSAL_STATUSES = [
@@ -301,6 +312,8 @@ export type CityRecord = z.infer<typeof CityRecordSchema>;
 export type StayRecord = z.infer<typeof StayRecordSchema>;
 export type ReservationRecord = z.infer<typeof ReservationRecordSchema>;
 export type HolidayRecord = z.infer<typeof HolidayRecordSchema>;
+export type FlightRecord = z.infer<typeof FlightRecordSchema>;
+export type FlightCurrency = (typeof FLIGHT_CURRENCIES)[number];
 export type PlaceRecord = z.infer<typeof PlaceRecordSchema>;
 export type ExpenseRecord = z.infer<typeof ExpenseRecordSchema>;
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
@@ -310,8 +323,6 @@ export type Proposal = z.infer<typeof ProposalSchema>;
 export type ProposalFields = z.infer<typeof ProposalFieldsSchema>;
 export type FieldSource = z.infer<typeof FieldSourceSchema>;
 export type NearestStation = z.infer<typeof NearestStationSchema>;
-export type LegNote = z.infer<typeof LegNoteSchema>;
-export type LegMode = (typeof LEG_MODES)[number];
 
 export type City = z.infer<typeof CitySchema>;
 export type Place = z.infer<typeof PlaceSchema>;

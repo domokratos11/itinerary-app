@@ -6,6 +6,7 @@ import { withoutGoogleCoordinates } from "./location";
 import {
   CityRecordSchema,
   ExpenseRecordSchema,
+  FlightRecordSchema,
   HolidayRecordSchema,
   PlaceRecordSchema,
   PlanItemSchema,
@@ -46,6 +47,7 @@ export const BackupSchema = z
     places: z.array(PlaceRecordSchema),
     holidays: z.array(HolidayRecordSchema).default([]),
     expenses: z.array(ExpenseRecordSchema).default([]),
+    flights: z.array(FlightRecordSchema).default([]),
     items: z.array(PlanItemSchema),
     proposals: z.array(ProposalSchema).default([]),
     trip: TripDetailsSchema.nullable().default(null),

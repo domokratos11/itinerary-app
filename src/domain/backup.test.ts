@@ -18,16 +18,23 @@ describe("backup", () => {
         placeId: place.id,
         date: "2026-12-18",
         order: "a0",
-        startTime: "10:00",
-        durationMin: 60,
-        note: null,
         status: "planned",
-        legNote: null,
         updatedAt: "2026-11-01T00:00:00.000Z",
       },
     ],
     new Date("2026-11-02T00:00:00.000Z"),
   );
+
+  it("still reads a stop saved with the old details, without them", () => {
+    const old = JSON.parse(JSON.stringify(backup));
+    Object.assign(old.items[0], {
+      startTime: "10:00",
+      durationMin: 60,
+      note: "Early",
+      legNote: null,
+    });
+    expect(BackupSchema.parse(old).items[0]).toEqual(backup.items[0]);
+  });
 
   it("round-trips through JSON and the schema", () => {
     const parsed = BackupSchema.parse(JSON.parse(JSON.stringify(backup)));

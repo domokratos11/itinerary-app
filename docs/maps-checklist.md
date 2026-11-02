@@ -87,7 +87,7 @@ Claude can do these once the keys are in, except signing in, which is yours:
 - [ ] Pins are numbered, and tapping one opens Place details
 - [ ] Offline shows the message, and the list still works
 - [ ] Walking times between close stops, and Train directions on longer legs
-- [ ] Live from Google and Show photo, with credits and the logo
+- [ ] Live details and photos load as a place opens, with credits and the logo
 - [ ] Hitting a cap shows the limit message
 
 ## 9. Run the research

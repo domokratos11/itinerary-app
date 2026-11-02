@@ -16,7 +16,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tip } from "@/components/tip";
-import { Yen, YEN_VALUES } from "@/components/yen";
+import {
+  HideAmountsButton,
+  MoneyScope,
+  useAmountsHidden,
+  useYenValues,
+  Yen,
+} from "@/components/yen";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -29,7 +35,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   daysRemaining,
   EMPTY_BUDGET,
-  formatYen,
   summarizeBudget,
   totalsByCategory,
   totalsByPayer,
@@ -179,7 +184,17 @@ export function SummaryFigures({ summary }: { summary: BudgetSummary }) {
 
 // The trip's shared money: what's set aside, what has gone and on what.
 export function BudgetScreen() {
+  return (
+    <MoneyScope>
+      <BudgetContent />
+    </MoneyScope>
+  );
+}
+
+function BudgetContent() {
   const tripId = useTripId();
+  const money = useYenValues();
+  const hidden = useAmountsHidden();
   const { summary, categories, expenses, budget } = useBudgetFigures();
   const [editing, setEditing] = useState<{
     expense: ExpenseRecord | null;
@@ -224,11 +239,22 @@ export function BudgetScreen() {
           <p className="text-sm text-muted-foreground">{t("budget.intro")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Tip label={t("budget.tipSetBudget")}>
-            <Button variant="outline" onClick={() => setSettingTargets(true)}>
-              <Target />
-              {t("budget.setBudget")}
-            </Button>
+          <HideAmountsButton />
+          {/* The form shows the real amounts, so it waits for them to show.
+              The span keeps the hint working on a disabled button. */}
+          <Tip
+            label={hidden ? t("budget.showToEdit") : t("budget.tipSetBudget")}
+          >
+            <span className="inline-flex">
+              <Button
+                variant="outline"
+                disabled={hidden}
+                onClick={() => setSettingTargets(true)}
+              >
+                <Target />
+                {t("budget.setBudget")}
+              </Button>
+            </span>
           </Tip>
           <Tip label={t("budget.tipAddExpense")}>
             <Button onClick={() => setEditing({ expense: null })}>
@@ -239,12 +265,12 @@ export function BudgetScreen() {
         </div>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t("budget.overview")}</CardTitle>
           </CardHeader>
-          <CardContent className="grid items-center gap-4 sm:grid-cols-2">
+          <CardContent className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
             <BudgetGauge
               percent={percent}
               over={summary.over > 0}
@@ -272,10 +298,10 @@ export function BudgetScreen() {
             ) : (
               <DonutChart
                 series={categorySeries(categories)}
-                center={formatYen(summary.spent)}
+                center={money.format(summary.spent)}
                 centerLabel={t("budget.spent")}
                 label={t("budget.byCategory")}
-                {...YEN_VALUES}
+                {...money}
               />
             )}
           </CardContent>
@@ -311,7 +337,7 @@ export function BudgetScreen() {
                   value: p.paid,
                   color: "var(--primary)",
                 }))}
-                {...YEN_VALUES}
+                {...money}
               />
             )}
           </CardContent>
@@ -343,7 +369,7 @@ export function BudgetScreen() {
               onValueChange={(v) => setCategory(v as typeof category)}
             >
               <SelectTrigger
-                className="w-fit min-w-44"
+                className="w-full min-w-44 sm:w-fit"
                 aria-label={t("common.category")}
               >
                 <SelectValue />
@@ -365,7 +391,7 @@ export function BudgetScreen() {
                 : t("budget.noMatches")}
             </p>
           ) : (
-            <ul className="grid gap-2 lg:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
               {visible.map((expense) => (
                 <ExpenseRow
                   key={expense.id}
@@ -399,6 +425,7 @@ export function BudgetScreen() {
 }
 
 function TargetRow({ row }: { row: CategoryTotal }) {
+  const money = useYenValues();
   const { category, paid, target } = row;
   const Icon = EXPENSE_ICON[category];
   const color = EXPENSE_COLOR[category];
@@ -419,10 +446,10 @@ function TargetRow({ row }: { row: CategoryTotal }) {
         >
           <Yen yen={paid}>
             {target === null
-              ? formatYen(paid)
+              ? money.format(paid)
               : t("budget.ofTarget", {
-                  paid: formatYen(paid),
-                  target: formatYen(target),
+                  paid: money.format(paid),
+                  target: money.format(target),
                 })}
           </Yen>
         </span>
@@ -449,6 +476,7 @@ function ExpenseRow({
   onArchive: () => void;
 }) {
   const Icon = EXPENSE_ICON[expense.category];
+  const hidden = useAmountsHidden();
   return (
     <li className="flex items-start gap-3 rounded-lg border p-3 text-sm">
       <Icon
@@ -473,7 +501,12 @@ function ExpenseRow({
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={t("common.editName", { name: expense.title })}
+        aria-label={
+          hidden
+            ? t("budget.showToEdit")
+            : t("common.editName", { name: expense.title })
+        }
+        disabled={hidden}
         onClick={onEdit}
       >
         <Pencil />

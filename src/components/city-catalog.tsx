@@ -216,7 +216,7 @@ export function CityCatalog({
                 })
               }
             >
-              <SelectTrigger className="w-fit min-w-44">
+              <SelectTrigger className="w-full min-w-44 sm:w-fit">
                 <SelectValue>
                   {filter.priority === "all" ? (
                     t("cities.allPriorities")
@@ -319,8 +319,8 @@ export function CityCatalog({
                 onPinClick={setSelectedId}
                 className={
                   sideBySide
-                    ? "aspect-[4/3] max-h-[calc(100vh-7rem)]"
-                    : "h-[65vh]"
+                    ? "aspect-[4/3] max-h-[calc(100svh-7rem)]"
+                    : "h-[65svh]"
                 }
                 note={
                   unpinned > 0

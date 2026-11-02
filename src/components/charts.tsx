@@ -107,7 +107,7 @@ export function DonutChart({
 }) {
   const shown = series.filter((s) => s.value > 0);
   return (
-    <div className="grid items-center gap-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
       <ChartContainer
         config={configFor(shown)}
         role="img"

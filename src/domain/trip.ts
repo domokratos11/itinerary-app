@@ -4,6 +4,7 @@ import { stayLocation, type Location } from "./plan";
 import type {
   CityRecord,
   ExpenseRecord,
+  FlightRecord,
   HolidayRecord,
   Place,
   PlaceRecord,
@@ -22,6 +23,7 @@ export type TripData = {
   places: PlaceRecord[];
   holidays: HolidayRecord[];
   expenses: ExpenseRecord[];
+  flights: FlightRecord[];
 };
 
 export type TripCollection = keyof TripData;
@@ -32,6 +34,7 @@ export const TRIP_COLLECTIONS: TripCollection[] = [
   "places",
   "holidays",
   "expenses",
+  "flights",
 ];
 
 export type TripRecordOf = {
@@ -45,6 +48,7 @@ export const EMPTY_TRIP: TripData = {
   places: [],
   holidays: [],
   expenses: [],
+  flights: [],
 };
 
 export function stayId(stay: Pick<Stay, "cityId" | "checkIn">): string {
@@ -85,6 +89,13 @@ export function activeTrip(data: TripData): TripData {
     expenses: data.expenses
       .filter((e) => !e.archived)
       .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
+    flights: data.flights
+      .filter((f) => !f.archived)
+      .sort((a, b) => {
+        const ka = `${a.departDate} ${a.departTime}`;
+        const kb = `${b.departDate} ${b.departTime}`;
+        return ka < kb ? -1 : ka > kb ? 1 : 0;
+      }),
   };
 }
 
@@ -94,12 +105,15 @@ export function tripDays(data: TripData): TripDay[] {
 
 export type Endpoint = { name: string; location: Location | null };
 
+export function isUndecidedHotel(hotelName: string): boolean {
+  const name = hotelName.trim().toLowerCase();
+  return name.startsWith("to be decided") || name.startsWith("por decidir");
+}
+
 // A hotel with no name yet ("To be decided") has no location to route to.
 export function endpointFor(stay: Stay | null, tr: Translate): Endpoint | null {
   if (!stay) return null;
-  const name = stay.hotelName.toLowerCase();
-  const undecided =
-    name.startsWith("to be decided") || name.startsWith("por decidir");
+  const undecided = isUndecidedHotel(stay.hotelName);
   return {
     name: undecided ? tr("leg.hotelUndecided") : stay.hotelName,
     location: undecided ? null : stayLocation(stay),

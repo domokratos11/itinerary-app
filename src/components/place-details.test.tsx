@@ -5,7 +5,10 @@ import { PlaceDetails } from "@/components/place-details";
 import { placeRecordDefaults, type PlaceRecord } from "@/domain/schemas";
 
 vi.mock("@/components/add-to-day", () => ({ AddToDay: () => null }));
-vi.mock("@/components/place-live", () => ({ PlaceLive: () => null }));
+vi.mock("@/components/place-live", () => ({
+  PlaceLive: () => null,
+  PlacePhotos: () => null,
+}));
 vi.mock("@/lib/use-media-query", () => ({ useMediaQuery: () => true }));
 vi.mock("@/lib/use-trip-id", () => ({ useTripId: () => "trip" }));
 vi.mock("@/lib/use-proposals", () => ({ useProposals: () => [] }));

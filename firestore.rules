@@ -10,27 +10,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isPlanItem(d) {
-      return d.keys().hasOnly(['id', 'placeId', 'date', 'order', 'startTime', 'durationMin', 'note', 'status', 'updatedAt', 'legNote'])
-        && d.keys().hasAll(['id', 'placeId', 'date', 'order', 'startTime', 'durationMin', 'note', 'status', 'updatedAt'])
+      return d.keys().hasOnly(['id', 'placeId', 'date', 'order', 'status', 'updatedAt'])
+        && d.keys().hasAll(['id', 'placeId', 'date', 'order', 'status', 'updatedAt'])
         && d.id is string && d.id.size() > 0 && d.id.size() <= 64
         && d.placeId is string && d.placeId.size() > 0 && d.placeId.size() <= 64
         && d.date is string && d.date.size() == 10
         && d.order is string && d.order.size() > 0 && d.order.size() <= 64
-        && (d.startTime == null || (d.startTime is string && d.startTime.size() == 5))
-        && (d.durationMin == null || (d.durationMin is int && d.durationMin > 0 && d.durationMin <= 1440))
-        && (d.note == null || (d.note is string && d.note.size() <= 500))
         && d.status in ['planned', 'done', 'skipped', 'removed']
-        && d.updatedAt is string && d.updatedAt.size() <= 30
-        && isLegNote(d.get('legNote', null));
-    }
-
-    function isLegNote(v) {
-      return v == null || (v is map
-        && v.keys().hasOnly(['mode', 'minutes', 'fareJPY', 'text'])
-        && v.keys().hasAll(['mode', 'minutes', 'fareJPY', 'text'])
-        && v.mode in ['train', 'subway', 'bus', 'walk', 'taxi']
-        && optionalNumber(v.minutes) && optionalNumber(v.fareJPY)
-        && optionalString(v.text, 200));
+        && d.updatedAt is string && d.updatedAt.size() <= 30;
     }
 
     function shortString(v, max) {
@@ -123,6 +110,27 @@ service cloud.firestore {
         && d.date is string && d.date.size() == 10
         && shortString(d.name, 100) && d.name.size() > 0
         && d.kind in ['holiday', 'closures']
+        && optionalString(d.note, 500)
+        && isRecord(d);
+    }
+
+    function isFlight(d) {
+      return d.keys().hasOnly(['id', 'airline', 'flightNumber', 'departDate', 'departTime', 'departAirport', 'departCity', 'arriveDate', 'arriveTime', 'arriveAirport', 'arriveCity', 'confirmation', 'costAmount', 'costCurrency', 'note', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'airline', 'flightNumber', 'departDate', 'departTime', 'departAirport', 'departCity', 'arriveDate', 'arriveTime', 'arriveAirport', 'arriveCity', 'confirmation', 'costAmount', 'costCurrency', 'note', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.airline, 100) && d.airline.size() > 0
+        && shortString(d.flightNumber, 20) && d.flightNumber.size() > 0
+        && d.departDate is string && d.departDate.size() == 10
+        && d.departTime is string && d.departTime.size() == 5
+        && d.departAirport is string && d.departAirport.size() == 3
+        && optionalString(d.departCity, 100)
+        && d.arriveDate is string && d.arriveDate.size() == 10
+        && d.arriveTime is string && d.arriveTime.size() == 5
+        && d.arriveAirport is string && d.arriveAirport.size() == 3
+        && optionalString(d.arriveCity, 100)
+        && optionalString(d.confirmation, 40)
+        && optionalNumber(d.costAmount)
+        && d.costCurrency in ['USD', 'JPY']
         && optionalString(d.note, 500)
         && isRecord(d);
     }
@@ -314,6 +322,13 @@ service cloud.firestore {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isHoliday(request.resource.data) && request.resource.data.id == id;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
+      }
+
+      match /flights/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isFlight(request.resource.data) && request.resource.data.id == id;
         allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 

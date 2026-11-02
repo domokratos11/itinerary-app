@@ -1,12 +1,7 @@
 import { distanceKm, type LatLng } from "@/lib/geo";
 import { directionsUrl, placeLocation, type Location } from "./plan";
 import type { Endpoint } from "./trip";
-import type {
-  LegNote,
-  NearestStation,
-  Place,
-  PlanItem,
-} from "./schemas";
+import type { NearestStation, Place, PlanItem } from "./schemas";
 import type { Translate } from "./i18n";
 
 // Up to about here a leg is worth walking and gets a real walking route;
@@ -22,7 +17,6 @@ export type DayLeg = {
   to: LatLng | null;
   // Opens the Maps app. Null when an end has no location at all.
   directions: string | null;
-  note: LegNote | null;
   station: NearestStation | null;
 };
 
@@ -34,7 +28,6 @@ function leg(
   key: string,
   from: Location | null,
   to: Location | null,
-  note: LegNote | null,
   station: NearestStation | null,
 ): DayLeg {
   const fromPoint = pointOf(from);
@@ -51,7 +44,6 @@ function leg(
       from && to
         ? directionsUrl(to, from, kind === "walk" ? "walking" : "transit")
         : null,
-    note,
     station,
   };
 }
@@ -78,7 +70,6 @@ export function dayLegs(
         ? (start?.location ?? null)
         : locationOf(rows[index - 1].place),
       locationOf(row.place),
-      row.item.legNote,
       stationOf(row.place),
     ),
   );
@@ -87,7 +78,6 @@ export function dayLegs(
       "end",
       locationOf(rows[rows.length - 1].place),
       end?.location ?? null,
-      null,
       null,
     ),
   );
@@ -116,19 +106,6 @@ export function formatWalk(
   tr: Translate,
 ): string {
   return tr("leg.walk", { minutes, distance: formatMeters(meters) });
-}
-
-export function formatLegNote(note: LegNote, tr: Translate): string {
-  return [
-    tr(`legMode.${note.mode}`),
-    note.minutes !== null
-      ? tr("leg.aboutMinutes", { minutes: note.minutes })
-      : "",
-    note.fareJPY !== null ? `¥${note.fareJPY.toLocaleString("en-US")}` : "",
-    note.text ?? "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
 }
 
 export function formatStation(station: NearestStation, tr: Translate): string {

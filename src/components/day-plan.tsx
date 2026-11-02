@@ -23,13 +23,15 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   BedDouble,
+  Check,
   ChevronDown,
   ChevronUp,
   ExternalLink,
   GripVertical,
+  Info,
   Navigation,
-  Pencil,
   Plus,
+  SkipForward,
   Ticket,
   Trash2,
 } from "lucide-react";
@@ -70,21 +72,25 @@ import {
   holidayWarnings,
   itemsForDay,
   legsForDay,
-  dayRunsLate,
   nextStop,
   placeLocation,
-  stopTimes,
   stopWarnings,
-  timeWarnings,
   waitingPlaces,
 } from "@/domain/plan";
-import type { PlanItem, Place, Reservation } from "@/domain/schemas";
+import type {
+  FlightRecord,
+  PlanItem,
+  Place,
+  Reservation,
+} from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
 import { planDrop, type DragSource, type DropTarget } from "@/domain/drop";
 import { isDraft } from "@/domain/place-edit";
 import {
   DayColumn,
   DragPreview,
+  WaitingControls,
+  waitingHint,
   LIST_ID,
   type Waiting,
   OtherDaysColumn,
@@ -98,6 +104,7 @@ import { LogCostButton, placePrefill } from "@/components/expense-form";
 import { Tip } from "@/components/tip";
 import { t } from "@/lib/i18n";
 import { CostLine } from "@/components/cost-line";
+import { FlightCard } from "@/components/flight-card";
 import { formatDayLabel } from "@/lib/format-day";
 import {
   addPlaceAt,
@@ -108,17 +115,23 @@ import {
 } from "@/lib/plan-actions";
 import { PlaceDetails } from "@/components/place-details";
 import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
-import { StopEditor, type StopChanges } from "@/components/stop-editor";
 import { LegLine } from "@/components/leg-line";
 import { TripMap } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
-import { dayMap, stopColor } from "@/domain/map-pins";
+import {
+  cityPins,
+  dayMap,
+  endpointPoint,
+  placePoint,
+  stopColor,
+} from "@/domain/map-pins";
+import { applyWaitingView, DEFAULT_WAITING_VIEW } from "@/domain/waiting-view";
 import type { MapLine } from "@/domain/maps-service";
 import { useWalkingLegs } from "@/lib/use-walking-legs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { nearbyByPlace } from "@/lib/catalog-filter";
 import { usePlanStore } from "@/lib/plan-store";
-import { daysHref } from "@/lib/links";
+import { daysHref, pageHref } from "@/lib/links";
 import {
   useCitiesById,
   usePlacesById,
@@ -137,6 +150,7 @@ type Props = {
   start: Endpoint | null;
   end: Endpoint | null;
   reservations: Reservation[];
+  flights: FlightRecord[];
 };
 
 export function DayPlan(props: Props) {
@@ -147,10 +161,11 @@ export function DayPlan(props: Props) {
   const trip = useTrip();
   const tripDays = useTripDays();
   const [dragging, setDragging] = useState<string | null>(null);
-  const [editing, setEditing] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "map" | "waiting">("list");
   const [adding, setAdding] = useState<Waiting | null>(null);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
+  const [waitingView, setWaitingView] = useState(DEFAULT_WAITING_VIEW);
+  const [waitingOnMap, setWaitingOnMap] = useState(false);
   const wide = useMediaQuery("(min-width: 768px)");
   const stops = useMemo(
     () => itemsForDay(items, props.date),
@@ -182,13 +197,17 @@ export function DayPlan(props: Props) {
 
   // Wide screens: what can be dragged in from the side panel, and the other
   // days of this day's cities to drop a stop on.
+  const allWaiting = useMemo(
+    () => waitingPlaces(trip.places, items, props.cityIds),
+    [items, trip.places, props.cityIds],
+  );
   const waiting = useMemo(
     () =>
-      waitingPlaces(trip.places, items, props.cityIds).map((place) => ({
+      applyWaitingView(allWaiting, waitingView).map((place) => ({
         dragId: placeDragId(place.id),
         place,
       })),
-    [items, trip.places, props.cityIds],
+    [allWaiting, waitingView],
   );
   const otherDays = tripDays.filter(
     (d) =>
@@ -343,19 +362,14 @@ export function DayPlan(props: Props) {
   }
 
   const next = nextStop(stops);
-  const lateEnd = dayRunsLate(
-    stops.filter((i) => i.status === "planned"),
-    placesById,
-  );
-  const editingItem = stops.find((i) => i.id === editing);
   const holiday = trip.holidays.find((h) => h.date === props.date);
 
-  function saveEdit(item: PlanItem, changes: StopChanges) {
-    setEditing(null);
+  // Tapping the status a stop already has takes it back to planned.
+  function mark(item: PlanItem, status: StopOutcome) {
     if (!tripId) return;
-    updateItem(tripId, item, changes).catch(() =>
-      toast.error(t("common.refused")),
-    );
+    updateItem(tripId, item, {
+      status: item.status === status ? "planned" : status,
+    }).catch(() => toast.error(t("common.refused")));
   }
   const nextPlace = next ? placesById.get(next.placeId) : undefined;
 
@@ -385,10 +399,53 @@ export function DayPlan(props: Props) {
   });
   const legLine = (key: string) => {
     const leg = legs.find((l) => l.key === key);
-    return leg ? <LegLine leg={leg} walking={walking.get(key)} /> : null;
+    if (!leg) return null;
+    const label =
+      key === "end" && props.end
+        ? t("leg.backToHotel", { name: props.end.name })
+        : key === rows[0]?.item.id && props.start
+          ? t("leg.fromHotel", { name: props.start.name })
+          : null;
+    return <LegLine leg={leg} walking={walking.get(key)} label={label} />;
   };
+  // Without coordinates a hotel has no pin, distance or walking time.
+  const hotelsOffMap = [
+    ...new Set(
+      [props.start, props.end].flatMap((hotel) =>
+        hotel?.location && !endpointPoint(hotel) ? [hotel.name] : [],
+      ),
+    ),
+  ];
+  const waitingShown = waiting.map((w) => w.place);
+  const pins = waitingOnMap
+    ? [...map.pins, ...cityPins(waitingShown)]
+    : map.pins;
+  const waitingUnpinned = waitingOnMap
+    ? waitingShown.filter((place) => !placePoint(place)).length
+    : 0;
   const mapNote =
-    map.unpinned > 0 ? t("day.mapNote", { count: map.unpinned }) : null;
+    [
+      map.unpinned > 0 ? t("day.mapNote", { count: map.unpinned }) : null,
+      waitingUnpinned > 0
+        ? t("day.waitingUnpinned", { count: waitingUnpinned })
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" ") || null;
+  const waitingControls = (
+    <WaitingControls
+      view={waitingView}
+      onViewChange={setWaitingView}
+      shown={waiting.length}
+      total={allWaiting.length}
+      onMap={waitingOnMap}
+      onMapChange={(on) => {
+        setWaitingOnMap(on);
+        // On phones the map is its own tab, so go and show them there.
+        if (on && !wide) setView("map");
+      }}
+    />
+  );
   const openPlace = openPlaceId ? placesById.get(openPlaceId) : undefined;
   const openNearby = openPlace
     ? (nearbyByPlace(trip.places)[openPlace.id] ?? []).map((n) => ({
@@ -427,10 +484,23 @@ export function DayPlan(props: Props) {
             <span className="font-medium">{holiday.name}.</span> {holiday.note}
           </p>
         )}
-        {lateEnd && (
-          <p className="text-sm text-destructive">
-            {t("day.runsLate", { time: lateEnd })}
+        {hotelsOffMap.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {t("day.hotelOffMap", { name: hotelsOffMap.join(", ") })}{" "}
+            <Link
+              href={pageHref("/settings/", tripId, { tab: "stays" })}
+              className="underline"
+            >
+              {t("day.hotelOffMapFix")}
+            </Link>
           </p>
+        )}
+        {props.flights.length > 0 && (
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            {props.flights.map((flight) => (
+              <FlightCard key={flight.id} flight={flight} />
+            ))}
+          </div>
         )}
         <div className="flex flex-wrap gap-2">
           {nextPlace ? (
@@ -469,18 +539,19 @@ export function DayPlan(props: Props) {
             <ToggleGroupItem value="list">{t("common.list")}</ToggleGroupItem>
             <ToggleGroupItem value="map">{t("common.map")}</ToggleGroupItem>
             <ToggleGroupItem value="waiting">
-              {t("day.waitingTab", { count: waiting.length })}
+              {t("day.waitingTab", { count: allWaiting.length })}
             </ToggleGroupItem>
           </ToggleGroup>
         )}
       </header>
 
+      {showPhoneMap && waitingOnMap && waitingControls}
       {showPhoneMap && (
         <TripMap
-          pins={map.pins}
+          pins={pins}
           lines={mapLines}
           onPinClick={setOpenPlaceId}
-          className="h-[65vh]"
+          className="h-[65svh]"
           note={mapNote}
         />
       )}
@@ -511,20 +582,25 @@ export function DayPlan(props: Props) {
                       dayOptions={dayOptionsFor(row.place?.cityId)}
                       currentDate={props.date}
                       onRemove={() => remove(row.item)}
-                      onEdit={() => setEditing(row.item.id)}
+                      onMark={(status) => mark(row.item, status)}
                       onMoveDay={(d) => moveToDay(row.item, d)}
+                      onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
                     />
                   ))}
                   {rows.length > 0 && <li>{legLine("end")}</li>}
                 </DroppableList>
               </SortableContext>
             </DayColumn>
-            <WaitingColumn waiting={waiting} />
+            <WaitingColumn
+              waiting={waiting}
+              total={allWaiting.length}
+              controls={waitingControls}
+            />
             <OtherDaysColumn otherDays={otherDays} stopCounts={stopCounts} />
           </div>
           <div className="h-[38.7%] min-h-80 shrink-0">
             <TripMap
-              pins={map.pins}
+              pins={pins}
               lines={mapLines}
               onPinClick={setOpenPlaceId}
               className="min-h-0 flex-1"
@@ -552,8 +628,9 @@ export function DayPlan(props: Props) {
                   dayOptions={dayOptionsFor(row.place?.cityId)}
                   currentDate={props.date}
                   onRemove={() => remove(row.item)}
-                  onEdit={() => setEditing(row.item.id)}
+                  onMark={(status) => mark(row.item, status)}
                   onMoveDay={(d) => moveToDay(row.item, d)}
+                  onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
                   buttons={{
                     canUp: index > 0,
                     canDown: index < rows.length - 1,
@@ -573,7 +650,12 @@ export function DayPlan(props: Props) {
       )}
 
       {!wide && view === "waiting" && (
-        <PhoneWaiting waiting={waiting} onChoose={setAdding} />
+        <PhoneWaiting
+          waiting={waiting}
+          total={allWaiting.length}
+          controls={waitingControls}
+          onChoose={setAdding}
+        />
       )}
       <AlertDialog
         open={adding !== null}
@@ -614,15 +696,6 @@ export function DayPlan(props: Props) {
           if (!open) setOpenPlaceId(null);
         }}
       />
-      {editingItem && (
-        <StopEditor
-          key={editingItem.id}
-          item={editingItem}
-          place={placesById.get(editingItem.placeId)}
-          onCancel={() => setEditing(null)}
-          onSave={(changes) => saveEdit(editingItem, changes)}
-        />
-      )}
     </div>
   );
 }
@@ -668,15 +741,20 @@ function DroppableList({
 // Phones can't drag, so a place waiting is added by tapping it.
 function PhoneWaiting({
   waiting,
+  total,
+  controls,
   onChoose,
 }: {
   waiting: Waiting[];
+  total: number;
+  controls: ReactNode;
   onChoose: (place: Waiting) => void;
 }) {
   return (
     <section className="flex flex-col gap-2">
+      {controls}
       <p className="text-sm text-muted-foreground">
-        {waiting.length === 0 ? t("day.waitingNone") : t("day.waitingTap")}
+        {waitingHint(waiting.length, total, t("day.waitingTap"))}
       </p>
       <ul className="flex flex-col gap-2">
         {waiting.map((w) => (
@@ -810,6 +888,8 @@ function HotelButton({ text, endpoint }: { text: string; endpoint: Endpoint }) {
   );
 }
 
+type StopOutcome = "done" | "skipped";
+
 type StopProps = {
   // Its place in the day, the same number as its pin on the map.
   number: number;
@@ -818,8 +898,9 @@ type StopProps = {
   dayOptions: { date: string; label: string }[];
   currentDate: string;
   onRemove: () => void;
-  onEdit: () => void;
+  onMark: (status: StopOutcome) => void;
   onMoveDay: (date: string) => void;
+  onOpenPlace: () => void;
 };
 
 // Wide screens: drag the grip to reorder, or focus it and use Space and the
@@ -873,8 +954,9 @@ function StopCard({
   dayOptions,
   currentDate,
   onRemove,
-  onEdit,
+  onMark,
   onMoveDay,
+  onOpenPlace,
   handle,
   buttons,
 }: StopProps & {
@@ -889,21 +971,11 @@ function StopCard({
   const { holidays } = useTrip();
   const tripId = useTripId();
   const name = place?.name ?? item.placeId;
-  const times = stopTimes(item, place);
-  const minutes = item.durationMin ?? null;
-  const meta = times
-    ? times.end
-      ? `${times.start}–${times.end}`
-      : times.start
-    : minutes
-      ? t("common.minutes", { minutes })
-      : null;
   const finished = item.status === "done" || item.status === "skipped";
   const warnings = place
     ? [
         ...stopWarnings(place, item.date, t),
         ...holidayWarnings(place, item.date, holidays, t),
-        ...timeWarnings(item, place, t),
       ]
     : [];
 
@@ -925,7 +997,22 @@ function StopCard({
               item.status === "done" && "line-through",
             )}
           >
-            {name}
+            {place ? (
+              <button
+                type="button"
+                aria-label={t("day.openDetails", { name })}
+                onClick={onOpenPlace}
+                className="rounded-sm text-left underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                {name}
+                <Info
+                  aria-hidden
+                  className="ml-1.5 inline size-4 align-[-0.125em] text-muted-foreground"
+                />
+              </button>
+            ) : (
+              name
+            )}
           </CardTitle>
           <div className="flex flex-wrap gap-2">
             {place && (
@@ -941,7 +1028,6 @@ function StopCard({
                   : t("common.skipped")}
               </Badge>
             )}
-            {meta && <Badge variant="outline">{meta}</Badge>}
             {place && isDraft(place) && (
               <Badge variant="outline" className="border-dashed">
                 {t("common.notResearched")}
@@ -957,8 +1043,31 @@ function StopCard({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        {item.note && <p className="text-sm">{item.note}</p>}
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={item.status === "done" ? "default" : "outline"}
+            size="sm"
+            aria-pressed={item.status === "done"}
+            aria-label={t("day.wentName", { name })}
+            className="flex-1 sm:flex-none"
+            onClick={() => onMark("done")}
+          >
+            <Check />
+            {t("day.went")}
+          </Button>
+          <Button
+            variant={item.status === "skipped" ? "default" : "outline"}
+            size="sm"
+            aria-pressed={item.status === "skipped"}
+            aria-label={t("day.skipName", { name })}
+            className="flex-1 sm:flex-none"
+            onClick={() => onMark("skipped")}
+          >
+            <SkipForward />
+            {t("day.skip")}
+          </Button>
+          {/* On phones: these two on top, the small actions, then the day. */}
+          <span aria-hidden className="basis-full sm:hidden" />
           {place && (
             <Tip label={t("place.tipOpenInMaps")}>
               <Button asChild variant="outline" size="sm">
@@ -997,7 +1106,10 @@ function StopCard({
           )}
           {dayOptions.length > 1 && (
             <Select value={currentDate} onValueChange={onMoveDay}>
-              <SelectTrigger size="sm" className="w-44">
+              <SelectTrigger
+                size="sm"
+                className="order-last w-full sm:order-none sm:w-44"
+              >
                 <SelectValue placeholder={t("common.moveTo")} />
               </SelectTrigger>
               <SelectContent>
@@ -1019,16 +1131,8 @@ function StopCard({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={t("common.editName", { name })}
-            className={cn(!(place && tripId) && "ml-auto")}
-            onClick={onEdit}
-          >
-            <Pencil />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
             aria-label={t("day.remove")}
+            className={cn(!(place && tripId) && "ml-auto")}
             onClick={onRemove}
           >
             <Trash2 />
@@ -1072,7 +1176,10 @@ function FullDay({
           </Button>
         </SheetTrigger>
       </Tip>
-      <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+      <SheetContent
+        side="bottom"
+        className="max-h-[80dvh] overflow-y-auto pb-[env(safe-area-inset-bottom)]"
+      >
         <SheetHeader className="text-left">
           <SheetTitle>{t("day.fullDay")}</SheetTitle>
           <SheetDescription>{t("day.fullDayDescription")}</SheetDescription>

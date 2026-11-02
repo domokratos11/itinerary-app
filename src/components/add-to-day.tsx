@@ -103,7 +103,7 @@ export function AddToDay({ place }: { place: Place }) {
         </CommandDialog>
       ) : (
         <Drawer open={open} onOpenChange={setOpen}>
-          <DrawerContent className="max-h-[70vh]">
+          <DrawerContent className="max-h-[70dvh]">
             <DrawerHeader className="text-left">
               <DrawerTitle>{t("common.addToDay")}</DrawerTitle>
               <DrawerDescription>

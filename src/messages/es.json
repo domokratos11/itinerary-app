@@ -99,13 +99,6 @@
     "tour": "tour",
     "ticket": "boleto"
   },
-  "legMode": {
-    "train": "Tren",
-    "subway": "Metro",
-    "bus": "Autobús",
-    "walk": "A pie",
-    "taxi": "Taxi"
-  },
   "language": {
     "label": "Idioma"
   },
@@ -158,7 +151,6 @@
     "dayOne": "Día 1",
     "todayDay": "Hoy · {day}",
     "nextStop": "Siguiente parada",
-    "nextStopAt": "Siguiente parada · {time}",
     "nothingToday": "Nada planeado para hoy.",
     "allDoneToday": "Ya se hicieron todas las paradas de hoy.",
     "goThere": "Ir allí",
@@ -183,7 +175,6 @@
     "notFound": "Día no encontrado",
     "notATripDay": "{date} no es uno de los días del viaje.",
     "noDate": "No se indicó una fecha.",
-    "runsLate": "Este día termina hasta las {time}. Revisa el último tren.",
     "goNext": "Ir a la siguiente parada",
     "noStopsLeft": "No quedan paradas planeadas",
     "start": "Inicio",
@@ -195,6 +186,11 @@
     "moveUp": "Subir",
     "moveDown": "Bajar",
     "remove": "Quitar",
+    "went": "Fuimos",
+    "wentName": "Fuimos a {name}",
+    "skip": "Omitir",
+    "skipName": "Omitir {name}",
+    "openDetails": "Ver los detalles de {name}",
     "removed": "Se quitó del plan",
     "fullDay": "Día completo",
     "fullDayDescription": "Cada tramo, a un toque.",
@@ -225,38 +221,35 @@
     "waitingTab": "En espera ({count})",
     "waitingTap": "Toca uno para agregarlo a este día.",
     "addWaitingTitle": "¿Agregar {name} a {day}?",
-    "addWaitingBody": "Se agrega al final del día, y puedes reordenarlo desde la lista."
+    "addWaitingBody": "Se agrega al final del día, y puedes reordenarlo desde la lista.",
+    "showOnMap": "Ver en el mapa",
+    "hideFromMap": "Quitar del mapa",
+    "sortAndFilter": "Ordenar y filtrar",
+    "sortBy": "Ordenar por",
+    "sortPriority": "Prioridad, imprescindibles primero",
+    "sortNameAsc": "Nombre, de la A a la Z",
+    "sortNameDesc": "Nombre, de la Z a la A",
+    "allCategories": "Todas las categorías",
+    "clearFilters": "Limpiar",
+    "waitingNoMatches": "Ningún lugar en espera coincide con estos filtros.",
+    "waitingUnpinned": "{count, plural, one {# lugar en espera aún no tiene} other {# lugares en espera aún no tienen}} marcador en el mapa.",
+    "hotelOffMap": "{name} no está en el mapa, así que no tiene marcador ni distancia a pie o en tren.",
+    "hotelOffMapFix": "Búscalo en Ajustes"
   },
   "warnings": {
     "closedOnDay": "Cerrado este día",
     "outOfSeason": "Fuera de temporada",
-    "notOpenYet": "Quizá aún no abra (abre a las {time})",
-    "closedByThen": "Quizá ya esté cerrado (cierra a las {time})",
     "holiday": "Día festivo: revisa que abra",
     "closures": "Cierres de Año Nuevo: revisa que abra"
-  },
-  "stop": {
-    "edit": "Editar parada",
-    "description": "Hora, duración y notas de esta parada.",
-    "startTime": "Hora de inicio",
-    "minutes": "Minutos",
-    "usually": "Normalmente unos {minutes} min",
-    "hours": "Horario: {hours}",
-    "gettingHere": "Cómo llegar",
-    "gettingHereHint": "Tu propia nota, como qué tren tomar. Se toma como una estimación.",
-    "noNote": "Sin nota",
-    "fare": "Tarifa (¥)",
-    "lineOrDetails": "Línea o detalles",
-    "status": "Estado"
   },
   "leg": {
     "about": "Aprox. {distance}",
     "walk": "A pie {minutes} min · {distance}",
-    "aboutMinutes": "unos {minutes} min",
     "trainDirections": "Cómo llegar en tren",
-    "estimate": "{note} (estimación)",
     "station": "Estación: {station}",
-    "hotelUndecided": "Hotel por decidir"
+    "hotelUndecided": "Hotel por decidir",
+    "fromHotel": "Desde {name}",
+    "backToHotel": "De vuelta a {name}"
   },
   "place": {
     "details": "Detalles del lugar",
@@ -300,7 +293,6 @@
     "notConfigured": "Google Maps aún no está configurado.",
     "noAnswer": "Google no respondió. Inténtalo más tarde.",
     "needsConnection": "Las fotos y los detalles en vivo necesitan conexión.",
-    "asking": "Consultando a Google…",
     "fromGoogle": "En vivo desde Google",
     "openNow": "Abierto ahora",
     "closedNow": "Cerrado ahora",
@@ -309,17 +301,13 @@
     "ratedCount": "Calificación {rating} de {count} reseñas",
     "noDetails": "Google no tiene detalles de esto.",
     "seeOnMaps": "Verlo en Google Maps",
-    "showPhoto": "Mostrar foto",
-    "noPhotos": "Google no tiene fotos.",
     "photoAlt": "Foto {index} de {total}",
     "loading": "Cargando…",
     "photoBy": "Foto de",
     "original": "Original en Google Maps",
     "position": "{index} de {total}",
     "closedVsNotes": "Google dice que hoy está cerrado, pero nuestras notas indican un horario.",
-    "notesDiffer": "Nuestras notas dicen {open}–{close}. Revísalo antes de confiar en alguno.",
-    "tipFromGoogle": "El horario de hoy y la calificación de Google. No se guarda nada.",
-    "tipShowPhoto": "Fotos de Google. No se guarda nada."
+    "notesDiffer": "Nuestras notas dicen {open}–{close}. Revísalo antes de confiar en alguno."
   },
   "map": {
     "notConfigured": "El mapa aún no está configurado.",
@@ -346,11 +334,13 @@
     "hintStays": "Dónde duermen cada noche. Esto define a qué ciudad pertenece cada día.",
     "hintCities": "Las ciudades del viaje y sus colores.",
     "hintPlaces": "Todos los lugares, con la investigación por revisar.",
-    "hintBookings": "Vuelos, trenes, tours y boletos, que aparecen en su día.",
+    "hintBookings": "Trenes, tours y boletos, que aparecen en su día.",
     "hintHolidays": "Feriados y cierres que pueden afectar sus planes.",
     "hintTrip": "El nombre del viaje y quién puede abrirlo.",
     "hintBackup": "Descarga todo el viaje como archivo, o restaura uno en un viaje vacío.",
-    "hintCleanup": "Elimina para siempre lo archivado o terminado, y el historial de cambios."
+    "hintCleanup": "Elimina para siempre lo archivado o terminado, y el historial de cambios.",
+    "tabFlights": "Vuelos",
+    "hintFlights": "Números de vuelo, horarios y códigos de confirmación, que aparecen en sus días."
   },
   "about": {
     "title": "Acerca de",
@@ -382,7 +372,10 @@
     "sameDays": "Los días del viaje no cambian.",
     "adds": "Agrega {days}",
     "removes": "Quita {days}",
-    "stranded": "{count, plural, one {# parada necesitará} other {# paradas necesitarán}} un día nuevo"
+    "stranded": "{count, plural, one {# parada necesitará} other {# paradas necesitarán}} un día nuevo",
+    "noLocation": "Aún no está en el mapa",
+    "pinned": "En el mapa.",
+    "pickToPin": "Elígelo de la lista de Google, o agrega abajo un enlace completo, para marcarlo en el mapa."
   },
   "citySettings": {
     "counts": "{stays, plural, one {# hospedaje} other {# hospedajes}} · {places, plural, one {# lugar} other {# lugares}}",
@@ -550,7 +543,10 @@
     "changedMembers": "cambió quién está en el viaje",
     "savedExpense": "guardó el gasto {title}",
     "archivedExpense": "archivó el gasto {title}",
-    "cleanedUp": "hizo limpieza: {what}"
+    "cleanedUp": "hizo limpieza: {what}",
+    "savedFlight": "guardó el vuelo {flight}",
+    "archivedFlight": "archivó el vuelo {flight}",
+    "restoredFlight": "restauró el vuelo {flight}"
   },
   "theme": {
     "system": "Igual que el teléfono",
@@ -627,7 +623,10 @@
     "usdHint": "≈ {usd} USD (1 USD = ¥{rate})",
     "tipSetBudget": "Define el total, una meta por categoría y cuántos viajan",
     "tipAddExpense": "Registra algo comprado o por pagar",
-    "tipLogCost": "Agrega este lugar al presupuesto, con su nombre y categoría ya puestos"
+    "tipLogCost": "Agrega este lugar al presupuesto, con su nombre y categoría ya puestos",
+    "hideAmounts": "Ocultar montos",
+    "showAmounts": "Mostrar montos",
+    "showToEdit": "Muestra los montos para editar esto"
   },
   "dashboard": {
     "title": "Panel",
@@ -682,7 +681,8 @@
     "costPerCity": "Costo estimado de las paradas planeadas por ciudad",
     "route": "Ruta",
     "noRoute": "Agrega hoteles para ver la ruta.",
-    "legTitle": "{city}: {count, plural, one {# día} other {# días}}"
+    "legTitle": "{city}: {count, plural, one {# día} other {# días}}",
+    "nextFlight": "Próximo vuelo"
   },
   "cleanup": {
     "intro": "Lo archivado y eliminado se puede restaurar hasta que lo limpies aquí. Después desaparece para siempre, para todos en el viaje.",
@@ -704,6 +704,29 @@
     "confirmTitle": "{what}: ¿eliminar para siempre?",
     "confirmBody": "Esto elimina para siempre {count, plural, one {# elemento} other {# elementos}} y no se puede deshacer. Puedes descargar una copia antes.",
     "deleteForGood": "Eliminar para siempre",
-    "done": "{count, plural, one {Se eliminó # elemento} other {Se eliminaron # elementos}}"
+    "done": "{count, plural, one {Se eliminó # elemento} other {Se eliminaron # elementos}}",
+    "flights": "Vuelos archivados"
+  },
+  "flights": {
+    "title": "Vuelos",
+    "none": "Aún no hay vuelos.",
+    "add": "Agregar vuelo",
+    "edit": "Editar vuelo {flight}",
+    "archiveAria": "Archivar vuelo {flight}",
+    "archived": "Vuelo archivado",
+    "localTimes": "Las fechas y horas son las locales de cada aeropuerto, como en tu boleto.",
+    "airline": "Aerolínea",
+    "number": "Número de vuelo",
+    "departure": "Salida",
+    "arrival": "Llegada",
+    "time": "Hora",
+    "airport": "Código de aeropuerto",
+    "airportHint": "Tres letras, como HND.",
+    "city": "Ciudad (opcional)",
+    "confirmation": "Número de confirmación (opcional)",
+    "cost": "Costo (opcional)",
+    "currency": "Moneda",
+    "confirmationCode": "Confirmación: {code}",
+    "costLine": "Costo: {cost}"
   }
 }

@@ -76,11 +76,7 @@ describe("importBackup", () => {
       placeId: place.id,
       date: "2026-12-18",
       order: "a0",
-      startTime: null,
-      durationMin: null,
-      note: null,
       status: "planned" as const,
-      legNote: null,
       updatedAt: "2026-11-01T00:00:00.000Z",
     };
     await importBackup(
@@ -102,6 +98,7 @@ describe("importBackup", () => {
       reservations: fixtureTrip.reservations.length,
       places: 1,
       holidays: fixtureTrip.holidays.length,
+      flights: 0,
       expenses: 0,
     });
 

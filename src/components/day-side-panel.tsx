@@ -2,13 +2,37 @@
 
 import type { ReactNode } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { GripVertical } from "lucide-react";
+import { GripVertical, ListFilter, MapPin, MapPinOff, X } from "lucide-react";
 
-import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
+import {
+  CategoryBadge,
+  CategoryOption,
+  PriorityBadge,
+  PriorityOption,
+} from "@/components/tag-badges";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { isDraft } from "@/domain/place-edit";
-import type { Place } from "@/domain/schemas";
+import { CATEGORIES, PRIORITIES, type Place } from "@/domain/schemas";
 import type { TripDay } from "@/domain/days";
+import {
+  DEFAULT_WAITING_VIEW,
+  isDefaultWaitingView,
+  WAITING_SORTS,
+  type WaitingSort,
+  type WaitingView,
+} from "@/domain/waiting-view";
+import type { MessageKey } from "@/domain/i18n";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { formatDayLabel } from "@/lib/format-day";
@@ -50,25 +74,193 @@ export function WaitingTags({ place }: { place: Place }) {
 // rest scrolls, so a long list never pushes the map away.
 export function DayColumn({
   title,
+  actions,
   children,
 }: {
   title: string;
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="flex min-h-0 flex-col rounded-xl border bg-muted/30">
       <h2 className="px-3 pt-3 pb-2 text-sm font-medium">{title}</h2>
+      {actions && <div className="px-3 pb-2">{actions}</div>}
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">{children}</div>
     </section>
   );
 }
 
-// Things waiting to be placed: drag them into the day.
-export function WaitingColumn({ waiting }: { waiting: Waiting[] }) {
+const SORT_LABEL: Record<WaitingSort, MessageKey> = {
+  priority: "day.sortPriority",
+  "name-asc": "day.sortNameAsc",
+  "name-desc": "day.sortNameDesc",
+};
+
+// Why the list is empty, or what to do with what's in it. `total` is how many
+// are waiting before any filter.
+export function waitingHint(shown: number, total: number, hint: string) {
+  if (total === 0) return t("day.waitingNone");
+  return shown === 0 ? t("day.waitingNoMatches") : hint;
+}
+
+export type WaitingControlsProps = {
+  view: WaitingView;
+  onViewChange: (view: WaitingView) => void;
+  shown: number;
+  total: number;
+  onMap: boolean;
+  onMapChange: (onMap: boolean) => void;
+};
+
+// Helps choose what to place: their pins on the map, in any order and filter.
+// Pins are off until asked for, and follow the filters when they're on.
+export function WaitingControls({
+  view,
+  onViewChange,
+  shown,
+  total,
+  onMap,
+  onMapChange,
+}: WaitingControlsProps) {
+  const filtered = !isDefaultWaitingView(view);
+  // Choosing keeps the menu open, as several choices are often made together.
+  const stayOpen = (event: Event) => event.preventDefault();
   return (
-    <DayColumn title={t("day.waiting")}>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Button
+          variant={onMap ? "default" : "outline"}
+          size="sm"
+          aria-pressed={onMap}
+          disabled={total === 0}
+          onClick={() => onMapChange(!onMap)}
+        >
+          {onMap ? <MapPinOff /> : <MapPin />}
+          {onMap ? t("day.hideFromMap") : t("day.showOnMap")}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant={filtered ? "secondary" : "outline"}
+              size="sm"
+              disabled={total === 0}
+            >
+              <ListFilter />
+              {t("day.sortAndFilter")}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            collisionPadding={8}
+            className="w-56"
+          >
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>{t("day.sortBy")}</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={view.sort}
+                onValueChange={(sort) =>
+                  onViewChange({ ...view, sort: sort as WaitingSort })
+                }
+              >
+                {WAITING_SORTS.map((sort) => (
+                  <DropdownMenuRadioItem
+                    key={sort}
+                    value={sort}
+                    onSelect={stayOpen}
+                  >
+                    {t(SORT_LABEL[sort])}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>{t("common.priority")}</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={view.priority}
+                onValueChange={(priority) =>
+                  onViewChange({
+                    ...view,
+                    priority: priority as WaitingView["priority"],
+                  })
+                }
+              >
+                <DropdownMenuRadioItem value="all" onSelect={stayOpen}>
+                  {t("cities.allPriorities")}
+                </DropdownMenuRadioItem>
+                {PRIORITIES.map((priority) => (
+                  <DropdownMenuRadioItem
+                    key={priority}
+                    value={priority}
+                    onSelect={stayOpen}
+                  >
+                    <PriorityOption priority={priority} />
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>{t("common.category")}</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={view.category}
+                onValueChange={(category) =>
+                  onViewChange({
+                    ...view,
+                    category: category as WaitingView["category"],
+                  })
+                }
+              >
+                <DropdownMenuRadioItem value="all" onSelect={stayOpen}>
+                  {t("day.allCategories")}
+                </DropdownMenuRadioItem>
+                {CATEGORIES.map((category) => (
+                  <DropdownMenuRadioItem
+                    key={category}
+                    value={category}
+                    onSelect={stayOpen}
+                  >
+                    <CategoryOption category={category} />
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {filtered && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onViewChange(DEFAULT_WAITING_VIEW)}
+          >
+            <X />
+            {t("day.clearFilters")}
+          </Button>
+        )}
+      </div>
+      {filtered && (
+        <p className="text-xs text-muted-foreground">
+          {t("cities.placesShown", { shown, total })}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Things waiting to be placed: drag them into the day.
+export function WaitingColumn({
+  waiting,
+  total,
+  controls,
+}: {
+  waiting: Waiting[];
+  total: number;
+  controls: ReactNode;
+}) {
+  return (
+    <DayColumn title={t("day.waiting")} actions={controls}>
       <p className="pb-2 text-xs text-muted-foreground">
-        {waiting.length === 0 ? t("day.waitingNone") : t("day.waitingDrag")}
+        {waitingHint(waiting.length, total, t("day.waitingDrag"))}
       </p>
       <ul className="flex flex-col gap-2">
         {waiting.map((w) => (

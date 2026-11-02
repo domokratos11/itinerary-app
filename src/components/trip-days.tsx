@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useSyncExternalStore } from "react";
-import { BedDouble } from "lucide-react";
+import { BedDouble, Plane } from "lucide-react";
 
+import { FlightCard } from "@/components/flight-card";
 import { Button } from "@/components/ui/button";
+import { flightsOnDay, flightsOutsideDays } from "@/domain/flights";
+import type { FlightRecord } from "@/domain/schemas";
 import { groupDaysByStay } from "@/domain/trip";
 import { intlLocale, t } from "@/lib/i18n";
 import { cityHref, dayHref, pageHref } from "@/lib/links";
@@ -28,6 +31,26 @@ function dayParts(date: string) {
   };
 }
 
+// The flights on dates with no day of their own: the way there and back.
+function OutsideFlights({ flights }: { flights: FlightRecord[] }) {
+  if (flights.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <h3 className="flex items-center gap-2 text-sm font-medium">
+        <Plane aria-hidden className="size-3.5 text-muted-foreground" />
+        {t("flights.title")}
+      </h3>
+      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {flights.map((flight) => (
+          <li key={flight.id}>
+            <FlightCard flight={flight} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // The trip's days, grouped by the hotel of each night, from the live stays.
 // A list on phones, a calendar-like grid on wider screens. "Today" scrolls
 // to today's card; before the trip to the first day, after it to the last.
@@ -42,6 +65,8 @@ export function TripDays() {
     () => groupDaysByStay(days, trip.stays),
     [days, trip.stays],
   );
+
+  const outside = flightsOutsideDays(trip.flights, days);
 
   const stopsByDate = useMemo(() => {
     const counts = new Map<string, number>();
@@ -80,6 +105,7 @@ export function TripDays() {
           {t("home.noStaysAfter")}
         </p>
       )}
+      <OutsideFlights flights={outside.before} />
       {groups.map((group) => {
         const city = group.stay ? citiesById.get(group.stay.cityId) : null;
         return (
@@ -109,11 +135,12 @@ export function TripDays() {
                 </span>
               )}
             </div>
-            <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {group.days.map((day) => {
                 const stops = stopsByDate.get(day.date) ?? 0;
                 const { weekday, day: num, month } = dayParts(day.date);
                 const isToday = day.date === today;
+                const flights = flightsOnDay(trip.flights, day.date);
                 return (
                   <li
                     key={day.date}
@@ -159,6 +186,15 @@ export function TripDays() {
                               {citiesById.get(id)?.name ?? id}
                             </span>
                           ))}
+                          {flights.map((flight) => (
+                            <span
+                              key={flight.id}
+                              className="flex items-center gap-1"
+                            >
+                              <Plane aria-hidden className="size-3" />
+                              {flight.flightNumber}
+                            </span>
+                          ))}
                         </span>
                       </span>
                       <span
@@ -181,6 +217,7 @@ export function TripDays() {
           </div>
         );
       })}
+      <OutsideFlights flights={outside.after} />
     </section>
   );
 }

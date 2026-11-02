@@ -7,6 +7,7 @@ import {
   CalendarClock,
   CalendarX,
   Flag,
+  Plane,
   Search,
   Ticket,
   TriangleAlert,
@@ -32,8 +33,14 @@ import { TodayCard } from "@/components/today-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Yen, YEN_VALUES } from "@/components/yen";
-import { formatYen, spendByDay, totalsByPayer } from "@/domain/budget";
+import {
+  HideAmountsButton,
+  MoneyScope,
+  useYenValues,
+  Yen,
+} from "@/components/yen";
+import { spendByDay, totalsByPayer } from "@/domain/budget";
+import { flightRoute, nextFlight } from "@/domain/flights";
 import {
   cityFigures,
   hoursLeftInTokyoDay,
@@ -206,7 +213,16 @@ function ClockTiles({
 
 // The first screen: where the trip stands, from what's already in it.
 export function DashboardScreen() {
+  return (
+    <MoneyScope>
+      <DashboardContent />
+    </MoneyScope>
+  );
+}
+
+function DashboardContent() {
   const tripId = useTripId();
+  const money = useYenValues();
   const trip = useTrip();
   const days = useTripDays();
   const items = usePlanStore((s) => s.items);
@@ -260,6 +276,7 @@ export function DashboardScreen() {
   const toResearch = placesToResearch(trip.places);
   const tonight = stayTonight(trip.stays, today);
   const next = nextReservation(trip.reservations, today);
+  const flight = nextFlight(trip.flights, today);
   const legs = routeLegs(days);
   const payers = totalsByPayer(expenses);
   const spending = spendByDay(expenses, days);
@@ -321,7 +338,10 @@ export function DashboardScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
+      <header className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
+        <HideAmountsButton />
+      </header>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <ClockTiles
@@ -345,7 +365,7 @@ export function DashboardScreen() {
         >
           <Hint>
             <Yen yen={summary.spent}>
-              {t("dashboard.spentSoFar", { yen: formatYen(summary.spent) })}
+              {t("dashboard.spentSoFar", { yen: money.format(summary.spent) })}
             </Yen>
           </Hint>
         </Tile>
@@ -365,7 +385,7 @@ export function DashboardScreen() {
         </Tile>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
         <TodayCard />
         <Panel title={t("dashboard.nextUp")}>
           <ul className="flex flex-col gap-3 text-sm">
@@ -377,6 +397,21 @@ export function DashboardScreen() {
                     {t("dashboard.tonight")}
                   </span>
                   {tonight ? tonight.hotelName : t("dashboard.noHotelTonight")}
+                </span>
+              </li>
+            )}
+            {flight && (
+              <li className="flex items-start gap-2">
+                <Plane className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <span className="min-w-0">
+                  <span className="block text-xs text-muted-foreground">
+                    {t("dashboard.nextFlight")}
+                  </span>
+                  {flight.flightNumber} · {formatDayLabel(flight.departDate)} ·{" "}
+                  {flight.departTime}
+                  <span className="block text-muted-foreground">
+                    {flightRoute(flight)}
+                  </span>
                 </span>
               </li>
             )}
@@ -426,9 +461,9 @@ export function DashboardScreen() {
       </div>
 
       <h2 className="pt-2 text-lg font-semibold">{t("dashboard.money")}</h2>
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
         <Panel title={t("budget.overview")}>
-          <div className="grid items-center gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
             <BudgetGauge
               percent={percent}
               over={summary.over > 0}
@@ -445,10 +480,10 @@ export function DashboardScreen() {
           ) : (
             <DonutChart
               series={categorySeries(categories)}
-              center={formatYen(summary.spent)}
+              center={money.format(summary.spent)}
               centerLabel={t("budget.spent")}
               label={t("budget.byCategory")}
-              {...YEN_VALUES}
+              {...money}
             />
           )}
         </Panel>
@@ -465,13 +500,13 @@ export function DashboardScreen() {
               name={t("budget.spent")}
               label={t("dashboard.spendPerDay")}
               tick={dayTick}
-              {...YEN_VALUES}
+              {...money}
             />
           )}
           {spending.outside > 0 && (
             <p className="pt-2 text-xs text-muted-foreground">
               {t("dashboard.paidOutside", {
-                yen: formatYen(spending.outside),
+                yen: money.format(spending.outside),
               })}
             </p>
           )}
@@ -487,14 +522,14 @@ export function DashboardScreen() {
                 value: p.paid,
                 color: "var(--primary)",
               }))}
-              {...YEN_VALUES}
+              {...money}
             />
           )}
         </Panel>
       </div>
 
       <h2 className="pt-2 text-lg font-semibold">{t("dashboard.plan")}</h2>
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
         <Panel
           title={t("dashboard.stopsPerDay")}
           className="md:col-span-2 2xl:col-span-2"
@@ -589,7 +624,7 @@ export function DashboardScreen() {
       </div>
 
       <h2 className="pt-2 text-lg font-semibold">{t("dashboard.places")}</h2>
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
         <Panel title={t("dashboard.placesByCategory")}>
           {trip.places.length === 0 ? (
             <Empty>{t("cities.noPlaces")}</Empty>
@@ -637,7 +672,7 @@ export function DashboardScreen() {
               value: f.estimateYen,
               color: cityColor(f.cityId),
             }))}
-            {...YEN_VALUES}
+            {...money}
           />
         </Panel>
         <Panel
@@ -665,7 +700,7 @@ export function DashboardScreen() {
                   />
                 ))}
               </div>
-              <ul className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+              <ul className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
                 {figures.map((f) => (
                   <li key={f.cityId} className="flex items-center gap-2">
                     <span

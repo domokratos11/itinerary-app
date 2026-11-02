@@ -75,7 +75,7 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <ul className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2 2xl:grid-cols-3">
         {trip.reservations.map((r) => (
           <li
             key={r.id}
@@ -208,9 +208,12 @@ function ReservationForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {RESERVATION_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {t(`reservationType.${type}`)}
+            {/* Flights have their own section; an older one can still be edited. */}
+            {RESERVATION_TYPES.filter(
+              (option) => option !== "flight" || reservation?.type === "flight",
+            ).map((option) => (
+              <SelectItem key={option} value={option}>
+                {t(`reservationType.${option}`)}
               </SelectItem>
             ))}
           </SelectContent>
