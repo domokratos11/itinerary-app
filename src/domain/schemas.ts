@@ -104,28 +104,13 @@ export const HolidaySchema = z.object({
   note: z.string().nullable(),
 });
 
-export const LEG_MODES = ["train", "subway", "bus", "walk", "taxi"] as const;
-
-// A hand-typed or researched note on how to reach a stop. Ours, so it can be
-// stored, unlike Google's route times. Treat these as estimates.
-export const LegNoteSchema = z.object({
-  mode: z.enum(LEG_MODES),
-  minutes: z.number().int().positive().max(1440).nullable(),
-  fareJPY: z.number().int().nonnegative().nullable(),
-  text: z.string().max(200).nullable(),
-});
-
 export const PlanItemSchema = z.object({
   id: z.string(),
   placeId: z.string(),
   date: isoDate,
   order: z.string(),
-  startTime: z.string().nullable(),
-  durationMin: z.number().int().positive().nullable(),
-  note: z.string().nullable(),
   status: z.enum(PLAN_STATUSES),
   updatedAt: z.iso.datetime(),
-  legNote: LegNoteSchema.nullable().default(null),
 });
 
 // Firestore records under trips/{tripId}. Each is the shape above plus an
@@ -310,8 +295,6 @@ export type Proposal = z.infer<typeof ProposalSchema>;
 export type ProposalFields = z.infer<typeof ProposalFieldsSchema>;
 export type FieldSource = z.infer<typeof FieldSourceSchema>;
 export type NearestStation = z.infer<typeof NearestStationSchema>;
-export type LegNote = z.infer<typeof LegNoteSchema>;
-export type LegMode = (typeof LEG_MODES)[number];
 
 export type City = z.infer<typeof CitySchema>;
 export type Place = z.infer<typeof PlaceSchema>;

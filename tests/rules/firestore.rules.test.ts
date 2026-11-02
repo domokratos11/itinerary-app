@@ -235,6 +235,32 @@ describe("expenses", () => {
   });
 });
 
+describe("stops in the plan", () => {
+  const stop = {
+    id: "s1",
+    placeId: "zoo",
+    date: "2026-12-16",
+    order: "a0",
+    status: "planned",
+    updatedAt: NOW,
+  };
+  const path = "trips/japan/items/s1";
+
+  it("are saved by members, with only these fields", async () => {
+    await assertSucceeds(setDoc(doc(as(ANA), path), stop));
+    await assertFails(setDoc(doc(as(EVE), path), stop));
+    await assertSucceeds(
+      setDoc(doc(as(ANA), path), { ...stop, status: "done" }),
+    );
+    await assertFails(setDoc(doc(as(ANA), path), { ...stop, status: "lost" }));
+  });
+
+  it("refuse the details stops no longer have", async () => {
+    for (const field of ["startTime", "durationMin", "note", "legNote"])
+      await assertFails(setDoc(doc(as(ANA), path), { ...stop, [field]: null }));
+  });
+});
+
 describe("the trip's budget", () => {
   const budget = {
     totalJPY: 500000,

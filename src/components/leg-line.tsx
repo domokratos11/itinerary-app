@@ -3,10 +3,8 @@
 import { Footprints, Navigation, TrainFront } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Yen } from "@/components/yen";
 import {
   formatDistance,
-  formatLegNote,
   formatStation,
   formatWalk,
   type DayLeg,
@@ -64,17 +62,6 @@ export function LegLine({
             </a>
           ))}
       </div>
-      {leg.note && (
-        <p>
-          {leg.note.fareJPY !== null ? (
-            <Yen yen={leg.note.fareJPY}>
-              {t("leg.estimate", { note: formatLegNote(leg.note, t) })}
-            </Yen>
-          ) : (
-            t("leg.estimate", { note: formatLegNote(leg.note, t) })
-          )}
-        </p>
-      )}
       {far && leg.station && (
         <p>{t("leg.station", { station: formatStation(leg.station, t) })}</p>
       )}

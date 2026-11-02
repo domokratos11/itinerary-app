@@ -69,7 +69,7 @@ Step-by-step instructions are in [maps-setup.md](maps-setup.md).
 Between two stops on the day list, a line shows the leg:
 
 - **Short leg:** `Walk 12 min · 900 m`
-- **Longer leg (over about 1.5 km):** `About 4 km` with a **Train directions** button that opens the Maps app in transit mode, and any train note you have stored (see "Trains").
+- **Longer leg (over about 1.5 km):** `About 4 km` with a **Train directions** button that opens the Maps app in transit mode.
 
 Offline, the list keeps working with straight-line distances and the map shows a short message. The map code loads only when the map is opened.
 
@@ -78,8 +78,7 @@ Offline, the list keeps working with straight-line distances and the map shows a
 1. **M0 test:** one Routes `TRANSIT` call and one Maps Embed `mode=transit` iframe, Ueno to Asakusa. The iframe is free and may behave differently from the API. If either works, it replaces layer 2's links.
 2. **Links to the Maps app:** already in the code (`src/domain/plan.ts`), and they do show Japanese trains.
 3. **Nearest station on each place:** researched and stored by Track B, for example `Ueno Station, Ginza Line, 4 min walk`.
-4. **Train notes on a leg:** line, minutes and fare, typed by hand or suggested by research, and stored because they are ours. Treat these as estimates.
-5. **Station pins on the map:** an optional live toggle using Nearby Search. Check its tier in M0.
+4. **Station pins on the map:** an optional live toggle using Nearby Search. Check its tier in M0.
 
 Shinkansen and other booked trains already live in reservations; the day view keeps showing them. A paid Japanese transit API (NAVITIME and similar) stays out of scope, since you asked for Google and it adds a provider.
 
@@ -101,7 +100,6 @@ Neither loads automatically or appears in lists, which is what keeps them inside
 | `places`             | `nearestStation` (`name`, `lines`, `walkMin`)              | From research, ours                                    |
 | `places`             | `sources` (`field`, `url`)                                 | Where each researched fact came from                   |
 | `places`             | `lockedFields`                                             | Fields you edited by hand; research never changes them |
-| `items`              | `legNote` (`mode`, `minutes`, `fareJPY`, `text`)           | Optional train note for reaching this stop             |
 | new `proposals/{id}` | See Track B                                                | Research waiting for your review                       |
 
 All new fields are optional in `firestore.rules` and default to null in Zod, the same way the queue's later fields were added, so existing documents stay valid. `isMember` guards `proposals` as well. `backup.ts`, `seed.ts` and the validators are updated with them. No Google hours, ratings, photos or routes are written anywhere.
@@ -183,7 +181,7 @@ Tracks A and B are independent after M1. M0 needs you for the Google Cloud setup
 | M2  | Nov 10 | Map on Day and City pages, numbered pins, `List / Map` switch                                                                                                                             | Works at 390px and on desktop, in light and dark, and offline shows the message |
 | M3  | Nov 14 | Place editor, Places tab, completeness filters, Add place                                                                                                                                 | A place can be fully edited in the app, with Undo                               |
 | M4  | Nov 20 | Proposals, review screen, `research:pull` / `research:push`. Test on 5 places, then run all of them.                                                                                      | Ueno Zoo has cost and duration with sources; nothing changed without review     |
-| M5  | Nov 26 | Walking legs, distances, train button, `legNote`, nearest station                                                                                                                         | A full day shows each leg                                                       |
+| M5  | Nov 26 | Walking legs, distances, train button, nearest station                                                                                                                                    | A full day shows each leg                                                       |
 | M6  | Dec 1  | Photos and Live from Google, with credits and the Google logo                                                                                                                             | Tapping stays under the caps; caps reaching their limit shows a clear message   |
 | M7  | Dec 5  | Optional: Claude API script or GitHub Action, station pins                                                                                                                                | Only if still wanted                                                            |
 

@@ -29,11 +29,7 @@ const item = (overrides: Partial<PlanItem>): PlanItem => ({
   placeId: "p",
   date: "2026-12-20",
   order: "a0",
-  startTime: null,
-  durationMin: null,
-  note: null,
   status: "planned",
-  legNote: null,
   updatedAt: NOW.toISOString(),
   ...overrides,
 });

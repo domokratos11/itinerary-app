@@ -24,11 +24,7 @@ const item = (id: string, order: string): PlanItem => ({
   placeId: `p-${id}`,
   date: "2026-12-20",
   order,
-  startTime: null,
-  durationMin: null,
-  note: null,
   status: "planned",
-  legNote: null,
   updatedAt: "2026-11-01T00:00:00.000Z",
 });
 

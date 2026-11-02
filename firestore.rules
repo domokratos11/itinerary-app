@@ -10,27 +10,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isPlanItem(d) {
-      return d.keys().hasOnly(['id', 'placeId', 'date', 'order', 'startTime', 'durationMin', 'note', 'status', 'updatedAt', 'legNote'])
-        && d.keys().hasAll(['id', 'placeId', 'date', 'order', 'startTime', 'durationMin', 'note', 'status', 'updatedAt'])
+      return d.keys().hasOnly(['id', 'placeId', 'date', 'order', 'status', 'updatedAt'])
+        && d.keys().hasAll(['id', 'placeId', 'date', 'order', 'status', 'updatedAt'])
         && d.id is string && d.id.size() > 0 && d.id.size() <= 64
         && d.placeId is string && d.placeId.size() > 0 && d.placeId.size() <= 64
         && d.date is string && d.date.size() == 10
         && d.order is string && d.order.size() > 0 && d.order.size() <= 64
-        && (d.startTime == null || (d.startTime is string && d.startTime.size() == 5))
-        && (d.durationMin == null || (d.durationMin is int && d.durationMin > 0 && d.durationMin <= 1440))
-        && (d.note == null || (d.note is string && d.note.size() <= 500))
         && d.status in ['planned', 'done', 'skipped', 'removed']
-        && d.updatedAt is string && d.updatedAt.size() <= 30
-        && isLegNote(d.get('legNote', null));
-    }
-
-    function isLegNote(v) {
-      return v == null || (v is map
-        && v.keys().hasOnly(['mode', 'minutes', 'fareJPY', 'text'])
-        && v.keys().hasAll(['mode', 'minutes', 'fareJPY', 'text'])
-        && v.mode in ['train', 'subway', 'bus', 'walk', 'taxi']
-        && optionalNumber(v.minutes) && optionalNumber(v.fareJPY)
-        && optionalString(v.text, 200));
+        && d.updatedAt is string && d.updatedAt.size() <= 30;
     }
 
     function shortString(v, max) {

@@ -5,7 +5,6 @@ import { t } from "@/lib/i18n";
 import {
   dayLegs,
   formatDistance,
-  formatLegNote,
   formatStation,
   formatWalk,
 } from "./legs";
@@ -13,8 +12,8 @@ import type { Place, PlanItem } from "./schemas";
 
 const place = (id: string, lat: number | null, lng = 139.77) =>
   ({ id, name: id, lat, lng: lat === null ? null : lng }) as Place;
-const row = (id: string, at: Place | undefined, legNote = null) => ({
-  item: { id, legNote } as PlanItem,
+const row = (id: string, at: Place | undefined) => ({
+  item: { id } as PlanItem,
   place: at,
 });
 const hotel = { name: "Hotel", location: { lat: 35.71, lng: 139.77 } };
@@ -71,26 +70,6 @@ describe("formatting", () => {
 
   it("describes a walk", () => {
     expect(formatWalk(12, 900, t)).toBe("Walk 12 min · 900 m");
-  });
-
-  it("leaves out what a note doesn't have", () => {
-    expect(
-      formatLegNote(
-        {
-          mode: "subway",
-          minutes: 12,
-          fareJPY: 180,
-          text: "Ginza Line",
-        },
-        t,
-      ),
-    ).toBe("Subway · about 12 min · ¥180 · Ginza Line");
-    expect(
-      formatLegNote(
-        { mode: "taxi", minutes: null, fareJPY: null, text: null },
-        t,
-      ),
-    ).toBe("Taxi");
   });
 
   it("describes a station", () => {

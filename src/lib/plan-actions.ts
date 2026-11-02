@@ -109,13 +109,11 @@ export async function placeItem(
   );
 }
 
-// Saves edited details of a stop (time, duration, note, done or skipped).
+// Saves whether a stop was visited or skipped.
 export async function updateItem(
   tripId: string,
   item: PlanItem,
-  changes: Partial<
-    Pick<PlanItem, "startTime" | "durationMin" | "note" | "status" | "legNote">
-  >,
+  changes: Partial<Pick<PlanItem, "status">>,
   now: Date = new Date(),
 ): Promise<void> {
   const updated = { ...item, ...changes, updatedAt: now.toISOString() };

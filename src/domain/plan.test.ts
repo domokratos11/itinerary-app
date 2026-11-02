@@ -4,7 +4,6 @@ import { t } from "@/lib/i18n";
 
 import {
   costTotal,
-  dayRunsLate,
   directionsUrl,
   holidayWarnings,
   hotelsForDay,
@@ -15,9 +14,7 @@ import {
   nextStop,
   newPlanItem,
   parseHours,
-  stopTimes,
   stopWarnings,
-  timeWarnings,
   waitingPlaces,
 } from "@/domain/plan";
 import type { PlanItem, Place, Stay } from "@/domain/schemas";
@@ -77,11 +74,7 @@ const item = (overrides: Partial<PlanItem>): PlanItem => ({
   placeId: "p",
   date: "2026-12-20",
   order: "a0",
-  startTime: null,
-  durationMin: null,
-  note: null,
   status: "planned",
-  legNote: null,
   updatedAt: "2026-10-28T00:00:00.000Z",
   ...overrides,
 });
@@ -310,9 +303,7 @@ describe("costTotal", () => {
   });
 });
 
-describe("stop times", () => {
-  const place = { durationMin: 90, openingHours: "about 10:00-21:00 (verify)" };
-
+describe("parseHours", () => {
   it("reads the first hours range from free text", () => {
     expect(parseHours("9:30-17:00, last entry 16:00")).toEqual({
       open: "09:30",
@@ -320,44 +311,6 @@ describe("stop times", () => {
     });
     expect(parseHours("Verify on the day")).toBeNull();
     expect(parseHours(null)).toBeNull();
-  });
-
-  it("ends a stop after its duration, or the place's typical one", () => {
-    expect(stopTimes({ startTime: "10:30", durationMin: null }, place)).toEqual(
-      { start: "10:30", end: "12:00" },
-    );
-    expect(stopTimes({ startTime: "23:30", durationMin: 60 }, place)?.end).toBe(
-      "24:30",
-    );
-    expect(stopTimes({ startTime: null, durationMin: 60 }, place)).toBeNull();
-  });
-
-  it("warns when a stop is outside the opening hours", () => {
-    expect(
-      timeWarnings({ startTime: "09:00", durationMin: 60 }, place, t),
-    ).toEqual(["May not be open yet (opens 10:00)"]);
-    expect(
-      timeWarnings({ startTime: "20:00", durationMin: 90 }, place, t),
-    ).toEqual(["May be closed by then (closes 21:00)"]);
-    expect(
-      timeWarnings({ startTime: "12:00", durationMin: 60 }, place, t),
-    ).toEqual([]);
-  });
-
-  it("flags a day that runs past 22:00", () => {
-    const places = new Map([["p", { durationMin: 120 }]]);
-    expect(
-      dayRunsLate(
-        [{ placeId: "p", startTime: "21:00", durationMin: null }],
-        places,
-      ),
-    ).toBe("23:00");
-    expect(
-      dayRunsLate(
-        [{ placeId: "p", startTime: "18:00", durationMin: null }],
-        places,
-      ),
-    ).toBeNull();
   });
 });
 

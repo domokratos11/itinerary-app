@@ -99,13 +99,6 @@
     "tour": "tour",
     "ticket": "ticket"
   },
-  "legMode": {
-    "train": "Train",
-    "subway": "Subway",
-    "bus": "Bus",
-    "walk": "Walk",
-    "taxi": "Taxi"
-  },
   "language": {
     "label": "Language"
   },
@@ -158,7 +151,6 @@
     "dayOne": "Day 1",
     "todayDay": "Today · {day}",
     "nextStop": "Next stop",
-    "nextStopAt": "Next stop · {time}",
     "nothingToday": "Nothing planned today.",
     "allDoneToday": "All of today's stops are done.",
     "goThere": "Go there",
@@ -183,7 +175,6 @@
     "notFound": "Day not found",
     "notATripDay": "{date} isn't one of the trip's days.",
     "noDate": "No date given.",
-    "runsLate": "This day runs until {time}. Check the last train.",
     "goNext": "Go to next stop",
     "noStopsLeft": "No planned stops left",
     "start": "Start",
@@ -195,6 +186,10 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "remove": "Remove",
+    "went": "Went",
+    "wentName": "We went to {name}",
+    "skip": "Skip",
+    "skipName": "Skip {name}",
     "openDetails": "See the details of {name}",
     "removed": "Removed from the plan",
     "fullDay": "Full day",
@@ -231,31 +226,13 @@
   "warnings": {
     "closedOnDay": "Closed on this day",
     "outOfSeason": "Outside its season",
-    "notOpenYet": "May not be open yet (opens {time})",
-    "closedByThen": "May be closed by then (closes {time})",
     "holiday": "Holiday: check it's open",
     "closures": "New Year closures: check it's open"
-  },
-  "stop": {
-    "edit": "Edit stop",
-    "description": "Time, duration and notes for this stop.",
-    "startTime": "Start time",
-    "minutes": "Minutes",
-    "usually": "Usually about {minutes} min",
-    "hours": "Hours: {hours}",
-    "gettingHere": "Getting here",
-    "gettingHereHint": "Your own note, such as which train to take. Treated as an estimate.",
-    "noNote": "No note",
-    "fare": "Fare (¥)",
-    "lineOrDetails": "Line or details",
-    "status": "Status"
   },
   "leg": {
     "about": "About {distance}",
     "walk": "Walk {minutes} min · {distance}",
-    "aboutMinutes": "about {minutes} min",
     "trainDirections": "Train directions",
-    "estimate": "{note} (estimate)",
     "station": "Station: {station}",
     "hotelUndecided": "Hotel to be decided"
   },

@@ -28,23 +28,24 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 
 ## Commands
 
-| Command                                      | What it does                                                               |
-| -------------------------------------------- | -------------------------------------------------------------------------- |
-| `npm run dev`                                | Dev server at `http://localhost:3000/itinerary-app/`                       |
-| `npm run test`                               | Vitest + React Testing Library                                             |
-| `npm run test:rules`                         | The security rules on the local Firestore emulator; never the real database |
-| `npm run validate`                           | Zod check of the JSON files kept in the repo                               |
-| `TRIP_ID=<id> npm run drafts:pull`           | Export draft places to `research/` for the enrichment run                  |
-| `TRIP_ID=<id> npm run places:push -- <file>` | Write researched places back and mark them researched                      |
-| `TRIP_ID=<id> npm run places:reset`          | Show what clearing all places would change; `-- --apply` archives them and removes their stops |
-| `TRIP_ID=<id> npm run research:pull`         | Export research requests (`docs/research-run.md`)                          |
-| `TRIP_ID=<id> npm run research:push -- <file>` | Write research back as proposals to review; never changes a place directly |
-| `npm run maps:check`                         | Check the Google keys and test train routes (`docs/maps-setup.md`)         |
-| `TRIP_ID=<id> npm run maps:match`            | Save place IDs and coordinates; reports doubtful matches to confirm        |
-| `TRIP_ID=<id> npm run maps:refresh`          | Refresh Google coordinates before the 30-day limit                         |
-| `npm run build`                              | Static export to `out/`                                                    |
-| `npm run preview`                            | Serve `out/` like GitHub Pages, at `http://localhost:4173/itinerary-app/`  |
-| `npm run lint` / `npm run format`            | ESLint / Prettier                                                          |
+| Command                                        | What it does                                                                                   |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `npm run dev`                                  | Dev server at `http://localhost:3000/itinerary-app/`                                           |
+| `npm run test`                                 | Vitest + React Testing Library                                                                 |
+| `npm run test:rules`                           | The security rules on the local Firestore emulator; never the real database                    |
+| `npm run validate`                             | Zod check of the JSON files kept in the repo                                                   |
+| `TRIP_ID=<id> npm run drafts:pull`             | Export draft places to `research/` for the enrichment run                                      |
+| `TRIP_ID=<id> npm run places:push -- <file>`   | Write researched places back and mark them researched                                          |
+| `TRIP_ID=<id> npm run places:reset`            | Show what clearing all places would change; `-- --apply` archives them and removes their stops |
+| `TRIP_ID=<id> npm run items:clean`             | Show which stops still have the old details; `-- --apply` deletes those fields                 |
+| `TRIP_ID=<id> npm run research:pull`           | Export research requests (`docs/research-run.md`)                                              |
+| `TRIP_ID=<id> npm run research:push -- <file>` | Write research back as proposals to review; never changes a place directly                     |
+| `npm run maps:check`                           | Check the Google keys and test train routes (`docs/maps-setup.md`)                             |
+| `TRIP_ID=<id> npm run maps:match`              | Save place IDs and coordinates; reports doubtful matches to confirm                            |
+| `TRIP_ID=<id> npm run maps:refresh`            | Refresh Google coordinates before the 30-day limit                                             |
+| `npm run build`                                | Static export to `out/`                                                                        |
+| `npm run preview`                              | Serve `out/` like GitHub Pages, at `http://localhost:4173/itinerary-app/`                      |
+| `npm run lint` / `npm run format`              | ESLint / Prettier                                                                              |
 
 ## Layout
 

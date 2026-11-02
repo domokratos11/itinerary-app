@@ -12,7 +12,6 @@ For each prompt: start in plan mode, read the plan, approve it, then commit once
 | Trip structure | Cities, stays and reservations are JSON files read at build time; `/day/[date]` and `/city/[cityId]` are pre-generated from them | Changing a hotel or a date means editing JSON and redeploying. Nothing can be changed from the app. |
 | Recently changed | A Sheet on the day page listing every plan item in the trip, newest `updatedAt` first, with its date and status; removed items have Restore | Shows each item's current state, not what changed: a move shows only the new date, an edit isn't visible, there's no "who" and no time, it isn't on the home page, and queue changes aren't in it. |
 | Drag and drop | dnd-kit reorder inside one day, only at 768px and wider; phones get up/down buttons | Reported as not working. There is no dragging between days and no dragging from the queue, and no write path for queue → day exists. |
-| Stop details | `startTime`, `durationMin`, `note` and the `done` / `skipped` statuses exist in the schema | No screen sets them. |
 | Navigation | Home lists days | No link from home to the city catalogs was found in `src/`; the catalog is reached only by URL. |
 | Desktop | Home is a `max-w-md` column; day and city pages widen to `max-w-3xl` | One phone column centred on a wide screen, no navigation, no use of the extra space. |
 

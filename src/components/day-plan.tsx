@@ -23,14 +23,15 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   BedDouble,
+  Check,
   ChevronDown,
   ChevronUp,
   ExternalLink,
   GripVertical,
   Info,
   Navigation,
-  Pencil,
   Plus,
+  SkipForward,
   Ticket,
   Trash2,
 } from "lucide-react";
@@ -71,12 +72,9 @@ import {
   holidayWarnings,
   itemsForDay,
   legsForDay,
-  dayRunsLate,
   nextStop,
   placeLocation,
-  stopTimes,
   stopWarnings,
-  timeWarnings,
   waitingPlaces,
 } from "@/domain/plan";
 import type { PlanItem, Place, Reservation } from "@/domain/schemas";
@@ -109,7 +107,6 @@ import {
 } from "@/lib/plan-actions";
 import { PlaceDetails } from "@/components/place-details";
 import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
-import { StopEditor, type StopChanges } from "@/components/stop-editor";
 import { LegLine } from "@/components/leg-line";
 import { TripMap } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
@@ -148,7 +145,6 @@ export function DayPlan(props: Props) {
   const trip = useTrip();
   const tripDays = useTripDays();
   const [dragging, setDragging] = useState<string | null>(null);
-  const [editing, setEditing] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "map" | "waiting">("list");
   const [adding, setAdding] = useState<Waiting | null>(null);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
@@ -344,19 +340,14 @@ export function DayPlan(props: Props) {
   }
 
   const next = nextStop(stops);
-  const lateEnd = dayRunsLate(
-    stops.filter((i) => i.status === "planned"),
-    placesById,
-  );
-  const editingItem = stops.find((i) => i.id === editing);
   const holiday = trip.holidays.find((h) => h.date === props.date);
 
-  function saveEdit(item: PlanItem, changes: StopChanges) {
-    setEditing(null);
+  // Tapping the status a stop already has takes it back to planned.
+  function mark(item: PlanItem, status: StopOutcome) {
     if (!tripId) return;
-    updateItem(tripId, item, changes).catch(() =>
-      toast.error(t("common.refused")),
-    );
+    updateItem(tripId, item, {
+      status: item.status === status ? "planned" : status,
+    }).catch(() => toast.error(t("common.refused")));
   }
   const nextPlace = next ? placesById.get(next.placeId) : undefined;
 
@@ -426,11 +417,6 @@ export function DayPlan(props: Props) {
         {holiday && (
           <p className="rounded-md bg-muted px-3 py-2 text-sm">
             <span className="font-medium">{holiday.name}.</span> {holiday.note}
-          </p>
-        )}
-        {lateEnd && (
-          <p className="text-sm text-destructive">
-            {t("day.runsLate", { time: lateEnd })}
           </p>
         )}
         <div className="flex flex-wrap gap-2">
@@ -512,7 +498,7 @@ export function DayPlan(props: Props) {
                       dayOptions={dayOptionsFor(row.place?.cityId)}
                       currentDate={props.date}
                       onRemove={() => remove(row.item)}
-                      onEdit={() => setEditing(row.item.id)}
+                      onMark={(status) => mark(row.item, status)}
                       onMoveDay={(d) => moveToDay(row.item, d)}
                       onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
                     />
@@ -554,7 +540,7 @@ export function DayPlan(props: Props) {
                   dayOptions={dayOptionsFor(row.place?.cityId)}
                   currentDate={props.date}
                   onRemove={() => remove(row.item)}
-                  onEdit={() => setEditing(row.item.id)}
+                  onMark={(status) => mark(row.item, status)}
                   onMoveDay={(d) => moveToDay(row.item, d)}
                   onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
                   buttons={{
@@ -617,15 +603,6 @@ export function DayPlan(props: Props) {
           if (!open) setOpenPlaceId(null);
         }}
       />
-      {editingItem && (
-        <StopEditor
-          key={editingItem.id}
-          item={editingItem}
-          place={placesById.get(editingItem.placeId)}
-          onCancel={() => setEditing(null)}
-          onSave={(changes) => saveEdit(editingItem, changes)}
-        />
-      )}
     </div>
   );
 }
@@ -813,6 +790,8 @@ function HotelButton({ text, endpoint }: { text: string; endpoint: Endpoint }) {
   );
 }
 
+type StopOutcome = "done" | "skipped";
+
 type StopProps = {
   // Its place in the day, the same number as its pin on the map.
   number: number;
@@ -821,7 +800,7 @@ type StopProps = {
   dayOptions: { date: string; label: string }[];
   currentDate: string;
   onRemove: () => void;
-  onEdit: () => void;
+  onMark: (status: StopOutcome) => void;
   onMoveDay: (date: string) => void;
   onOpenPlace: () => void;
 };
@@ -877,7 +856,7 @@ function StopCard({
   dayOptions,
   currentDate,
   onRemove,
-  onEdit,
+  onMark,
   onMoveDay,
   onOpenPlace,
   handle,
@@ -894,21 +873,11 @@ function StopCard({
   const { holidays } = useTrip();
   const tripId = useTripId();
   const name = place?.name ?? item.placeId;
-  const times = stopTimes(item, place);
-  const minutes = item.durationMin ?? null;
-  const meta = times
-    ? times.end
-      ? `${times.start}–${times.end}`
-      : times.start
-    : minutes
-      ? t("common.minutes", { minutes })
-      : null;
   const finished = item.status === "done" || item.status === "skipped";
   const warnings = place
     ? [
         ...stopWarnings(place, item.date, t),
         ...holidayWarnings(place, item.date, holidays, t),
-        ...timeWarnings(item, place, t),
       ]
     : [];
 
@@ -961,7 +930,6 @@ function StopCard({
                   : t("common.skipped")}
               </Badge>
             )}
-            {meta && <Badge variant="outline">{meta}</Badge>}
             {place && isDraft(place) && (
               <Badge variant="outline" className="border-dashed">
                 {t("common.notResearched")}
@@ -977,8 +945,27 @@ function StopCard({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        {item.note && <p className="text-sm">{item.note}</p>}
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={item.status === "done" ? "default" : "outline"}
+            size="sm"
+            aria-pressed={item.status === "done"}
+            aria-label={t("day.wentName", { name })}
+            onClick={() => onMark("done")}
+          >
+            <Check />
+            {t("day.went")}
+          </Button>
+          <Button
+            variant={item.status === "skipped" ? "default" : "outline"}
+            size="sm"
+            aria-pressed={item.status === "skipped"}
+            aria-label={t("day.skipName", { name })}
+            onClick={() => onMark("skipped")}
+          >
+            <SkipForward />
+            {t("day.skip")}
+          </Button>
           {place && (
             <Tip label={t("place.tipOpenInMaps")}>
               <Button asChild variant="outline" size="sm">
@@ -1039,16 +1026,8 @@ function StopCard({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={t("common.editName", { name })}
-            className={cn(!(place && tripId) && "ml-auto")}
-            onClick={onEdit}
-          >
-            <Pencil />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
             aria-label={t("day.remove")}
+            className={cn(!(place && tripId) && "ml-auto")}
             onClick={onRemove}
           >
             <Trash2 />
@@ -1092,7 +1071,10 @@ function FullDay({
           </Button>
         </SheetTrigger>
       </Tip>
-      <SheetContent side="bottom" className="max-h-[80dvh] overflow-y-auto pb-[env(safe-area-inset-bottom)]">
+      <SheetContent
+        side="bottom"
+        className="max-h-[80dvh] overflow-y-auto pb-[env(safe-area-inset-bottom)]"
+      >
         <SheetHeader className="text-left">
           <SheetTitle>{t("day.fullDay")}</SheetTitle>
           <SheetDescription>{t("day.fullDayDescription")}</SheetDescription>
