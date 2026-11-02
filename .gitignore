@@ -40,7 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# research exports from npm run queue:pull
+# research and drafts exports from npm run drafts:pull and research:pull
 /research/
 
 # service-account keys for the scripts (never commit)

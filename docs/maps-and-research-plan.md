@@ -1,21 +1,23 @@
 # Maps and place research plan
 
-Written 2026-10-30, about six and a half weeks before departure (Dec 15). This replaces decision 6 ("Still no Google Maps API") in [remaining-work-plan.md](remaining-work-plan.md).
+Written 2026-10-30, status updated 2026-11-01. This is the reference for the Google Maps rules in [CLAUDE.md](../CLAUDE.md) rule 4. It replaced the earlier decision that the app would have no Google Maps API.
 
 There are two separate tracks:
 
 - **Track A, Google Maps:** pins, distances, trains and photos, shown live.
 - **Track B, place data:** editing a place by hand, and filling in its information with AI research.
 
-## What the code shows today
+## Status today (2026-11-01)
 
-| Finding                                                            | Why it matters                                                                                                                                               |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Only 12 of 227 places have coordinates (all in Nagoya)             | A map can't show the other 215 until they are matched to Google places. This comes first.                                                                    |
-| Only 9 places have a cost, 12 a duration and 11 a description      | This is why Ueno Zoo says "Not researched yet".                                                                                                              |
-| `seedTrip` marks every catalog place `researched`, even empty ones | `queue:pull` only exports `draft` places, so Ueno Zoo and the other empty places **never reach the research run**. This is the real blocker in today's flow. |
-| The app has no screen for editing a place                          | Cities, stays and bookings can be edited in Settings. Places can only change through scripts.                                                                |
-| Plan items and places have no travel information                   | `geo.ts` only gives straight-line distance, and directions are a link out to Maps.                                                                           |
+The original snapshot of the code (12 of 227 places with coordinates, no place editor, `queue:pull`) is no longer true; the milestones below built what it asked for.
+
+| Area | Status |
+| --- | --- |
+| Map, walking legs, photos and live details (M2, M5, M6) | Built and deployed. The map has no pins until `maps:match` runs. |
+| Place editor, Places tab, Add place (M3) | Built and deployed. |
+| Research requests, proposals and review (M4) | Built. `research:pull` and `research:push` replace the old `queue:pull`. The 215-place run is not done yet. |
+| Coordinate matching (`maps:match`) and refresh (`maps:refresh`) | Scripts exist. Matching is not run yet; see [maps-checklist.md](maps-checklist.md), steps 7 to 10. |
+| Trains | Routes `TRANSIT` returns nothing for Japan; the Maps app links and stored train notes are used instead. |
 
 ## What Google allows, and what shapes this design
 
@@ -104,7 +106,7 @@ Neither loads automatically or appears in lists, which is what keeps them inside
 | `items`              | `legNote` (`mode`, `minutes`, `fareJPY`, `text`)           | Optional train note for reaching this stop             |
 | new `proposals/{id}` | See Track B                                                | Research waiting for your review                       |
 
-All new fields are optional in `firestore.rules` and default to null in Zod, the same way the queue's later fields were added, so existing documents stay valid. `isMember` guards `proposals` as well. `backup.ts`, `seed.ts` and the validators are updated with them. No Google hours, ratings, photos or routes are written anywhere.
+All new fields are optional in `firestore.rules` and default to null in Zod, the same way the queue's later fields were added, so existing documents stay valid. `isMember` guards `proposals` as well. `backup.ts` and the validators are updated with them. No Google hours, ratings, photos or routes are written anywhere.
 
 Code follows the existing pattern: a `MapsService` interface in `src/domain`, one Google implementation in `src/lib` and a memory one for tests. Screens never import the Maps SDK. All SDK code lives in the Google implementation, including the map, so no React wrapper is needed; `@vis.gl/react-google-maps` would have added a second script loader for no gain.
 
@@ -162,7 +164,7 @@ Checked 2026-10-30 against the [service terms](https://cloud.google.com/maps-pla
 
 | Question                                 | Answer                                                                                                                                                                                                                                                       | Effect on the plan                                                                                                                                                                                             |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Can coordinates be stored?               | Yes, "for up to 30 consecutive calendar days, after which Customer must delete" them (14.3).                                                                                                                                                                 | `maps:refresh` stays. Google coordinates are also left out of `data/` and backups, since the repo is public and those copies would outlive 30 days. Coordinates you supply yourself (`manual`) are unaffected. |
+| Can coordinates be stored?               | Yes, "for up to 30 consecutive calendar days, after which Customer must delete" them (14.3).                                                                                                                                                                 | `maps:refresh` stays. Google coordinates are also left out of backups, since the repo is public and those copies would outlive 30 days. Coordinates you supply yourself (`manual`) are unaffected. |
 | Can route times be stored?               | No. Only latitude and longitude from Routes may be cached (19.3).                                                                                                                                                                                            | As planned, memory only.                                                                                                                                                                                       |
 | Other map providers?                     | Places and Routes content can't be used with a non-Google map (14.2, 19.2).                                                                                                                                                                                  | Rules out Leaflet for this data.                                                                                                                                                                               |
 | Can a cap target one price tier?         | No. [Quotas are per API method](https://developers.google.com/maps/documentation/places/web-service/usage-and-billing), and a field mask decides the tier. Whether Places (New) offers a per-day quota for every method still has to be seen in the console. | Two projects, a 60-a-day app cap on Place Details (about $16 in the worst month), and a limit inside the app.                                                                                                  |
@@ -203,11 +205,11 @@ This leaves the full review from the earlier plan on Dec 10. If time runs short,
 | Weak signal in Japan                    | The list, stored research and offline cache all work without the map                     |
 | Stale coordinates past 30 days          | `maps:refresh` run before and during the trip                                            |
 
-## Decisions for you
+## Decisions (answered)
 
-1. **Billing:** OK with a card on a separate Google Cloud project, with caps? _Recommended: yes. Without it, none of Track A is possible._
-2. **Research worker:** start with Claude Code on your computer? _Recommended: yes. Add the API or GitHub Action only if you miss it._
-3. **Trains:** OK with links to the Maps app plus stored notes if M0 confirms the API returns nothing? _Recommended: yes._
+1. **Billing:** a card on a separate Google Cloud project, with caps. Set up; the caps are still unconfirmed (see the checklist, step 4).
+2. **Research worker:** Claude Code on your computer, with `research:pull` and `research:push`. The API or GitHub Action is not built.
+3. **Trains:** links to the Maps app plus stored notes, since the M0 test found no Japanese transit route from the API.
 
 ## Sources
 

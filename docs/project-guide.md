@@ -76,7 +76,7 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 
 | Library | Version | What it does here | Where |
 |---|---|---|---|
-| **shadcn/ui** | CLI ^4.23.0 | Source-owned components copied into the repo. Style `radix-luma`, base colour `stone`, CSS variables on, RSC on. | `src/components/ui/` (28 files), `components.json` |
+| **shadcn/ui** | CLI ^4.23.0 | Source-owned components copied into the repo. Style `radix-luma`, base colour `stone`, CSS variables on, RSC on. | `src/components/ui/` (27 files), `components.json` |
 | **radix-ui** (umbrella package) | ^1.8.1 | Accessible primitives under shadcn components (dialog, select, tabs, tooltip, dropdown, switch, etc.). | `src/components/ui/*` |
 | **class-variance-authority** | ^0.7.1 | Variant styles for buttons, badges and similar components. | `src/components/ui/button.tsx` and others |
 | **cn** (npm package) | ^0.5.0 | The `cn()` class-merging helper. Note: shadcn usually ships `clsx` + `tailwind-merge`; this repo uses the `cn` package instead. | `src/lib/utils.ts` re-exports it |
@@ -157,9 +157,8 @@ The rule that holds this together: **screens never import the Firebase SDK or th
 | `src/` | All application code and tests. |
 | `scripts/` | Node scripts for data, research and Maps work. Run with `tsx`. |
 | `tests/rules/` | Firestore security rules tests (emulator). |
-| `docs/` | Operational docs: Maps setup and plan, research run guide, remaining work plan, and this guide. |
+| `docs/` | Operational docs: Maps setup and plan, research run guide, and this guide. |
 | `public/` | Static files copied as-is: icons, `.nojekyll` (so GitHub Pages serves `_next/`), Google Maps logo. |
-| `links/` | `nagoya.txt`: a list of short Google Maps links. No code or script reads it (see §24). |
 | `.github/workflows/deploy.yml` | Build and deploy to GitHub Pages on each push to `main`. |
 | `firebase.json` | Firestore rules file and emulator ports (Firestore on 8181, UI off, single project mode). |
 | `firestore.rules` | The security rules. Pasted into the Firebase console by hand; the deploy does not publish them. |
@@ -174,7 +173,6 @@ The rule that holds this together: **screens never import the Firebase SDK or th
 | `CLAUDE.md` | Standing project rules (the 15+ numbered rules, commands, layout). |
 | `README.md` | Setup for Firebase, versions, languages. |
 | `.claude/launch.json` | Dev server configuration for the preview tools. |
-| `Trip Planner — Feasibility & Build Plan.md` | An early plan from October 2026. **Superseded** (it says there is no Google Maps and open editing); kept as history. See §24. |
 
 ### 3.2 `src/app`: routes
 
@@ -260,7 +258,7 @@ Base components:
 
 | Folder | Role |
 |---|---|
-| `src/components/ui/` | 28 shadcn/ui components. Do not hand-edit; add with `npx shadcn@latest add <name>`. Files include `alert-dialog`, `button`, `card`, `carousel`, `chart`, `command`, `dialog`, `drawer`, `dropdown-menu`, `select`, `sheet`, `sidebar`, `sonner`, `tabs`, `toggle-group`, `tooltip`, and others. |
+| `src/components/ui/` | 27 shadcn/ui components. Do not hand-edit; add with `npx shadcn@latest add <name>`. Files include `alert-dialog`, `button`, `card`, `carousel`, `chart`, `command`, `dialog`, `drawer`, `dropdown-menu`, `select`, `sheet`, `sidebar`, `sonner`, `tabs`, `toggle-group`, `tooltip`, and others. |
 
 ### 3.4 `src/domain`: pure logic and interfaces
 
@@ -341,7 +339,6 @@ Maps and place helpers:
 | `maps.config.ts` | Maps browser key and Map ID. Public values; restricted in Google Cloud. |
 | `maps-service-instance.ts` | The one `MapsService` instance. |
 | `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. |
-| `local-maps-service.ts` | In-memory stand-in for tests. |
 | `use-walking-legs.ts` | Walking routes for a day's short legs, kept in memory. |
 | `tap-limit.ts` | Per-device daily limit on paid Google calls (photos and live details, 15 each per day). |
 | `catalog-filter.ts` | Filters the city catalogue (category, priority, unassigned) and finds nearby places (1 km). |
@@ -372,11 +369,11 @@ Version and update:
 
 | Area | Files |
 |---|---|
-| All tracked files | 270 |
+| All tracked files | 266 |
 | `src/domain` (non-test modules) | 25 |
 | `src/components` (top-level, not `ui`) | 62 |
-| `src/lib` | 69 (including tests) |
-| `src/components/ui` | 28 |
+| `src/lib` | 68 (including tests) |
+| `src/components/ui` | 27 |
 | Scripts | 16 |
 | Docs (`docs/`) | 5 |
 | Test files (`*.test.*`) | 40 |
@@ -1331,11 +1328,10 @@ These come from reading the code, not from a live database.
 
 ## 24. Known gaps and stale files
 
+Removed on 2026-11-01: the Feasibility plan, docs/remaining-work-plan.md, links/nagoya.txt, src/lib/local-maps-service.ts (nothing imported it) and src/components/ui/scroll-area.tsx (unused shadcn component). docs/maps-and-research-plan.md was brought up to date the same day.
+
 | Item | Status | What to do |
 |---|---|---|
-| `Trip Planner — Feasibility & Build Plan.md` (repo root) | Superseded. It says there is no Google Maps and that editing is open to anyone with the link; both are now false. | Move to an archive folder or delete, with the owner's say-so. |
-| `docs/remaining-work-plan.md` | Dated plan with target dates in November and December 2026. | Update when the work is done or retire it. |
-| `links/nagoya.txt` | Seven short Google Maps links. No code or script reads it. | Keep as input for a future matcher, or delete. |
 | `components.json` vs code | Declares `iconLibrary: phosphor`, but 29 files use lucide and 9 use Phosphor. | Pick one icon set. |
 | `cn` npm package | Used instead of the usual `clsx` and `tailwind-merge` pair. | Works; note it when adding shadcn components. |
 | Rules not in CI | `test:rules` and `lint` are not run by the deploy workflow. | Add to CI if wanted. |
