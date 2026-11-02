@@ -365,7 +365,7 @@ export function DashboardScreen() {
         </Tile>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
         <TodayCard />
         <Panel title={t("dashboard.nextUp")}>
           <ul className="flex flex-col gap-3 text-sm">
@@ -426,9 +426,9 @@ export function DashboardScreen() {
       </div>
 
       <h2 className="pt-2 text-lg font-semibold">{t("dashboard.money")}</h2>
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
         <Panel title={t("budget.overview")}>
-          <div className="grid items-center gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
             <BudgetGauge
               percent={percent}
               over={summary.over > 0}
@@ -494,7 +494,7 @@ export function DashboardScreen() {
       </div>
 
       <h2 className="pt-2 text-lg font-semibold">{t("dashboard.plan")}</h2>
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
         <Panel
           title={t("dashboard.stopsPerDay")}
           className="md:col-span-2 2xl:col-span-2"
@@ -589,7 +589,7 @@ export function DashboardScreen() {
       </div>
 
       <h2 className="pt-2 text-lg font-semibold">{t("dashboard.places")}</h2>
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
         <Panel title={t("dashboard.placesByCategory")}>
           {trip.places.length === 0 ? (
             <Empty>{t("cities.noPlaces")}</Empty>
@@ -665,7 +665,7 @@ export function DashboardScreen() {
                   />
                 ))}
               </div>
-              <ul className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+              <ul className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
                 {figures.map((f) => (
                   <li key={f.cityId} className="flex items-center gap-2">
                     <span

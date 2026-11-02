@@ -95,6 +95,21 @@
   }
   html {
     @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  /* Feels like an app on a phone: no grey flash on tap, no wait for a double
+     tap, and the page itself doesn't rubber-band sideways. */
+  html,
+  body {
+    overscroll-behavior-x: none;
+  }
+  a,
+  button,
+  label,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 }
 

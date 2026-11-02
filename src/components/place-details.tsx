@@ -126,7 +126,7 @@ export function PlaceDetails({
       {editor}
       {costForm}
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[85vh]">
+        <DrawerContent className="max-h-[85dvh]">
           {place && (
             <div className="overflow-y-auto px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
               <DrawerHeader className="px-0 text-left">

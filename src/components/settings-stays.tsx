@@ -113,7 +113,7 @@ export function StaysSettings({ tripId }: { tripId: string }) {
         </p>
       ))}
 
-      <ol className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
+      <ol className="grid grid-cols-1 gap-2 lg:grid-cols-2 2xl:grid-cols-3">
         {trip.stays.map((stay) => {
           const city = citiesById.get(stay.cityId);
           const n = nights(stay.checkIn, stay.checkOut);

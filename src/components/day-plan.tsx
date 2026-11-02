@@ -480,7 +480,7 @@ export function DayPlan(props: Props) {
           pins={map.pins}
           lines={mapLines}
           onPinClick={setOpenPlaceId}
-          className="h-[65vh]"
+          className="h-[65svh]"
           note={mapNote}
         />
       )}
@@ -997,7 +997,7 @@ function StopCard({
           )}
           {dayOptions.length > 1 && (
             <Select value={currentDate} onValueChange={onMoveDay}>
-              <SelectTrigger size="sm" className="w-44">
+              <SelectTrigger size="sm" className="w-full sm:w-44">
                 <SelectValue placeholder={t("common.moveTo")} />
               </SelectTrigger>
               <SelectContent>
@@ -1072,7 +1072,7 @@ function FullDay({
           </Button>
         </SheetTrigger>
       </Tip>
-      <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+      <SheetContent side="bottom" className="max-h-[80dvh] overflow-y-auto pb-[env(safe-area-inset-bottom)]">
         <SheetHeader className="text-left">
           <SheetTitle>{t("day.fullDay")}</SheetTitle>
           <SheetDescription>{t("day.fullDayDescription")}</SheetDescription>

@@ -239,12 +239,12 @@ export function BudgetScreen() {
         </div>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t("budget.overview")}</CardTitle>
           </CardHeader>
-          <CardContent className="grid items-center gap-4 sm:grid-cols-2">
+          <CardContent className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
             <BudgetGauge
               percent={percent}
               over={summary.over > 0}
@@ -343,7 +343,7 @@ export function BudgetScreen() {
               onValueChange={(v) => setCategory(v as typeof category)}
             >
               <SelectTrigger
-                className="w-fit min-w-44"
+                className="w-full min-w-44 sm:w-fit"
                 aria-label={t("common.category")}
               >
                 <SelectValue />
@@ -365,7 +365,7 @@ export function BudgetScreen() {
                 : t("budget.noMatches")}
             </p>
           ) : (
-            <ul className="grid gap-2 lg:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
               {visible.map((expense) => (
                 <ExpenseRow
                   key={expense.id}

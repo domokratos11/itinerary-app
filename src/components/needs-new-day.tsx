@@ -76,7 +76,7 @@ export function NeedsNewDay() {
                   </span>
                 </span>
                 <Select onValueChange={(date) => move(index, date)}>
-                  <SelectTrigger size="sm" className="w-44">
+                  <SelectTrigger size="sm" className="w-full sm:w-44">
                     <SelectValue placeholder={t("common.moveTo")} />
                   </SelectTrigger>
                   <SelectContent>
