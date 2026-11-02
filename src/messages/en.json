@@ -278,7 +278,6 @@
     "notConfigured": "Google Maps isn't set up yet.",
     "noAnswer": "Google didn't answer. Try again later.",
     "needsConnection": "Photos and live details need a connection.",
-    "asking": "Asking Google…",
     "fromGoogle": "Live from Google",
     "openNow": "Open now",
     "closedNow": "Closed now",
@@ -287,17 +286,13 @@
     "ratedCount": "Rated {rating} from {count} reviews",
     "noDetails": "Google has no details for this.",
     "seeOnMaps": "See it on Google Maps",
-    "showPhoto": "Show photo",
-    "noPhotos": "Google has no photos.",
     "photoAlt": "Photo {index} of {total}",
     "loading": "Loading…",
     "photoBy": "Photo by",
     "original": "Original on Google Maps",
     "position": "{index} of {total}",
     "closedVsNotes": "Google says it's closed today, but our notes give opening hours.",
-    "notesDiffer": "Our notes say {open}–{close}. Check before relying on either.",
-    "tipFromGoogle": "Today's hours and rating from Google. Nothing is saved.",
-    "tipShowPhoto": "Photos from Google. Nothing is saved."
+    "notesDiffer": "Our notes say {open}–{close}. Check before relying on either."
   },
   "map": {
     "notConfigured": "The map isn't set up yet.",

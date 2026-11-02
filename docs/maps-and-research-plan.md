@@ -36,16 +36,16 @@ So each place shows two kinds of information: **our notes** (stored, work offlin
 
 **Cost at this size is very likely $0, as long as daily caps are set:**
 
-| Use                           | Google product and tier   | Free per month | Expected use      |
-| ----------------------------- | ------------------------- | -------------- | ----------------- |
-| Match 227 places to place IDs | Text Search, IDs only     | Unlimited      | Once              |
-| Load photo references         | Place Details, IDs only   | Unlimited      | Each open         |
-| Coordinates                   | Place Details Essentials  | 10,000         | About 230 a month |
-| Show a map                    | Dynamic Maps              | 10,000         | Hundreds          |
-| Walking time and distance     | Compute Routes Essentials | 10,000         | Hundreds          |
-| Open status, rating, hours    | Place Details Enterprise  | **1,000**      | Only when tapped  |
-| Photo images                  | Place Details Photos      | **1,000**      | Only when tapped  |
-| One route in an iframe        | Maps Embed                | Unlimited      | Optional          |
+| Use                           | Google product and tier   | Free per month | Expected use       |
+| ----------------------------- | ------------------------- | -------------- | ------------------ |
+| Match 227 places to place IDs | Text Search, IDs only     | Unlimited      | Once               |
+| Load photo references         | Place Details, IDs only   | Unlimited      | Each open          |
+| Coordinates                   | Place Details Essentials  | 10,000         | About 230 a month  |
+| Show a map                    | Dynamic Maps              | 10,000         | Hundreds           |
+| Walking time and distance     | Compute Routes Essentials | 10,000         | Hundreds           |
+| Open status, rating, hours    | Place Details Enterprise  | **1,000**      | When a place opens |
+| Photo images                  | Place Details Photos      | **1,000**      | When a place opens |
+| One route in an iframe        | Maps Embed                | Unlimited      | Optional           |
 
 ## Track A: the map
 
@@ -86,10 +86,10 @@ Shinkansen and other booked trains already live in reservations; the day view ke
 
 In Place details:
 
-- **Photos** show one image when you tap **Show photo**, then a swipeable gallery of up to 10, each with its photographer's credit and a link to the original on Google Maps.
-- **Live from Google** shows open status, rating and today's hours when you tap it. If it disagrees with our stored hours, the app flags the difference.
+- **Photos** show one image at the top as soon as a place opens, in a swipeable gallery of up to 10. Each further image loads only when reached, with its photographer's credit and a link to the original on Google Maps.
+- **Live from Google** shows open status, rating and today's hours as the place opens. If it disagrees with our stored hours, the app flags the difference.
 
-Neither loads automatically or appears in lists, which is what keeps them inside the 1,000-a-month allowance. Each device also stops at 15 of each a day, because a Cloud cap can't target one price tier.
+Neither appears in lists. Answers are kept in memory for 30 minutes (`src/lib/place-live-cache.ts`), never saved, so reopening a place is free. Each device also stops at 30 of each a day, because a Cloud cap can't target one price tier. Worst case that is more than the 1,000 free a month; normal use by two people stays well under it.
 
 ### Firestore changes
 

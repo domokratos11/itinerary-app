@@ -1,9 +1,10 @@
 import { todayInTokyo } from "@/lib/tokyo-date";
 
-// A per-device daily limit on Google's paid-tier features, under the caps set
-// in the Cloud console: a cap can't target one price tier, so this keeps normal
-// use (or a stuck finger) well inside the 1,000-a-month allowance.
-export const TAP_LIMITS = { live: 15, photo: 15 } as const;
+// A per-device daily limit on Google's paid-tier features: a cap in the Cloud
+// console can't target one price tier. Opening a place uses one of each, and
+// lib/place-live-cache leaves out reopening one, so this is room for a day of
+// planning while keeping a runaway loop far from the 1,000-a-month allowance.
+export const TAP_LIMITS = { live: 30, photo: 30 } as const;
 
 export type TapKind = keyof typeof TAP_LIMITS;
 

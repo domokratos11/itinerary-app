@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Globe, ImageIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { Tip } from "@/components/tip";
-import { Button } from "@/components/ui/button";
 import {
   Carousel,
   CarouselContent,
@@ -13,6 +10,7 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
+import { Skeleton } from "@/components/ui/skeleton";
 import { hoursDifference } from "@/domain/live-hours";
 import {
   MapsError,
@@ -23,8 +21,12 @@ import type { PlaceRecord } from "@/domain/schemas";
 import { BASE_PATH } from "@/lib/base-path";
 import { intlLocale, t } from "@/lib/i18n";
 import { mapsService } from "@/lib/maps-service-instance";
-import { tryTap } from "@/lib/tap-limit";
-import { weekdayInTokyo } from "@/lib/tokyo-date";
+import {
+  livePlace,
+  placePhotos,
+  showPhoto,
+  shownPhotos,
+} from "@/lib/place-live-cache";
 import { useOnline } from "@/lib/use-online";
 
 function messageFor(error: unknown): string {
@@ -60,9 +62,8 @@ function GoogleAttribution() {
   );
 }
 
-// Google's photos and live details for a place. Nothing is fetched until it's
-// tapped and nothing is stored, which keeps them inside the free allowance and
-// Google's terms.
+// Google's live details for a place, loaded as it opens. Nothing is stored, and
+// lib/place-live-cache keeps reopening a place from being another billed call.
 export function PlaceLive({ place }: { place: PlaceRecord }) {
   const online = useOnline();
   if (!place.googlePlaceId || !mapsService.isConfigured()) return null;
@@ -72,12 +73,16 @@ export function PlaceLive({ place }: { place: PlaceRecord }) {
         {t("live.needsConnection")}
       </p>
     );
-  return (
-    <div className="flex flex-col gap-4">
-      <LiveDetails place={place} placeId={place.googlePlaceId} />
-      <Photos placeId={place.googlePlaceId} />
-    </div>
-  );
+  return <LiveDetails place={place} placeId={place.googlePlaceId} />;
+}
+
+// Google's photos for a place, at the top of its details. Offline, PlaceLive
+// says why they're missing.
+export function PlacePhotos({ place }: { place: PlaceRecord }) {
+  const online = useOnline();
+  if (!online || !place.googlePlaceId || !mapsService.isConfigured())
+    return null;
+  return <Photos placeId={place.googlePlaceId} />;
 }
 
 function LiveDetails({
@@ -89,30 +94,26 @@ function LiveDetails({
 }) {
   const [live, setLive] = useState<LivePlace | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  function load() {
-    if (!tryTap("live")) return setProblem(t("live.limit"));
-    setLoading(true);
-    setProblem(null);
-    mapsService
-      .liveDetails(placeId, weekdayInTokyo())
-      .then(setLive)
-      .catch((error: unknown) => setProblem(messageFor(error)))
-      .finally(() => setLoading(false));
-  }
+  useEffect(() => {
+    let current = true;
+    livePlace(placeId)
+      .then((answer) => {
+        if (current) setLive(answer);
+      })
+      .catch((error: unknown) => {
+        if (current) setProblem(messageFor(error));
+      });
+    return () => {
+      current = false;
+    };
+  }, [placeId]);
 
+  if (problem)
+    return <p className="text-sm text-muted-foreground">{problem}</p>;
   if (!live)
     return (
-      <div className="flex flex-col gap-1">
-        <Tip label={t("live.tipFromGoogle")}>
-          <Button variant="outline" disabled={loading} onClick={load}>
-            <Globe />
-            {loading ? t("live.asking") : t("live.fromGoogle")}
-          </Button>
-        </Tip>
-        {problem && <p className="text-sm text-destructive">{problem}</p>}
-      </div>
+      <Skeleton aria-label={t("live.loading")} className="h-24 rounded-lg" />
     );
 
   const difference = hoursDifference(place.openingHours, live.todayHours, t);
@@ -164,59 +165,53 @@ function LiveDetails({
 
 function Photos({ placeId }: { placeId: string }) {
   const [photos, setPhotos] = useState<PlacePhoto[] | null>(null);
-  const [problem, setProblem] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [api, setApi] = useState<CarouselApi>();
   const [index, setIndex] = useState(0);
   // Each photo's image is requested only once it has been shown: that request
   // is what's billed. Going past the limit leaves the rest unloaded.
-  const [loaded, setLoaded] = useState<Set<number>>(new Set([0]));
-  const seen = useRef(loaded);
+  const [loaded, setLoaded] = useState(() => shownPhotos(placeId));
   const [blocked, setBlocked] = useState(false);
+
+  useEffect(() => {
+    let current = true;
+    placePhotos(placeId)
+      .then((answer) => {
+        if (!current) return;
+        setLoaded(shownPhotos(placeId));
+        setPhotos(answer);
+      })
+      .catch((error: unknown) => {
+        // The live details beside them say the same, so one message is enough.
+        messageFor(error);
+        if (current) setFailed(true);
+      });
+    return () => {
+      current = false;
+    };
+  }, [placeId]);
 
   useEffect(() => {
     if (!api) return;
     const onSelect = () => {
       const next = api.selectedScrollSnap();
       setIndex(next);
-      if (seen.current.has(next)) return;
-      if (!tryTap("photo")) return setBlocked(true);
-      seen.current = new Set([...seen.current, next]);
-      setLoaded(seen.current);
+      if (showPhoto(placeId, next)) setLoaded(shownPhotos(placeId));
+      else setBlocked(true);
     };
     api.on("select", onSelect);
     return () => {
       api.off("select", onSelect);
     };
-  }, [api]);
+  }, [api, placeId]);
 
-  function load() {
-    if (!tryTap("photo")) return setProblem(t("live.limit"));
-    setLoading(true);
-    setProblem(null);
-    mapsService
-      .photos(placeId)
-      .then(setPhotos)
-      .catch((error: unknown) => setProblem(messageFor(error)))
-      .finally(() => setLoading(false));
-  }
-
+  if (failed || photos?.length === 0) return null;
   if (!photos)
     return (
-      <div className="flex flex-col gap-1">
-        <Tip label={t("live.tipShowPhoto")}>
-          <Button variant="outline" disabled={loading} onClick={load}>
-            <ImageIcon />
-            {loading ? t("live.asking") : t("live.showPhoto")}
-          </Button>
-        </Tip>
-        {problem && <p className="text-sm text-destructive">{problem}</p>}
-      </div>
-    );
-
-  if (photos.length === 0)
-    return (
-      <p className="text-sm text-muted-foreground">{t("live.noPhotos")}</p>
+      <Skeleton
+        aria-label={t("live.loading")}
+        className="aspect-[4/3] w-full rounded-lg"
+      />
     );
 
   const current = photos[index];

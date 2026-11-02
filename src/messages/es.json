@@ -278,7 +278,6 @@
     "notConfigured": "Google Maps aún no está configurado.",
     "noAnswer": "Google no respondió. Inténtalo más tarde.",
     "needsConnection": "Las fotos y los detalles en vivo necesitan conexión.",
-    "asking": "Consultando a Google…",
     "fromGoogle": "En vivo desde Google",
     "openNow": "Abierto ahora",
     "closedNow": "Cerrado ahora",
@@ -287,17 +286,13 @@
     "ratedCount": "Calificación {rating} de {count} reseñas",
     "noDetails": "Google no tiene detalles de esto.",
     "seeOnMaps": "Verlo en Google Maps",
-    "showPhoto": "Mostrar foto",
-    "noPhotos": "Google no tiene fotos.",
     "photoAlt": "Foto {index} de {total}",
     "loading": "Cargando…",
     "photoBy": "Foto de",
     "original": "Original en Google Maps",
     "position": "{index} de {total}",
     "closedVsNotes": "Google dice que hoy está cerrado, pero nuestras notas indican un horario.",
-    "notesDiffer": "Nuestras notas dicen {open}–{close}. Revísalo antes de confiar en alguno.",
-    "tipFromGoogle": "El horario de hoy y la calificación de Google. No se guarda nada.",
-    "tipShowPhoto": "Fotos de Google. No se guarda nada."
+    "notesDiffer": "Nuestras notas dicen {open}–{close}. Revísalo antes de confiar en alguno."
   },
   "map": {
     "notConfigured": "El mapa aún no está configurado.",

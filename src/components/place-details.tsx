@@ -27,7 +27,7 @@ import { ExpenseForm, placePrefill } from "@/components/expense-form";
 import { Tip } from "@/components/tip";
 import { Yen } from "@/components/yen";
 import { PlaceEditor } from "@/components/place-editor";
-import { PlaceLive } from "@/components/place-live";
+import { PlaceLive, PlacePhotos } from "@/components/place-live";
 import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { isDraft, mapsSearchUrl } from "@/domain/place-edit";
 import { isOpenProposal } from "@/domain/proposals";
@@ -164,6 +164,7 @@ function PlaceBody({
     : place.mapsUrl;
   return (
     <div className="flex flex-col gap-4">
+      <PlacePhotos key={`photos-${place.id}`} place={place} />
       <div className="flex flex-wrap gap-2">
         <CategoryBadge category={place.category} />
         <PriorityBadge priority={place.priority} />
@@ -178,6 +179,8 @@ function PlaceBody({
           </Badge>
         )}
       </div>
+
+      <PlaceLive key={place.id} place={place} />
 
       <Tip label={t("place.tipOpenInMaps")}>
         <Button asChild>
@@ -224,7 +227,6 @@ function PlaceBody({
         </p>
       )}
       <PlaceResearch place={place} />
-      <PlaceLive key={place.id} place={place} />
 
       {place.purpose && (
         <Section label={t("common.whyGo")}>{place.purpose}</Section>
