@@ -243,8 +243,14 @@ function Photos({ placeId }: { placeId: string }) {
         </CarouselContent>
         {photos.length > 1 && (
           <>
-            <CarouselPrevious type="button" className="left-2" />
-            <CarouselNext type="button" className="right-2" />
+            <CarouselPrevious
+              type="button"
+              className="left-2 bg-background/80 backdrop-blur-sm dark:bg-background/80"
+            />
+            <CarouselNext
+              type="button"
+              className="right-2 bg-background/80 backdrop-blur-sm dark:bg-background/80"
+            />
           </>
         )}
       </Carousel>

@@ -951,6 +951,7 @@ function StopCard({
             size="sm"
             aria-pressed={item.status === "done"}
             aria-label={t("day.wentName", { name })}
+            className="flex-1 sm:flex-none"
             onClick={() => onMark("done")}
           >
             <Check />
@@ -961,11 +962,14 @@ function StopCard({
             size="sm"
             aria-pressed={item.status === "skipped"}
             aria-label={t("day.skipName", { name })}
+            className="flex-1 sm:flex-none"
             onClick={() => onMark("skipped")}
           >
             <SkipForward />
             {t("day.skip")}
           </Button>
+          {/* On phones: these two on top, the small actions, then the day. */}
+          <span aria-hidden className="basis-full sm:hidden" />
           {place && (
             <Tip label={t("place.tipOpenInMaps")}>
               <Button asChild variant="outline" size="sm">
@@ -1004,7 +1008,10 @@ function StopCard({
           )}
           {dayOptions.length > 1 && (
             <Select value={currentDate} onValueChange={onMoveDay}>
-              <SelectTrigger size="sm" className="w-full sm:w-44">
+              <SelectTrigger
+                size="sm"
+                className="order-last w-full sm:order-none sm:w-44"
+              >
                 <SelectValue placeholder={t("common.moveTo")} />
               </SelectTrigger>
               <SelectContent>
