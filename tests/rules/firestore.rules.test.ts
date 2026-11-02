@@ -298,6 +298,7 @@ describe("clean up", () => {
     "places",
     "holidays",
     "expenses",
+    "flights",
   ])("deletes only archived %s, only for members", async (name) => {
     const live = `trips/japan/${name}/live`;
     const retired = `trips/japan/${name}/retired`;
@@ -341,6 +342,43 @@ describe("clean up", () => {
 
   it("never deletes a trip", async () => {
     await assertFails(deleteDoc(doc(as(ANA), "trips/japan")));
+  });
+});
+
+describe("flights", () => {
+  const flight = {
+    id: "f1",
+    airline: "Sample Air",
+    flightNumber: "XX 100",
+    departDate: "2026-12-15",
+    departTime: "10:00",
+    departAirport: "AAA",
+    departCity: null,
+    arriveDate: "2026-12-15",
+    arriveTime: "12:00",
+    arriveAirport: "BBB",
+    arriveCity: null,
+    confirmation: null,
+    costAmount: 12.5,
+    costCurrency: "USD",
+    note: null,
+    archived: false,
+    updatedAt: NOW,
+  };
+  const path = "trips/japan/flights/f1";
+
+  it("are read and saved by members only, in the right shape", async () => {
+    await assertSucceeds(setDoc(doc(as(ANA), path), flight));
+    await assertSucceeds(getDoc(doc(as(ANA), path)));
+    await assertFails(getDoc(doc(as(EVE), path)));
+    await assertFails(setDoc(doc(as(EVE), path), flight));
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...flight, departAirport: "TOKYO" }),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...flight, costCurrency: "EUR" }),
+    );
+    await assertFails(setDoc(doc(as(ANA), path), { ...flight, gate: "12" }));
   });
 });
 

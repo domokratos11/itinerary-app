@@ -319,11 +319,13 @@
     "hintStays": "Dónde duermen cada noche. Esto define a qué ciudad pertenece cada día.",
     "hintCities": "Las ciudades del viaje y sus colores.",
     "hintPlaces": "Todos los lugares, con la investigación por revisar.",
-    "hintBookings": "Vuelos, trenes, tours y boletos, que aparecen en su día.",
+    "hintBookings": "Trenes, tours y boletos, que aparecen en su día.",
     "hintHolidays": "Feriados y cierres que pueden afectar sus planes.",
     "hintTrip": "El nombre del viaje y quién puede abrirlo.",
     "hintBackup": "Descarga todo el viaje como archivo, o restaura uno en un viaje vacío.",
-    "hintCleanup": "Elimina para siempre lo archivado o terminado, y el historial de cambios."
+    "hintCleanup": "Elimina para siempre lo archivado o terminado, y el historial de cambios.",
+    "tabFlights": "Vuelos",
+    "hintFlights": "Números de vuelo, horarios y códigos de confirmación, que aparecen en sus días."
   },
   "about": {
     "title": "Acerca de",
@@ -523,7 +525,10 @@
     "changedMembers": "cambió quién está en el viaje",
     "savedExpense": "guardó el gasto {title}",
     "archivedExpense": "archivó el gasto {title}",
-    "cleanedUp": "hizo limpieza: {what}"
+    "cleanedUp": "hizo limpieza: {what}",
+    "savedFlight": "guardó el vuelo {flight}",
+    "archivedFlight": "archivó el vuelo {flight}",
+    "restoredFlight": "restauró el vuelo {flight}"
   },
   "theme": {
     "system": "Igual que el teléfono",
@@ -658,7 +663,8 @@
     "costPerCity": "Costo estimado de las paradas planeadas por ciudad",
     "route": "Ruta",
     "noRoute": "Agrega hoteles para ver la ruta.",
-    "legTitle": "{city}: {count, plural, one {# día} other {# días}}"
+    "legTitle": "{city}: {count, plural, one {# día} other {# días}}",
+    "nextFlight": "Próximo vuelo"
   },
   "cleanup": {
     "intro": "Lo archivado y eliminado se puede restaurar hasta que lo limpies aquí. Después desaparece para siempre, para todos en el viaje.",
@@ -680,6 +686,29 @@
     "confirmTitle": "{what}: ¿eliminar para siempre?",
     "confirmBody": "Esto elimina para siempre {count, plural, one {# elemento} other {# elementos}} y no se puede deshacer. Puedes descargar una copia antes.",
     "deleteForGood": "Eliminar para siempre",
-    "done": "{count, plural, one {Se eliminó # elemento} other {Se eliminaron # elementos}}"
+    "done": "{count, plural, one {Se eliminó # elemento} other {Se eliminaron # elementos}}",
+    "flights": "Vuelos archivados"
+  },
+  "flights": {
+    "title": "Vuelos",
+    "none": "Aún no hay vuelos.",
+    "add": "Agregar vuelo",
+    "edit": "Editar vuelo {flight}",
+    "archiveAria": "Archivar vuelo {flight}",
+    "archived": "Vuelo archivado",
+    "localTimes": "Las fechas y horas son las locales de cada aeropuerto, como en tu boleto.",
+    "airline": "Aerolínea",
+    "number": "Número de vuelo",
+    "departure": "Salida",
+    "arrival": "Llegada",
+    "time": "Hora",
+    "airport": "Código de aeropuerto",
+    "airportHint": "Tres letras, como HND.",
+    "city": "Ciudad (opcional)",
+    "confirmation": "Número de confirmación (opcional)",
+    "cost": "Costo (opcional)",
+    "currency": "Moneda",
+    "confirmationCode": "Confirmación: {code}",
+    "costLine": "Costo: {cost}"
   }
 }

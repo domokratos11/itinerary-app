@@ -77,7 +77,12 @@ import {
   stopWarnings,
   waitingPlaces,
 } from "@/domain/plan";
-import type { PlanItem, Place, Reservation } from "@/domain/schemas";
+import type {
+  FlightRecord,
+  PlanItem,
+  Place,
+  Reservation,
+} from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
 import { planDrop, type DragSource, type DropTarget } from "@/domain/drop";
 import { isDraft } from "@/domain/place-edit";
@@ -97,6 +102,7 @@ import { LogCostButton, placePrefill } from "@/components/expense-form";
 import { Tip } from "@/components/tip";
 import { t } from "@/lib/i18n";
 import { CostLine } from "@/components/cost-line";
+import { FlightCard } from "@/components/flight-card";
 import { formatDayLabel } from "@/lib/format-day";
 import {
   addPlaceAt,
@@ -135,6 +141,7 @@ type Props = {
   start: Endpoint | null;
   end: Endpoint | null;
   reservations: Reservation[];
+  flights: FlightRecord[];
 };
 
 export function DayPlan(props: Props) {
@@ -418,6 +425,13 @@ export function DayPlan(props: Props) {
           <p className="rounded-md bg-muted px-3 py-2 text-sm">
             <span className="font-medium">{holiday.name}.</span> {holiday.note}
           </p>
+        )}
+        {props.flights.length > 0 && (
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            {props.flights.map((flight) => (
+              <FlightCard key={flight.id} flight={flight} />
+            ))}
+          </div>
         )}
         <div className="flex flex-wrap gap-2">
           {nextPlace ? (

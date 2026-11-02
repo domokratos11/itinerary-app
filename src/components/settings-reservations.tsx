@@ -208,9 +208,12 @@ function ReservationForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {RESERVATION_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {t(`reservationType.${type}`)}
+            {/* Flights have their own section; an older one can still be edited. */}
+            {RESERVATION_TYPES.filter(
+              (option) => option !== "flight" || reservation?.type === "flight",
+            ).map((option) => (
+              <SelectItem key={option} value={option}>
+                {t(`reservationType.${option}`)}
               </SelectItem>
             ))}
           </SelectContent>

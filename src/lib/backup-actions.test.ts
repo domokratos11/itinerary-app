@@ -98,6 +98,7 @@ describe("importBackup", () => {
       reservations: fixtureTrip.reservations.length,
       places: 1,
       holidays: fixtureTrip.holidays.length,
+      flights: 0,
       expenses: 0,
     });
 

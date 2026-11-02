@@ -45,6 +45,7 @@ describe("activeTrip", () => {
       locationSource: null,
     };
     const data: TripData = {
+      flights: [],
       cities: [
         { id: "osaka", name: "Osaka", color: "#000000", ...base },
         { id: "nagoya", name: "Nagoya", color: "#000000", ...base },

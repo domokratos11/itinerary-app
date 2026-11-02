@@ -319,11 +319,13 @@
     "hintStays": "Where you sleep each night. These set which city each day belongs to.",
     "hintCities": "The cities of the trip and their colours.",
     "hintPlaces": "Every place, with research waiting for review.",
-    "hintBookings": "Flights, trains, tours and tickets, shown on their day.",
+    "hintBookings": "Trains, tours and tickets, shown on their day.",
     "hintHolidays": "Holidays and closures that can affect your plans.",
     "hintTrip": "The trip's name and who can open it.",
     "hintBackup": "Download the whole trip as a file, or restore one into an empty trip.",
-    "hintCleanup": "Permanently delete what's archived or finished, and the change history."
+    "hintCleanup": "Permanently delete what's archived or finished, and the change history.",
+    "tabFlights": "Flights",
+    "hintFlights": "Flight numbers, times and confirmation codes, shown on their days."
   },
   "about": {
     "title": "About",
@@ -523,7 +525,10 @@
     "changedMembers": "changed who is on the trip",
     "savedExpense": "saved the expense {title}",
     "archivedExpense": "archived the expense {title}",
-    "cleanedUp": "cleaned up: {what}"
+    "cleanedUp": "cleaned up: {what}",
+    "savedFlight": "saved the flight {flight}",
+    "archivedFlight": "archived the flight {flight}",
+    "restoredFlight": "restored the flight {flight}"
   },
   "theme": {
     "system": "Match phone",
@@ -658,7 +663,8 @@
     "costPerCity": "Estimated cost of planned stops per city",
     "route": "Route",
     "noRoute": "Add hotels to see the route.",
-    "legTitle": "{city}: {count, plural, one {# day} other {# days}}"
+    "legTitle": "{city}: {count, plural, one {# day} other {# days}}",
+    "nextFlight": "Next flight"
   },
   "cleanup": {
     "intro": "Archived and removed things can be restored until you clean them up here. After that they're gone for good, for everyone on the trip.",
@@ -680,6 +686,29 @@
     "confirmTitle": "{what}: delete for good?",
     "confirmBody": "This permanently deletes {count, plural, one {# item} other {# items}} and can't be undone. You can download a backup first.",
     "deleteForGood": "Delete for good",
-    "done": "Deleted {count, plural, one {# item} other {# items}}"
+    "done": "Deleted {count, plural, one {# item} other {# items}}",
+    "flights": "Archived flights"
+  },
+  "flights": {
+    "title": "Flights",
+    "none": "No flights yet.",
+    "add": "Add flight",
+    "edit": "Edit flight {flight}",
+    "archiveAria": "Archive flight {flight}",
+    "archived": "Flight archived",
+    "localTimes": "Dates and times are local to each airport, as on your ticket.",
+    "airline": "Airline",
+    "number": "Flight number",
+    "departure": "Departure",
+    "arrival": "Arrival",
+    "time": "Time",
+    "airport": "Airport code",
+    "airportHint": "Three letters, such as HND.",
+    "city": "City (optional)",
+    "confirmation": "Confirmation number (optional)",
+    "cost": "Cost (optional)",
+    "currency": "Currency",
+    "confirmationCode": "Confirmation: {code}",
+    "costLine": "Cost: {cost}"
   }
 }

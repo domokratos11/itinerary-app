@@ -175,6 +175,31 @@ export const HolidayRecordSchema = HolidaySchema.extend({
   ...recordFields,
 });
 
+export const FLIGHT_CURRENCIES = ["USD", "JPY"] as const;
+
+const airportCode = z.string().regex(/^[A-Z]{3}$/);
+const clockTime = z.string().regex(/^\d{2}:\d{2}$/);
+
+// One flight, with dates and times local to each airport, as on the ticket.
+export const FlightRecordSchema = z.object({
+  id: recordId,
+  airline: z.string().min(1).max(100),
+  flightNumber: z.string().min(1).max(20),
+  departDate: isoDate,
+  departTime: clockTime,
+  departAirport: airportCode,
+  departCity: z.string().max(100).nullable(),
+  arriveDate: isoDate,
+  arriveTime: clockTime,
+  arriveAirport: airportCode,
+  arriveCity: z.string().max(100).nullable(),
+  confirmation: z.string().max(40).nullable(),
+  costAmount: z.number().nonnegative().nullable(),
+  costCurrency: z.enum(FLIGHT_CURRENCIES),
+  note: z.string().max(500).nullable(),
+  ...recordFields,
+});
+
 // A draft place is waiting for research.
 export const PlaceRecordSchema = PlaceSchema.extend({
   status: z.enum(PLACE_STATUSES),
@@ -224,6 +249,7 @@ export const TripDataSchema = z.object({
   places: z.array(PlaceRecordSchema),
   holidays: z.array(HolidayRecordSchema),
   expenses: z.array(ExpenseRecordSchema).default([]),
+  flights: z.array(FlightRecordSchema).default([]),
 });
 
 export const PROPOSAL_STATUSES = [
@@ -286,6 +312,8 @@ export type CityRecord = z.infer<typeof CityRecordSchema>;
 export type StayRecord = z.infer<typeof StayRecordSchema>;
 export type ReservationRecord = z.infer<typeof ReservationRecordSchema>;
 export type HolidayRecord = z.infer<typeof HolidayRecordSchema>;
+export type FlightRecord = z.infer<typeof FlightRecordSchema>;
+export type FlightCurrency = (typeof FLIGHT_CURRENCIES)[number];
 export type PlaceRecord = z.infer<typeof PlaceRecordSchema>;
 export type ExpenseRecord = z.infer<typeof ExpenseRecordSchema>;
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];

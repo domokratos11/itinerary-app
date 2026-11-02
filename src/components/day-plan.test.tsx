@@ -54,6 +54,7 @@ function dayPlan() {
       start={null}
       end={null}
       reservations={[]}
+      flights={[]}
     />,
   );
 }

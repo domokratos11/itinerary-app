@@ -4,7 +4,7 @@ import { logActivity } from "@/lib/activity-log";
 import { tripRepository } from "@/lib/trip-repository-instance";
 import { useTripStore } from "@/lib/trip-store";
 
-// Every change to cities, stays, reservations, places, holidays and expenses goes
+// Every change to cities, stays, reservations, places, holidays, expenses and flights goes
 // through here, then through TripRepository. The change shows at once; the
 // next snapshot replaces it, or undoes it if the rules refuse the write.
 //

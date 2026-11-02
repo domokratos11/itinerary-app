@@ -114,6 +114,27 @@ service cloud.firestore {
         && isRecord(d);
     }
 
+    function isFlight(d) {
+      return d.keys().hasOnly(['id', 'airline', 'flightNumber', 'departDate', 'departTime', 'departAirport', 'departCity', 'arriveDate', 'arriveTime', 'arriveAirport', 'arriveCity', 'confirmation', 'costAmount', 'costCurrency', 'note', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'airline', 'flightNumber', 'departDate', 'departTime', 'departAirport', 'departCity', 'arriveDate', 'arriveTime', 'arriveAirport', 'arriveCity', 'confirmation', 'costAmount', 'costCurrency', 'note', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.airline, 100) && d.airline.size() > 0
+        && shortString(d.flightNumber, 20) && d.flightNumber.size() > 0
+        && d.departDate is string && d.departDate.size() == 10
+        && d.departTime is string && d.departTime.size() == 5
+        && d.departAirport is string && d.departAirport.size() == 3
+        && optionalString(d.departCity, 100)
+        && d.arriveDate is string && d.arriveDate.size() == 10
+        && d.arriveTime is string && d.arriveTime.size() == 5
+        && d.arriveAirport is string && d.arriveAirport.size() == 3
+        && optionalString(d.arriveCity, 100)
+        && optionalString(d.confirmation, 40)
+        && optionalNumber(d.costAmount)
+        && d.costCurrency in ['USD', 'JPY']
+        && optionalString(d.note, 500)
+        && isRecord(d);
+    }
+
     function isPlace(d) {
       return d.keys().hasOnly(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'googlePlaceId', 'locationFetchedAt', 'locationSource', 'nearestStation', 'sources', 'lockedFields', 'archived', 'updatedAt'])
         && d.keys().hasAll(['id', 'cityId', 'mapsUrl', 'name', 'lat', 'lng', 'category', 'purpose', 'description', 'tips', 'costEstimateJPY', 'durationMin', 'openingHours', 'closedDates', 'seasonFrom', 'seasonTo', 'priority', 'verifiedAt', 'websiteUrl', 'notes', 'status', 'source', 'archived', 'updatedAt'])
@@ -301,6 +322,13 @@ service cloud.firestore {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isHoliday(request.resource.data) && request.resource.data.id == id;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
+      }
+
+      match /flights/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isFlight(request.resource.data) && request.resource.data.id == id;
         allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 

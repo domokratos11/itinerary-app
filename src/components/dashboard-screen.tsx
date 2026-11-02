@@ -7,6 +7,7 @@ import {
   CalendarClock,
   CalendarX,
   Flag,
+  Plane,
   Search,
   Ticket,
   TriangleAlert,
@@ -39,6 +40,7 @@ import {
   Yen,
 } from "@/components/yen";
 import { spendByDay, totalsByPayer } from "@/domain/budget";
+import { flightRoute, nextFlight } from "@/domain/flights";
 import {
   cityFigures,
   hoursLeftInTokyoDay,
@@ -274,6 +276,7 @@ function DashboardContent() {
   const toResearch = placesToResearch(trip.places);
   const tonight = stayTonight(trip.stays, today);
   const next = nextReservation(trip.reservations, today);
+  const flight = nextFlight(trip.flights, today);
   const legs = routeLegs(days);
   const payers = totalsByPayer(expenses);
   const spending = spendByDay(expenses, days);
@@ -394,6 +397,21 @@ function DashboardContent() {
                     {t("dashboard.tonight")}
                   </span>
                   {tonight ? tonight.hotelName : t("dashboard.noHotelTonight")}
+                </span>
+              </li>
+            )}
+            {flight && (
+              <li className="flex items-start gap-2">
+                <Plane className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <span className="min-w-0">
+                  <span className="block text-xs text-muted-foreground">
+                    {t("dashboard.nextFlight")}
+                  </span>
+                  {flight.flightNumber} · {formatDayLabel(flight.departDate)} ·{" "}
+                  {flight.departTime}
+                  <span className="block text-muted-foreground">
+                    {flightRoute(flight)}
+                  </span>
                 </span>
               </li>
             )}

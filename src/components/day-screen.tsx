@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { DayPlan } from "@/components/day-plan";
+import { flightsOnDay } from "@/domain/flights";
 import { hotelsForDay } from "@/domain/plan";
 import { endpointFor } from "@/domain/trip";
 import { t } from "@/lib/i18n";
@@ -46,6 +47,7 @@ export function DayScreen() {
       start={endpointFor(start, t)}
       end={endpointFor(end, t)}
       reservations={trip.reservations.filter((r) => r.date === date)}
+      flights={flightsOnDay(trip.flights, date)}
     />
   );
 }
