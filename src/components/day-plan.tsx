@@ -13,6 +13,8 @@ import {
   useSensors,
   type CollisionDetection,
   type DragEndEvent,
+  type SensorDescriptor,
+  type SensorOptions,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -141,6 +143,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
 
 type Props = {
   date: string;
@@ -154,7 +157,11 @@ type Props = {
 };
 
 export function DayPlan(props: Props) {
-  const tripId = useTripId();
+  // A read-only link can look around the day but change nothing: no
+  // dragging, no stop actions, nothing to add.
+  const readOnly = useReadOnly();
+  const memberTripId = useTripId();
+  const tripId = readOnly ? null : memberTripId;
   const items = usePlanStore((s) => s.items);
   const placesById = usePlacesById();
   const citiesById = useCitiesById();
@@ -487,12 +494,14 @@ export function DayPlan(props: Props) {
         {hotelsOffMap.length > 0 && (
           <p className="text-sm text-muted-foreground">
             {t("day.hotelOffMap", { name: hotelsOffMap.join(", ") })}{" "}
-            <Link
-              href={pageHref("/settings/", tripId, { tab: "stays" })}
-              className="underline"
-            >
-              {t("day.hotelOffMapFix")}
-            </Link>
+            {!readOnly && (
+              <Link
+                href={pageHref("/settings/", tripId, { tab: "stays" })}
+                className="underline"
+              >
+                {t("day.hotelOffMapFix")}
+              </Link>
+            )}
           </p>
         )}
         {props.flights.length > 0 && (
@@ -558,7 +567,7 @@ export function DayPlan(props: Props) {
 
       {wide ? (
         <DndContext
-          sensors={sensors}
+          sensors={readOnly ? NO_SENSORS : sensors}
           collisionDetection={preferItems}
           onDragStart={({ active }) => setDragging(String(active.id))}
           onDragCancel={() => setDragging(null)}
@@ -585,6 +594,7 @@ export function DayPlan(props: Props) {
                       onMark={(status) => mark(row.item, status)}
                       onMoveDay={(d) => moveToDay(row.item, d)}
                       onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
+                      readOnly={readOnly}
                     />
                   ))}
                   {rows.length > 0 && <li>{legLine("end")}</li>}
@@ -595,8 +605,13 @@ export function DayPlan(props: Props) {
               waiting={waiting}
               total={allWaiting.length}
               controls={waitingControls}
+              onOpen={readOnly ? setOpenPlaceId : undefined}
             />
-            <OtherDaysColumn otherDays={otherDays} stopCounts={stopCounts} />
+            <OtherDaysColumn
+              otherDays={otherDays}
+              stopCounts={stopCounts}
+              readOnly={readOnly}
+            />
           </div>
           <div className="h-[38.7%] min-h-80 shrink-0">
             <TripMap
@@ -631,6 +646,7 @@ export function DayPlan(props: Props) {
                   onMark={(status) => mark(row.item, status)}
                   onMoveDay={(d) => moveToDay(row.item, d)}
                   onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
+                  readOnly={readOnly}
                   buttons={{
                     canUp: index > 0,
                     canDown: index < rows.length - 1,
@@ -654,11 +670,12 @@ export function DayPlan(props: Props) {
           waiting={waiting}
           total={allWaiting.length}
           controls={waitingControls}
-          onChoose={setAdding}
+          onChoose={readOnly ? (w) => setOpenPlaceId(w.place.id) : setAdding}
+          readOnly={readOnly}
         />
       )}
       <AlertDialog
-        open={adding !== null}
+        open={adding !== null && !readOnly}
         onOpenChange={(open) => !open && setAdding(null)}
       >
         <AlertDialogContent>
@@ -699,6 +716,9 @@ export function DayPlan(props: Props) {
     </div>
   );
 }
+
+// A read-only link can't drag anything.
+const NO_SENSORS: SensorDescriptor<SensorOptions>[] = [];
 
 // Drops land on the most specific target under the pointer: a stop or a
 // day before the list around them. Keyboard drags have no pointer, so they
@@ -744,17 +764,23 @@ function PhoneWaiting({
   total,
   controls,
   onChoose,
+  readOnly,
 }: {
   waiting: Waiting[];
   total: number;
   controls: ReactNode;
   onChoose: (place: Waiting) => void;
+  readOnly: boolean;
 }) {
   return (
     <section className="flex flex-col gap-2">
       {controls}
       <p className="text-sm text-muted-foreground">
-        {waitingHint(waiting.length, total, t("day.waitingTap"))}
+        {waitingHint(
+          waiting.length,
+          total,
+          readOnly ? t("share.waitingHint") : t("day.waitingTap"),
+        )}
       </p>
       <ul className="flex flex-col gap-2">
         {waiting.map((w) => (
@@ -768,7 +794,7 @@ function PhoneWaiting({
                 <span className="font-medium">{w.place.name}</span>
                 <WaitingTags place={w.place} />
               </span>
-              <Plus />
+              {readOnly ? <Info /> : <Plus />}
             </Button>
           </li>
         ))}
@@ -901,6 +927,8 @@ type StopProps = {
   onMark: (status: StopOutcome) => void;
   onMoveDay: (date: string) => void;
   onOpenPlace: () => void;
+  // On a read-only link: the stop and its map link, nothing to change.
+  readOnly: boolean;
 };
 
 // Wide screens: drag the grip to reorder, or focus it and use Space and the
@@ -929,17 +957,19 @@ function SortableStop({
       <StopCard
         {...props}
         handle={
-          <Tip label={t("day.dragToReorder")}>
-            <button
-              type="button"
-              aria-label={t("day.dragToReorder")}
-              className="mt-0.5 cursor-grab touch-none rounded-sm text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
-              {...attributes}
-              {...listeners}
-            >
-              <GripVertical />
-            </button>
-          </Tip>
+          props.readOnly ? undefined : (
+            <Tip label={t("day.dragToReorder")}>
+              <button
+                type="button"
+                aria-label={t("day.dragToReorder")}
+                className="mt-0.5 cursor-grab touch-none rounded-sm text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
+                {...attributes}
+                {...listeners}
+              >
+                <GripVertical />
+              </button>
+            </Tip>
+          )
         }
       />
     </li>
@@ -957,6 +987,7 @@ function StopCard({
   onMark,
   onMoveDay,
   onOpenPlace,
+  readOnly,
   handle,
   buttons,
 }: StopProps & {
@@ -969,7 +1000,8 @@ function StopCard({
   };
 }) {
   const { holidays } = useTrip();
-  const tripId = useTripId();
+  const memberTripId = useTripId();
+  const tripId = readOnly ? null : memberTripId;
   const name = place?.name ?? item.placeId;
   const finished = item.status === "done" || item.status === "skipped";
   const warnings = place
@@ -1044,30 +1076,34 @@ function StopCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant={item.status === "done" ? "default" : "outline"}
-            size="sm"
-            aria-pressed={item.status === "done"}
-            aria-label={t("day.wentName", { name })}
-            className="flex-1 sm:flex-none"
-            onClick={() => onMark("done")}
-          >
-            <Check />
-            {t("day.went")}
-          </Button>
-          <Button
-            variant={item.status === "skipped" ? "default" : "outline"}
-            size="sm"
-            aria-pressed={item.status === "skipped"}
-            aria-label={t("day.skipName", { name })}
-            className="flex-1 sm:flex-none"
-            onClick={() => onMark("skipped")}
-          >
-            <SkipForward />
-            {t("day.skip")}
-          </Button>
-          {/* On phones: these two on top, the small actions, then the day. */}
-          <span aria-hidden className="basis-full sm:hidden" />
+          {!readOnly && (
+            <>
+              <Button
+                variant={item.status === "done" ? "default" : "outline"}
+                size="sm"
+                aria-pressed={item.status === "done"}
+                aria-label={t("day.wentName", { name })}
+                className="flex-1 sm:flex-none"
+                onClick={() => onMark("done")}
+              >
+                <Check />
+                {t("day.went")}
+              </Button>
+              <Button
+                variant={item.status === "skipped" ? "default" : "outline"}
+                size="sm"
+                aria-pressed={item.status === "skipped"}
+                aria-label={t("day.skipName", { name })}
+                className="flex-1 sm:flex-none"
+                onClick={() => onMark("skipped")}
+              >
+                <SkipForward />
+                {t("day.skip")}
+              </Button>
+              {/* On phones: these two on top, the small actions, then the day. */}
+              <span aria-hidden className="basis-full sm:hidden" />
+            </>
+          )}
           {place && (
             <Tip label={t("place.tipOpenInMaps")}>
               <Button asChild variant="outline" size="sm">
@@ -1082,7 +1118,7 @@ function StopCard({
               </Button>
             </Tip>
           )}
-          {buttons && (
+          {buttons && !readOnly && (
             <>
               <Button
                 variant="outline"
@@ -1104,7 +1140,7 @@ function StopCard({
               </Button>
             </>
           )}
-          {dayOptions.length > 1 && (
+          {dayOptions.length > 1 && !readOnly && (
             <Select value={currentDate} onValueChange={onMoveDay}>
               <SelectTrigger
                 size="sm"
@@ -1128,15 +1164,17 @@ function StopCard({
               className="ml-auto"
             />
           )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t("day.remove")}
-            className={cn(!(place && tripId) && "ml-auto")}
-            onClick={onRemove}
-          >
-            <Trash2 />
-          </Button>
+          {!readOnly && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("day.remove")}
+              className={cn(!(place && tripId) && "ml-auto")}
+              onClick={onRemove}
+            >
+              <Trash2 />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

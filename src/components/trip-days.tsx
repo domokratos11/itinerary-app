@@ -16,6 +16,7 @@ import { todayInTokyo } from "@/lib/tokyo-date";
 import { useCitiesById, useTrip, useTripDays } from "@/lib/trip-store";
 import { cn } from "@/lib/utils";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
 
 const FALLBACK_COLOR = "#64748b";
 const noopSubscribe = () => () => {};
@@ -60,6 +61,7 @@ export function TripDays() {
   const days = useTripDays();
   const citiesById = useCitiesById();
   const tripId = useTripId();
+  const readOnly = useReadOnly();
   const today = useSyncExternalStore(noopSubscribe, todayInTokyo, () => null);
   const groups = useMemo(
     () => groupDaysByStay(days, trip.stays),
@@ -98,11 +100,16 @@ export function TripDays() {
       </div>
       {days.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          {t("home.noStaysBefore")}{" "}
-          <Link href={pageHref("/settings/", tripId)} className="underline">
-            {t("home.noStaysLink")}
-          </Link>{" "}
-          {t("home.noStaysAfter")}
+          {t("home.noStaysBefore")}
+          {!readOnly && (
+            <>
+              {" "}
+              <Link href={pageHref("/settings/", tripId)} className="underline">
+                {t("home.noStaysLink")}
+              </Link>{" "}
+              {t("home.noStaysAfter")}
+            </>
+          )}
         </p>
       )}
       <OutsideFlights flights={outside.before} />

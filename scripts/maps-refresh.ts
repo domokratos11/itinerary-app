@@ -4,7 +4,8 @@
  * those due). Coordinates that are past the limit and can't be refreshed are
  * deleted; the place ID stays, so the next run can fetch them again.
  *
- * Coordinates you entered yourself are never touched.
+ * Coordinates you entered yourself are never touched. The copies held by
+ * read-only links (shares/{shareId}) are brought in line afterwards.
  */
 import { adminDb } from "./admin-db";
 import { fetchLocation, loadEnv, pause, scriptKey } from "./maps-api";
@@ -84,8 +85,54 @@ async function main() {
     }
   }
 
+  // Read-only links hold a copy of the places and hotels. Their Google
+  // coordinates follow the trip's, so they are renewed or deleted with them.
+  let copies = 0;
+  const shares = await db
+    .collection("shares")
+    .where("tripId", "==", tripId)
+    .get();
+  for (const share of shares.docs) {
+    for (const name of ["places", "stays"] as const) {
+      const rows = await db.collection(`shares/${share.id}/${name}`).get();
+      for (const row of rows.docs) {
+        if (row.data().locationSource !== "google") continue;
+        const live = (
+          await db.doc(`trips/${tripId}/${name}/${row.id}`).get()
+        ).data();
+        const keep =
+          live?.locationSource === "google" &&
+          live.lat !== null &&
+          !coordinatesExpired(
+            {
+              lat: live.lat,
+              lng: live.lng,
+              locationFetchedAt: live.locationFetchedAt ?? null,
+              locationSource: "google",
+            },
+            now,
+          );
+        await row.ref.update(
+          keep
+            ? {
+                lat: live.lat,
+                lng: live.lng,
+                locationFetchedAt: live.locationFetchedAt,
+              }
+            : {
+                lat: null,
+                lng: null,
+                locationFetchedAt: null,
+                locationSource: null,
+              },
+        );
+        copies += 1;
+      }
+    }
+  }
+
   console.log(
-    `${refreshed} refreshed, ${deleted} deleted, ${failed} calls failed`,
+    `${refreshed} refreshed, ${deleted} deleted, ${failed} calls failed, ${copies} copies in read-only links updated`,
   );
   process.exit(failed > 0 ? 1 : 0);
 }

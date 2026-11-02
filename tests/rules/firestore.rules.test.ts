@@ -14,6 +14,7 @@ import {
   getDocs,
   query,
   setDoc,
+  Timestamp,
   updateDoc,
   where,
   type Firestore,
@@ -404,5 +405,217 @@ describe("holidays", () => {
         kind: "party",
       }),
     );
+  });
+});
+
+describe("read-only links", () => {
+  const HOUR = 60 * 60 * 1000;
+  const at = (ms: number) => Timestamp.fromMillis(Date.now() + ms);
+  const link = (fields: Record<string, unknown> = {}) => ({
+    tripId: "peru",
+    tripName: "Peru",
+    label: "Grandma",
+    createdAt: NOW,
+    expiresAt: at(24 * HOUR),
+    revoked: false,
+    publishedAt: NOW,
+    ...fields,
+  });
+  const city = {
+    id: "lima",
+    name: "Lima",
+    color: "#2563eb",
+    archived: false,
+    updatedAt: NOW,
+  };
+  const place = {
+    id: "museo",
+    cityId: "lima",
+    mapsUrl: "https://www.google.com/maps/search/?api=1&query=Museo",
+    name: "Museo",
+    lat: null,
+    lng: null,
+    category: "sight",
+    purpose: null,
+    description: null,
+    tips: [],
+    costEstimateJPY: null,
+    durationMin: null,
+    openingHours: null,
+    closedDates: [],
+    seasonFrom: null,
+    seasonTo: null,
+    priority: "want",
+    verifiedAt: null,
+    websiteUrl: null,
+    notes: null,
+    status: "researched",
+    source: "catalog",
+    archived: false,
+    updatedAt: NOW,
+  };
+  const flight = {
+    id: "sa-1",
+    airline: "Sample Air",
+    flightNumber: "SA 1",
+    departDate: "2026-12-15",
+    departTime: "10:00",
+    departAirport: "LIM",
+    departCity: null,
+    arriveDate: "2026-12-16",
+    arriveTime: "15:00",
+    arriveAirport: "HND",
+    arriveCity: null,
+    confirmation: null,
+    costAmount: null,
+    costCurrency: "JPY",
+    note: null,
+    archived: false,
+    updatedAt: NOW,
+  };
+  const seed = (id: string, fields: Record<string, unknown> = {}) =>
+    env.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, `shares/${id}`), link(fields));
+      await setDoc(doc(db, `shares/${id}/cities/lima`), city);
+    });
+
+  it("can be read by anyone while open, by ID only", async () => {
+    await seed("open");
+    await assertSucceeds(getDoc(doc(anonymous(), "shares/open")));
+    await assertSucceeds(
+      getDocs(collection(anonymous(), "shares/open/cities")),
+    );
+    await assertSucceeds(getDoc(doc(as(EVE), "shares/open/cities/lima")));
+    await assertFails(getDocs(collection(anonymous(), "shares")));
+    await assertFails(
+      getDocs(
+        query(collection(as(EVE), "shares"), where("tripId", "==", "peru")),
+      ),
+    );
+  });
+
+  it("can't be read once expired or revoked", async () => {
+    await seed("old", { expiresAt: at(-HOUR) });
+    await seed("closed", { revoked: true });
+    for (const id of ["old", "closed"]) {
+      await assertFails(getDoc(doc(anonymous(), `shares/${id}`)));
+      await assertFails(
+        getDocs(collection(anonymous(), `shares/${id}/cities`)),
+      );
+    }
+  });
+
+  it("never open the trip itself", async () => {
+    await seed("open");
+    await assertFails(getDoc(doc(anonymous(), "trips/peru")));
+    await assertFails(getDocs(collection(anonymous(), "trips/peru/expenses")));
+  });
+
+  it("are listed and made only by the trip's members", async () => {
+    await seed("open");
+    await assertSucceeds(
+      getDocs(
+        query(collection(as(BEN), "shares"), where("tripId", "==", "peru")),
+      ),
+    );
+    await assertSucceeds(setDoc(doc(as(BEN), "shares/new"), link()));
+    await assertFails(setDoc(doc(as(EVE), "shares/eve"), link()));
+    await assertFails(setDoc(doc(anonymous(), "shares/anon"), link()));
+    await assertFails(
+      setDoc(
+        doc(as(ANA), "shares/other"),
+        link({ tripId: "japan", revoked: true }),
+      ),
+    );
+  });
+
+  it("stay open at most 30 days", async () => {
+    await assertFails(
+      setDoc(
+        doc(as(ANA), "shares/long"),
+        link({ expiresAt: at(32 * 24 * HOUR) }),
+      ),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), "shares/past"), link({ expiresAt: at(-HOUR) })),
+    );
+    await seed("open");
+    await assertFails(
+      updateDoc(doc(as(ANA), "shares/open"), { expiresAt: at(40 * 24 * HOUR) }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(as(ANA), "shares/open"), { expiresAt: at(29 * 24 * HOUR) }),
+    );
+  });
+
+  it("can't be changed by viewers, moved to another trip or reopened", async () => {
+    await seed("open");
+    await assertFails(
+      updateDoc(doc(anonymous(), "shares/open"), { label: "x" }),
+    );
+    await assertFails(
+      setDoc(doc(anonymous(), "shares/open/cities/lima"), {
+        ...city,
+        name: "X",
+      }),
+    );
+    await assertFails(deleteDoc(doc(anonymous(), "shares/open/cities/lima")));
+    await assertFails(
+      updateDoc(doc(as(ANA), "shares/open"), { tripId: "japan" }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(as(ANA), "shares/open"), { revoked: true }),
+    );
+    await assertFails(
+      updateDoc(doc(as(ANA), "shares/open"), { revoked: false }),
+    );
+  });
+
+  it("copies hold no amount, confirmation or booking note", async () => {
+    await seed("open");
+    const db = as(ANA);
+    await assertSucceeds(setDoc(doc(db, "shares/open/places/museo"), place));
+    await assertSucceeds(setDoc(doc(db, "shares/open/flights/sa-1"), flight));
+    await assertFails(
+      setDoc(doc(db, "shares/open/places/museo"), {
+        ...place,
+        costEstimateJPY: 500,
+      }),
+    );
+    for (const change of [
+      { costAmount: 900 },
+      { confirmation: "ABC123" },
+      { note: "Seat 3A" },
+    ])
+      await assertFails(
+        setDoc(doc(db, "shares/open/flights/sa-1"), { ...flight, ...change }),
+      );
+    await assertFails(
+      setDoc(doc(db, "shares/open/expenses/x"), {
+        id: "x",
+        title: "Dinner",
+        amountJPY: 8000,
+      }),
+    );
+    await assertFails(
+      setDoc(doc(db, "shares/open/items/i1"), {
+        id: "i1",
+        placeId: "museo",
+        date: "2026-12-18",
+        order: "a",
+        status: "removed",
+        updatedAt: NOW,
+      }),
+    );
+  });
+
+  it("are deleted only once closed", async () => {
+    await seed("open");
+    await seed("old", { expiresAt: at(-HOUR) });
+    await assertFails(deleteDoc(doc(as(ANA), "shares/open")));
+    await assertFails(deleteDoc(doc(as(EVE), "shares/old")));
+    await assertSucceeds(deleteDoc(doc(as(ANA), "shares/old/cities/lima")));
+    await assertSucceeds(deleteDoc(doc(as(ANA), "shares/old")));
   });
 });

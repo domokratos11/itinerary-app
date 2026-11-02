@@ -3,14 +3,17 @@ import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { getAuth, type Auth } from "firebase/auth";
 import {
   initializeFirestore,
+  memoryLocalCache,
   persistentLocalCache,
   persistentMultipleTabManager,
   type Firestore,
 } from "firebase/firestore";
 
 import { appCheckSiteKey, firebaseConfig } from "@/lib/firebase.config";
+import { isViewer } from "@/lib/viewer-store";
 
 let db: Firestore | undefined;
+let viewerDb: Firestore | undefined;
 
 declare global {
   // Read by App Check: true makes it print a debug token to register.
@@ -39,6 +42,9 @@ function getFirebaseApp(): FirebaseApp {
 // so the static build does not touch IndexedDB. The local cache keeps the
 // plan readable and queues edits while offline.
 export function getDb(): Firestore {
+  // Someone on a read-only link never reaches the trip itself, so no screen
+  // can read or write it by mistake; the rules would refuse them anyway.
+  if (isViewer()) throw new Error("Read-only link");
   if (db) return db;
   db = initializeFirestore(getFirebaseApp(), {
     localCache: persistentLocalCache({
@@ -46,6 +52,19 @@ export function getDb(): Firestore {
     }),
   });
   return db;
+}
+
+// For people opening a read-only link: a separate app with no sign-in and
+// a memory cache, so the copy never stays on their device and a closed link
+// can't be read back from an offline cache.
+export function getViewerDb(): Firestore {
+  if (viewerDb) return viewerDb;
+  const name = "viewer";
+  const app =
+    getApps().find((a) => a.name === name) ??
+    initializeApp(firebaseConfig, name);
+  viewerDb = initializeFirestore(app, { localCache: memoryLocalCache() });
+  return viewerDb;
 }
 
 // The signed-in user is kept in IndexedDB, so sign-in survives reloads and

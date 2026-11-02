@@ -76,6 +76,7 @@ import {
 } from "@/lib/trip-store";
 import { useProposals } from "@/lib/use-proposals";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
 
 const noopSubscribe = () => () => {};
 const FALLBACK_COLOR = "#64748b";
@@ -231,6 +232,8 @@ function DashboardContent() {
   const proposals = useProposals(tripId);
   const today = useSyncExternalStore(noopSubscribe, todayInTokyo, () => null);
   const { summary, categories, expenses } = useBudgetFigures();
+  // A read-only link: no money and no way into Settings.
+  const readOnly = useReadOnly();
 
   const perDay = useMemo(
     () => stopsPerDay(days, items, placesById),
@@ -255,11 +258,13 @@ function DashboardContent() {
       <div className="flex flex-col items-start gap-3">
         <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
         <Empty>{t("dashboard.empty")}</Empty>
-        <Button asChild variant="outline">
-          <Link href={pageHref("/settings/", tripId)}>
-            {t("dashboard.openSettings")}
-          </Link>
-        </Button>
+        {!readOnly && (
+          <Button asChild variant="outline">
+            <Link href={pageHref("/settings/", tripId)}>
+              {t("dashboard.openSettings")}
+            </Link>
+          </Button>
+        )}
       </div>
     );
 
@@ -303,7 +308,7 @@ function DashboardContent() {
       key: `hotel-${date}`,
       icon: BedDouble,
       text: t("dashboard.noHotel", { day: formatDayLabel(date) }),
-      href: pageHref("/settings/", tripId, { tab: "stays" }),
+      href: readOnly ? null : pageHref("/settings/", tripId, { tab: "stays" }),
     })),
     ...holidays.map((h) => ({
       key: `holiday-${h.id}`,
@@ -314,7 +319,7 @@ function DashboardContent() {
       }),
       href: dayHref(h.date, tripId),
     })),
-    ...(ready > 0
+    ...(ready > 0 && !readOnly
       ? [
           {
             key: "research-ready",
@@ -324,7 +329,7 @@ function DashboardContent() {
           },
         ]
       : []),
-    ...(toResearch > 0
+    ...(toResearch > 0 && !readOnly
       ? [
           {
             key: "to-research",
@@ -349,26 +354,30 @@ function DashboardContent() {
           stopsLeft={stopsLeftToday(items, today)}
           plannedDays={plannedDays}
         />
-        <Tile
-          label={
-            summary.over > 0 ? t("budget.overBy") : t("dashboard.budgetLeft")
-          }
-          value={
-            summary.over > 0 ? (
-              <Yen yen={summary.over} />
-            ) : summary.left === null ? (
-              t("budget.notSet")
-            ) : (
-              <Yen yen={summary.left} />
-            )
-          }
-        >
-          <Hint>
-            <Yen yen={summary.spent}>
-              {t("dashboard.spentSoFar", { yen: money.format(summary.spent) })}
-            </Yen>
-          </Hint>
-        </Tile>
+        {!readOnly && (
+          <Tile
+            label={
+              summary.over > 0 ? t("budget.overBy") : t("dashboard.budgetLeft")
+            }
+            value={
+              summary.over > 0 ? (
+                <Yen yen={summary.over} />
+              ) : summary.left === null ? (
+                t("budget.notSet")
+              ) : (
+                <Yen yen={summary.left} />
+              )
+            }
+          >
+            <Hint>
+              <Yen yen={summary.spent}>
+                {t("dashboard.spentSoFar", {
+                  yen: money.format(summary.spent),
+                })}
+              </Yen>
+            </Hint>
+          </Tile>
+        )}
         <Tile
           label={t("dashboard.stops")}
           value={t("dashboard.doneOf", {
@@ -446,13 +455,20 @@ function DashboardContent() {
             <ul className="flex flex-col gap-2 text-sm">
               {watchOut.map(({ key, icon: Icon, text, href }) => (
                 <li key={key}>
-                  <Link
-                    href={href}
-                    className="flex items-start gap-2 underline-offset-2 hover:underline"
-                  >
-                    <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                    <span className="min-w-0">{text}</span>
-                  </Link>
+                  {href ? (
+                    <Link
+                      href={href}
+                      className="flex items-start gap-2 underline-offset-2 hover:underline"
+                    >
+                      <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0">{text}</span>
+                    </Link>
+                  ) : (
+                    <span className="flex items-start gap-2">
+                      <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0">{text}</span>
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -460,73 +476,79 @@ function DashboardContent() {
         </Panel>
       </div>
 
-      <h2 className="pt-2 text-lg font-semibold">{t("dashboard.money")}</h2>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
-        <Panel title={t("budget.overview")}>
-          <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
-            <BudgetGauge
-              percent={percent}
-              over={summary.over > 0}
-              label={t("budget.gaugeLabel", { percent: Math.round(percent) })}
-            >
-              <GaugeCenter summary={summary} />
-            </BudgetGauge>
-            <SummaryFigures summary={summary} />
+      {!readOnly && (
+        <>
+          <h2 className="pt-2 text-lg font-semibold">{t("dashboard.money")}</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+            <Panel title={t("budget.overview")}>
+              <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
+                <BudgetGauge
+                  percent={percent}
+                  over={summary.over > 0}
+                  label={t("budget.gaugeLabel", {
+                    percent: Math.round(percent),
+                  })}
+                >
+                  <GaugeCenter summary={summary} />
+                </BudgetGauge>
+                <SummaryFigures summary={summary} />
+              </div>
+            </Panel>
+            <Panel title={t("budget.byCategory")}>
+              {summary.spent === 0 ? (
+                <Empty>{t("budget.nothingPaid")}</Empty>
+              ) : (
+                <DonutChart
+                  series={categorySeries(categories)}
+                  center={money.format(summary.spent)}
+                  centerLabel={t("budget.spent")}
+                  label={t("budget.byCategory")}
+                  {...money}
+                />
+              )}
+            </Panel>
+            <Panel title={t("dashboard.spendPerDay")}>
+              {spending.days.every((d) => d.paid === 0) ? (
+                <Empty>{t("dashboard.noDaySpend")}</Empty>
+              ) : (
+                <ColumnChart
+                  data={spending.days.map((d) => ({
+                    key: d.date,
+                    value: d.paid,
+                  }))}
+                  color="#2563eb"
+                  name={t("budget.spent")}
+                  label={t("dashboard.spendPerDay")}
+                  tick={dayTick}
+                  {...money}
+                />
+              )}
+              {spending.outside > 0 && (
+                <p className="pt-2 text-xs text-muted-foreground">
+                  {t("dashboard.paidOutside", {
+                    yen: money.format(spending.outside),
+                  })}
+                </p>
+              )}
+            </Panel>
+            <Panel title={t("budget.byPerson")}>
+              {payers.length === 0 ? (
+                <Empty>{t("budget.nothingPaid")}</Empty>
+              ) : (
+                <BarList
+                  rows={payers.map((p) => ({
+                    key: p.paidBy ?? "nobody",
+                    label: personLabel(p.paidBy),
+                    value: p.paid,
+                    color: "var(--primary)",
+                  }))}
+                  {...money}
+                />
+              )}
+            </Panel>
           </div>
-        </Panel>
-        <Panel title={t("budget.byCategory")}>
-          {summary.spent === 0 ? (
-            <Empty>{t("budget.nothingPaid")}</Empty>
-          ) : (
-            <DonutChart
-              series={categorySeries(categories)}
-              center={money.format(summary.spent)}
-              centerLabel={t("budget.spent")}
-              label={t("budget.byCategory")}
-              {...money}
-            />
-          )}
-        </Panel>
-        <Panel title={t("dashboard.spendPerDay")}>
-          {spending.days.every((d) => d.paid === 0) ? (
-            <Empty>{t("dashboard.noDaySpend")}</Empty>
-          ) : (
-            <ColumnChart
-              data={spending.days.map((d) => ({
-                key: d.date,
-                value: d.paid,
-              }))}
-              color="#2563eb"
-              name={t("budget.spent")}
-              label={t("dashboard.spendPerDay")}
-              tick={dayTick}
-              {...money}
-            />
-          )}
-          {spending.outside > 0 && (
-            <p className="pt-2 text-xs text-muted-foreground">
-              {t("dashboard.paidOutside", {
-                yen: money.format(spending.outside),
-              })}
-            </p>
-          )}
-        </Panel>
-        <Panel title={t("budget.byPerson")}>
-          {payers.length === 0 ? (
-            <Empty>{t("budget.nothingPaid")}</Empty>
-          ) : (
-            <BarList
-              rows={payers.map((p) => ({
-                key: p.paidBy ?? "nobody",
-                label: personLabel(p.paidBy),
-                value: p.paid,
-                color: "var(--primary)",
-              }))}
-              {...money}
-            />
-          )}
-        </Panel>
-      </div>
+        </>
+      )}
 
       <h2 className="pt-2 text-lg font-semibold">{t("dashboard.plan")}</h2>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -664,17 +686,19 @@ function DashboardContent() {
             }))}
           />
         </Panel>
-        <Panel title={t("dashboard.costPerCity")}>
-          <BarList
-            rows={figures.map((f) => ({
-              key: f.cityId,
-              label: cityName(f.cityId),
-              value: f.estimateYen,
-              color: cityColor(f.cityId),
-            }))}
-            {...money}
-          />
-        </Panel>
+        {!readOnly && (
+          <Panel title={t("dashboard.costPerCity")}>
+            <BarList
+              rows={figures.map((f) => ({
+                key: f.cityId,
+                label: cityName(f.cityId),
+                value: f.estimateYen,
+                color: cityColor(f.cityId),
+              }))}
+              {...money}
+            />
+          </Panel>
+        )}
         <Panel
           title={t("dashboard.route")}
           className="md:col-span-2 2xl:col-span-2"

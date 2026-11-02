@@ -12,10 +12,12 @@ import { cityHref, pageHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTrip } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
 
 // Every city in trip order, with its dates and how much of it is planned.
 export function CitiesScreen() {
   const tripId = useTripId();
+  const readOnly = useReadOnly();
   const trip = useTrip();
   const items = usePlanStore((s) => s.items);
   const planned = useMemo(
@@ -31,14 +33,19 @@ export function CitiesScreen() {
       <h1 className="text-2xl font-semibold">{t("cities.title")}</h1>
       {trip.cities.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          {t("cities.none")}{" "}
-          <Link
-            href={pageHref("/settings/", tripId, { tab: "cities" })}
-            className="underline"
-          >
-            {t("cities.addInSettings")}
-          </Link>
-          .
+          {t("cities.none")}
+          {!readOnly && (
+            <>
+              {" "}
+              <Link
+                href={pageHref("/settings/", tripId, { tab: "cities" })}
+                className="underline"
+              >
+                {t("cities.addInSettings")}
+              </Link>
+              .
+            </>
+          )}
         </p>
       )}
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">

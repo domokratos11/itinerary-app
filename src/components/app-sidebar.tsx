@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
-import { SECTIONS, useSection } from "@/components/app-header";
+import { useSection, useSections } from "@/components/app-header";
 import { Tip } from "@/components/tip";
 import {
   Sidebar,
@@ -71,6 +71,7 @@ export function AppSidebarProvider({ children }: { children: ReactNode }) {
 export function AppSidebar() {
   const tripId = useTripId();
   const section = useSection();
+  const sections = useSections();
   const path = usePathname();
   const date = useSearchParams().get("date");
   const days = useTripDays();
@@ -91,7 +92,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <nav aria-label={t("nav.sections")}>
             <SidebarMenu>
-              {SECTIONS.map(({ path: href, label, hint, icon: Icon }) => (
+              {sections.map(({ path: href, label, hint, icon: Icon }) => (
                 <SidebarMenuItem key={href}>
                   <Tip side="right" label={t(hint)}>
                     <SidebarMenuButton asChild isActive={section === href}>
