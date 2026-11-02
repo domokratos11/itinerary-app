@@ -9,3 +9,16 @@ export function formatDayLabel(date: string): string {
     timeZone: "UTC",
   });
 }
+
+// An instant such as a link's expiry, as the date and time in Tokyo.
+export function formatTokyoDateTime(iso: string): string {
+  return new Date(iso).toLocaleString(intlLocale(), {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Tokyo",
+    timeZoneName: "short",
+  });
+}

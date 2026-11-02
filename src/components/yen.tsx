@@ -18,6 +18,7 @@ import {
 } from "@/domain/budget";
 import { setHideAmounts, useHideAmounts } from "@/lib/hide-amounts";
 import { t } from "@/lib/i18n";
+import { useReadOnly } from "@/lib/viewer-store";
 
 export function usdHint(yen: number): string {
   return t("budget.usdHint", { usd: formatUsd(yen), rate: YEN_PER_USD });
@@ -52,6 +53,9 @@ export function useYenValues() {
 // An open eye shows the amounts, a closed one hides them.
 export function HideAmountsButton() {
   const hidden = useAmountsHidden();
+  // A read-only link has no amounts to show or hide.
+  const readOnly = useReadOnly();
+  if (readOnly) return null;
   return (
     <Button
       variant="outline"
@@ -72,6 +76,9 @@ export function HideAmountsButton() {
 export function Yen({ yen, children }: { yen: number; children?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const hidden = useAmountsHidden();
+  // Never an amount on a read-only link, not even a hidden one.
+  const readOnly = useReadOnly();
+  if (readOnly) return null;
   if (hidden) return <span>{children ?? HIDDEN_AMOUNT}</span>;
   return (
     <TooltipProvider delayDuration={150}>

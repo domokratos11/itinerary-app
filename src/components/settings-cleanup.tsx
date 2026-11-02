@@ -7,6 +7,7 @@ import {
   Globe,
   History,
   Inbox,
+  Link2,
   MapPin,
   Plane,
   Search,
@@ -45,6 +46,8 @@ import { t } from "@/lib/i18n";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
 import { useProposals } from "@/lib/use-proposals";
+import { useShares } from "@/lib/use-shares";
+import { shareStatus } from "@/domain/share";
 
 const ICONS: Record<CleanupKind, LucideIcon> = {
   stays: BedDouble,
@@ -62,6 +65,7 @@ type Pending =
   | { kind: "plan"; title: string; count: number; plan: CleanupPlan }
   | { kind: "history"; title: string; count: number }
   | { kind: "queue"; title: string; count: number }
+  | { kind: "shares"; title: string; count: number }
   | { kind: "everything"; title: string; count: number; plan: CleanupPlan };
 
 async function removePlan(tripId: string, plan: CleanupPlan) {
@@ -89,6 +93,10 @@ export function CleanupSettings({ tripId }: { tripId: string }) {
   const trip = useTripStore((s) => s.data);
   const items = usePlanStore((s) => s.items);
   const proposals = useProposals(tripId);
+  // Read-only links that have expired or were revoked, with their copies.
+  const closedShares = useShares(tripId).filter(
+    (s) => shareStatus(s, new Date()) !== "active",
+  );
   const [remote, setRemote] = useState<RemoteLeftovers | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [working, setWorking] = useState(false);
@@ -118,6 +126,9 @@ export function CleanupSettings({ tripId }: { tripId: string }) {
         await cleanupRepository.removeAll(tripId, "queue");
       if (job.kind === "history" || job.kind === "everything")
         await cleanupRepository.removeAll(tripId, "activity");
+      if (job.kind === "shares" || job.kind === "everything")
+        for (const share of closedShares)
+          await cleanupRepository.removeShare(share.id);
       logActivity(tripId, {
         kind: "settings",
         targetId: null,
@@ -132,7 +143,10 @@ export function CleanupSettings({ tripId }: { tripId: string }) {
     }
   }
 
-  const total = everything.count + (remote ? remote.history + remote.queue : 0);
+  const total =
+    everything.count +
+    closedShares.length +
+    (remote ? remote.history + remote.queue : 0);
 
   return (
     <div className="flex max-w-3xl flex-col gap-4 text-sm">
@@ -188,6 +202,20 @@ export function CleanupSettings({ tripId }: { tripId: string }) {
               kind: "queue",
               title: t("cleanup.queue"),
               count: remote?.queue ?? 0,
+            })
+          }
+        />
+        <Row
+          icon={Link2}
+          title={t("cleanup.shares")}
+          count={closedShares.length}
+          note={t("cleanup.sharesNote")}
+          disabled={working}
+          onClean={() =>
+            setPending({
+              kind: "shares",
+              title: t("cleanup.shares"),
+              count: closedShares.length,
             })
           }
         />

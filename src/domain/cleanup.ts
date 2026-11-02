@@ -145,4 +145,7 @@ export interface CleanupRepository {
   ): Promise<void>;
   // Deletes a whole collection that has no live rows.
   removeAll(tripId: string, collection: "activity" | "queue"): Promise<void>;
+  // Deletes a read-only link that's closed, with its copy of the trip. The
+  // rules refuse one that's still open.
+  removeShare(shareId: string): Promise<void>;
 }

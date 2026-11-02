@@ -57,6 +57,8 @@ import { todayInTokyo } from "@/lib/tokyo-date";
 import { archiveRecord, saveBudget, saveRecord } from "@/lib/trip-actions";
 import { usePlacesById, useTrip, useTripDays } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
+import { NotOnSharedView } from "@/components/viewer";
 
 const noopSubscribe = () => () => {};
 
@@ -184,6 +186,8 @@ export function SummaryFigures({ summary }: { summary: BudgetSummary }) {
 
 // The trip's shared money: what's set aside, what has gone and on what.
 export function BudgetScreen() {
+  // A read-only link never shows money; this covers a typed address.
+  if (useReadOnly()) return <NotOnSharedView />;
   return (
     <MoneyScope>
       <BudgetContent />

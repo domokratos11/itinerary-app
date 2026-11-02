@@ -38,6 +38,7 @@ import { requestResearch } from "@/lib/proposal-actions";
 import { useProposals } from "@/lib/use-proposals";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
 
 export type NearbyPlace = { id: string; name: string };
 
@@ -60,7 +61,10 @@ export function PlaceDetails({
   onArchive,
 }: Props) {
   const wide = useMediaQuery("(min-width: 768px)");
-  const tripId = useTripId();
+  // Nothing can be changed from a read-only link, and it never shows a cost.
+  const readOnly = useReadOnly();
+  const memberTripId = useTripId();
+  const tripId = readOnly ? null : memberTripId;
   const [editing, setEditing] = useState<string | null>(null);
   const [logging, setLogging] = useState<string | null>(null);
   // The details step aside while the editor is open, so two panels never
@@ -93,7 +97,8 @@ export function PlaceDetails({
       inPlan={inPlan}
       onEdit={onEdit}
       onLogCost={tripId ? () => setLogging(place.id) : null}
-      onArchive={onArchive ? () => onArchive(place) : null}
+      onArchive={onArchive && !readOnly ? () => onArchive(place) : null}
+      readOnly={readOnly}
     />
   );
 
@@ -151,6 +156,7 @@ function PlaceBody({
   onEdit,
   onLogCost,
   onArchive,
+  readOnly,
 }: {
   place: PlaceRecord;
   nearby: NearbyPlace[];
@@ -158,6 +164,7 @@ function PlaceBody({
   onEdit: (() => void) | null;
   onLogCost: (() => void) | null;
   onArchive: (() => void) | null;
+  readOnly: boolean;
 }) {
   const mapsLink = place.googlePlaceId
     ? mapsSearchUrl(place.name, place.googlePlaceId)
@@ -190,7 +197,7 @@ function PlaceBody({
           </a>
         </Button>
       </Tip>
-      <AddToDay place={place} />
+      {!readOnly && <AddToDay place={place} />}
       {onLogCost && (
         <Tip label={t("budget.tipLogCost")}>
           <Button variant="outline" onClick={onLogCost}>
@@ -226,7 +233,7 @@ function PlaceBody({
           {t("place.inPlanNote")}
         </p>
       )}
-      <PlaceResearch place={place} />
+      {!readOnly && <PlaceResearch place={place} />}
 
       {place.purpose && (
         <Section label={t("common.whyGo")}>{place.purpose}</Section>
@@ -244,13 +251,15 @@ function PlaceBody({
         </Section>
       )}
 
-      <Section label={t("common.cost")}>
-        {place.costEstimateJPY ? (
-          <Yen yen={place.costEstimateJPY} />
-        ) : (
-          formatCost(place.costEstimateJPY)
-        )}
-      </Section>
+      {!readOnly && (
+        <Section label={t("common.cost")}>
+          {place.costEstimateJPY ? (
+            <Yen yen={place.costEstimateJPY} />
+          ) : (
+            formatCost(place.costEstimateJPY)
+          )}
+        </Section>
+      )}
       <Section label={t("common.timeNeeded")}>
         {place.durationMin === null
           ? t("common.notResearched")

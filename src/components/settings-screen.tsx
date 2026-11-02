@@ -10,6 +10,7 @@ import {
   Globe,
   MapPin,
   Plane,
+  Share2,
   Ticket,
   Users,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import { FlightsSettings } from "@/components/settings-flights";
 import { HolidaysSettings } from "@/components/settings-holidays";
 import { PlacesSettings } from "@/components/settings-places";
 import { ReservationsSettings } from "@/components/settings-reservations";
+import { ShareSettings } from "@/components/settings-share";
 import { StaysSettings } from "@/components/settings-stays";
 import { TripSettings } from "@/components/settings-trip";
 import { Tip } from "@/components/tip";
@@ -36,6 +38,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { t } from "@/lib/i18n";
 import { useTripStore } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
+import { NotOnSharedView } from "@/components/viewer";
 
 const SECTIONS = [
   {
@@ -88,6 +92,13 @@ const SECTIONS = [
     Panel: TripSettings,
   },
   {
+    value: "share",
+    label: "settings.tabShare",
+    hint: "settings.hintShare",
+    icon: Share2,
+    Panel: ShareSettings,
+  },
+  {
     value: "backup",
     label: "settings.tabBackup",
     hint: "settings.hintBackup",
@@ -114,6 +125,10 @@ export function SettingsScreen() {
     SECTIONS.find((s) => s.value === asked)?.value ?? "stays",
   );
   const error = useTripStore((s) => s.error);
+  const readOnly = useReadOnly();
+
+  // Never reached from a read-only link's menus; this covers a typed address.
+  if (readOnly) return <NotOnSharedView />;
 
   return (
     <div className="flex flex-col gap-4">

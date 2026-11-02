@@ -2,11 +2,13 @@ import { Yen } from "@/components/yen";
 import { costTotal } from "@/domain/plan";
 import type { Place } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
+import { useReadOnly } from "@/lib/viewer-store";
 
 // Estimated spend for some stops. Stops without a researched price are
 // counted apart, so an unknown price never reads as free.
 export function CostLine({ places }: { places: (Place | undefined)[] }) {
-  if (places.length === 0) return null;
+  const readOnly = useReadOnly();
+  if (places.length === 0 || readOnly) return null;
   const { yen, unpriced } = costTotal(places);
   return (
     <p className="text-sm text-muted-foreground">

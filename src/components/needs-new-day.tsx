@@ -19,6 +19,7 @@ import { placeItem } from "@/lib/plan-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { usePlacesById, useTrip, useTripDays } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
 
 // Stops left without a valid day after the stays changed, each with a
 // picker of the days its city now covers.
@@ -33,7 +34,8 @@ export function NeedsNewDay() {
     [items, days, trip.places],
   );
 
-  if (stranded.length === 0) return null;
+  const readOnly = useReadOnly();
+  if (stranded.length === 0 || readOnly) return null;
 
   function move(index: number, date: string) {
     if (!tripId) return;

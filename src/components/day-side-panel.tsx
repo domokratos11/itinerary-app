@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { GripVertical, ListFilter, MapPin, MapPinOff, X } from "lucide-react";
@@ -36,6 +37,7 @@ import type { MessageKey } from "@/domain/i18n";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { formatDayLabel } from "@/lib/format-day";
+import { dayHref } from "@/lib/links";
 
 // Drag ids on the day page. Stops use their plan item id; everything else
 // carries a prefix so the drop handler can tell them apart.
@@ -247,53 +249,90 @@ export function WaitingControls({
   );
 }
 
-// Things waiting to be placed: drag them into the day.
+// Things waiting to be placed: drag them into the day. On a read-only link
+// they can only be opened.
 export function WaitingColumn({
   waiting,
   total,
   controls,
+  onOpen,
 }: {
   waiting: Waiting[];
   total: number;
   controls: ReactNode;
+  onOpen?: (placeId: string) => void;
 }) {
   return (
     <DayColumn title={t("day.waiting")} actions={controls}>
       <p className="pb-2 text-xs text-muted-foreground">
-        {waitingHint(waiting.length, total, t("day.waitingDrag"))}
+        {waitingHint(
+          waiting.length,
+          total,
+          onOpen ? t("share.waitingHint") : t("day.waitingDrag"),
+        )}
       </p>
       <ul className="flex flex-col gap-2">
-        {waiting.map((w) => (
-          <WaitingItem key={w.dragId} waiting={w} />
-        ))}
+        {waiting.map((w) =>
+          onOpen ? (
+            <li key={w.dragId}>
+              <button
+                type="button"
+                onClick={() => onOpen(w.place.id)}
+                className="flex w-full flex-col gap-1 rounded-md border bg-card p-2 text-left text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                <span className="truncate font-medium">{w.place.name}</span>
+                <WaitingTags place={w.place} />
+              </button>
+            </li>
+          ) : (
+            <WaitingItem key={w.dragId} waiting={w} />
+          ),
+        )}
       </ul>
     </DayColumn>
   );
 }
 
-// The other days of this city: drop a stop on one to move it there.
+// The other days of this city: drop a stop on one to move it there. On a
+// read-only link they are links to those days instead.
 export function OtherDaysColumn({
   otherDays,
   stopCounts,
+  readOnly = false,
 }: {
   otherDays: TripDay[];
   stopCounts: Map<string, number>;
+  readOnly?: boolean;
 }) {
   return (
-    <DayColumn title={t("day.moveToAnother")}>
+    <DayColumn title={readOnly ? t("share.otherDays") : t("day.moveToAnother")}>
       <p className="pb-2 text-xs text-muted-foreground">
         {otherDays.length === 0
           ? t("day.noOtherDays")
-          : t("day.moveToAnotherHint")}
+          : readOnly
+            ? t("share.otherDaysHint")
+            : t("day.moveToAnotherHint")}
       </p>
       <ul className="flex flex-col gap-1.5">
-        {otherDays.map((d) => (
-          <DayDrop
-            key={d.date}
-            date={d.date}
-            stops={stopCounts.get(d.date) ?? 0}
-          />
-        ))}
+        {otherDays.map((d) =>
+          readOnly ? (
+            <li key={d.date}>
+              <Link
+                href={dayHref(d.date, null)}
+                className="flex items-center justify-between rounded-md border px-3 py-2 text-sm hover:bg-accent"
+              >
+                {formatDayLabel(d.date)}
+                <Badge variant="outline">{stopCounts.get(d.date) ?? 0}</Badge>
+              </Link>
+            </li>
+          ) : (
+            <DayDrop
+              key={d.date}
+              date={d.date}
+              stops={stopCounts.get(d.date) ?? 0}
+            />
+          ),
+        )}
       </ul>
     </DayColumn>
   );

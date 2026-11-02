@@ -42,6 +42,7 @@ import { CityForm } from "@/components/settings-cities";
 import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
+import { useReadOnly } from "@/lib/viewer-store";
 import { Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,6 +74,8 @@ export function CityCatalog({
   const [editingCity, setEditingCity] = useState(false);
   const items = usePlanStore((s) => s.items);
   const [view, setView] = useState<"list" | "map">("list");
+  // A read-only link can look and filter, never change anything.
+  const readOnly = useReadOnly();
   // Wide enough for the map beside the grid; otherwise a switch.
   const sideBySide = useMediaQuery("(min-width: 1280px)");
   const showMap = sideBySide || view === "map";
@@ -143,20 +146,28 @@ export function CityCatalog({
           <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold">
             {city.name}
           </h1>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t("common.editName", { name: city.name })}
-            onClick={() => setEditingCity(true)}
-          >
-            <Pencil />
-          </Button>
-          <Tip label={t("common.tipAddPlace")}>
-            <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
-              <Plus />
-              {t("common.addPlace")}
-            </Button>
-          </Tip>
+          {!readOnly && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("common.editName", { name: city.name })}
+                onClick={() => setEditingCity(true)}
+              >
+                <Pencil />
+              </Button>
+              <Tip label={t("common.tipAddPlace")}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAdding(true)}
+                >
+                  <Plus />
+                  {t("common.addPlace")}
+                </Button>
+              </Tip>
+            </>
+          )}
         </div>
         <p className="text-sm text-muted-foreground">
           {t("cities.placesShown", {
@@ -340,16 +351,16 @@ export function CityCatalog({
         onOpenChange={(open) => {
           if (!open) setSelectedId(null);
         }}
-        onArchive={tripId ? archivePlace : undefined}
+        onArchive={tripId && !readOnly ? archivePlace : undefined}
       />
-      {adding && tripId && (
+      {adding && tripId && !readOnly && (
         <AddPlace
           tripId={tripId}
           defaultCityId={city.id}
           onClose={() => setAdding(false)}
         />
       )}
-      {editingCity && (
+      {editingCity && !readOnly && (
         <CityForm
           city={city}
           onCancel={() => setEditingCity(false)}

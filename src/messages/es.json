@@ -340,7 +340,9 @@
     "hintBackup": "Descarga todo el viaje como archivo, o restaura uno en un viaje vacío.",
     "hintCleanup": "Elimina para siempre lo archivado o terminado, y el historial de cambios.",
     "tabFlights": "Vuelos",
-    "hintFlights": "Números de vuelo, horarios y códigos de confirmación, que aparecen en sus días."
+    "hintFlights": "Números de vuelo, horarios y códigos de confirmación, que aparecen en sus días.",
+    "tabShare": "Compartir",
+    "hintShare": "Enlaces de solo lectura para personas que no están en el viaje. Nunca muestran importes y se cierran cuando tú decidas."
   },
   "about": {
     "title": "Acerca de",
@@ -546,7 +548,10 @@
     "cleanedUp": "hizo limpieza: {what}",
     "savedFlight": "guardó el vuelo {flight}",
     "archivedFlight": "archivó el vuelo {flight}",
-    "restoredFlight": "restauró el vuelo {flight}"
+    "restoredFlight": "restauró el vuelo {flight}",
+    "sharedLink": "creó un enlace de solo lectura: {label}",
+    "refreshedLink": "actualizó el enlace de solo lectura {label}",
+    "revokedLink": "cerró el enlace de solo lectura {label}"
   },
   "theme": {
     "system": "Igual que el teléfono",
@@ -705,7 +710,9 @@
     "confirmBody": "Esto elimina para siempre {count, plural, one {# elemento} other {# elementos}} y no se puede deshacer. Puedes descargar una copia antes.",
     "deleteForGood": "Eliminar para siempre",
     "done": "{count, plural, one {Se eliminó # elemento} other {Se eliminaron # elementos}}",
-    "flights": "Vuelos archivados"
+    "flights": "Vuelos archivados",
+    "shares": "Enlaces compartidos cerrados",
+    "sharesNote": "Enlaces que caducaron o se cerraron, con su copia del viaje."
   },
   "flights": {
     "title": "Vuelos",
@@ -728,5 +735,57 @@
     "currency": "Moneda",
     "confirmationCode": "Confirmación: {code}",
     "costLine": "Costo: {cost}"
+  },
+  "share": {
+    "intro": "Cualquiera con un enlace puede ver los días, los lugares y el mapa hasta que caduque. No puede cambiar nada, y nunca se incluyen importes, presupuesto, notas de reservas ni códigos de confirmación. El enlace muestra el viaje tal como estaba cuando lo creaste o pulsaste Actualizar por última vez.",
+    "none": "Todavía no hay enlaces.",
+    "create": "Nuevo enlace de solo lectura",
+    "createAndCopy": "Crear y copiar enlace",
+    "formHint": "El enlace se abre sin iniciar sesión. Las horas son de Japón.",
+    "label": "Nombre",
+    "labelHint": "Solo tú y los miembros del viaje lo ven, para distinguir los enlaces.",
+    "labelPlaceholder": "Por ejemplo: Abuela",
+    "validFor": "Abierto durante",
+    "days": "{count, plural, one {# día} other {# días}}",
+    "customDate": "Hasta una fecha y hora…",
+    "until": "Se cierra (hora de Japón)",
+    "untilHint": "Como máximo 30 días desde ahora.",
+    "closesAt": "Se cierra el {date}",
+    "untitled": "Enlace sin nombre",
+    "status": {
+      "active": "Abierto",
+      "expired": "Caducado",
+      "revoked": "Cerrado"
+    },
+    "expires": "Se cierra el {date}",
+    "expired": "Caducó el {date}",
+    "revokedNote": "Cerrado para siempre. Limpieza en Ajustes puede borrarlo.",
+    "published": "Muestra el viaje a fecha de {date}",
+    "copy": "Copiar enlace",
+    "copied": "Enlace copiado",
+    "refresh": "Actualizar",
+    "refreshed": "El enlace ya muestra el viaje actual",
+    "changeExpiry": "Cambiar caducidad",
+    "expiryChanged": "Caducidad cambiada",
+    "revoke": "Cerrar enlace",
+    "revokeTitle": "¿Cerrar este enlace?",
+    "revokeBody": "Quien lo use perderá el acceso en pocos minutos. Un enlace cerrado no se puede volver a abrir; crea uno nuevo.",
+    "revoked": "Enlace cerrado",
+    "readOnly": "Solo lectura",
+    "banner": "Viaje compartido, solo lectura",
+    "bannerUntil": "Abierto hasta el {date}",
+    "viewerMenu": "Opciones de la vista compartida",
+    "viewerHint": "Puedes ver todo, pero no se puede cambiar nada. Los importes no se comparten.",
+    "leave": "Salir de la vista compartida",
+    "leaveHint": "¿Estás en el viaje? Sal de esta vista para iniciar sesión.",
+    "closedTitle": "Este enlace no está abierto",
+    "closedBody": "Caducó, se cerró o está incompleto. Pide uno nuevo a quien te lo envió.",
+    "memberSignIn": "Estoy en el viaje: iniciar sesión",
+    "notHereTitle": "No forma parte de este viaje compartido",
+    "notHereBody": "Esta página no se incluye en un enlace de solo lectura.",
+    "backToTrip": "Volver al viaje",
+    "waitingHint": "Lugares de esta ciudad que aún no están en ningún día. Toca uno para ver detalles.",
+    "otherDays": "Otros días aquí",
+    "otherDaysHint": "Los demás días en esta ciudad."
   }
 }

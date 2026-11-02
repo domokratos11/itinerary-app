@@ -340,7 +340,9 @@
     "hintBackup": "Download the whole trip as a file, or restore one into an empty trip.",
     "hintCleanup": "Permanently delete what's archived or finished, and the change history.",
     "tabFlights": "Flights",
-    "hintFlights": "Flight numbers, times and confirmation codes, shown on their days."
+    "hintFlights": "Flight numbers, times and confirmation codes, shown on their days.",
+    "tabShare": "Share",
+    "hintShare": "Read-only links for people who aren't on the trip. They never show amounts and close when you choose."
   },
   "about": {
     "title": "About",
@@ -546,7 +548,10 @@
     "cleanedUp": "cleaned up: {what}",
     "savedFlight": "saved the flight {flight}",
     "archivedFlight": "archived the flight {flight}",
-    "restoredFlight": "restored the flight {flight}"
+    "restoredFlight": "restored the flight {flight}",
+    "sharedLink": "made a read-only link: {label}",
+    "refreshedLink": "refreshed the read-only link {label}",
+    "revokedLink": "closed the read-only link {label}"
   },
   "theme": {
     "system": "Match phone",
@@ -705,7 +710,9 @@
     "confirmBody": "This permanently deletes {count, plural, one {# item} other {# items}} and can't be undone. You can download a backup first.",
     "deleteForGood": "Delete for good",
     "done": "Deleted {count, plural, one {# item} other {# items}}",
-    "flights": "Archived flights"
+    "flights": "Archived flights",
+    "shares": "Closed share links",
+    "sharesNote": "Links that expired or were closed, with their copy of the trip."
   },
   "flights": {
     "title": "Flights",
@@ -728,5 +735,57 @@
     "currency": "Currency",
     "confirmationCode": "Confirmation: {code}",
     "costLine": "Cost: {cost}"
+  },
+  "share": {
+    "intro": "Anyone with a link can see the days, places and map until it expires. They can't change anything, and no amount, budget, booking note or confirmation code is ever included. A link shows the trip as it was when you made it or last pressed Refresh.",
+    "none": "No links yet.",
+    "create": "New read-only link",
+    "createAndCopy": "Create and copy link",
+    "formHint": "The link opens without signing in. Times are Japan time.",
+    "label": "Name",
+    "labelHint": "Only you and the trip's members see this, to tell links apart.",
+    "labelPlaceholder": "For example: Grandma",
+    "validFor": "Open for",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "customDate": "Until a date and time…",
+    "until": "Closes at (Japan time)",
+    "untilHint": "At most 30 days from now.",
+    "closesAt": "Closes {date}",
+    "untitled": "Untitled link",
+    "status": {
+      "active": "Open",
+      "expired": "Expired",
+      "revoked": "Closed"
+    },
+    "expires": "Closes {date}",
+    "expired": "Expired {date}",
+    "revokedNote": "Closed for good. Clean up in Settings can delete it.",
+    "published": "Shows the trip as of {date}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "refresh": "Refresh",
+    "refreshed": "The link now shows the current trip",
+    "changeExpiry": "Change expiry",
+    "expiryChanged": "Expiry changed",
+    "revoke": "Close link",
+    "revokeTitle": "Close this link?",
+    "revokeBody": "Anyone using it loses access within a few minutes. A closed link can't be opened again; make a new one instead.",
+    "revoked": "Link closed",
+    "readOnly": "Read-only",
+    "banner": "Shared trip, read only",
+    "bannerUntil": "Open until {date}",
+    "viewerMenu": "Shared view options",
+    "viewerHint": "You can look at everything here, but nothing can be changed. Amounts aren't shared.",
+    "leave": "Leave shared view",
+    "leaveHint": "On the trip yourself? Leave this view to sign in.",
+    "closedTitle": "This link isn't open",
+    "closedBody": "It has expired, was closed, or isn't complete. Ask the person who sent it for a new one.",
+    "memberSignIn": "I'm on the trip: sign in",
+    "notHereTitle": "Not part of this shared trip",
+    "notHereBody": "This page isn't included in a read-only link.",
+    "backToTrip": "Back to the trip",
+    "waitingHint": "Places in this city not on any day yet. Tap one for details.",
+    "otherDays": "Other days here",
+    "otherDaysHint": "The other days in this city."
   }
 }

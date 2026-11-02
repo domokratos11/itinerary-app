@@ -1,5 +1,6 @@
 import { clearSession } from "@/lib/auth";
 import { BASE_PATH } from "@/lib/base-path";
+import { useViewerStore } from "@/lib/viewer-store";
 
 // The version this copy of the app was built as.
 export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
@@ -73,15 +74,19 @@ async function clearCaches(): Promise<void> {
 // Leaves this device as if the app had never been opened, apart from
 // preferences, and loads `target` afresh. The person has to sign in again.
 export async function resetApp(target: string): Promise<void> {
+  // Someone on a read-only link stays on it after the reset.
+  const share = useViewerStore.getState().share?.id ?? null;
   try {
-    await clearSession();
+    if (!share) await clearSession();
   } catch {
     // Carry on: the rest still clears what it can.
   }
   clearStorage(target);
   await clearCaches();
   // The query string gets past a browser that cached the old page.
-  window.location.replace(`${BASE_PATH}/?v=${encodeURIComponent(target)}`);
+  const query = new URLSearchParams({ v: target });
+  if (share) query.set("share", share);
+  window.location.replace(`${BASE_PATH}/?${query}`);
 }
 
 // What the server says is deployed, or null without an answer. No answer

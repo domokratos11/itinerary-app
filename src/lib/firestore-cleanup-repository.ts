@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getCountFromServer,
   getDocs,
@@ -11,6 +12,7 @@ import type {
   CleanupRepository,
   RemoteLeftovers,
 } from "@/domain/cleanup";
+import { SHARED_COLLECTIONS } from "@/domain/share";
 import { getDb } from "@/lib/firebase";
 
 // A write batch holds at most 500 writes, so larger lists go in chunks.
@@ -50,6 +52,20 @@ export class FirestoreCleanupRepository implements CleanupRepository {
         batch.delete(doc(db, "trips", tripId, name, id));
       await batch.commit();
     }
+  }
+
+  async removeShare(shareId: string): Promise<void> {
+    const db = getDb();
+    // The copy first, so an interrupted run leaves the link to try again.
+    for (const name of SHARED_COLLECTIONS) {
+      const rows = await getDocs(collection(db, "shares", shareId, name));
+      for (let i = 0; i < rows.docs.length; i += CHUNK) {
+        const batch = writeBatch(db);
+        for (const row of rows.docs.slice(i, i + CHUNK)) batch.delete(row.ref);
+        await batch.commit();
+      }
+    }
+    await deleteDoc(doc(db, "shares", shareId));
   }
 
   async removeAll(tripId: string, name: "activity" | "queue"): Promise<void> {

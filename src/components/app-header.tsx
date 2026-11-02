@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
+  Eye,
   LayoutDashboard,
   MapPinned,
   Settings,
@@ -15,12 +16,15 @@ import { ActivitySheet } from "@/components/activity-sheet";
 import { SearchPalette } from "@/components/search-palette";
 import { Tip } from "@/components/tip";
 import { TripSwitcher } from "@/components/trip-switcher";
+import { ViewerSheet } from "@/components/viewer";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { APP_VERSION } from "@/lib/app-reset";
 import { t } from "@/lib/i18n";
 import { pageHref } from "@/lib/links";
 import { cn } from "@/lib/utils";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
 
 export const SECTIONS = [
   {
@@ -60,6 +64,15 @@ export const SECTIONS = [
   },
 ] as const;
 
+// What a read-only link may open: no money (Budget) and no Settings.
+const VIEWER_SECTIONS = SECTIONS.filter(
+  (s) => s.path !== "/budget/" && s.path !== "/settings/",
+);
+
+export function useSections(): readonly (typeof SECTIONS)[number][] {
+  return useReadOnly() ? VIEWER_SECTIONS : SECTIONS;
+}
+
 export function useSection(): string {
   // usePathname has no base path and may lack the trailing slash.
   const path = usePathname();
@@ -76,15 +89,23 @@ export function useSection(): string {
 export function AppHeader() {
   const tripId = useTripId();
   const active = useSection();
+  const sections = useSections();
+  const readOnly = useReadOnly();
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="flex h-14 w-full items-center gap-2 px-4 lg:px-6">
         <TripSwitcher />
+        {readOnly && (
+          <Badge variant="secondary" className="shrink-0">
+            <Eye aria-hidden />
+            {t("share.readOnly")}
+          </Badge>
+        )}
         <nav
           aria-label={t("nav.sections")}
           className="ml-4 hidden gap-1 md:flex lg:hidden"
         >
-          {SECTIONS.map(({ path, label, hint, icon: Icon }) => (
+          {sections.map(({ path, label, hint, icon: Icon }) => (
             <Tip key={path} label={t(hint)}>
               <Button
                 asChild
@@ -104,8 +125,14 @@ export function AppHeader() {
         </nav>
         <div className="ml-auto flex items-center gap-1">
           <SearchPalette />
-          <ActivitySheet compact />
-          <AccountSheet />
+          {readOnly ? (
+            <ViewerSheet />
+          ) : (
+            <>
+              <ActivitySheet compact />
+              <AccountSheet />
+            </>
+          )}
         </div>
       </div>
     </header>
@@ -125,13 +152,19 @@ export function VersionTag() {
 export function BottomNav() {
   const tripId = useTripId();
   const active = useSection();
+  const sections = useSections();
   return (
     <nav
       aria-label={t("nav.sections")}
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
-      <ul className="grid grid-cols-5">
-        {SECTIONS.map(({ path, label, icon: Icon }) => (
+      <ul
+        className={cn(
+          "grid",
+          sections.length === SECTIONS.length ? "grid-cols-5" : "grid-cols-3",
+        )}
+      >
+        {sections.map(({ path, label, icon: Icon }) => (
           <li key={path}>
             <Link
               href={pageHref(path, tripId)}

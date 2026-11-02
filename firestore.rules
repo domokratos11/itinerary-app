@@ -4,6 +4,8 @@ rules_version = '2';
 // leaked link alone opens nothing. People see only their own trips, only the
 // emails in config/access can create one, and trips are never deleted. Inside
 // a trip only what's already retired can be deleted (Clean up in Settings).
+// The one exception to sign-in is shares/{shareId}: a read-only copy without
+// amounts that members publish, readable by its ID until it expires.
 // The scripts use the Admin SDK, which these rules don't apply to.
 // Paste this file into Firebase console → Firestore → Rules, then Publish.
 service cloud.firestore {
@@ -262,6 +264,42 @@ service cloud.firestore {
         && shortString(d.updatedAt, 30);
     }
 
+    // A read-only link. Anyone with its ID may read it and its copy of the
+    // trip until it expires or is revoked; at most 30 days ahead (plus an
+    // hour for clock drift), and a revoked link stays revoked.
+    function isShare(d) {
+      return d.keys().hasOnly(['tripId', 'tripName', 'label', 'createdAt', 'expiresAt', 'revoked', 'publishedAt'])
+        && d.keys().hasAll(['tripId', 'tripName', 'label', 'createdAt', 'expiresAt', 'revoked', 'publishedAt'])
+        && shortString(d.tripId, 128) && d.tripId.size() > 0
+        && optionalString(d.tripName, 100)
+        && shortString(d.label, 100)
+        && shortString(d.createdAt, 30)
+        && d.expiresAt is timestamp
+        && d.expiresAt <= request.time + duration.value(30 * 24 + 1, 'h')
+        && d.revoked is bool
+        && shortString(d.publishedAt, 30);
+    }
+
+    function shareOf(shareId) {
+      return get(/databases/$(database)/documents/shares/$(shareId)).data;
+    }
+
+    function isOpenShare(s) {
+      return s.revoked == false && request.time < s.expiresAt;
+    }
+
+    // Copies may hold no amount and no booking note or confirmation.
+    function isSharedCopy(name, d) {
+      return (name == 'cities' && isCity(d))
+        || (name == 'stays' && isStay(d) && d.note == null)
+        || (name == 'reservations' && isReservation(d) && d.note == null)
+        || (name == 'places' && isPlace(d) && d.costEstimateJPY == null)
+        || (name == 'holidays' && isHoliday(d))
+        || (name == 'flights' && isFlight(d) && d.confirmation == null
+          && d.costAmount == null && d.note == null)
+        || (name == 'items' && isPlanItem(d) && d.status != 'removed');
+    }
+
     // Who may create trips. Readable only by the people on the list, so
     // nobody else can see it.
     match /config/access {
@@ -367,6 +405,36 @@ service cloud.firestore {
           && isPlanItem(request.resource.data)
           && request.resource.data.id == itemId;
         allow delete: if isMember(tripId) && resource.data.status == 'removed';
+      }
+    }
+
+    // Read-only links. The only thing readable without signing in, and only
+    // by ID: nobody can list them except the trip's members.
+    match /shares/{shareId} {
+      allow get: if isOpenShare(resource.data) || isMember(resource.data.tripId);
+      // Only with the query where tripId == the member's trip.
+      allow list: if isMember(resource.data.tripId);
+      allow create: if isMember(request.resource.data.tripId)
+        && isShare(request.resource.data)
+        && request.resource.data.revoked == false
+        && request.resource.data.expiresAt > request.time;
+      allow update: if isMember(resource.data.tripId)
+        && isShare(request.resource.data)
+        && request.resource.data.tripId == resource.data.tripId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (request.resource.data.revoked == true || resource.data.revoked == false);
+      // Clean up, once the link is closed.
+      allow delete: if isMember(resource.data.tripId)
+        && (resource.data.revoked == true || request.time >= resource.data.expiresAt);
+
+      // The link's copy of the trip. Members rewrite it on Refresh, which
+      // deletes copies of records that are gone; the trip itself is untouched.
+      match /{name}/{id} {
+        allow read: if isOpenShare(shareOf(shareId)) || isMember(shareOf(shareId).tripId);
+        allow create, update: if isMember(shareOf(shareId).tripId)
+          && isSharedCopy(name, request.resource.data)
+          && request.resource.data.id == id;
+        allow delete: if isMember(shareOf(shareId).tripId);
       }
     }
 

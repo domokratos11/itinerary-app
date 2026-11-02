@@ -137,6 +137,10 @@ Browser (static HTML + JS)
  │                 └─ Firestore implementations (src/lib/firestore-*.ts) ── Firebase SDK ── Firestore + Auth
  ├─ MapsService interface (src/domain/maps-service.ts)
  │     └─ GoogleMapsService (src/lib/google-maps-service.ts) ── Maps JS SDK (one script tag)
+ ├─ ShareRepository interface (src/domain/share-repository.ts)
+ │     └─ FirestoreShareRepository (src/lib/firestore-share-repository.ts) ── shares/… (members)
+ ├─ Read-only viewer (?share=): viewer-store ── use-share-sync ── getViewerDb()
+ │     └─ second Firebase app "viewer" (no sign-in, memory cache) ── shares/{id} and its copy
  └─ service worker (sw.js, precache) and version check (version.json)
 
 Node scripts (scripts/*.ts, run with tsx)
@@ -144,7 +148,9 @@ Node scripts (scripts/*.ts, run with tsx)
  └─ REST calls (scripts/maps-api.ts) ── Google Places API (New) and Routes API
 ```
 
-The rule that holds this together: **screens never import the Firebase SDK or the Maps SDK directly.** They call hooks and actions, which call interfaces (`TripRepository`, `PlanRepository`, `ProposalRepository`, `UserRepository`, `ActivityRepository`, `CleanupRepository`, `MapsService`). Tests swap in the in-memory versions (`local-*.ts`).
+The rule that holds this together: **screens never import the Firebase SDK or the Maps SDK directly.** They call hooks and actions, which call interfaces (`TripRepository`, `PlanRepository`, `ProposalRepository`, `UserRepository`, `ActivityRepository`, `CleanupRepository`, `ShareRepository`, `MapsService`). Tests swap in the in-memory versions (`local-*.ts`).
+
+Read-only links are the one place the browser reads without sign-in. The viewer path never calls `getDb()`, which throws in viewer mode, so a link cannot reach the real trip (§12.8).
 
 ---
 
@@ -193,7 +199,7 @@ The rule that holds this together: **screens never import the Firebase SDK or th
 | `favicon.ico` | Browser icon. |
 | `days/page.test.tsx` | A test kept beside its page. |
 
-Every page file is a Server Component that renders a `main` wrapper and one client screen component inside `Suspense`. The page itself reads no data.
+Every page file is a Server Component that renders a `main` wrapper and one client screen component inside `Suspense`. The page itself reads no data. Every route also accepts `?share=` for the read-only view (§5, §12.8).
 
 ### 3.3 `src/components`: UI
 
@@ -201,11 +207,12 @@ Shared chrome and gates:
 
 | File | Role |
 |---|---|
-| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip" and offline screens. Renders the app only when access is `member` and the trip has loaded. |
-| `app-header.tsx` | Top bar (trip switcher, section links on tablets, search, activity, account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text) and `SECTIONS` (the five sections). |
+| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member` and the trip has loaded, or when a shared view is active. |
+| `app-header.tsx` | Top bar (trip switcher, section links on tablets, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the five sections) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
+| `viewer.tsx` | `ViewerSheet` (side sheet: language, theme, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
-| `plan-sync.tsx` | Mounted once; starts the auth, plan and trip listeners. |
+| `plan-sync.tsx` | Mounted once. Renders `MemberSync` (auth, plan and trip listeners) for members, or `ViewerSync` (loads the shared copy, §12.8) when the tab is in viewer mode. |
 | `locale-root.tsx` | Remounts the app when the language changes. |
 | `service-worker-register.tsx` | Registers `sw.js` in production. |
 | `offline-banner.tsx` | Shows "offline" text; edits still save on the device. |
@@ -232,7 +239,8 @@ Screens (one per page):
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
 | `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`) and `MoneyScope`. |
-| `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Backup, Clean up. |
+| `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Share, Backup, Clean up. |
+| `settings-share.tsx` | Settings tab | Read-only share links: create, copy, refresh, change expiry, close (§12.8). |
 | `settings-stays.tsx`, `settings-cities.tsx`, `settings-places.tsx`, `settings-flights.tsx`, `settings-reservations.tsx`, `settings-holidays.tsx`, `settings-trip.tsx` | Settings tabs | Admin editors for each collection. `settings-places.tsx` also holds the research requests and proposal review. |
 | `settings-backup.tsx` | Settings tab | Export the whole trip as JSON; import only into an empty trip. |
 | `settings-cleanup.tsx` | Settings tab | Lists retired records and deletes them for good. |
@@ -286,6 +294,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `maps-service.ts` | `MapsService` interface and map types. |
 | `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting, and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. |
 | `flights.ts` | Flight logic: flights on a day, flights outside the days, next flight, route, cost label, cost in yen, and the form conversion. |
+| `share.ts`, `share-repository.ts` | `share.ts`: `newShareId` and `parseShareId` (128-bit base64url IDs), `MAX_SHARE_DAYS` (30), `toSharedTrip` (builds the copy, §12.8). `share-repository.ts`: the `ShareRepository` interface. |
 | `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS`: sort and filter for the Day page's waiting list and its pins. |
 | `dashboard.ts` | Figures for the dashboard tiles. |
 | `proposals.ts` | Research proposals: new, open check, accept field by field, research result schema and cleaning. |
@@ -302,7 +311,7 @@ Firebase and repositories:
 
 | File | Role |
 |---|---|
-| `firebase.ts` | Starts the Firebase app (once), App Check (off unless a key is set), and Firestore with a persistent local cache and multi-tab manager. `getFirebaseAuth()` for Auth. |
+| `firebase.ts` | Starts the Firebase app (once), App Check (off unless a key is set), and Firestore with a persistent local cache and multi-tab manager. `getFirebaseAuth()` for Auth. `getDb()` throws in viewer mode. `getViewerDb()` is a separate app named "viewer" with a memory cache, used only by the shared view. |
 | `firebase.config.ts` | Firebase web config and the App Check site key (`null` = off). Public values; access is decided by the rules. |
 | `auth.ts` | The only file that talks to `firebase/auth` for sign-in: Google popup, `watchUser`, sign-out, session clear. |
 | `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. |
@@ -310,9 +319,14 @@ Firebase and repositories:
 | `firestore-proposal-repository.ts` | Implements `ProposalRepository` on `trips/{id}/proposals`. |
 | `firestore-user-repository.ts` | Implements `UserRepository` on `users/{uid}`. |
 | `firestore-activity-repository.ts` | Implements `ActivityRepository` on `trips/{id}/activity` (newest first, limited). |
-| `firestore-cleanup-repository.ts` | Implements `CleanupRepository`: counts, lists and deletes retired records (the only code that deletes). |
+| `firestore-cleanup-repository.ts` | Implements `CleanupRepository`: counts, lists and deletes retired records (the only code that deletes), including `removeShare` for closed or expired share links with their copies. |
+| `firestore-share-repository.ts` | Implements `ShareRepository` on `shares/{shareId}` and its copy subcollections: `watchShares`, `create`, `publish` (refresh), `setExpiry`, `revoke`, `load`. Refresh writes every record and deletes copies of records that are gone; the trip is not touched. |
+| `share-repository-instance.ts` | The single `ShareRepository` instance. |
+| `use-shares.ts` | Hook `useShares` for Settings → Share: the trip's share links. |
+| `use-share-sync.ts` | For viewer mode: loads the copy once from the server, checks the expiry every minute, re-reads every 10 minutes, and fills `useTripStore` and `usePlanStore`. |
+| `viewer-store.ts` | Zustand: `useViewerStore` (status `off`, `loading`, `active`, `closed`, `failed`), `useReadOnly()`, `isViewer()`, `viewerShareId()` (reads `?share=`, kept in sessionStorage for the tab; a `?trip=` link leaves viewer mode), `leaveSharedView`, `shareUrl`. |
 | `*-repository-instance.ts` | The single instance each screen uses (`tripRepository`, `planRepository`, and others). |
-| `local-*-repository.ts` | In-memory versions for tests. |
+| `local-*-repository.ts` | In-memory versions for tests (`local-share-repository.ts` included). |
 
 State and sync:
 
@@ -350,7 +364,7 @@ Maps and place helpers:
 | `catalog-filter.ts` | Filters the city catalogue (category, priority, unassigned) and finds nearby places (1 km). |
 | `geo.ts` | Straight-line distance. |
 | `tokyo-date.ts` | Date helpers in Tokyo time. |
-| `format-day.ts` | Day labels, such as "Thursday 17 Dec". |
+| `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). |
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
@@ -445,6 +459,8 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 
 **`?trip=`** is the trip ID. Every internal link keeps it (`pageHref()` in `src/lib/links.ts`), so a shared link keeps working after navigation. The trip ID is in the link only, never in the repo.
 
+**`?share=<shareId>`** opens the read-only view of a share copy on any route (§12.8). The share ID is 128 random bits, base64url, and is not the trip ID. The tab keeps it in sessionStorage, so navigation inside the app works without it in the URL. A `?trip=` link leaves viewer mode. Internal links do not add `?share=`.
+
 **Old links:** before the static-query design, pages were `/day/2026-12-18/` and `/city/nagoya/`. `old-link-redirect.tsx` on the 404 page forwards them to `/day/?date=…` and `/city/?id=…`.
 
 **Navigation** is Next's `Link` (client-side) for internal links, and `window.location` for full reloads when the trip changes (`openTrip`, `openMyTrips`), so nothing from the previous trip stays in memory.
@@ -461,11 +477,12 @@ All routes are static. Dynamic data comes from query strings, read in the browse
   ThemeProvider                            next-themes; dark class on <html>
    VersionGate                             version check, storage reset, initLocale
     ServiceWorkerRegister                 registers sw.js (production)
-    Suspense > PlanSync                   auth, trip and plan listeners (no DOM)
+    Suspense > PlanSync                   member listeners, or ViewerSync for ?share= (no DOM)
     LocaleRoot                            remounts the app on language change
-     AppGate                              splash / sign-in / trip picker / member app
+     AppGate                              splash / sign-in / trip picker / member app / shared view
       AppSidebarProvider                  sidebar open state (localStorage)
        AppHeader (Suspense)               trip switcher, section links (md), search, activity, account
+                                          (viewer: trip name, Read-only badge, search, ViewerSheet)
        OfflineBanner                      shown when offline
        <div flex>
          AppSidebar (Suspense)            wide screens only (lg and up)
@@ -485,7 +502,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
 | `/cities/` | `CitiesScreen` | — |
 | `/budget/` | `BudgetScreen` | `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
-| `/settings/` | `SettingsScreen` | one panel per tab (`Stays`, `Cities`, `Places`, `Flights`, `Reservations`, `Holidays`, `Trip`, `Backup`, `Cleanup`); `EditPanel` in each; `ProposalReview` in Places |
+| `/settings/` | `SettingsScreen` | one panel per tab (`Stays`, `Cities`, `Places`, `Flights`, `Reservations`, `Holidays`, `Trip`, `Share`, `Backup`, `Cleanup`); `EditPanel` in each; `ProposalReview` in Places; `NotOnSharedView` in viewer mode |
 
 ### 6.3 Shared overlays
 
@@ -497,6 +514,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `SearchPalette` | header | Command dialog | Command dialog (`Ctrl K` hint) |
 | `ActivitySheet` | header | Sheet | Sheet |
 | `AccountSheet` | header | Sheet | Sheet |
+| `ViewerSheet` (viewer mode only, in place of Activity and Account) | header | Sheet (right) | Sheet (right) |
 | `NewTripPanel` (uses `EditPanel`) | gate, trip switcher | Drawer | Dialog |
 
 ---
@@ -508,7 +526,7 @@ What happens on first load, in order:
 1. **Static HTML** is served. It contains the `Splash` (the icon) and nothing else about the trip. Nothing about the trip is in the HTML.
 2. **`VersionGate`** (client) runs first:
    - `initLocale()` sets the language: the last choice from localStorage, otherwise the browser language (Spanish if it starts with `es`, else English).
-   - In production only: removes `?v=` from the URL; if the stored version is different, resets the device (`resetApp`); otherwise fetches `version.json`, and shows the app once the check answers or after 2 seconds, whichever comes first.
+   - In production only: removes `?v=` from the URL; if the stored version is different, resets the device (`resetApp`), which keeps `?share=` in the URL so a viewer returns to the shared view; otherwise fetches `version.json`, and shows the app once the check answers or after 2 seconds, whichever comes first.
    - Rechecks when the tab becomes visible again.
 3. **Providers mount**: `ServiceWorkerRegister`, `PlanSync`, `LocaleRoot`.
 4. **`AppGate`** starts with `status: "loading"` and renders `Splash`.
@@ -536,6 +554,13 @@ What happens on first load, in order:
 7. **Listeners open only for `member`** (`PlanSync`): `usePlanSync(tripId)` subscribes to `items`, `useTripSync(tripId)` subscribes to the seven collections. Until then the rules would refuse them.
 8. **Remembering**: once a member is confirmed, the trip ID is saved in localStorage and in `users/{uid}.lastTripId`.
 
+**Viewer mode (`?share=`)** replaces steps 5, 7 and 8 for that tab:
+
+- `viewerShareId()` reads `?share=` and starts viewer mode. `PlanSync` renders `ViewerSync` instead of `MemberSync`, so auth never starts (no `users/{uid}` read or write) and no member listener opens.
+- `ViewerSync` (`useShareSync`) loads the copy once from the server through `getViewerDb()`, with no sign-in, and fills `useTripStore` and `usePlanStore`. It checks the expiry every minute and closes the view when the link expires. It re-reads the copy every 10 minutes, so a closed link stops within that time.
+- `AppGate` shows, in order: Splash while loading; "This link isn't open" when the link is closed, expired or unknown (with a button to leave and sign in); the offline screen when offline; otherwise the app.
+- Nothing about the copy is stored on the device. Only language and theme are kept, as for members.
+
 ---
 
 ## 8. Data flow: reads, writes and listeners
@@ -557,6 +582,17 @@ Firestore (trips/{id}/items)
 
 Each listener delivers the full list, not diffs. Each snapshot replaces the store contents.
 
+Shared view (viewer mode, no sign-in):
+
+```
+Firestore (shares/{shareId}, then shares/{shareId}/{cities|stays|reservations|places|holidays|flights|items})
+   └─ getViewerDb() ── loads the copy once, then re-reads it every 10 minutes
+        └─ useShareSync ─ tripStore / planStore (same shape as members' data)
+             └─ the same screens, with the read-only changes in §12.8
+```
+
+The copy has no expenses, budget or member emails (§12.8), so the viewer's stores never hold them.
+
 ### 8.2 Writes (optimistic)
 
 ```
@@ -570,6 +606,7 @@ UI event (drop, edit, add, archive, budget change)
 
 - Offline: Firestore's local cache queues the write and syncs when the connection returns. The promise resolves when the server has the write.
 - Batches: `saveMany` uses `writeBatch` in chunks of 450 (Firestore limit is 500 per batch).
+- Share links (members only, Settings → Share): create writes `shares/{shareId}` and its copy; **Refresh** (publish) rewrites the copy from the current trip; **Change expiry** updates `expiresAt`; **Close link** sets `revoked: true`, which cannot be undone. Each action writes one activity entry (kind `settings`). The trip itself is only read.
 
 ### 8.3 Deletes
 
@@ -581,13 +618,15 @@ Nothing is deleted in normal use:
 | Trip record (city, stay, place, reservation, holiday, expense, flight) | `archived: true` |
 | Proposal | `status: "dismissed"` |
 | Activity entry | kept; deleted only by Clean up or by the rules' delete rule for members |
+| Share link | Close marks it `revoked` (kept). Clean up deletes a link only once it is closed or expired, with all its copy records |
+| Copy record (refresh) | A refresh deletes copies of records that no longer exist in the trip. The trip is not touched |
 
-Only **Settings → Clean up** deletes, through `CleanupRepository`. The rules allow deletes only for records already retired (§23).
+Only **Settings → Clean up** deletes, through `CleanupRepository` (share links through `removeShare`). The rules allow deletes only for records already retired (§23).
 
 ### 8.4 Activity log
 
 - Every change worth remembering writes one entry (`trips/{id}/activity`): time, device name, kind, target, short summary, and before/after JSON (up to 4,000 characters each).
-- Kinds: `added`, `moved`, `reordered`, `edited`, `removed`, `restored`, `undone`, `queued`, `assigned`, `dismissed`, `settings`.
+- Kinds: `added`, `moved`, `reordered`, `edited`, `removed`, `restored`, `undone`, `queued`, `assigned`, `dismissed`, `settings`. Share actions (created, refreshed, closed a link) use `settings`.
 - The sheet subscribes to the newest 50 only while open, so it costs no reads otherwise.
 - Undo: `undoFor` in `domain/activity.ts` gives the reverse change while the stop has not changed since.
 
@@ -701,9 +740,13 @@ Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordi
 
 Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, next flight (`nextFlight`), route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts.tsx` (recharts via shadcn chart).
 
+**Shared view:** the budget tile, the Money section and cost per city are removed. The "Watch out" list has no research or Settings links.
+
 ### 12.2 Days (`/days/`)
 
 Trip name and dates, plan status, export of the trip (`ExportTrip`), today card, "needs a new day" (stops whose day is no longer valid after a stay moved), research notice (proposals to review), and the list of days (`trip-days.tsx`) with city dots, date, stop count, and the flight cards leaving or landing that day. Flights leaving on a date no stay covers (such as the way there and back) appear as cards before the first or after the last group of days.
+
+**Shared view:** Export trip is hidden.
 
 ### 12.3 Day (`/day/?date=`)
 
@@ -723,10 +766,14 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Bookings button**: lists reservations on the day (wide layout).
 - **Costs**: `costTotal` for the day.
 
+**Shared view:** no drag and drop, Went and Skip, up and down buttons, move to another day, log cost, remove, or add from the waiting list. Tapping a waiting place opens its details (it does not add it). The other-days column becomes links to those days. The List, Map and Waiting views, the filters and directions stay. Costs are hidden (`Yen` and `CostLine` render nothing).
+
 ### 12.4 Cities (`/cities/`) and City (`/city/?id=`)
 
 - Cities list: each city in trip order with dates and how much is planned.
 - City page: the catalogue (§11.2) for one city, with place details, add place, cost lines, and the map.
+
+**Shared view:** the city page has no edit name, Add place or archive. The filters and the map stay.
 
 ### 12.5 Budget (`/budget/`)
 
@@ -741,6 +788,8 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Charts**: donut by category, bars by day, gauge of budget used.
 - **Hide amounts**: the eye button (`HideAmountsButton`) hides every amount on the Budget and Dashboard screens. Hidden amounts read as `HIDDEN_AMOUNT` (`¥****`), including chart legends and tooltips, and the dollar hint is gone. Charts still draw from the real numbers. Setting the budget and editing an expense are disabled while hidden. The choice is saved on the device (`hide-amounts.ts`).
 
+**Shared view:** `/budget/` shows `NotOnSharedView`. `Yen`, `CostLine` and `HideAmountsButton` render nothing anywhere in the app, so no amounts appear in place details or on the days.
+
 ### 12.6 Settings (`/settings/`)
 
 Tabs (`settings-screen.tsx`):
@@ -754,15 +803,44 @@ Tabs (`settings-screen.tsx`):
 | Bookings | reservations (train, hotel, tour, ticket). New bookings can no longer be of type flight; an older flight booking can still be edited. |
 | Holidays | holidays and closures |
 | Trip | trip name, members (email list, max 20), budget |
+| Share | read-only share links: name, expiry, copy link, refresh, change expiry, close (§12.8). Members only. |
 | Backup | export the whole trip as JSON, including flights; import only into a trip that has nothing saved. Older backups without flights still import. |
-| Clean up | the retired records (archived, removed, dismissed, legacy queue, activity) and delete them for good; counts shown first |
+| Clean up | the retired records (archived, removed, dismissed, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
 
 Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, "start fresh" which runs `resetApp`), and sign-out.
+
+**Shared view:** `/settings/` shows `NotOnSharedView`. The Account sheet is replaced by the viewer sheet (§12.8).
 
 ### 12.7 Trip switcher and trip creation
 
 - Header trip name opens a menu when there are other trips, or when the person may create one. `New trip` makes a trip with the person as the only member (`createTrip`).
 - Only emails in `config/access.tripCreators` can create trips (rules and `canCreateTrips`).
+
+### 12.8 Read-only share links
+
+Members can give anyone with the link a read-only view of the trip, with no sign-in. Share links are made in **Settings → Share** (`settings-share.tsx`; rules in §15.2, data in §23.1).
+
+**For members:**
+
+- Each link has a **name** (seen only by members) and an **expiry**: 1, 3, 7, 14 or 30 days, or a date and time in Japan time. The expiry can be at most 30 days ahead (`MAX_SHARE_DAYS`).
+- The link looks like `https://domokratos11.github.io/itinerary-app/?share=<shareId>`. The share ID is 128 random bits (`newShareId`, `parseShareId` in `src/domain/share.ts`). The trip ID is not in the link.
+- Actions per link: **Copy link**; **Refresh** (rebuilds the copy from the trip now); **Change expiry**; **Close link** (permanent). Create, refresh and close are written to the activity log.
+- The copy changes only when a member presses **Refresh**. Edits to the trip do not reach it until then.
+
+**What the copy holds** (`toSharedTrip` in `src/domain/share.ts`):
+
+- Cities, stays, reservations, places, holidays, flights and plan items, in the same record shapes as the trip. Archived records and removed stops are left out.
+- Not included: expenses, the budget and member emails.
+- Blanked: a place's cost estimate (null); a flight's confirmation number (null), cost (null, currency JPY) and note (null); the notes on stays and reservations (null).
+- Google coordinates older than 30 days are dropped (§14).
+
+**For viewers** (no sign-in, `?share=` in the link):
+
+- The app shows Dashboard, Days and Cities only. `/budget/` and `/settings/` show `NotOnSharedView`. Each screen's changes are listed in §12.1 to §12.6.
+- The header shows the trip name, a "Read-only" badge, search and the viewer sheet (language, theme, and "Leave shared view", stored only on the device) in place of Activity and Account.
+- The copy loads once, and the app checks the expiry every minute. It re-reads the copy every 10 minutes, so a closed or expired link stops within that time. A closed, expired or unknown link shows "This link isn't open", with a button to leave and sign in.
+- Place details still fetch photos and hours from Google, under the same per-device daily limit as members (§14.2).
+- Auth never starts in viewer mode, and `getDb()` throws, so nothing can read or write the real trip from a link.
 
 ---
 
@@ -806,6 +884,7 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 - Screens reach Google only through `MapsService` (`src/domain/maps-service.ts`). The implementation is `GoogleMapsService`. The SDK is one script tag, added on first use.
 - **Stored:** Google place IDs (indefinitely) and Google coordinates (at most 30 days; `maps:refresh` renews them). Our own notes can be stored.
 - **In memory only:** hours, ratings, photos, route times and distances. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
+- **Share copies** (§12.8) keep place IDs and Google coordinates as the trip does. Coordinates older than 30 days are dropped from the copy. `npm run maps:refresh` brings the copies' coordinates in line with the trip (renewed or deleted), so a copy never keeps them past 30 days. Copies hold no hours, ratings or photos.
 - Google data appears only on a Google map or next to the Google logo. Never on another map provider.
 - The browser key is public and restricted by website and API. The script key stays in a git-ignored `.env`.
 - Google Cloud stays in its own projects, not the Firebase project's billing.
@@ -821,6 +900,8 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 | `Place.fetchFields` (`photos`, `regularOpeningHours`, and the live-detail fields listed in `google-maps-service.ts`) | Photos and live details, loaded when a place opens | `TAP_LIMITS` 30 per device per day each for `live` and `photo` (`tap-limit.ts`) |
 
 Waiting-list pins on the Day page (`cityPins`) use only stored coordinates and make no calls.
+
+Viewers of a share link make the same place-detail calls as members (photos and live details), under the same per-device daily limit.
 
 ### 14.3 Calls the scripts make (not the browser)
 
@@ -862,9 +943,10 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 | 3. Trip creation | Only emails in `config/access.tripCreators` can create trips; the creator must be in the new trip's members | `isTripCreator()`, `isNewTrip()` |
 | 4. Data shape | Every write must match a whitelist of fields and types, with size limits and enums | `isPlanItem`, `isCity`, `isStay`, `isReservation`, `isHoliday`, `isFlight`, `isPlace`, `isExpense`, `isProposal`, `isActivity`, `isBudget`, `isUserProfile`, `isNewTrip`, `isTripEdit` |
 | 5. Document ID match | Every write checks that the document ID equals the record's `id` field | each `match` block |
-| 6. Deletes | Only retired records can be deleted (archived, removed, dismissed, applied); trips are never deleted; activity can be deleted by members | each `allow delete` |
+| 6. Deletes | Only retired records can be deleted (archived, removed, dismissed, applied); share links only once closed or expired; trips are never deleted; activity can be deleted by members | each `allow delete` |
 | 7. App gate | Nothing renders or listens before a member is confirmed | `AppGate`, `use-trip-sync`, `use-plan-sync`, `useAuthStore.access` |
 | 8. Local data | Sign-out wipes the offline cache for this device; a version change clears storage but keeps preferences | `auth.ts` `endSession`, `app-reset.ts` |
+| 9. Share links | The link is the only key (a 128-bit share ID). Anyone with it reads the copy while the link is open; members read and manage the link without the copy being open. No sign-in | `shares` rules (§15.2), `share.ts` |
 
 ### 15.2 Rules, in plain words
 
@@ -878,6 +960,8 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
   - `update`: members only, and only the fields `name`, `members` (1 to 20, must include the caller), `budget`, `updatedAt`.
   - `delete`: never.
 - **Trip subcollections** (`cities`, `stays`, `reservations`, `holidays`, `expenses`, `flights`, `places`, `proposals`, `items`, `activity`): read and write for members, with the schema check on each write. Delete only if already retired.
+- **`shares/{shareId}`:** `get` is allowed to anyone while the link is open (`revoked == false` and `request.time < expiresAt`), and to members of its trip. `list` is for members only, with a query on `tripId`. `create` and `update` are for members only, through `isShare`: at most 30 days ahead (plus 1 hour of clock drift), `tripId` and `createdAt` unchanged, and a revoked link cannot be reopened. `delete` is for members only, once the link is revoked or expired.
+- **`shares/{shareId}/{cities|stays|reservations|places|holidays|flights|items}/{id}`** (the copy): read while the link is open, or by members. Writes are for members only and must pass `isSharedCopy`: the existing field checks, with no amount, confirmation or booking note, plan items not `removed`, and no other collection name. This is the only data readable without sign-in.
 - **`items`:** a plan item may hold only `id`, `placeId`, `date`, `order`, `status` and `updatedAt`. The old stop fields (`startTime`, `durationMin`, `note`, `legNote`) are refused.
 - **`queue`** (legacy): members can read and delete, nothing else.
 - **`activity`:** written once, never updated. Members can delete (for Clean up).
@@ -901,6 +985,9 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 - Anyone who is a member can read and change every record of the trip. Membership is all-or-nothing; there are no per-field or per-role permissions.
 - The Admin SDK scripts bypass the rules by design.
 - Email is the identity key. Members are added by editing the trip document in the console or through Settings → Trip.
+- Anyone with a share link can read its copy until the link expires or is closed. The link is the only key, and only a member can close it (Close link). Closing is permanent.
+- Everything in the copy is visible to anyone who has the link. §12.8 lists what the copy leaves out.
+- `firestore.rules` must be pasted into the Firebase console for the share rules to apply. The deploy does not publish them (§4.3).
 
 ---
 
@@ -1106,6 +1193,9 @@ config/
   access                       one document: tripCreators (array of lowercase emails)
 users/
   {uid}                        one per signed-in person: language, lastTripId, updatedAt
+shares/
+  {shareId}                    one per share link (128-bit random ID, §12.8)
+    cities/stays/reservations/places/holidays/flights/items/{id}   the copy the link shows
 trips/
   {tripId}                     one per trip (ID generated by Firestore)
     activity/{id}              change log
@@ -1122,6 +1212,20 @@ trips/
 ```
 
 No other top-level collections are used by the app. Everything else is denied.
+
+`shares` is the only top-level collection that can be read without sign-in, and only while a link is open. Its fields:
+
+| Field | Type | Notes |
+|---|---|---|
+| `tripId` | string | The trip the copy comes from. Members list links by it. |
+| `tripName` | string ≤ 100, or null | Name shown on the copy. |
+| `label` | string ≤ 100 | Name of the link, seen only by members. |
+| `createdAt` | ISO string (≤ 30) | Set at creation; cannot change. |
+| `expiresAt` | timestamp | Link stops working at this time. At most 30 days (plus 1 hour) ahead of creation or change. |
+| `revoked` | bool | `true` once closed. A revoked link cannot be reopened. |
+| `publishedAt` | ISO string (≤ 30) | When the copy was last refreshed. |
+
+Deletes: members only, and only once the link is revoked or expired.
 
 ### 23.2 Trip document (`trips/{tripId}`)
 
@@ -1275,6 +1379,8 @@ config/access ──(creators)──► trips (create)
 
 users/{uid}.lastTripId ──► trips/{tripId}
 
+shares/{shareId}.tripId ──► trips/{tripId} (copy only; the copy is a snapshot, refreshed on demand)
+
 trips/{tripId}
  ├─ members[] ──────────────── who can read and write everything below
  ├─ budget (map)
@@ -1311,6 +1417,8 @@ Cross-collection links are **not enforced** by the rules or by the database. The
 | Member | `activity` orderBy `at` desc, limit 50 | Only while the activity sheet is open | Single-field order; no composite index. |
 | Member | `activity` count and `queue` list | Only in Clean up | `getCountFromServer`, `getDocs`. |
 | Member | `users/{uid}` get and merge-set | Sign-in and trip change | Profile. |
+| Member | `shares` where `tripId ==` (list) | Settings → Share | Lists the trip's share links. |
+| Anyone with an open link | `shares/{shareId}` get, then its copy (seven collections and `items`) | When the view opens, then every 10 minutes | No sign-in; read through the viewer app (`getViewerDb()`). |
 
 The app needs **no composite indexes**. There is no `firestore.indexes.json` in the repo; the Firebase console has none to publish.
 
@@ -1320,6 +1428,7 @@ The app needs **no composite indexes**. There is no `firestore.indexes.json` in 
 - Plan changes write only the changed items.
 - Bulk writes use `writeBatch` in chunks of 450.
 - Trip-level writes: `updateTrip` (name, members, budget).
+- Share writes: create writes the link and its copy; Refresh writes every copy record and deletes copies of records that are gone; Change expiry and Close update the link only. The trip is never written by share actions.
 - Activity writes are fire-and-forget; they never block a change.
 
 ### 23.17 Validation layers
@@ -1402,3 +1511,5 @@ Removed on 2026-11-01: the Feasibility plan, docs/remaining-work-plan.md, links/
 | **Version gate** | The start-up check that resets a device when a new version is deployed. |
 | **Clean up** | The only place where records are deleted for good. |
 | **Haiku subagent** | A helper run on the Haiku model that writes doc updates (rule 16 in `CLAUDE.md`). |
+| **Share link** | A read-only link to a copy of the trip, opened with `?share=` and no sign-in (§12.8). |
+| **Viewer mode** | The app state for a share link: read-only, no sign-in, no access to the real trip (§7). |

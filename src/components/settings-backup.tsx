@@ -16,6 +16,7 @@ import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
 import { useProposals } from "@/lib/use-proposals";
 import { useTripId } from "@/lib/use-trip-id";
+import { useReadOnly } from "@/lib/viewer-store";
 
 // Downloads the whole trip as one JSON file.
 export function ExportTrip({
@@ -28,6 +29,9 @@ export function ExportTrip({
   const items = usePlanStore((s) => s.items);
   const proposals = useProposals(tripId);
   const trip = useActiveTrip();
+  // The backup holds every amount, so a read-only link never offers it.
+  const readOnly = useReadOnly();
+  if (readOnly) return null;
 
   async function download() {
     if (!tripId) return;

@@ -23,7 +23,7 @@ import { BASE_PATH } from "@/lib/base-path";
 import { openMyTrips, openTrip } from "@/lib/trip-id";
 import { useTripStore } from "@/lib/trip-store";
 import { useOnline } from "@/lib/use-online";
-
+import { leaveSharedView, useViewerStore } from "@/lib/viewer-store";
 // The first thing on every page. `children` is the whole app and renders only
 // for a signed-in member whose trip has arrived; everything else gets a screen
 // of its own. The store starts as "loading", so the static HTML holds only the
@@ -39,6 +39,17 @@ export function AppGate({ children }: { children: ReactNode }) {
     (s) => Object.values(s.loaded).every(Boolean) || s.error !== null,
   );
   const online = useOnline();
+  const viewer = useViewerStore((s) => s.status);
+
+  // A read-only link: its own screens, and never the sign-in ones.
+  if (viewer !== "off") {
+    if (viewer === "loading") return <Splash />;
+    if (viewer === "closed") return <ShareClosed />;
+    if (viewer === "failed")
+      return online ? <ShareClosed /> : <OfflineScreen />;
+    if (!tripLoaded) return <Splash />;
+    return children;
+  }
 
   if (status === "loading") return <Splash />;
   if (status === "signed-out")
@@ -118,6 +129,19 @@ function Screen({ title, children }: { title: string; children: ReactNode }) {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// The link has expired, was revoked or never existed: the rules refuse all
+// three alike, so the screen doesn't say which.
+function ShareClosed() {
+  return (
+    <Screen title={t("share.closedTitle")}>
+      <p>{t("share.closedBody")}</p>
+      <Button variant="outline" onClick={leaveSharedView}>
+        {t("share.memberSignIn")}
+      </Button>
+    </Screen>
   );
 }
 
