@@ -231,7 +231,7 @@ Screens (one per page):
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
-| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. |
+| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`) and `MoneyScope`. |
 | `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Bookings, Holidays, Trip, Backup, Clean up. |
 | `settings-stays.tsx`, `settings-cities.tsx`, `settings-places.tsx`, `settings-reservations.tsx`, `settings-holidays.tsx`, `settings-trip.tsx` | Settings tabs | Admin editors for each collection. `settings-places.tsx` also holds the research requests and proposal review. |
 | `settings-backup.tsx` | Settings tab | Export the whole trip as JSON; import only into an empty trip. |
@@ -242,11 +242,10 @@ Plan and place editing:
 
 | File | Role |
 |---|---|
-| `place-details.tsx` | Place sheet (wide) or drawer (phone): notes, live details, add to day, edit, research. |
-| `place-live.tsx` | Google photos, rating and today's hours. Only fetched on demand. |
+| `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, add to day, edit, research. |
+| `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. |
 | `place-editor.tsx` | Form for a place's fields. |
 | `edit-panel.tsx` | Dialog (wide) or drawer (phone) that wraps forms. |
-| `stop-editor.tsx` | Edit one stop (time, duration, note, leg note). |
 | `add-place.tsx` | Add a place by name (Google suggestions) or by pasted Maps link. |
 | `add-to-day.tsx` | Choose day and position for a place. |
 | `proposal-review.tsx` | Compare old and new values for a research proposal, accept field by field. |
@@ -266,7 +265,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 
 | File | Role |
 |---|---|
-| `schemas.ts` | The Zod schemas for every Firestore record and the enums (categories, priorities, statuses, expense categories, reservation types, legs). |
+| `schemas.ts` | The Zod schemas for every Firestore record and the enums (categories, priorities, statuses, expense categories, reservation types). |
 | `trip.ts` | `TripData` type, `TRIP_COLLECTIONS`, `EMPTY_TRIP`, `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
 | `trip-repository.ts` | `TripRepository` interface and `TripAccess` / `TripSummary` types. |
 | `plan-repository.ts` | `PlanRepository` interface; `markRemoved`. |
@@ -275,7 +274,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `activity.ts` | Activity schema, kinds, `ActivityRepository`, and `undoFor`. |
 | `cleanup.ts` | Plans the Clean up step (what is retired and can go) and the `CleanupRepository` interface. |
 | `backup.ts` | Backup file schema and builder. |
-| `plan.ts` | Plan logic: items for a day, next stop, keys for insert, stop warnings, costs, stop times, time and holiday warnings, leg notes, hotels for a day. |
+| `plan.ts` | Plan logic: items for a day, next stop, keys for insert, stop warnings, holiday warnings, costs, hotels for a day. |
 | `days.ts` | `deriveDays`: the trip's days, from the stays (a day belongs to every stay whose range includes it). `tripPhase` (before, during, after). |
 | `legs.ts` | Legs between stops (walk, transit, taxi) and distance formatting. Walking legs are at most `WALK_LEG_MAX_KM` (1.5 km). |
 | `drop.ts` | Drop rules for drag and drop (which target, which order key). |
@@ -283,7 +282,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `live-hours.ts` | Parses Google's opening hours text (English) into periods; "open now". |
 | `map-pins.ts` | Map pins, colours and straight lines for the trip map. |
 | `maps-service.ts` | `MapsService` interface and map types. |
-| `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting. |
+| `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting, and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. |
 | `dashboard.ts` | Figures for the dashboard tiles. |
 | `proposals.ts` | Research proposals: new, open check, accept field by field, research result schema and cleaning. |
 | `place-edit.ts` | Place form: fields, validation, changes, filters (`PLACE_FILTERS`), Maps link parsing, draft places. |
@@ -329,6 +328,7 @@ State and sync:
 | `proposal-actions.ts` | Request research; accept or dismiss proposals. |
 | `activity-log.ts` | Writes activity entries without ever failing the change. |
 | `device-name.ts` | The name this device signs its changes with (kept in localStorage). |
+| `hide-amounts.ts` | Zustand store `useHideAmounts` and `setHideAmounts`: whether amounts are hidden on Budget and Dashboard. Saved in localStorage under `hide-amounts`, kept through a version reset. |
 | `backup-actions.ts` | Export and import of the trip file. |
 | `trip-actions.test.ts` etc. | Tests beside each module. |
 
@@ -340,7 +340,8 @@ Maps and place helpers:
 | `maps-service-instance.ts` | The one `MapsService` instance. |
 | `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. |
 | `use-walking-legs.ts` | Walking routes for a day's short legs, kept in memory. |
-| `tap-limit.ts` | Per-device daily limit on paid Google calls (photos and live details, 15 each per day). |
+| `tap-limit.ts` | Per-device daily limit on paid Google calls (photos and live details, 30 each per day). |
+| `place-live-cache.ts` | Keeps live details and photo lists in memory for 30 minutes per place (`LIVE_CACHE_MS`). Never stored, so a reload empties it; failed calls are not kept; only real Google calls count toward the limit. |
 | `catalog-filter.ts` | Filters the city catalogue (category, priority, unassigned) and finds nearby places (1 km). |
 | `geo.ts` | Straight-line distance. |
 | `tokyo-date.ts` | Date helpers in Tokyo time. |
@@ -355,7 +356,7 @@ Version and update:
 
 | File | Role |
 |---|---|
-| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`), cache clearing, reload. |
+| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`), cache clearing, reload. |
 | `version-check.ts` | Compares the running version with `version.json` and decides whether to reset. |
 
 ### 3.6 `src/messages`, `src/test`, `scripts`
@@ -473,12 +474,12 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 
 | Page | Screen | Main children |
 |---|---|---|
-| `/` | `DashboardScreen` | `TodayCard`, tiles, `Charts`, `Yen` |
+| `/` | `DashboardScreen` | `TodayCard`, tiles, `Charts`, `Yen`, `HideAmountsButton` |
 | `/days/` | `TripName`, `TripDates`, `TripPlanStatus`, `ExportTrip`, `TodayCard`, `NeedsNewDay`, `ResearchNotice`, `TripDays` | — |
-| `/day/` | `DayScreen` → `DayPlan` | `DaySidePanel` columns, `StopEditor`, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
+| `/day/` | `DayScreen` → `DayPlan` | `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
 | `/cities/` | `CitiesScreen` | — |
-| `/budget/` | `BudgetScreen` | `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen` |
+| `/budget/` | `BudgetScreen` | `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
 | `/settings/` | `SettingsScreen` | one panel per tab (`Stays`, `Cities`, `Places`, `Reservations`, `Holidays`, `Trip`, `Backup`, `Cleanup`); `EditPanel` in each; `ProposalReview` in Places |
 
 ### 6.3 Shared overlays
@@ -486,7 +487,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | Overlay | Used by | Phone | Wide (768px and up) |
 |---|---|---|---|
 | `PlaceDetails` | day, city | Drawer (vaul) | Sheet (side) |
-| `EditPanel` | place editor, stop editor, expenses, settings forms | Drawer | Dialog |
+| `EditPanel` | place editor, expenses, settings forms | Drawer | Dialog |
 | `AddToDay` | place details | Drawer | Dialog |
 | `SearchPalette` | header | Command dialog | Command dialog (`Ctrl K` hint) |
 | `ActivitySheet` | header | Sheet | Sheet |
@@ -606,6 +607,8 @@ The app is designed for a 390px phone first, then widened (CLAUDE.md rule 8). Br
 - `useMediaQuery("(min-width: 1280px)")` in `city-catalog.tsx` for the side-by-side layout.
 - The shadcn sidebar (`ui/sidebar.tsx`) uses `(max-width: 1023px)` to switch to an off-canvas sheet. The app has no trigger for that sheet, so below 1024px the sidebar is never shown; the day list is reached through the Days page.
 - Layout classes are Tailwind responsive prefixes (`md:`, `lg:`), used in about 30 component and page files. Page wrappers grow from `max-w-md` (phone) to `max-w-[100rem]` (desktop).
+- One-column grids must use `grid-cols-1`. An implicit grid track grows to its widest content and overflows the phone screen.
+- Buttons are larger on touch screens: the `pointer-coarse:` variants in `src/components/ui/button.tsx` set bigger heights and icon sizes.
 - Bottom padding: the body adds `pb-[calc(4rem+env(safe-area-inset-bottom))]` below `md`, so the tab bar does not cover content.
 - `viewportFit: "cover"` and safe-area insets are used so notched phones are handled.
 
@@ -613,7 +616,7 @@ The app is designed for a 390px phone first, then widened (CLAUDE.md rule 8). Br
 
 | Action | Phone | Desktop |
 |---|---|---|
-| Move a stop | Edit it (time, order) | Drag with pointer; keyboard drags too (dnd-kit sensors) |
+| Move a stop | Move up or down with the buttons, or pick another day | Drag with pointer; keyboard drags too (dnd-kit sensors) |
 | Add a waiting place | Tap it | Drag it to a day or stop, or tap |
 | Search | Header search button | Header button or Ctrl K / ⌘K |
 | Sections | Bottom tab bar | Sidebar (or header links between 768 and 1023px) |
@@ -691,7 +694,7 @@ Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordi
 
 ### 12.1 Dashboard (`/`)
 
-Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, route legs for today, budget summary (`Yen`), and places to research. Charts from `charts.tsx` (recharts via shadcn chart).
+Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts.tsx` (recharts via shadcn chart).
 
 ### 12.2 Days (`/days/`)
 
@@ -701,9 +704,9 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 `day-plan.tsx` (large file) shows, for one date:
 
-- **Stops** in order: time, duration, place, category and priority badges, cost, and a note. Stop times come from `stopTimes` (start times and durations).
+- **Stops** in order: place, category and priority badges, and cost. Each stop has **Went** and **Skip** buttons, which set `status` to `done` or `skipped` through `updateItem`; tapping the active one sets it back to `planned`. The stop's name is a button with an info icon that opens `PlaceDetails`, the same as tapping its map pin.
 - **Legs** between stops (`dayLegs`): the hotel to the first stop, stop to stop, and the last stop back to the hotel. Each leg is keyed by the stop it arrives at (or `end`). Walking routes are used for legs up to 1.5 km (`WALK_LEG_MAX_KM`), fetched from the Maps SDK and kept in memory; straight-line distance is the fallback (`use-walking-legs.ts`).
-- **Warnings:** `stopWarnings` flags a place on one of its closed dates; `holidayWarnings` flags a holiday or closure on that date for the place's category; `timeWarnings` compares the stop's start and end times with the place's opening hours; `dayRunsLate` flags a day that runs past `LATE_DAY` (22:00).
+- **Warnings:** `stopWarnings` flags a place on one of its closed dates; `holidayWarnings` flags a holiday or closure on that date for the place's category. These are the only warnings on a stop.
 - **Hotels** for the day (`hotelsForDay`): check-in and check-out.
 - **Waiting list**: places in the trip not yet on a day (`waitingPlaces`).
 - **Map** (`TripMap`): pins for the day's stops, lines between them.
@@ -726,6 +729,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Budget** on the trip document: total (yen), by category, and number of travellers (the per-adult estimate is multiplied by travellers; `null` = number of members).
 - **Figures**: spent, planned, budget left, days remaining (`daysRemaining`). USD shown with a fixed rate in `budget.ts` (`YEN_PER_USD`).
 - **Charts**: donut by category, bars by day, gauge of budget used.
+- **Hide amounts**: the eye button (`HideAmountsButton`) hides every amount on the Budget and Dashboard screens. Hidden amounts read as `HIDDEN_AMOUNT` (`¥****`), including chart legends and tooltips, and the dollar hint is gone. Charts still draw from the real numbers. Setting the budget and editing an expense are disabled while hidden. The choice is saved on the device (`hide-amounts.ts`).
 
 ### 12.6 Settings (`/settings/`)
 
@@ -759,8 +763,8 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 |---|---|---|
 | `days.ts` | `deriveDays(stays)`, `weekdayOf`, `tripPhase` | A day belongs to every stay whose range includes it, both ends included, so transfer days belong to two cities. |
 | `trip.ts` | `activeTrip`, `stayId` | Archived hidden; stays sorted by check-in; stay ID = `cityId-checkIn`. |
-| `plan.ts` | `itemsForDay`, `nextStop`, `keysForInsert`, `stopTimes`, `timeWarnings`, `holidayWarnings`, `stopWarnings`, `costTotal`, `dayRunsLate`, `newPlanItem`, `distanceBetweenPlaces`, `placeLocation`, `stayLocation`, `directionsUrl` | Order is a fractional key; times are computed from start and duration; "late" means past 22:00. |
-| `legs.ts` | `dayLegs`, `formatWalk`, `formatLegNote`, `formatStation` | Walk if ≤ 1.5 km, else transit or taxi. |
+| `plan.ts` | `itemsForDay`, `nextStop`, `keysForInsert`, `holidayWarnings`, `stopWarnings`, `costTotal`, `newPlanItem`, `distanceBetweenPlaces`, `placeLocation`, `stayLocation`, `directionsUrl` | Order is a fractional key. Stops have no time of their own. |
+| `legs.ts` | `dayLegs`, `formatWalk`, `formatStation` | Walk if ≤ 1.5 km, else transit or taxi. |
 | `order.ts` (lib) | `keyAt`, `keysBetween` via fractional-indexing | Moving a stop rewrites one key. |
 | `drop.ts` | `planDrop` | Which target a drop lands on (stop, day, list), and which keys change. |
 | `location.ts` | `coordinatesExpired`, `dueForRefresh`, `withoutGoogleCoordinates`, `doubtfulMatch`, `medianPoint` | Google coordinates expire after 30 days and are due for refresh from day 20. `doubtfulMatch` flags a match more than 2 km from coordinates already saved, or far from the city centre (30 km; 200 km for day trips). Flagged matches are reported for a person to confirm. |
@@ -787,8 +791,8 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 
 - Screens reach Google only through `MapsService` (`src/domain/maps-service.ts`). The implementation is `GoogleMapsService`. The SDK is one script tag, added on first use.
-- **Stored:** Google place IDs (indefinitely) and Google coordinates (at most 30 days; `maps:refresh` renews them). Our own notes, leg times and fares can be stored.
-- **In memory only:** hours, ratings, photos, route times and distances.
+- **Stored:** Google place IDs (indefinitely) and Google coordinates (at most 30 days; `maps:refresh` renews them). Our own notes can be stored.
+- **In memory only:** hours, ratings, photos, route times and distances. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
 - Google data appears only on a Google map or next to the Google logo. Never on another map provider.
 - The browser key is public and restricted by website and API. The script key stays in a git-ignored `.env`.
 - Google Cloud stays in its own projects, not the Firebase project's billing.
@@ -801,7 +805,7 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 | `Route.computeRoutes` (walking) | Walking legs of a day | Cached in memory; stops after the daily cap |
 | `AutocompleteSuggestion.fetchAutocompleteSuggestions` | Place suggestions when adding a place | Session token per search |
 | `Place.fetchFields` (`location`) | Coordinates for a chosen suggestion (ends the billing session) | — |
-| `Place.fetchFields` (`photos`, `regularOpeningHours`, and the live-detail fields listed in `google-maps-service.ts`) | Photos and live details on the place sheet | `TAP_LIMITS` 15 per device per day each for `live` and `photo` (`tap-limit.ts`) |
+| `Place.fetchFields` (`photos`, `regularOpeningHours`, and the live-detail fields listed in `google-maps-service.ts`) | Photos and live details, loaded when a place opens | `TAP_LIMITS` 30 per device per day each for `live` and `photo` (`tap-limit.ts`) |
 
 ### 14.3 Calls the scripts make (not the browser)
 
@@ -859,6 +863,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
   - `update`: members only, and only the fields `name`, `members` (1 to 20, must include the caller), `budget`, `updatedAt`.
   - `delete`: never.
 - **Trip subcollections** (`cities`, `stays`, `reservations`, `holidays`, `expenses`, `places`, `proposals`, `items`, `activity`): read and write for members, with the schema check on each write. Delete only if already retired.
+- **`items`:** a plan item may hold only `id`, `placeId`, `date`, `order`, `status` and `updatedAt`. The old stop fields (`startTime`, `durationMin`, `note`, `legNote`) are refused.
 - **`queue`** (legacy): members can read and delete, nothing else.
 - **`activity`:** written once, never updated. Members can delete (for Clean up).
 
@@ -873,7 +878,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 - **Tokens and keys** in Maps: `maps:check` verifies the keys.
 - **Content Security Policy:** none is set in the repo (static hosting on Pages gives no header control).
 - **App Check:** code is present but off (`appCheckSiteKey = null`). Turning it on requires a reCAPTCHA v3 key and Firebase console setup.
-- **Rules tests:** `tests/rules/firestore.rules.test.ts` (25 test cases) run against the emulator: `npm run test:rules`. Java must be installed. The test project is `demo-itinerary`, so the real database is never touched.
+- **Rules tests:** `tests/rules/firestore.rules.test.ts` (26 test cases) run against the emulator: `npm run test:rules`. Java must be installed. The test project is `demo-itinerary`, so the real database is never touched.
 
 ### 15.4 What the rules do not cover
 
@@ -941,7 +946,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 2. The app fetches `version.json` (never cached by the service worker) on start and whenever the tab becomes visible.
 3. If the deployed version differs from `APP_VERSION`, `resetApp(deployed)` runs once per tab (`triedVersion` in sessionStorage, so a stale page cannot cause a loop):
    - signs out, with up to 5 seconds to upload pending edits (`clearSession`);
-   - clears localStorage except `locale`, `theme`, `device-name` and `sidebar-open`;
+   - clears localStorage except `locale`, `theme`, `device-name`, `sidebar-open` and `hide-amounts`;
    - clears sessionStorage and all Cache Storage entries, and unregisters service workers;
    - reloads `…/?v=<version>` (the `v` is removed after load).
 4. Storage stamped with another version is reset on start (`storageIsStale`).
@@ -998,6 +1003,7 @@ Details:
 - Proposals with `status` `applied` or `dismissed` can be deleted in Clean up.
 - `places:push` (`scripts/places-push.ts`) writes researched places directly, for bulk loads. It marks them `researched`.
 - `places:reset` (`scripts/places-reset.ts`) archives all places and removes their stops, only with `--apply` (dry run by default).
+- `items:clean` (`scripts/items-clean.ts`) removes `startTime`, `durationMin`, `note` and `legNote` from a trip's plan items, only with `--apply` (dry run by default). It needs `TRIP_ID`.
 - The research file format is documented in `docs/research-run.md`.
 
 ---
@@ -1021,6 +1027,7 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `drafts:pull` | `scripts/drafts-pull.ts` | Exports draft places to `research/` | No |
 | `places:push` | `scripts/places-push.ts` | Writes researched places into the trip | Yes |
 | `places:reset` | `scripts/places-reset.ts` | Shows what clearing all places would change; `-- --apply` does it | Yes, with `--apply` |
+| `items:clean` | `scripts/items-clean.ts` | Shows which plan items hold the old stop fields (`startTime`, `durationMin`, `note`, `legNote`); `-- --apply` removes them | Yes, with `--apply` |
 | `research:pull` | `scripts/research-pull.ts` | Exports research requests for a research run | No |
 | `research:push` | `scripts/research-push.ts` | Writes research as proposals for review; never changes a place | Yes (proposals only) |
 | `maps:check` | `scripts/maps-check.ts` | Checks Google keys and test train routes; `-- --embed` serves the Maps Embed test | No |
@@ -1042,7 +1049,7 @@ Tests for scripts: `scripts/places-reset.test.ts`, `scripts/research-pull.test.t
 
 - **Vitest** with **jsdom**, configured in `vitest.config.mts`. Alias `@` → `src`. Tests: `src/**/*.test.{ts,tsx}` and `scripts/**/*.test.ts`.
 - **Setup** (`src/test/setup.ts`): jest-dom matchers; Testing Library cleanup after each test; the activity repository replaced with the in-memory `LocalActivityRepository`; `ResizeObserver` stubbed (tooltips need it).
-- **In-memory repositories** (`local-*.ts`) and the local Maps service replace Firebase and Google in tests. Nothing in tests touches the real database.
+- **In-memory repositories** (`local-*.ts`) replace Firebase in tests. Nothing in tests touches the real database.
 - **Fixture:** `src/test/fixture-trip.json` (made-up trip). Only tests import it.
 - **Rules tests:** separate config (`vitest.rules.config.mts`), run on the emulator (§15.3).
 
@@ -1119,12 +1126,10 @@ Only `name`, `members`, `budget` and `updatedAt` may change on update.
 | `placeId` | string (≤ 64) | Must point to a place ID (not checked by the rules; the app skips items whose place is missing). |
 | `date` | string, 10 chars | `YYYY-MM-DD`. |
 | `order` | string (≤ 64) | Fractional-index key within the day. |
-| `startTime` | string, 5 chars, or null | `HH:MM`. |
-| `durationMin` | int 1 to 1440, or null | |
-| `note` | string ≤ 500, or null | |
-| `status` | `planned`, `done`, `skipped`, `removed` | |
+| `status` | `planned`, `done`, `skipped`, `removed` | `done` and `skipped` are set by the Went and Skip buttons. |
 | `updatedAt` | ISO string (≤ 30) | |
-| `legNote` | map or null | `mode` (train, subway, bus, walk, taxi), `minutes`, `fareJPY`, `text` (≤ 200). |
+
+The rules refuse any other field, so the old stop fields `startTime`, `durationMin`, `note` and `legNote` cannot be written. `items:clean` (§21) removes them from existing items.
 
 Deletes: only when `status == "removed"`.
 
