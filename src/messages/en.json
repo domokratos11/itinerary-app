@@ -221,7 +221,18 @@
     "waitingTab": "Waiting ({count})",
     "waitingTap": "Tap one to add it to this day.",
     "addWaitingTitle": "Add {name} to {day}?",
-    "addWaitingBody": "It goes at the end of the day, and you can reorder it from the list."
+    "addWaitingBody": "It goes at the end of the day, and you can reorder it from the list.",
+    "showOnMap": "Show on map",
+    "hideFromMap": "Hide from map",
+    "sortAndFilter": "Sort and filter",
+    "sortBy": "Sort by",
+    "sortPriority": "Priority, must-sees first",
+    "sortNameAsc": "Name, A to Z",
+    "sortNameDesc": "Name, Z to A",
+    "allCategories": "All categories",
+    "clearFilters": "Clear",
+    "waitingNoMatches": "No waiting places match these filters.",
+    "waitingUnpinned": "{count, plural, one {# waiting place has} other {# waiting places have}} no map pin yet."
   },
   "warnings": {
     "closedOnDay": "Closed on this day",

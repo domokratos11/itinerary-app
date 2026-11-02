@@ -227,7 +227,7 @@ Screens (one per page):
 | `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. |
 | `day-screen.tsx` | `/day/` | Loads one day and renders `DayPlan`. |
 | `day-plan.tsx` | `/day/` | The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. |
-| `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view: the day, other days, waiting places. Also drag IDs. |
+| `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view: the day, other days, waiting places. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
@@ -285,6 +285,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `maps-service.ts` | `MapsService` interface and map types. |
 | `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting, and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. |
 | `flights.ts` | Flight logic: flights on a day, flights outside the days, next flight, route, cost label, cost in yen, and the form conversion. |
+| `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS`: sort and filter for the Day page's waiting list and its pins. |
 | `dashboard.ts` | Figures for the dashboard tiles. |
 | `proposals.ts` | Research proposals: new, open check, accept field by field, research result schema and cleaning. |
 | `place-edit.ts` | Place form: fields, validation, changes, filters (`PLACE_FILTERS`), Maps link parsing, draft places. |
@@ -711,7 +712,10 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Legs** between stops (`dayLegs`): the hotel to the first stop, stop to stop, and the last stop back to the hotel. Each leg is keyed by the stop it arrives at (or `end`). Walking routes are used for legs up to 1.5 km (`WALK_LEG_MAX_KM`), fetched from the Maps SDK and kept in memory; straight-line distance is the fallback (`use-walking-legs.ts`).
 - **Warnings:** `stopWarnings` flags a place on one of its closed dates; `holidayWarnings` flags a holiday or closure on that date for the place's category. These are the only warnings on a stop.
 - **Hotels** for the day (`hotelsForDay`): check-in and check-out.
-- **Waiting list**: places in the trip not yet on a day (`waitingPlaces`).
+- **Waiting list**: places in the trip not yet on a day (`waitingPlaces`), listed through `applyWaitingView`.
+  - **Sort and filter** menu: sort by priority (the default), name A to Z or Z to A; filter by priority and category. **Clear** appears when anything differs from the default and resets sorting and filters.
+  - **Show on map** is off by default and resets when moving to another day, because `DayScreen` keys `DayPlan` by date. When on, the listed places get pins beside the numbered stops, coloured by category through `cityPins`, and they follow the filters. Clear does not turn the pins off. Tapping a pin opens the place's details. Places with no coordinates are counted in a note under the map.
+  - On phones the map is its own tab, so turning it on switches to that tab, where the same controls appear to turn it off. Neither the view nor the button is saved.
 - **Map** (`TripMap`): pins for the day's stops, lines between them.
 - **Drag and drop**: stops within a day, between days, from the waiting list (`drop.ts`). Keyboard support.
 - **Bookings button**: lists reservations on the day (wide layout).
@@ -781,6 +785,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `place-edit.ts` | `applyPlaceEdit`, `validatePlaceForm`, `missingFields`, `needsResearch`, `parseMapsLink`, `matchesPlaceFilter`, `newDraftPlace` | Locked fields (hand-edited) are never changed by research. |
 | `trip-edit.ts` | `stayIssues`, `dayChanges` | When a stay moves, which stops lose their day. |
 | `flights.ts` | `flightsOnDay`, `flightsOutsideDays`, `nextFlight`, `flightRoute`, `flightCostLabel`, `flightCostInYen`, `flightToForm`, `flightFromForm` | Dates and times stay local to each airport, as on the ticket, and are never converted. A flight's yen cost is its USD amount × `YEN_PER_USD`, rounded. Flights outside the days are those leaving on a date no stay covers. |
+| `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS` | Sort (priority first, then name) and filters for the waiting list and its pins. The view is not saved. |
 | `cleanup.ts` | `planCleanup`, `planEverything`, `CLEANUP_KINDS` | What Clean up will delete, from the retired records only. |
 | `backup.ts` | `makeBackup`, `BackupSchema`, `backupSummary` | Whole-trip file, validated on import. |
 | `activity.ts` | `undoFor`, `ActivitySchema` | Reverse of a change, if the target has not changed since. |
@@ -812,6 +817,8 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 | `AutocompleteSuggestion.fetchAutocompleteSuggestions` | Place suggestions when adding a place | Session token per search |
 | `Place.fetchFields` (`location`) | Coordinates for a chosen suggestion (ends the billing session) | — |
 | `Place.fetchFields` (`photos`, `regularOpeningHours`, and the live-detail fields listed in `google-maps-service.ts`) | Photos and live details, loaded when a place opens | `TAP_LIMITS` 30 per device per day each for `live` and `photo` (`tap-limit.ts`) |
+
+Waiting-list pins on the Day page (`cityPins`) use only stored coordinates and make no calls.
 
 ### 14.3 Calls the scripts make (not the browser)
 

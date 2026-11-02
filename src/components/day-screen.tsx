@@ -39,7 +39,9 @@ export function DayScreen() {
 
   const { start, end } = hotelsForDay(date, trip.stays);
   return (
+    // A key per date, so another day starts with its own list and no pins.
     <DayPlan
+      key={date}
       date={date}
       label={formatDayLabel(date)}
       cityNames={day.cityIds.map((id) => citiesById.get(id)?.name ?? id)}

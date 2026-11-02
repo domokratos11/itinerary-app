@@ -89,6 +89,8 @@ import { isDraft } from "@/domain/place-edit";
 import {
   DayColumn,
   DragPreview,
+  WaitingControls,
+  waitingHint,
   LIST_ID,
   type Waiting,
   OtherDaysColumn,
@@ -116,7 +118,8 @@ import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { LegLine } from "@/components/leg-line";
 import { TripMap } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
-import { dayMap, stopColor } from "@/domain/map-pins";
+import { cityPins, dayMap, placePoint, stopColor } from "@/domain/map-pins";
+import { applyWaitingView, DEFAULT_WAITING_VIEW } from "@/domain/waiting-view";
 import type { MapLine } from "@/domain/maps-service";
 import { useWalkingLegs } from "@/lib/use-walking-legs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -155,6 +158,8 @@ export function DayPlan(props: Props) {
   const [view, setView] = useState<"list" | "map" | "waiting">("list");
   const [adding, setAdding] = useState<Waiting | null>(null);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
+  const [waitingView, setWaitingView] = useState(DEFAULT_WAITING_VIEW);
+  const [waitingOnMap, setWaitingOnMap] = useState(false);
   const wide = useMediaQuery("(min-width: 768px)");
   const stops = useMemo(
     () => itemsForDay(items, props.date),
@@ -186,13 +191,17 @@ export function DayPlan(props: Props) {
 
   // Wide screens: what can be dragged in from the side panel, and the other
   // days of this day's cities to drop a stop on.
+  const allWaiting = useMemo(
+    () => waitingPlaces(trip.places, items, props.cityIds),
+    [items, trip.places, props.cityIds],
+  );
   const waiting = useMemo(
     () =>
-      waitingPlaces(trip.places, items, props.cityIds).map((place) => ({
+      applyWaitingView(allWaiting, waitingView).map((place) => ({
         dragId: placeDragId(place.id),
         place,
       })),
-    [items, trip.places, props.cityIds],
+    [allWaiting, waitingView],
   );
   const otherDays = tripDays.filter(
     (d) =>
@@ -386,8 +395,36 @@ export function DayPlan(props: Props) {
     const leg = legs.find((l) => l.key === key);
     return leg ? <LegLine leg={leg} walking={walking.get(key)} /> : null;
   };
+  const waitingShown = waiting.map((w) => w.place);
+  const pins = waitingOnMap
+    ? [...map.pins, ...cityPins(waitingShown)]
+    : map.pins;
+  const waitingUnpinned = waitingOnMap
+    ? waitingShown.filter((place) => !placePoint(place)).length
+    : 0;
   const mapNote =
-    map.unpinned > 0 ? t("day.mapNote", { count: map.unpinned }) : null;
+    [
+      map.unpinned > 0 ? t("day.mapNote", { count: map.unpinned }) : null,
+      waitingUnpinned > 0
+        ? t("day.waitingUnpinned", { count: waitingUnpinned })
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" ") || null;
+  const waitingControls = (
+    <WaitingControls
+      view={waitingView}
+      onViewChange={setWaitingView}
+      shown={waiting.length}
+      total={allWaiting.length}
+      onMap={waitingOnMap}
+      onMapChange={(on) => {
+        setWaitingOnMap(on);
+        // On phones the map is its own tab, so go and show them there.
+        if (on && !wide) setView("map");
+      }}
+    />
+  );
   const openPlace = openPlaceId ? placesById.get(openPlaceId) : undefined;
   const openNearby = openPlace
     ? (nearbyByPlace(trip.places)[openPlace.id] ?? []).map((n) => ({
@@ -470,15 +507,16 @@ export function DayPlan(props: Props) {
             <ToggleGroupItem value="list">{t("common.list")}</ToggleGroupItem>
             <ToggleGroupItem value="map">{t("common.map")}</ToggleGroupItem>
             <ToggleGroupItem value="waiting">
-              {t("day.waitingTab", { count: waiting.length })}
+              {t("day.waitingTab", { count: allWaiting.length })}
             </ToggleGroupItem>
           </ToggleGroup>
         )}
       </header>
 
+      {showPhoneMap && waitingOnMap && waitingControls}
       {showPhoneMap && (
         <TripMap
-          pins={map.pins}
+          pins={pins}
           lines={mapLines}
           onPinClick={setOpenPlaceId}
           className="h-[65svh]"
@@ -521,12 +559,16 @@ export function DayPlan(props: Props) {
                 </DroppableList>
               </SortableContext>
             </DayColumn>
-            <WaitingColumn waiting={waiting} />
+            <WaitingColumn
+              waiting={waiting}
+              total={allWaiting.length}
+              controls={waitingControls}
+            />
             <OtherDaysColumn otherDays={otherDays} stopCounts={stopCounts} />
           </div>
           <div className="h-[38.7%] min-h-80 shrink-0">
             <TripMap
-              pins={map.pins}
+              pins={pins}
               lines={mapLines}
               onPinClick={setOpenPlaceId}
               className="min-h-0 flex-1"
@@ -576,7 +618,12 @@ export function DayPlan(props: Props) {
       )}
 
       {!wide && view === "waiting" && (
-        <PhoneWaiting waiting={waiting} onChoose={setAdding} />
+        <PhoneWaiting
+          waiting={waiting}
+          total={allWaiting.length}
+          controls={waitingControls}
+          onChoose={setAdding}
+        />
       )}
       <AlertDialog
         open={adding !== null}
@@ -662,15 +709,20 @@ function DroppableList({
 // Phones can't drag, so a place waiting is added by tapping it.
 function PhoneWaiting({
   waiting,
+  total,
+  controls,
   onChoose,
 }: {
   waiting: Waiting[];
+  total: number;
+  controls: ReactNode;
   onChoose: (place: Waiting) => void;
 }) {
   return (
     <section className="flex flex-col gap-2">
+      {controls}
       <p className="text-sm text-muted-foreground">
-        {waiting.length === 0 ? t("day.waitingNone") : t("day.waitingTap")}
+        {waitingHint(waiting.length, total, t("day.waitingTap"))}
       </p>
       <ul className="flex flex-col gap-2">
         {waiting.map((w) => (

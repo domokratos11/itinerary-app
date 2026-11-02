@@ -29,13 +29,50 @@ vi.mock("@/lib/plan-actions", () => ({
   restoreItem: vi.fn(),
   updateItem: vi.fn(() => Promise.resolve()),
 }));
+vi.mock("@/components/trip-map", () => ({
+  TripMap: ({
+    pins,
+    note,
+  }: {
+    pins: { title: string }[];
+    note: string | null;
+  }) => (
+    <div role="figure">
+      {pins.map((pin) => pin.title).join(", ")}|{note}
+    </div>
+  ),
+}));
 vi.mock("@/components/place-details", () => ({
   PlaceDetails: ({ place }: { place: { name: string } | null }) =>
     place && <div role="dialog">{place.name}</div>,
 }));
 
 const DATE = "2026-12-18";
-const place = testPlace({ id: "zoo", name: "Ueno Zoo", cityId: "nagoya" });
+const place = testPlace({
+  id: "zoo",
+  name: "Ueno Zoo",
+  cityId: "nagoya",
+  lat: 35.7,
+  lng: 139.7,
+});
+const castle = testPlace({
+  id: "castle",
+  name: "Nagoya Castle",
+  cityId: "nagoya",
+  category: "sight",
+  priority: "must",
+  lat: 35.18,
+  lng: 136.9,
+});
+const market = testPlace({
+  id: "market",
+  name: "Morning Market",
+  cityId: "nagoya",
+  category: "food",
+  priority: "maybe",
+  lat: null,
+  lng: null,
+});
 const stop = newPlanItem({
   id: "s1",
   placeId: place.id,
@@ -61,7 +98,9 @@ function dayPlan() {
 
 describe("a stop in the day's plan", () => {
   beforeEach(() => {
-    useTripStore.setState({ data: { ...fixtureTrip, places: [place] } });
+    useTripStore.setState({
+      data: { ...fixtureTrip, places: [place, castle, market] },
+    });
     usePlanStore.setState({ items: [stop] });
     useAuthStore.setState({ tripId: "trip-1", access: "member" });
   });
@@ -87,6 +126,25 @@ describe("a stop in the day's plan", () => {
     dayPlan();
     fireEvent.click(screen.getByRole("button", { name }));
     expect(updateItem).toHaveBeenLastCalledWith("trip-1", stop, { status });
+  });
+
+  it("shows waiting places on the map only when asked", () => {
+    dayPlan();
+    fireEvent.click(screen.getByRole("radio", { name: "Map" }));
+    expect(screen.getByRole("figure")).toHaveTextContent("Ueno Zoo");
+    expect(screen.getByRole("figure")).not.toHaveTextContent("Nagoya Castle");
+
+    fireEvent.click(screen.getByRole("radio", { name: "Waiting (2)" }));
+    const show = screen.getByRole("button", { name: "Show on map" });
+    expect(show).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(show);
+
+    // Phones go to the map to see them, and can turn them off from there.
+    const map = screen.getByRole("figure");
+    expect(map).toHaveTextContent("Ueno Zoo, Nagoya Castle");
+    expect(map).toHaveTextContent("1 waiting place has no map pin yet.");
+    fireEvent.click(screen.getByRole("button", { name: "Hide from map" }));
+    expect(screen.getByRole("figure")).not.toHaveTextContent("Nagoya Castle");
   });
 
   it("goes back to planned when the same button is tapped again", () => {

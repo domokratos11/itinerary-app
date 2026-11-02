@@ -221,7 +221,18 @@
     "waitingTab": "En espera ({count})",
     "waitingTap": "Toca uno para agregarlo a este día.",
     "addWaitingTitle": "¿Agregar {name} a {day}?",
-    "addWaitingBody": "Se agrega al final del día, y puedes reordenarlo desde la lista."
+    "addWaitingBody": "Se agrega al final del día, y puedes reordenarlo desde la lista.",
+    "showOnMap": "Ver en el mapa",
+    "hideFromMap": "Quitar del mapa",
+    "sortAndFilter": "Ordenar y filtrar",
+    "sortBy": "Ordenar por",
+    "sortPriority": "Prioridad, imprescindibles primero",
+    "sortNameAsc": "Nombre, de la A a la Z",
+    "sortNameDesc": "Nombre, de la Z a la A",
+    "allCategories": "Todas las categorías",
+    "clearFilters": "Limpiar",
+    "waitingNoMatches": "Ningún lugar en espera coincide con estos filtros.",
+    "waitingUnpinned": "{count, plural, one {# lugar en espera aún no tiene} other {# lugares en espera aún no tienen}} marcador en el mapa."
   },
   "warnings": {
     "closedOnDay": "Cerrado este día",
