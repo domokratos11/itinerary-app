@@ -147,6 +147,44 @@ describe("a stop in the day's plan", () => {
     expect(screen.getByRole("figure")).not.toHaveTextContent("Nagoya Castle");
   });
 
+  it("says which legs go to and from the hotel, and warns with no location", () => {
+    render(
+      <DayPlan
+        date={DATE}
+        label="Dec 18"
+        cityNames={["Nagoya"]}
+        cityIds={["nagoya"]}
+        start={{ name: "Sample Hotel", location: { query: "Sample Hotel" } }}
+        end={{ name: "Sample Hotel", location: { query: "Sample Hotel" } }}
+        reservations={[]}
+        flights={[]}
+      />,
+    );
+    expect(screen.getByText("From Sample Hotel")).toBeInTheDocument();
+    expect(screen.getByText("Back to Sample Hotel")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Sample Hotel isn't on the map/),
+    ).toBeInTheDocument();
+  });
+
+  it("doesn't warn about a hotel that is on the map", () => {
+    const hotel = { name: "Sample Hotel", location: { lat: 35.7, lng: 139.7 } };
+    render(
+      <DayPlan
+        date={DATE}
+        label="Dec 18"
+        cityNames={["Nagoya"]}
+        cityIds={["nagoya"]}
+        start={hotel}
+        end={hotel}
+        reservations={[]}
+        flights={[]}
+      />,
+    );
+    expect(screen.queryByText(/isn't on the map/)).toBeNull();
+    expect(screen.getByText("From Sample Hotel")).toBeInTheDocument();
+  });
+
   it("goes back to planned when the same button is tapped again", () => {
     usePlanStore.setState({ items: [{ ...stop, status: "done" }] });
     dayPlan();

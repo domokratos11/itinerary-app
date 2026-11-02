@@ -105,12 +105,15 @@ export function tripDays(data: TripData): TripDay[] {
 
 export type Endpoint = { name: string; location: Location | null };
 
+export function isUndecidedHotel(hotelName: string): boolean {
+  const name = hotelName.trim().toLowerCase();
+  return name.startsWith("to be decided") || name.startsWith("por decidir");
+}
+
 // A hotel with no name yet ("To be decided") has no location to route to.
 export function endpointFor(stay: Stay | null, tr: Translate): Endpoint | null {
   if (!stay) return null;
-  const name = stay.hotelName.toLowerCase();
-  const undecided =
-    name.startsWith("to be decided") || name.startsWith("por decidir");
+  const undecided = isUndecidedHotel(stay.hotelName);
   return {
     name: undecided ? tr("leg.hotelUndecided") : stay.hotelName,
     location: undecided ? null : stayLocation(stay),

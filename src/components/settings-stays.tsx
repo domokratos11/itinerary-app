@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Archive, Pencil, Plus, TriangleAlert } from "lucide-react";
+import { Archive, MapPinOff, Pencil, Plus, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { EditPanel, Field } from "@/components/edit-panel";
 import { LogCostButton } from "@/components/expense-form";
+import { PlaceSuggestions } from "@/components/place-suggestions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,15 +18,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { placePoint } from "@/domain/map-pins";
+import { MapsError, type PlaceSuggestion } from "@/domain/maps-service";
 import { parseMapsLink } from "@/domain/place-edit";
 import type { StayRecord } from "@/domain/schemas";
-import { stayId } from "@/domain/trip";
+import { isUndecidedHotel, stayId } from "@/domain/trip";
 import { dayChanges, stayIssues, type DayChanges } from "@/domain/trip-edit";
 import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
+import { mapsService } from "@/lib/maps-service-instance";
 import { usePlanStore } from "@/lib/plan-store";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useCitiesById, useTrip, useTripStore } from "@/lib/trip-store";
+import { usePlaceSuggestions } from "@/lib/use-place-suggestions";
 
 type Editing =
   | { kind: "edit"; record: StayRecord | null }
@@ -135,6 +141,15 @@ export function StaysSettings({ tripId }: { tripId: string }) {
                   {t("stays.nights", { count: n })}
                 </span>
                 {stay.note && <span className="block">{stay.note}</span>}
+                {!placePoint(stay) && !isUndecidedHotel(stay.hotelName) && (
+                  <Badge
+                    variant="outline"
+                    className="mt-1 border-dashed text-muted-foreground"
+                  >
+                    <MapPinOff />
+                    {t("stays.noLocation")}
+                  </Badge>
+                )}
               </span>
               <LogCostButton
                 tripId={tripId}
@@ -225,6 +240,18 @@ function StayForm({
   const [checkIn, setCheckIn] = useState(stay?.checkIn ?? defaultCheckIn);
   const [checkOut, setCheckOut] = useState(stay?.checkOut ?? "");
   const [note, setNote] = useState(stay?.note ?? "");
+  const [chosen, setChosen] = useState<PlaceSuggestion | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const renamed = hotelName.trim() !== (stay?.hotelName ?? "");
+  // Shown until a place is picked: for a hotel with no location yet, or once
+  // the name no longer matches the place that was saved.
+  const suggestions = usePlaceSuggestions(
+    hotelName,
+    !chosen &&
+      !isUndecidedHotel(hotelName) &&
+      (renamed || !stay || !placePoint(stay)),
+  );
 
   const datesValid = /^\d{4}-\d{2}-\d{2}$/.test(checkIn) && checkOut > checkIn;
   const urlValid = mapsUrl.trim() === "" || URL.canParse(mapsUrl.trim());
@@ -236,9 +263,10 @@ function StayForm({
     // Coordinates come from a full Maps place link; otherwise keep the old
     // ones only if the link didn't change.
     const parsed = url ? parseMapsLink(url) : null;
-    const sameLink = url === (stay?.hotelMapsUrl ?? null);
-    const lat = parsed?.lat ?? (sameLink ? (stay?.lat ?? null) : null);
-    const lng = parsed?.lng ?? (sameLink ? (stay?.lng ?? null) : null);
+    // A new link or a new name means another place, so its location goes too.
+    const samePlace = url === (stay?.hotelMapsUrl ?? null) && !renamed;
+    const lat = parsed?.lat ?? (samePlace ? (stay?.lat ?? null) : null);
+    const lng = parsed?.lng ?? (samePlace ? (stay?.lng ?? null) : null);
     let id = stay?.id ?? stayId({ cityId, checkIn });
     if (!stay && takenIds.includes(id)) id = `${id}-${takenIds.length + 1}`;
     return {
@@ -251,10 +279,10 @@ function StayForm({
       checkIn,
       checkOut,
       note: note.trim() || null,
-      // A new link replaces what maps:match found for the old one.
-      googlePlaceId: sameLink ? (stay?.googlePlaceId ?? null) : null,
-      locationFetchedAt: sameLink ? (stay?.locationFetchedAt ?? null) : null,
-      locationSource: sameLink
+      // It replaces what maps:match found for the old one.
+      googlePlaceId: samePlace ? (stay?.googlePlaceId ?? null) : null,
+      locationFetchedAt: samePlace ? (stay?.locationFetchedAt ?? null) : null,
+      locationSource: samePlace
         ? (stay?.locationSource ?? null)
         : lat !== null
           ? "manual"
@@ -264,13 +292,36 @@ function StayForm({
     };
   }
 
+  async function submit() {
+    const record = build();
+    if (!chosen) return onSave(record);
+    setSaving(true);
+    let point: { lat: number; lng: number } | null = null;
+    try {
+      point = await mapsService.locatePlace(chosen.placeId);
+    } catch (error) {
+      // The place ID is enough: maps:refresh can fetch the coordinates.
+      if (!(error instanceof MapsError)) throw error;
+    }
+    onSave({
+      ...record,
+      googlePlaceId: chosen.placeId,
+      lat: point?.lat ?? null,
+      lng: point?.lng ?? null,
+      locationFetchedAt: point ? new Date().toISOString() : null,
+      locationSource: point ? "google" : null,
+    });
+  }
+
+  const pinned = chosen !== null || placePoint(build()) !== null;
+
   return (
     <EditPanel
       open
       onOpenChange={(open) => !open && onCancel()}
       title={stay ? t("stays.edit") : t("common.addStay")}
-      canSubmit={valid}
-      onSubmit={() => onSave(build())}
+      canSubmit={valid && !saving}
+      onSubmit={() => void submit()}
     >
       <Field label={t("common.city")} htmlFor="stay-city">
         <Select value={cityId} onValueChange={setCityId}>
@@ -286,16 +337,36 @@ function StayForm({
           </SelectContent>
         </Select>
       </Field>
-      <Field label={t("stays.hotel")} htmlFor="stay-hotel">
+      <Field
+        label={t("stays.hotel")}
+        htmlFor="stay-hotel"
+        hint={
+          isUndecidedHotel(hotelName) || hotelName.trim() === ""
+            ? undefined
+            : pinned
+              ? t("stays.pinned")
+              : t("stays.pickToPin")
+        }
+      >
         <Input
           id="stay-hotel"
           value={hotelName}
           maxLength={200}
-          onChange={(e) => setHotelName(e.target.value)}
+          onChange={(e) => {
+            setHotelName(e.target.value);
+            setChosen(null);
+          }}
           placeholder={t("stays.toBeDecided")}
           required
         />
       </Field>
+      <PlaceSuggestions
+        suggestions={suggestions}
+        onChoose={(suggestion) => {
+          setChosen(suggestion);
+          setHotelName(suggestion.name);
+        }}
+      />
       <Field
         label={t("stays.mapsOptional")}
         htmlFor="stay-maps"

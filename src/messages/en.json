@@ -232,7 +232,9 @@
     "allCategories": "All categories",
     "clearFilters": "Clear",
     "waitingNoMatches": "No waiting places match these filters.",
-    "waitingUnpinned": "{count, plural, one {# waiting place has} other {# waiting places have}} no map pin yet."
+    "waitingUnpinned": "{count, plural, one {# waiting place has} other {# waiting places have}} no map pin yet.",
+    "hotelOffMap": "{name} isn't on the map, so there's no pin or walk or train distance for it.",
+    "hotelOffMapFix": "Find it in Settings"
   },
   "warnings": {
     "closedOnDay": "Closed on this day",
@@ -245,7 +247,9 @@
     "walk": "Walk {minutes} min · {distance}",
     "trainDirections": "Train directions",
     "station": "Station: {station}",
-    "hotelUndecided": "Hotel to be decided"
+    "hotelUndecided": "Hotel to be decided",
+    "fromHotel": "From {name}",
+    "backToHotel": "Back to {name}"
   },
   "place": {
     "details": "Place details",
@@ -368,7 +372,10 @@
     "sameDays": "The trip's days stay the same.",
     "adds": "Adds {days}",
     "removes": "Removes {days}",
-    "stranded": "{count, plural, one {# stop} other {# stops}} will need a new day"
+    "stranded": "{count, plural, one {# stop} other {# stops}} will need a new day",
+    "noLocation": "Not on the map yet",
+    "pinned": "On the map.",
+    "pickToPin": "Choose it from Google's list, or add a full link below, to pin it on the map."
   },
   "citySettings": {
     "counts": "{stays, plural, one {# stay} other {# stays}} · {places, plural, one {# place} other {# places}}",

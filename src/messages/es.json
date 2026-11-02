@@ -232,7 +232,9 @@
     "allCategories": "Todas las categorías",
     "clearFilters": "Limpiar",
     "waitingNoMatches": "Ningún lugar en espera coincide con estos filtros.",
-    "waitingUnpinned": "{count, plural, one {# lugar en espera aún no tiene} other {# lugares en espera aún no tienen}} marcador en el mapa."
+    "waitingUnpinned": "{count, plural, one {# lugar en espera aún no tiene} other {# lugares en espera aún no tienen}} marcador en el mapa.",
+    "hotelOffMap": "{name} no está en el mapa, así que no tiene marcador ni distancia a pie o en tren.",
+    "hotelOffMapFix": "Búscalo en Ajustes"
   },
   "warnings": {
     "closedOnDay": "Cerrado este día",
@@ -245,7 +247,9 @@
     "walk": "A pie {minutes} min · {distance}",
     "trainDirections": "Cómo llegar en tren",
     "station": "Estación: {station}",
-    "hotelUndecided": "Hotel por decidir"
+    "hotelUndecided": "Hotel por decidir",
+    "fromHotel": "Desde {name}",
+    "backToHotel": "De vuelta a {name}"
   },
   "place": {
     "details": "Detalles del lugar",
@@ -368,7 +372,10 @@
     "sameDays": "Los días del viaje no cambian.",
     "adds": "Agrega {days}",
     "removes": "Quita {days}",
-    "stranded": "{count, plural, one {# parada necesitará} other {# paradas necesitarán}} un día nuevo"
+    "stranded": "{count, plural, one {# parada necesitará} other {# paradas necesitarán}} un día nuevo",
+    "noLocation": "Aún no está en el mapa",
+    "pinned": "En el mapa.",
+    "pickToPin": "Elígelo de la lista de Google, o agrega abajo un enlace completo, para marcarlo en el mapa."
   },
   "citySettings": {
     "counts": "{stays, plural, one {# hospedaje} other {# hospedajes}} · {places, plural, one {# lugar} other {# lugares}}",

@@ -247,6 +247,7 @@ Plan and place editing:
 | `place-editor.tsx` | Form for a place's fields. |
 | `edit-panel.tsx` | Dialog (wide) or drawer (phone) that wraps forms. |
 | `add-place.tsx` | Add a place by name (Google suggestions) or by pasted Maps link. |
+| `place-suggestions.tsx` | The list of Google's suggestions, used by `add-place.tsx` and `settings-stays.tsx`. |
 | `add-to-day.tsx` | Choose day and position for a place. |
 | `proposal-review.tsx` | Compare old and new values for a research proposal, accept field by field. |
 | `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. |
@@ -343,6 +344,7 @@ Maps and place helpers:
 | `maps-service-instance.ts` | The one `MapsService` instance. |
 | `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. |
 | `use-walking-legs.ts` | Walking routes for a day's short legs, kept in memory. |
+| `use-place-suggestions.ts` | The debounced search behind `PlaceSuggestions` (add a place and the hotel form). |
 | `tap-limit.ts` | Per-device daily limit on paid Google calls (photos and live details, 30 each per day). |
 | `place-live-cache.ts` | Keeps live details and photo lists in memory for 30 minutes per place (`LIVE_CACHE_MS`). Never stored, so a reload empties it; failed calls are not kept; only real Google calls count toward the limit. |
 | `catalog-filter.ts` | Filters the city catalogue (category, priority, unassigned) and finds nearby places (1 km). |
@@ -709,9 +711,9 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 - **Flights** leaving or landing that day appear as cards at the top, with the times as on the ticket.
 - **Stops** in order: place, category and priority badges, and cost. Each stop has **Went** and **Skip** buttons, which set `status` to `done` or `skipped` through `updateItem`; tapping the active one sets it back to `planned`. The stop's name is a button with an info icon that opens `PlaceDetails`, the same as tapping its map pin.
-- **Legs** between stops (`dayLegs`): the hotel to the first stop, stop to stop, and the last stop back to the hotel. Each leg is keyed by the stop it arrives at (or `end`). Walking routes are used for legs up to 1.5 km (`WALK_LEG_MAX_KM`), fetched from the Maps SDK and kept in memory; straight-line distance is the fallback (`use-walking-legs.ts`).
+- **Legs** between stops (`dayLegs`): the hotel to the first stop, stop to stop, and the last stop back to the hotel. Each leg is keyed by the stop it arrives at (or `end`). Walking routes are used for legs up to 1.5 km (`WALK_LEG_MAX_KM`), fetched from the Maps SDK and kept in memory; straight-line distance is the fallback (`use-walking-legs.ts`). The legs from and back to the hotel are labelled "From {hotel}" and "Back to {hotel}" (`LegLine`'s `label`).
 - **Warnings:** `stopWarnings` flags a place on one of its closed dates; `holidayWarnings` flags a holiday or closure on that date for the place's category. These are the only warnings on a stop.
-- **Hotels** for the day (`hotelsForDay`): check-in and check-out.
+- **Hotels** for the day (`hotelsForDay`): check-in and check-out. A hotel with saved coordinates gets the same walk time or distance as other legs, and an "H" pin on the map, drawn larger than the stops (`emphasised`). A hotel with only a text location gets a directions link and no pin, walk time or distance; a note at the top of the day links to Settings > Stays (`hotelsOffMap` in `day-plan.tsx`).
 - **Waiting list**: places in the trip not yet on a day (`waitingPlaces`), listed through `applyWaitingView`.
   - **Sort and filter** menu: sort by priority (the default), name A to Z or Z to A; filter by priority and category. **Clear** appears when anything differs from the default and resets sorting and filters.
   - **Show on map** is off by default and resets when moving to another day, because `DayScreen` keys `DayPlan` by date. When on, the listed places get pins beside the numbered stops, coloured by category through `cityPins`, and they follow the filters. Clear does not turn the pins off. Tapping a pin opens the place's details. Places with no coordinates are counted in a note under the map.
@@ -745,7 +747,7 @@ Tabs (`settings-screen.tsx`):
 
 | Tab | Edits |
 |---|---|
-| Stays | hotels (name, maps link, check-in/out, city, note) |
+| Stays | hotels (name, maps link, check-in/out, city, note). The form offers Google's suggestions under the hotel name; choosing one saves the place ID and coordinates (`locationSource` `google`, so `maps:refresh` renews them). Renaming a hotel or changing its link clears the old place ID and coordinates. A stay with no coordinates shows a "Not on the map yet" badge. A hotel still to be decided (`isUndecidedHotel` in `domain/trip.ts`) is never looked up. |
 | Cities | cities (name, colour) |
 | Places | places: edit fields, filters, research requests, proposal review (`ProposalReview`), add draft |
 | Flights | flights: airline, flight number, departure and arrival airport, city, date and time, confirmation (optional), cost (USD or yen), note. Archive and restore. Each flight shows on the days it leaves and lands. |
@@ -814,8 +816,8 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 |---|---|---|
 | Maps JS script (`maps.googleapis.com/maps/api/js`) | Map, markers, libraries (`maps`, `marker`, `core`, `routes`, `places`) | Loaded only when a map is first shown |
 | `Route.computeRoutes` (walking) | Walking legs of a day | Cached in memory; stops after the daily cap |
-| `AutocompleteSuggestion.fetchAutocompleteSuggestions` | Place suggestions when adding a place | Session token per search |
-| `Place.fetchFields` (`location`) | Coordinates for a chosen suggestion (ends the billing session) | — |
+| `AutocompleteSuggestion.fetchAutocompleteSuggestions` | Place suggestions when adding a place or a hotel | Session token per search |
+| `Place.fetchFields` (`location`) | Coordinates for a chosen suggestion, when adding a place or a hotel (ends the billing session) | — |
 | `Place.fetchFields` (`photos`, `regularOpeningHours`, and the live-detail fields listed in `google-maps-service.ts`) | Photos and live details, loaded when a place opens | `TAP_LIMITS` 30 per device per day each for `live` and `photo` (`tap-limit.ts`) |
 
 Waiting-list pins on the Day page (`cityPins`) use only stored coordinates and make no calls.

@@ -118,14 +118,20 @@ import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { LegLine } from "@/components/leg-line";
 import { TripMap } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
-import { cityPins, dayMap, placePoint, stopColor } from "@/domain/map-pins";
+import {
+  cityPins,
+  dayMap,
+  endpointPoint,
+  placePoint,
+  stopColor,
+} from "@/domain/map-pins";
 import { applyWaitingView, DEFAULT_WAITING_VIEW } from "@/domain/waiting-view";
 import type { MapLine } from "@/domain/maps-service";
 import { useWalkingLegs } from "@/lib/use-walking-legs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { nearbyByPlace } from "@/lib/catalog-filter";
 import { usePlanStore } from "@/lib/plan-store";
-import { daysHref } from "@/lib/links";
+import { daysHref, pageHref } from "@/lib/links";
 import {
   useCitiesById,
   usePlacesById,
@@ -393,8 +399,23 @@ export function DayPlan(props: Props) {
   });
   const legLine = (key: string) => {
     const leg = legs.find((l) => l.key === key);
-    return leg ? <LegLine leg={leg} walking={walking.get(key)} /> : null;
+    if (!leg) return null;
+    const label =
+      key === "end" && props.end
+        ? t("leg.backToHotel", { name: props.end.name })
+        : key === rows[0]?.item.id && props.start
+          ? t("leg.fromHotel", { name: props.start.name })
+          : null;
+    return <LegLine leg={leg} walking={walking.get(key)} label={label} />;
   };
+  // Without coordinates a hotel has no pin, distance or walking time.
+  const hotelsOffMap = [
+    ...new Set(
+      [props.start, props.end].flatMap((hotel) =>
+        hotel?.location && !endpointPoint(hotel) ? [hotel.name] : [],
+      ),
+    ),
+  ];
   const waitingShown = waiting.map((w) => w.place);
   const pins = waitingOnMap
     ? [...map.pins, ...cityPins(waitingShown)]
@@ -461,6 +482,17 @@ export function DayPlan(props: Props) {
         {holiday && (
           <p className="rounded-md bg-muted px-3 py-2 text-sm">
             <span className="font-medium">{holiday.name}.</span> {holiday.note}
+          </p>
+        )}
+        {hotelsOffMap.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {t("day.hotelOffMap", { name: hotelsOffMap.join(", ") })}{" "}
+            <Link
+              href={pageHref("/settings/", tripId, { tab: "stays" })}
+              className="underline"
+            >
+              {t("day.hotelOffMapFix")}
+            </Link>
           </p>
         )}
         {props.flights.length > 0 && (
