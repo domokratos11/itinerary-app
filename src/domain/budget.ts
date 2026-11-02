@@ -20,6 +20,10 @@ export function formatYen(yen: number): string {
   return `¥${yen.toLocaleString("en-US")}`;
 }
 
+// Shown for any amount while they're hidden. One fixed length, so it doesn't
+// give away how big a number is.
+export const HIDDEN_AMOUNT = "¥****";
+
 // A fixed rate, only for the rough dollar hint: amounts stay in yen. Change it
 // here when the rate moves.
 export const YEN_PER_USD = 157.58;

@@ -16,7 +16,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tip } from "@/components/tip";
-import { Yen, YEN_VALUES } from "@/components/yen";
+import {
+  HideAmountsButton,
+  MoneyScope,
+  useAmountsHidden,
+  useYenValues,
+  Yen,
+} from "@/components/yen";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -29,7 +35,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   daysRemaining,
   EMPTY_BUDGET,
-  formatYen,
   summarizeBudget,
   totalsByCategory,
   totalsByPayer,
@@ -179,7 +184,17 @@ export function SummaryFigures({ summary }: { summary: BudgetSummary }) {
 
 // The trip's shared money: what's set aside, what has gone and on what.
 export function BudgetScreen() {
+  return (
+    <MoneyScope>
+      <BudgetContent />
+    </MoneyScope>
+  );
+}
+
+function BudgetContent() {
   const tripId = useTripId();
+  const money = useYenValues();
+  const hidden = useAmountsHidden();
   const { summary, categories, expenses, budget } = useBudgetFigures();
   const [editing, setEditing] = useState<{
     expense: ExpenseRecord | null;
@@ -224,11 +239,22 @@ export function BudgetScreen() {
           <p className="text-sm text-muted-foreground">{t("budget.intro")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Tip label={t("budget.tipSetBudget")}>
-            <Button variant="outline" onClick={() => setSettingTargets(true)}>
-              <Target />
-              {t("budget.setBudget")}
-            </Button>
+          <HideAmountsButton />
+          {/* The form shows the real amounts, so it waits for them to show.
+              The span keeps the hint working on a disabled button. */}
+          <Tip
+            label={hidden ? t("budget.showToEdit") : t("budget.tipSetBudget")}
+          >
+            <span className="inline-flex">
+              <Button
+                variant="outline"
+                disabled={hidden}
+                onClick={() => setSettingTargets(true)}
+              >
+                <Target />
+                {t("budget.setBudget")}
+              </Button>
+            </span>
           </Tip>
           <Tip label={t("budget.tipAddExpense")}>
             <Button onClick={() => setEditing({ expense: null })}>
@@ -272,10 +298,10 @@ export function BudgetScreen() {
             ) : (
               <DonutChart
                 series={categorySeries(categories)}
-                center={formatYen(summary.spent)}
+                center={money.format(summary.spent)}
                 centerLabel={t("budget.spent")}
                 label={t("budget.byCategory")}
-                {...YEN_VALUES}
+                {...money}
               />
             )}
           </CardContent>
@@ -311,7 +337,7 @@ export function BudgetScreen() {
                   value: p.paid,
                   color: "var(--primary)",
                 }))}
-                {...YEN_VALUES}
+                {...money}
               />
             )}
           </CardContent>
@@ -399,6 +425,7 @@ export function BudgetScreen() {
 }
 
 function TargetRow({ row }: { row: CategoryTotal }) {
+  const money = useYenValues();
   const { category, paid, target } = row;
   const Icon = EXPENSE_ICON[category];
   const color = EXPENSE_COLOR[category];
@@ -419,10 +446,10 @@ function TargetRow({ row }: { row: CategoryTotal }) {
         >
           <Yen yen={paid}>
             {target === null
-              ? formatYen(paid)
+              ? money.format(paid)
               : t("budget.ofTarget", {
-                  paid: formatYen(paid),
-                  target: formatYen(target),
+                  paid: money.format(paid),
+                  target: money.format(target),
                 })}
           </Yen>
         </span>
@@ -449,6 +476,7 @@ function ExpenseRow({
   onArchive: () => void;
 }) {
   const Icon = EXPENSE_ICON[expense.category];
+  const hidden = useAmountsHidden();
   return (
     <li className="flex items-start gap-3 rounded-lg border p-3 text-sm">
       <Icon
@@ -473,7 +501,12 @@ function ExpenseRow({
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={t("common.editName", { name: expense.title })}
+        aria-label={
+          hidden
+            ? t("budget.showToEdit")
+            : t("common.editName", { name: expense.title })
+        }
+        disabled={hidden}
         onClick={onEdit}
       >
         <Pencil />

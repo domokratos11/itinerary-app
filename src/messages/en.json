@@ -600,7 +600,10 @@
     "usdHint": "≈ {usd} USD (1 USD = ¥{rate})",
     "tipSetBudget": "Set the total, a target per category and how many are travelling",
     "tipAddExpense": "Record something bought or still to pay",
-    "tipLogCost": "Add this place to the Budget, with its name and category filled in"
+    "tipLogCost": "Add this place to the Budget, with its name and category filled in",
+    "hideAmounts": "Hide amounts",
+    "showAmounts": "Show amounts",
+    "showToEdit": "Show the amounts to edit this"
   },
   "dashboard": {
     "title": "Dashboard",

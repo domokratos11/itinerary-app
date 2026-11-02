@@ -32,8 +32,13 @@ import { TodayCard } from "@/components/today-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Yen, YEN_VALUES } from "@/components/yen";
-import { formatYen, spendByDay, totalsByPayer } from "@/domain/budget";
+import {
+  HideAmountsButton,
+  MoneyScope,
+  useYenValues,
+  Yen,
+} from "@/components/yen";
+import { spendByDay, totalsByPayer } from "@/domain/budget";
 import {
   cityFigures,
   hoursLeftInTokyoDay,
@@ -206,7 +211,16 @@ function ClockTiles({
 
 // The first screen: where the trip stands, from what's already in it.
 export function DashboardScreen() {
+  return (
+    <MoneyScope>
+      <DashboardContent />
+    </MoneyScope>
+  );
+}
+
+function DashboardContent() {
   const tripId = useTripId();
+  const money = useYenValues();
   const trip = useTrip();
   const days = useTripDays();
   const items = usePlanStore((s) => s.items);
@@ -321,7 +335,10 @@ export function DashboardScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
+      <header className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
+        <HideAmountsButton />
+      </header>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <ClockTiles
@@ -345,7 +362,7 @@ export function DashboardScreen() {
         >
           <Hint>
             <Yen yen={summary.spent}>
-              {t("dashboard.spentSoFar", { yen: formatYen(summary.spent) })}
+              {t("dashboard.spentSoFar", { yen: money.format(summary.spent) })}
             </Yen>
           </Hint>
         </Tile>
@@ -445,10 +462,10 @@ export function DashboardScreen() {
           ) : (
             <DonutChart
               series={categorySeries(categories)}
-              center={formatYen(summary.spent)}
+              center={money.format(summary.spent)}
               centerLabel={t("budget.spent")}
               label={t("budget.byCategory")}
-              {...YEN_VALUES}
+              {...money}
             />
           )}
         </Panel>
@@ -465,13 +482,13 @@ export function DashboardScreen() {
               name={t("budget.spent")}
               label={t("dashboard.spendPerDay")}
               tick={dayTick}
-              {...YEN_VALUES}
+              {...money}
             />
           )}
           {spending.outside > 0 && (
             <p className="pt-2 text-xs text-muted-foreground">
               {t("dashboard.paidOutside", {
-                yen: formatYen(spending.outside),
+                yen: money.format(spending.outside),
               })}
             </p>
           )}
@@ -487,7 +504,7 @@ export function DashboardScreen() {
                 value: p.paid,
                 color: "var(--primary)",
               }))}
-              {...YEN_VALUES}
+              {...money}
             />
           )}
         </Panel>
@@ -637,7 +654,7 @@ export function DashboardScreen() {
               value: f.estimateYen,
               color: cityColor(f.cityId),
             }))}
-            {...YEN_VALUES}
+            {...money}
           />
         </Panel>
         <Panel

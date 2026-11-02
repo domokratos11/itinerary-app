@@ -600,7 +600,10 @@
     "usdHint": "≈ {usd} USD (1 USD = ¥{rate})",
     "tipSetBudget": "Define el total, una meta por categoría y cuántos viajan",
     "tipAddExpense": "Registra algo comprado o por pagar",
-    "tipLogCost": "Agrega este lugar al presupuesto, con su nombre y categoría ya puestos"
+    "tipLogCost": "Agrega este lugar al presupuesto, con su nombre y categoría ya puestos",
+    "hideAmounts": "Ocultar montos",
+    "showAmounts": "Mostrar montos",
+    "showToEdit": "Muestra los montos para editar esto"
   },
   "dashboard": {
     "title": "Panel",
