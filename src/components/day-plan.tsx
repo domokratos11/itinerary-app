@@ -118,7 +118,7 @@ import {
 import { PlaceDetails } from "@/components/place-details";
 import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { LegLine } from "@/components/leg-line";
-import { TripMap } from "@/components/trip-map";
+import { TripMap, type MapFocus } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
 import {
   cityPins,
@@ -171,6 +171,7 @@ export function DayPlan(props: Props) {
   const [view, setView] = useState<"list" | "map" | "waiting">("list");
   const [adding, setAdding] = useState<Waiting | null>(null);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
+  const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
   const [waitingView, setWaitingView] = useState(DEFAULT_WAITING_VIEW);
   const [waitingOnMap, setWaitingOnMap] = useState(false);
   const wide = useMediaQuery("(min-width: 768px)");
@@ -454,6 +455,13 @@ export function DayPlan(props: Props) {
     />
   );
   const openPlace = openPlaceId ? placesById.get(openPlaceId) : undefined;
+  function showOnMap() {
+    if (!openPlace) return;
+    setOpenPlaceId(null);
+    // On phones the map is its own tab.
+    if (!wide) setView("map");
+    setMapFocus({ id: openPlace.id });
+  }
   const openNearby = openPlace
     ? (nearbyByPlace(trip.places)[openPlace.id] ?? []).map((n) => ({
         id: n.id,
@@ -560,6 +568,7 @@ export function DayPlan(props: Props) {
           pins={pins}
           lines={mapLines}
           onPinClick={setOpenPlaceId}
+          focus={mapFocus}
           className="h-[65svh]"
           note={mapNote}
         />
@@ -618,6 +627,7 @@ export function DayPlan(props: Props) {
               pins={pins}
               lines={mapLines}
               onPinClick={setOpenPlaceId}
+              focus={mapFocus}
               className="min-h-0 flex-1"
               note={mapNote}
             />
@@ -712,6 +722,11 @@ export function DayPlan(props: Props) {
         onOpenChange={(open) => {
           if (!open) setOpenPlaceId(null);
         }}
+        onShowOnMap={
+          openPlace && pins.some((pin) => pin.id === openPlace.id)
+            ? showOnMap
+            : undefined
+        }
       />
     </div>
   );

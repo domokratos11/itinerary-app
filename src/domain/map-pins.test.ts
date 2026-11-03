@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cityPins, dayMap, straightLines } from "./map-pins";
+import { cityPins, dayFilterPins, dayMap, straightLines } from "./map-pins";
 import type { Place, PlanItem } from "./schemas";
 
 const place = (id: string, lat: number | null, overrides = {}): Place =>
@@ -68,5 +68,35 @@ describe("straightLines", () => {
       [a, b],
       [b, c],
     ]);
+  });
+});
+
+describe("dayFilterPins", () => {
+  const plan = (id: string, placeId: string, date: string, order: string) =>
+    ({ id, placeId, date, order, status: "planned" }) as PlanItem;
+  const places = new Map(
+    [place("a", 35), place("b", 35.1), place("c", null)].map((p) => [p.id, p]),
+  );
+  const items = [
+    plan("1", "a", "2026-12-18", "a0"),
+    plan("2", "b", "2026-12-18", "a1"),
+    plan("3", "c", "2026-12-19", "a0"),
+    plan("4", "a", "2026-12-19", "a1"),
+    plan("5", "elsewhere", "2026-12-19", "a2"),
+  ];
+
+  it("colours each chosen day apart and numbers its stops", () => {
+    const result = dayFilterPins(["2026-12-19", "2026-12-18"], items, places);
+    expect(result.legend.map((l) => [l.date, l.stops])).toEqual([
+      ["2026-12-18", 2],
+      ["2026-12-19", 2],
+    ]);
+    expect(result.legend[0].color).not.toBe(result.legend[1].color);
+    // "a" stays with the earlier day; "c" has no pin but is still listed.
+    expect(result.pins.map((p) => [p.id, p.label, p.color])).toEqual([
+      ["a", "1", result.legend[0].color],
+      ["b", "2", result.legend[0].color],
+    ]);
+    expect([...result.placeIds].sort()).toEqual(["a", "b", "c"]);
   });
 });

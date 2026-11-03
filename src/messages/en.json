@@ -170,6 +170,11 @@
     "allPriorities": "All priorities",
     "unassignedOnly": "Unassigned only",
     "inPlanBadge": "In plan",
+    "filterDays": "Days",
+    "daysChosen": "{count, plural, one {# day} other {# days}}",
+    "showAllPlaces": "All places",
+    "dayLegend": "Days on the map",
+    "noDaysHere": "No days in this city yet.",
     "noPlaces": "No places yet. Add the first one.",
     "noMatches": "No places match these filters.",
     "unpinned": "{unpinned} of these {total} places have no map pin yet."
@@ -258,6 +263,7 @@
     "details": "Place details",
     "checked": "Checked {date}",
     "openInMaps": "Open in Google Maps",
+    "showOnMap": "Show on map",
     "edit": "Edit place",
     "removeFromPlanFirst": "Remove it from the plan first",
     "inPlanNote": "It's in the plan. Remove it from its day to archive it.",
@@ -316,7 +322,8 @@
     "notConfigured": "The map isn't set up yet.",
     "offline": "You're offline. The map comes back with signal; the list still works.",
     "quota": "The map reached its daily limit. It will be back tomorrow.",
-    "failed": "The map couldn't load. The list still works."
+    "failed": "The map couldn't load. The list still works.",
+    "fit": "Show all pins"
   },
   "settings": {
     "title": "Trip settings",

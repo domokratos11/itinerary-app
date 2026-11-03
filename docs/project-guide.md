@@ -237,7 +237,7 @@ Screens (one per page):
 | `day-plan.tsx` | `/day/` | The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. |
 | `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view: the day, other days, waiting places. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
-| `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, add place, cost and details. |
+| `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, Days filter (per-day pins with a legend), add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
 | `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`) and `MoneyScope`. |
 | `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Share, Backup, Clean up. |
@@ -251,7 +251,7 @@ Plan and place editing:
 
 | File | Role |
 |---|---|
-| `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, add to day, edit, research. |
+| `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, add to day, edit, research. "Show on map" (under "Open in Google Maps", only when the place has coordinates) via `onShowOnMap`. |
 | `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. |
 | `place-editor.tsx` | Form for a place's fields. |
 | `edit-panel.tsx` | Dialog (wide) or drawer (phone) that wraps forms. |
@@ -259,7 +259,7 @@ Plan and place editing:
 | `place-suggestions.tsx` | The list of Google's suggestions, used by `add-place.tsx` and `settings-stays.tsx`. |
 | `add-to-day.tsx` | Choose day and position for a place. |
 | `proposal-review.tsx` | Compare old and new values for a research proposal, accept field by field. |
-| `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. |
+| `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend). |
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
 | `tag-badges.tsx` | Category and priority badges and options. |
 | `charts.tsx` | Chart helpers for budget and dashboard. |
@@ -291,8 +291,8 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `drop.ts` | Drop rules for drag and drop (which target, which order key). |
 | `location.ts` | Google coordinate expiry (30 days) and refresh (after 20 days); match radii for the place matcher. |
 | `live-hours.ts` | Parses Google's opening hours text (English) into periods; "open now". |
-| `map-pins.ts` | Map pins, colours and straight lines for the trip map. |
-| `maps-service.ts` | `MapsService` interface and map types. |
+| `map-pins.ts` | Map pins, colours and straight lines for the trip map. `dayFilterPins(dates, items, places)` returns `{placeIds, pins, legend}` for the City page's day filter, colouring pins per day (`DAY_COLORS`, in date order). |
+| `maps-service.ts` | `MapsService` interface and map types. `MapView` has `fit()` (frame all current pins again) and `focus(id)` (pan to that pin, zoom 16, bring it to the front and scale it up until the next update). |
 | `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting, and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. |
 | `flights.ts` | Flight logic: flights on a day, flights outside the days, next flight, route, cost label, cost in yen, and the form conversion. |
 | `share.ts`, `share-repository.ts` | `share.ts`: `newShareId` and `parseShareId` (128-bit base64url IDs), `MAX_SHARE_DAYS` (30), `toSharedTrip` (builds the copy, §12.8). `share-repository.ts`: the `ShareRepository` interface. |
@@ -357,7 +357,7 @@ Maps and place helpers:
 |---|---|
 | `maps.config.ts` | Maps browser key and Map ID. Public values; restricted in Google Cloud. |
 | `maps-service-instance.ts` | The one `MapsService` instance. |
-| `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. |
+| `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. Remembers the last pins drawn, so `fit()` can frame them again. |
 | `use-walking-legs.ts` | Walking routes for a day's short legs, kept in memory. |
 | `use-place-suggestions.ts` | The debounced search behind `PlaceSuggestions` (add a place and the hotel form). |
 | `tap-limit.ts` | Per-device daily limit on paid Google calls (photos and live details, 30 each per day). |
@@ -707,11 +707,14 @@ Matching is done by `cmdk`'s fuzzy filter on the `value` string of each item.
 | Filter | Options | Note |
 |---|---|---|
 | View | List, Map | Map shows `TripMap` with the city's pins |
+| Days | Checkbox items, one per day the city covers, with its stop count; "All places" clears | With days chosen, list and map show only places with a non-removed stop on those days (category and priority still apply). Pins are coloured per day (`DAY_COLORS`) and numbered in that day's order, with a legend of the days over the map. A place on two chosen days shows once, with the earlier day. |
 | Category | All, plus each category | Toggle group |
 | Priority | All, must, want, maybe | Select |
-| Unassigned only | yes/no | "Unassigned" = not used by any active plan item |
+| Unassigned only | yes/no | "Unassigned" = not used by any active plan item. Disabled while days are chosen. |
 
 Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordinates (`NEARBY_KM`).
+
+"Show on map" in place details (§3.3) closes the details, switches phones to the Map view, clears the filters if they hide the place, and focuses its pin.
 
 ### 11.3 Settings → Places filters
 
@@ -762,7 +765,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
   - **Sort and filter** menu: sort by priority (the default), name A to Z or Z to A; filter by priority and category. **Clear** appears when anything differs from the default and resets sorting and filters.
   - **Show on map** is off by default and resets when moving to another day, because `DayScreen` keys `DayPlan` by date. When on, the listed places get pins beside the numbered stops, coloured by category through `cityPins`, and they follow the filters. Clear does not turn the pins off. Tapping a pin opens the place's details. Places with no coordinates are counted in a note under the map.
   - On phones the map is its own tab, so turning it on switches to that tab, where the same controls appear to turn it off. Neither the view nor the button is saved.
-- **Map** (`TripMap`): pins for the day's stops, lines between them.
+- **Map** (`TripMap`): pins for the day's stops, lines between them. "Show all pins" frames them again. **Show on map** in place details is offered when the place has a pin on this map (a stop, or a Waiting place shown on the map); phones switch to the map tab.
 - **Drag and drop**: stops within a day, between days, from the waiting list (`drop.ts`). Keyboard support.
 - **Bookings button**: lists reservations on the day (wide layout).
 - **Costs**: `costTotal` for the day.
@@ -772,7 +775,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 ### 12.4 Cities (`/cities/`) and City (`/city/?id=`)
 
 - Cities list: each city in trip order with dates and how much is planned.
-- City page: the catalogue (§11.2) for one city, with place details, add place, cost lines, and the map.
+- City page: the catalogue (§11.2) for one city, with place details, add place, cost lines, the Days filter and the map.
 
 **Shared view:** the city page has no edit name, Add place or archive. The filters and the map stay.
 
@@ -860,7 +863,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `drop.ts` | `planDrop` | Which target a drop lands on (stop, day, list), and which keys change. |
 | `location.ts` | `coordinatesExpired`, `dueForRefresh`, `withoutGoogleCoordinates`, `doubtfulMatch`, `medianPoint` | Google coordinates expire after 30 days and are due for refresh from day 20. `doubtfulMatch` flags a match more than 2 km from coordinates already saved, or far from the city centre (30 km; 200 km for day trips). Flagged matches are reported for a person to confirm. |
 | `live-hours.ts` | `parseGoogleHours`, `openNowFrom`, `hoursDifference` | Reads Google's English opening-hours text into periods, and works out whether a place is open now. |
-| `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor` | Pins per stop, straight lines when no route. |
+| `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor`, `dayFilterPins` | Pins per stop, straight lines when no route. `dayFilterPins` gives the City page's pins and day legend for the chosen days (a place on two days shows once, with the earlier day). |
 | `budget.ts` | `summarizeBudget`, `totalsByCategory`, `totalsByPayer`, `estimateStops`, `spendByDay`, `daysRemaining` | Expenses beat estimates for the same place; yen integers. |
 | `dashboard.ts` | many tile functions (see §12.1) | All figures from in-memory data. |
 | `proposals.ts` | `newProposal`, `isOpenProposal`, `acceptProposal`, `changedFields`, `researchToAccept`, `cleanResearch`, `ResearchResultSchema` | Research never writes a place. Accepting copies chosen fields and their sources; status becomes `researched`. |

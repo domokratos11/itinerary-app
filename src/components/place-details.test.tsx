@@ -73,3 +73,33 @@ describe("PlaceDetails archive", () => {
     expect(screen.queryByRole("button", { name: "Archive" })).toBeNull();
   });
 });
+
+describe("PlaceDetails show on map", () => {
+  it("offers it for a place with a pin", () => {
+    const onShowOnMap = vi.fn();
+    render(
+      <PlaceDetails
+        place={{ ...place, lat: 35.7, lng: 139.77 }}
+        nearby={[]}
+        onOpenChange={vi.fn()}
+        onShowOnMap={onShowOnMap}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show on map" }));
+    expect(onShowOnMap).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "ueno-zoo" }),
+    );
+  });
+
+  it("leaves it out for a place without coordinates", () => {
+    render(
+      <PlaceDetails
+        place={place}
+        nearby={[]}
+        onOpenChange={vi.fn()}
+        onShowOnMap={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Show on map" })).toBeNull();
+  });
+});
