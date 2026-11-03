@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useSyncExternalStore } from "react";
-import { BedDouble, Plane } from "lucide-react";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { BedDouble, CalendarDays, List, Plane } from "lucide-react";
 
 import { FlightCard } from "@/components/flight-card";
+import { TripCalendar } from "@/components/trip-calendar";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { flightsOnDay, flightsOutsideDays } from "@/domain/flights";
 import type { FlightRecord } from "@/domain/schemas";
 import { groupDaysByStay } from "@/domain/trip";
@@ -52,9 +54,21 @@ function OutsideFlights({ flights }: { flights: FlightRecord[] }) {
   );
 }
 
-// The trip's days, grouped by the hotel of each night, from the live stays.
-// A list on phones, a calendar-like grid on wider screens. "Today" scrolls
-// to today's card; before the trip to the first day, after it to the last.
+type DaysView = "calendar" | "list";
+const VIEW_KEY = "days-view";
+
+function readView(): DaysView {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "calendar";
+  } catch {
+    return "calendar";
+  }
+}
+
+// The trip's days from the live stays: a Monday-first calendar, or a list
+// grouped by the hotel of each night (one column on phones, a grid wider).
+// The choice is kept on the device. "Today" scrolls to today's day; before
+// the trip to the first day, after it to the last.
 export function TripDays() {
   const items = usePlanStore((s) => s.items);
   const trip = useTrip();
@@ -63,6 +77,7 @@ export function TripDays() {
   const tripId = useTripId();
   const readOnly = useReadOnly();
   const today = useSyncExternalStore(noopSubscribe, todayInTokyo, () => null);
+  const [view, setView] = useState<DaysView>(readView);
   const groups = useMemo(
     () => groupDaysByStay(days, trip.stays),
     [days, trip.stays],
@@ -90,13 +105,44 @@ export function TripDays() {
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
+  function chooseView(value: string) {
+    if (value !== "calendar" && value !== "list") return;
+    setView(value);
+    try {
+      localStorage.setItem(VIEW_KEY, value);
+    } catch {
+      // A private window keeps the choice for this visit only.
+    }
+  }
+
   return (
     <section className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">{t("home.daysHeading")}</h2>
-        <Button size="sm" variant="outline" onClick={jumpToToday}>
-          {t("common.today")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {days.length > 0 && (
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={view}
+              onValueChange={chooseView}
+              aria-label={t("home.viewAria")}
+            >
+              <ToggleGroupItem value="calendar">
+                <CalendarDays />
+                {t("home.viewCalendar")}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list">
+                <List />
+                {t("home.viewList")}
+              </ToggleGroupItem>
+            </ToggleGroup>
+          )}
+          <Button size="sm" variant="outline" onClick={jumpToToday}>
+            {t("common.today")}
+          </Button>
+        </div>
       </div>
       {days.length === 0 && (
         <p className="text-sm text-muted-foreground">
@@ -113,117 +159,125 @@ export function TripDays() {
         </p>
       )}
       <OutsideFlights flights={outside.before} />
-      {groups.map((group) => {
-        const city = group.stay ? citiesById.get(group.stay.cityId) : null;
-        return (
-          <div key={group.days[0].date} className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-sm">
-              <span
-                aria-hidden
-                className="size-2.5 rounded-full"
-                style={{ backgroundColor: city?.color ?? FALLBACK_COLOR }}
-              />
-              {group.stay && city ? (
-                <Link
-                  href={cityHref(city.id, tripId)}
-                  className="font-medium underline-offset-4 hover:underline"
-                >
-                  {city.name}
-                </Link>
-              ) : (
-                <span className="font-medium text-destructive">
-                  {t("home.noHotel")}
-                </span>
-              )}
-              {group.stay && (
-                <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
-                  <BedDouble className="size-3.5 shrink-0" />
-                  <span className="truncate">{group.stay.hotelName}</span>
-                </span>
-              )}
-            </div>
-            <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {group.days.map((day) => {
-                const stops = stopsByDate.get(day.date) ?? 0;
-                const { weekday, day: num, month } = dayParts(day.date);
-                const isToday = day.date === today;
-                const flights = flightsOnDay(trip.flights, day.date);
-                return (
-                  <li
-                    key={day.date}
-                    id={`day-${day.date}`}
-                    className="scroll-mt-20"
+      {view === "calendar" && days.length > 0 && (
+        <TripCalendar days={days} stopsByDate={stopsByDate} today={today} />
+      )}
+      {view === "list" &&
+        groups.map((group) => {
+          const city = group.stay ? citiesById.get(group.stay.cityId) : null;
+          return (
+            <div key={group.days[0].date} className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-sm">
+                <span
+                  aria-hidden
+                  className="size-2.5 rounded-full"
+                  style={{ backgroundColor: city?.color ?? FALLBACK_COLOR }}
+                />
+                {group.stay && city ? (
+                  <Link
+                    href={cityHref(city.id, tripId)}
+                    className="font-medium underline-offset-4 hover:underline"
                   >
-                    <Link
-                      href={dayHref(day.date, tripId)}
-                      prefetch={false}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50 hover:bg-muted/40",
-                        isToday && "border-primary ring-2 ring-primary/20",
-                      )}
+                    {city.name}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-destructive">
+                    {t("home.noHotel")}
+                  </span>
+                )}
+                {group.stay && (
+                  <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
+                    <BedDouble className="size-3.5 shrink-0" />
+                    <span className="truncate">{group.stay.hotelName}</span>
+                  </span>
+                )}
+              </div>
+              <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {group.days.map((day) => {
+                  const stops = stopsByDate.get(day.date) ?? 0;
+                  const { weekday, day: num, month } = dayParts(day.date);
+                  const isToday = day.date === today;
+                  const flights = flightsOnDay(trip.flights, day.date);
+                  return (
+                    <li
+                      key={day.date}
+                      id={`day-${day.date}`}
+                      className="scroll-mt-20"
                     >
-                      <span className="flex w-11 shrink-0 flex-col items-center rounded-lg bg-muted py-1 leading-none">
-                        <span className="text-[10px] text-muted-foreground uppercase">
-                          {month}
-                        </span>
-                        <span className="font-heading text-xl font-semibold tabular-nums">
-                          {num}
-                        </span>
-                      </span>
-                      <span className="flex min-w-0 flex-1 flex-col gap-1">
-                        <span className="text-sm font-medium">
-                          {weekday}
-                          {isToday && (
-                            <span className="ml-2 text-xs text-primary">
-                              {t("common.today")}
-                            </span>
-                          )}
-                        </span>
-                        <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                          {day.cityIds.map((id) => (
-                            <span key={id} className="flex items-center gap-1">
-                              <span
-                                aria-hidden
-                                className="size-1.5 rounded-full"
-                                style={{
-                                  backgroundColor:
-                                    citiesById.get(id)?.color ?? FALLBACK_COLOR,
-                                }}
-                              />
-                              {citiesById.get(id)?.name ?? id}
-                            </span>
-                          ))}
-                          {flights.map((flight) => (
-                            <span
-                              key={flight.id}
-                              className="flex items-center gap-1"
-                            >
-                              <Plane aria-hidden className="size-3" />
-                              {flight.flightNumber}
-                            </span>
-                          ))}
-                        </span>
-                      </span>
-                      <span
+                      <Link
+                        href={dayHref(day.date, tripId)}
+                        prefetch={false}
                         className={cn(
-                          "shrink-0 text-xs tabular-nums",
-                          stops === 0
-                            ? "text-muted-foreground"
-                            : "font-medium text-foreground",
+                          "flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50 hover:bg-muted/40",
+                          isToday && "border-primary ring-2 ring-primary/20",
                         )}
                       >
-                        {stops === 0
-                          ? "—"
-                          : t("common.stops", { count: stops })}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        );
-      })}
+                        <span className="flex w-11 shrink-0 flex-col items-center rounded-lg bg-muted py-1 leading-none">
+                          <span className="text-[10px] text-muted-foreground uppercase">
+                            {month}
+                          </span>
+                          <span className="font-heading text-xl font-semibold tabular-nums">
+                            {num}
+                          </span>
+                        </span>
+                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                          <span className="text-sm font-medium">
+                            {weekday}
+                            {isToday && (
+                              <span className="ml-2 text-xs text-primary">
+                                {t("common.today")}
+                              </span>
+                            )}
+                          </span>
+                          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                            {day.cityIds.map((id) => (
+                              <span
+                                key={id}
+                                className="flex items-center gap-1"
+                              >
+                                <span
+                                  aria-hidden
+                                  className="size-1.5 rounded-full"
+                                  style={{
+                                    backgroundColor:
+                                      citiesById.get(id)?.color ??
+                                      FALLBACK_COLOR,
+                                  }}
+                                />
+                                {citiesById.get(id)?.name ?? id}
+                              </span>
+                            ))}
+                            {flights.map((flight) => (
+                              <span
+                                key={flight.id}
+                                className="flex items-center gap-1"
+                              >
+                                <Plane aria-hidden className="size-3" />
+                                {flight.flightNumber}
+                              </span>
+                            ))}
+                          </span>
+                        </span>
+                        <span
+                          className={cn(
+                            "shrink-0 text-xs tabular-nums",
+                            stops === 0
+                              ? "text-muted-foreground"
+                              : "font-medium text-foreground",
+                          )}
+                        >
+                          {stops === 0
+                            ? "—"
+                            : t("common.stops", { count: stops })}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          );
+        })}
       <OutsideFlights flights={outside.after} />
     </section>
   );

@@ -231,7 +231,8 @@ Screens (one per page):
 |---|---|---|
 | `dashboard-screen.tsx` | `/` | Dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research. |
 | `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions; before it, a countdown. |
-| `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. |
+| `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. `trip-days.tsx` holds the Calendar / List toggle (shadcn `ToggleGroup`, next to Today). |
+| `trip-calendar.tsx` | `/days/` | `TripCalendar`: the Calendar view. Monday-first weeks in one continuous grid (December into January). Trip days link to `/day/?date=` (id `day-YYYY-MM-DD`); cells show the day number, stop count, a flight icon, a holiday dot and a today ring. Each hotel night is a city-coloured bar; hotel names show from `lg`. Days outside the trip are muted, not links. |
 | `day-screen.tsx` | `/day/` | Loads one day and renders `DayPlan`. |
 | `day-plan.tsx` | `/day/` | The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. |
 | `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view: the day, other days, waiting places. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
@@ -375,7 +376,7 @@ Version and update:
 
 | File | Role |
 |---|---|
-| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`), cache clearing, reload. |
+| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `days-view`), cache clearing, reload. |
 | `version-check.ts` | Compares the running version with `version.json` and decides whether to reset. |
 
 ### 3.6 `src/messages`, `src/test`, `scripts`
@@ -497,7 +498,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | Page | Screen | Main children |
 |---|---|---|
 | `/` | `DashboardScreen` | `TodayCard`, tiles, `Charts`, `Yen`, `HideAmountsButton` |
-| `/days/` | `TripName`, `TripDates`, `TripPlanStatus`, `ExportTrip`, `TodayCard`, `NeedsNewDay`, `ResearchNotice`, `TripDays` | — |
+| `/days/` | `TripName`, `TripDates`, `TripPlanStatus`, `ExportTrip`, `TodayCard`, `NeedsNewDay`, `ResearchNotice`, `TripDays` (`TripCalendar` or the list, by the `ToggleGroup`) | — |
 | `/day/` | `DayScreen` → `DayPlan` | `FlightCard`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
 | `/cities/` | `CitiesScreen` | — |
@@ -744,7 +745,7 @@ Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripC
 
 ### 12.2 Days (`/days/`)
 
-Trip name and dates, plan status, export of the trip (`ExportTrip`), today card, "needs a new day" (stops whose day is no longer valid after a stay moved), research notice (proposals to review), and the list of days (`trip-days.tsx`) with city dots, date, stop count, and the flight cards leaving or landing that day. Flights leaving on a date no stay covers (such as the way there and back) appear as cards before the first or after the last group of days.
+Trip name and dates, plan status, export of the trip (`ExportTrip`), today card, "needs a new day" (stops whose day is no longer valid after a stay moved), research notice (proposals to review), and the days in one of two views, chosen with a Calendar / List `ToggleGroup` next to the "Today" button. **Calendar** is the default (`TripCalendar`, `trip-calendar.tsx`): Monday-first weeks in one grid, each trip day linking to `/day/?date=` with its stop count, flight, holiday and today ring; each hotel night is a city-coloured bar. Phones get compact cells; from `lg` cells also show city names, holiday names and "N stops". **List** is the day list grouped by hotel (`trip-days.tsx`, city dots, date, stop count, flight cards leaving or landing that day). Flights leaving on a date no stay covers (such as the way there and back) appear as cards before the first or after the last group of days, in both views. The choice is saved on the device in localStorage under `days-view`, kept through a version reset. Each calendar day has id `day-YYYY-MM-DD`, so "Today" scrolls to it.
 
 **Shared view:** Export trip is hidden.
 
@@ -850,8 +851,9 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 
 | Module | Key functions | Rule it encodes |
 |---|---|---|
-| `days.ts` | `deriveDays(stays)`, `weekdayOf`, `tripPhase` | A day belongs to every stay whose range includes it, both ends included, so transfer days belong to two cities. |
-| `trip.ts` | `activeTrip`, `stayId` | Archived hidden; stays sorted by check-in; stay ID = `cityId-checkIn`. |
+| `days.ts` | `deriveDays(stays)`, `weekdayOf`, `tripPhase`, `toUtcDate`, `addDays` | A day belongs to every stay whose range includes it, both ends included, so transfer days belong to two cities. |
+| `calendar.ts` | `calendarWeeks(days)`, `stayBands(week, stays)` | `calendarWeeks` gives whole Monday–Sunday weeks around the trip, cells `{date, day, showMonth, monthIndex}`. `stayBands` gives runs of columns per hotel night for the coloured bars. |
+| `trip.ts` | `activeTrip`, `stayId`, `nightStay` | Archived hidden; stays sorted by check-in; stay ID = `cityId-checkIn`. `nightStay(date, stays)` is the hotel slept in that night: on a transfer day, the hotel you arrive at; on the last day, the hotel you leave. `groupDaysByStay` uses it too. |
 | `plan.ts` | `itemsForDay`, `nextStop`, `keysForInsert`, `holidayWarnings`, `stopWarnings`, `costTotal`, `newPlanItem`, `distanceBetweenPlaces`, `placeLocation`, `stayLocation`, `directionsUrl` | Order is a fractional key. Stops have no time of their own. |
 | `legs.ts` | `dayLegs`, `formatWalk`, `formatStation` | Walk if ≤ 1.5 km, else transit or taxi. |
 | `order.ts` (lib) | `keyAt`, `keysBetween` via fractional-indexing | Moving a stop rewrites one key. |

@@ -154,7 +154,10 @@
     "nothingToday": "Nada planeado para hoy.",
     "allDoneToday": "Ya se hicieron todas las paradas de hoy.",
     "goThere": "Ir allí",
-    "openToday": "Abrir hoy ({done}/{total} hechas)"
+    "openToday": "Abrir hoy ({done}/{total} hechas)",
+    "viewCalendar": "Calendario",
+    "viewList": "Lista",
+    "viewAria": "Ver los días como"
   },
   "cities": {
     "title": "Ciudades",

@@ -13,6 +13,7 @@ const KEPT_KEYS = [
   "device-name",
   "sidebar-open",
   "hide-amounts",
+  "days-view",
 ];
 const VERSION_KEY = "app-version";
 // The version this tab last reset for. GitHub Pages may keep serving the old

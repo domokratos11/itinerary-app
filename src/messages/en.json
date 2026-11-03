@@ -154,7 +154,10 @@
     "nothingToday": "Nothing planned today.",
     "allDoneToday": "All of today's stops are done.",
     "goThere": "Go there",
-    "openToday": "Open today ({done}/{total} done)"
+    "openToday": "Open today ({done}/{total} done)",
+    "viewCalendar": "Calendar",
+    "viewList": "List",
+    "viewAria": "Show the days as"
   },
   "cities": {
     "title": "Cities",

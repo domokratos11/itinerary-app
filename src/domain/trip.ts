@@ -150,6 +150,16 @@ export type StayGroup<S extends Stay = Stay> = {
   days: TripDay[];
 };
 
+// The hotel slept in on the night of `date`. A transfer day counts as the
+// hotel you arrive at; the last day as the hotel you leave.
+export function nightStay<S extends Stay>(date: string, stays: S[]): S | null {
+  return (
+    stays.find((s) => s.checkIn <= date && date < s.checkOut) ??
+    stays.find((s) => s.checkOut === date) ??
+    null
+  );
+}
+
 // The days grouped by the hotel slept in that night, in order. A transfer
 // day goes with the hotel you arrive at; the last day goes with the last
 // hotel. Nights with no hotel form their own groups.
@@ -159,10 +169,7 @@ export function groupDaysByStay<S extends Stay>(
 ): StayGroup<S>[] {
   const groups: StayGroup<S>[] = [];
   for (const day of days) {
-    const stay =
-      stays.find((s) => s.checkIn <= day.date && day.date < s.checkOut) ??
-      stays.find((s) => s.checkOut === day.date) ??
-      null;
+    const stay = nightStay(day.date, stays);
     const last = groups.at(-1);
     if (last && last.stay === stay) last.days.push(day);
     else groups.push({ stay, days: [day] });
