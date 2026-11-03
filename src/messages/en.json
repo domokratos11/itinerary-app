@@ -554,7 +554,6 @@
     "revokedLink": "closed the read-only link {label}"
   },
   "theme": {
-    "system": "Match phone",
     "light": "Light",
     "dark": "Dark",
     "theme": "Theme",

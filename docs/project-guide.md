@@ -671,8 +671,8 @@ The app is designed for a 390px phone first, then widened (CLAUDE.md rule 8). Br
 
 ## 10. Theme
 
-- **Library:** `next-themes`, in `src/components/theme-provider.tsx`. Attribute `class`, default `system`, `enableSystem`, `disableTransitionOnChange`. It sets `class="dark"` on `<html>` before the first paint, so `suppressHydrationWarning` is on `<html>`.
-- **Choices:** Match phone (system), Light, Dark. The button in the Account sheet cycles them (`theme-toggle.tsx`). The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
+- **Library:** `next-themes`, in `src/components/theme-provider.tsx`. Attribute `class`, themes `light` and `dark`, default `light`, `enableSystem={false}`, `disableTransitionOnChange`. It sets `class="dark"` on `<html>` before the first paint, so `suppressHydrationWarning` is on `<html>`.
+- **Choices:** Light and Dark only, with no "Match phone" option. The button in the Account sheet switches between them (`theme-toggle.tsx`). On a device with no stored choice, or with the old stored `system` value, `PickFirstTheme` picks light or dark once from `prefers-color-scheme` and saves it. The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
 - **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, in OKLCH: `--background`, `--foreground`, `--primary` (teal, close to the theme colour), `--muted`, `--border`, `--sidebar-*`, `--chart-1..5`, and others. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`).
 - **Dark variant:** `@custom-variant dark (&:where(.dark, .dark *));` in `globals.css`, so `dark:` classes follow the `dark` class.
 - **Base colour:** `stone` in `components.json`.

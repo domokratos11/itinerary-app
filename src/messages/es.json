@@ -554,7 +554,6 @@
     "revokedLink": "cerró el enlace de solo lectura {label}"
   },
   "theme": {
-    "system": "Igual que el teléfono",
     "light": "Claro",
     "dark": "Oscuro",
     "theme": "Tema",
