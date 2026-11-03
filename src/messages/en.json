@@ -856,5 +856,23 @@
     "export": "Export CSV",
     "tipExport": "Download the expenses as a spreadsheet file, with every amount",
     "exported": "Expenses downloaded"
+  },
+  "weather": {
+    "clear": "Clear",
+    "partly": "Partly cloudy",
+    "cloudy": "Cloudy",
+    "fog": "Fog",
+    "drizzle": "Drizzle",
+    "rain": "Rain",
+    "snow": "Snow",
+    "storm": "Thunderstorms",
+    "sunrise": "Sunrise {time}",
+    "sunset": "Sunset {time}",
+    "temps": "{max}° / {min}°",
+    "precip": "{pct}% rain or snow",
+    "forecast": "Forecast",
+    "typical": "Typical",
+    "tipTypical": "What these dates were like over the last three years; the forecast takes over 16 days before",
+    "outlook": "Weather and daylight"
   }
 }

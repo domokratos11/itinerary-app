@@ -5,6 +5,8 @@ import { useSyncExternalStore } from "react";
 import { ArrowRight, Navigation } from "lucide-react";
 
 import { QuickExpenseButton } from "@/components/quick-expense";
+import { DayWeatherStrip } from "@/components/day-weather";
+import { useDaysWeather } from "@/lib/use-weather";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { tripPhase } from "@/domain/days";
@@ -38,6 +40,14 @@ export function TodayCard() {
   const items = usePlanStore((s) => s.items);
   const placesById = usePlacesById();
   const citiesById = useCitiesById();
+  const todayCity =
+    today && tripPhase(today, days).phase === "during"
+      ? (citiesById.get(days.find((d) => d.date === today)?.cityIds[0] ?? "")
+          ?.name ?? null)
+      : null;
+  const outlook = useDaysWeather(
+    today && todayCity ? [{ date: today, city: todayCity }] : [],
+  );
   if (!today) return null;
 
   const phase = tripPhase(today, days);
@@ -95,6 +105,7 @@ export function TodayCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
+        <DayWeatherStrip outlook={outlook.get(phase.date)} />
         {place && next ? (
           <div className="flex flex-col gap-1">
             <span className="text-xs tracking-wide text-muted-foreground uppercase">

@@ -90,6 +90,8 @@ export function dayBrief(input: {
   >[];
   stops: PlaceRecord[];
   proposalIds: Map<string, string>;
+  // Worked out from the city's own coordinates, when they were found.
+  sun?: { sunrise: string; sunset: string } | null;
 }) {
   const points = input.stops.map(placePoint);
   const kmBetweenStops = points.slice(1).map((point, i) => {
@@ -104,6 +106,8 @@ export function dayBrief(input: {
     request: input.research.request,
     cities: input.cities,
     hotel: input.hotel,
+    sunrise: input.sun?.sunrise ?? null,
+    sunset: input.sun?.sunset ?? null,
     holiday: input.holiday,
     reservations: input.reservations,
     flights: input.flights,

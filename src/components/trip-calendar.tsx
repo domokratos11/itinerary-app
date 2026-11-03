@@ -12,6 +12,8 @@ import { intlLocale, t } from "@/lib/i18n";
 import { dayHref } from "@/lib/links";
 import { useCitiesById, useTrip } from "@/lib/trip-store";
 import { useDayResearch } from "@/lib/use-day-research";
+import { useDaysWeather } from "@/lib/use-weather";
+import { WeatherBadge } from "@/components/day-weather";
 import { cn } from "@/lib/utils";
 import { useTripId } from "@/lib/use-trip-id";
 
@@ -62,6 +64,16 @@ export function TripCalendar({
     [trip.holidays],
   );
   const names = weekdayNames();
+  const outlook = useDaysWeather(
+    useMemo(
+      () =>
+        days.map((d) => ({
+          date: d.date,
+          city: citiesById.get(d.cityIds[0] ?? "")?.name ?? null,
+        })),
+      [days, citiesById],
+    ),
+  );
 
   return (
     <div className="flex flex-col gap-1" role="table">
@@ -153,6 +165,7 @@ export function TripCalendar({
                       number
                     )}
                   </span>
+                  <WeatherBadge outlook={outlook.get(cell.date)} />
                   {holiday && (
                     <span
                       aria-hidden

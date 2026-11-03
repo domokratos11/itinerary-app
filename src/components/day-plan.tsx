@@ -120,6 +120,8 @@ import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { LegLine } from "@/components/leg-line";
 import { DayResearchPanel } from "@/components/day-research";
 import { QuickExpenseButton } from "@/components/quick-expense";
+import { DayWeatherStrip } from "@/components/day-weather";
+import { useDaysWeather } from "@/lib/use-weather";
 import { TripMap, type MapFocus } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
 import {
@@ -174,6 +176,9 @@ export function DayPlan(props: Props) {
   const [adding, setAdding] = useState<Waiting | null>(null);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
+  const outlook = useDaysWeather([
+    { date: props.date, city: props.cityNames[0] ?? null },
+  ]);
   const [waitingView, setWaitingView] = useState(DEFAULT_WAITING_VIEW);
   const [waitingOnMap, setWaitingOnMap] = useState(false);
   const wide = useMediaQuery("(min-width: 768px)");
@@ -499,6 +504,7 @@ export function DayPlan(props: Props) {
           ))}
         </div>
         <CostLine places={stops.map((i) => placesById.get(i.placeId))} />
+        <DayWeatherStrip outlook={outlook.get(props.date)} />
         {holiday && (
           <p className="rounded-md bg-muted px-3 py-2 text-sm">
             <span className="font-medium">{holiday.name}.</span> {holiday.note}

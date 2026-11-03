@@ -24,7 +24,9 @@ import { fileURLToPath } from "node:url";
 import { adminDb } from "./admin-db";
 import { dayBrief, dayPlaces } from "../src/domain/day-research";
 import { deriveDays, weekdayOf } from "../src/domain/days";
+import { sunTimes } from "../src/domain/sun";
 import { nightStay } from "../src/domain/trip";
+import { locateCity } from "../src/lib/open-meteo";
 import { missingFields, needsResearch } from "../src/domain/place-edit";
 import { isOpenProposal, newProposal } from "../src/domain/proposals";
 import {
@@ -65,6 +67,15 @@ export function freeFileName(
   let name = `${prefix}-${date}.json`;
   for (let n = 2; taken(name); n += 1) name = `${prefix}-${date}-${n}.json`;
   return name;
+}
+
+// Sunrise and sunset in the day's first city, found by name through
+// Open-Meteo (not Google). Null when the city can't be found or there is no
+// connection.
+async function daylight(date: string, city: string | undefined) {
+  if (!city) return null;
+  const at = await locateCity(city).catch(() => null);
+  return at ? sunTimes(date, at.lat, at.lng) : null;
 }
 
 function parsed<T>(docs: { data(): unknown }[], schema: z.ZodType<T>): T[] {
@@ -209,6 +220,7 @@ async function main() {
             })),
           stops,
           proposalIds: open,
+          sun: await daylight(day.date, cityNames.get(tripDay.cityIds[0])),
         }),
       );
     }

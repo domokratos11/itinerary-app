@@ -108,6 +108,7 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **Google Maps JavaScript API** | script | Map, walking routes, place suggestions, photos, opening hours, rating. Loaded as one script tag the first time it is needed. | `src/lib/google-maps-service.ts` |
 | **Google Places API (New)** | REST | Used by scripts only: text search, place details, IDs and coordinates. | `scripts/maps-api.ts`, `maps-check.ts` |
 | **Google Routes API** | REST | Used by `maps:check` to test train routes. The app's walking routes use the Maps SDK's `Route` class instead. | `scripts/maps-check.ts`, `google-maps-service.ts` |
+| **Open-Meteo** (REST, no key) | — | Forecast, typical weather and city geocoding for the day views. Called from the browser; nothing is stored in Firestore. | `src/lib/open-meteo.ts`, `use-weather.ts` |
 | **Google Fonts** (through `next/font`) | — | Font files, self-hosted at build time. | `layout.tsx` |
 
 ### 2.5 PWA, build and tooling
@@ -141,6 +142,7 @@ Browser (static HTML + JS)
  │     └─ FirestoreShareRepository (src/lib/firestore-share-repository.ts) ── shares/… (members)
  ├─ Read-only viewer (?share=): viewer-store ── use-share-sync ── getViewerDb()
  │     └─ second Firebase app "viewer" (no sign-in, memory cache) ── shares/{id} and its copy
+ ├─ Open-Meteo (src/lib/open-meteo.ts, use-weather.ts) ── forecast, typical weather, geocoding (no key, no Google data)
  └─ service worker (sw.js, precache) and version check (version.json)
 
 Node scripts (scripts/*.ts, run with tsx)
@@ -230,9 +232,9 @@ Screens (one per page):
 | File | Page | Role |
 |---|---|---|
 | `dashboard-screen.tsx` | `/` | Dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research. |
-| `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions, and the quick cost button (`QuickExpenseButton`); before it, a countdown. |
+| `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions, and the quick cost button (`QuickExpenseButton`); before it, a countdown. During the trip it also shows the day's weather (`WeatherBadge`). |
 | `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. `trip-days.tsx` holds the Calendar / List toggle (shadcn `ToggleGroup`, next to Today). |
-| `trip-calendar.tsx` | `/days/` | `TripCalendar`: the Calendar view. Monday-first weeks in one continuous grid (December into January). Trip days link to `/day/?date=` (id `day-YYYY-MM-DD`); cells show the day number, stop count, a flight icon, a holiday dot and a today ring. Each hotel night is a city-coloured bar; hotel names show from `lg`. Days outside the trip are muted, not links. A day with research requested shows a search icon; one with a ready analysis shows a sparkles icon. |
+| `trip-calendar.tsx` | `/days/` | `TripCalendar`: the Calendar view. Monday-first weeks in one continuous grid (December into January). Trip days link to `/day/?date=` (id `day-YYYY-MM-DD`); cells show the day number, stop count, a flight icon, a holiday dot and a today ring. Each hotel night is a city-coloured bar; hotel names show from `lg`. Days outside the trip are muted, not links. A day with research requested shows a search icon; one with a ready analysis shows a sparkles icon. Each trip day cell also shows the day's weather icon (`WeatherBadge`), with the high from `lg`. |
 | `day-screen.tsx` | `/day/` | Loads one day and renders `DayPlan`. |
 | `day-plan.tsx` | `/day/` | The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. |
 | `day-research.tsx` | `/day/` | `DayResearchPanel`: under the flights. "Research this day" (optional message) asks for every place on the day; shows the request, the day analysis (load badge, warnings, nearby ideas, answer, sources) and place updates to review or accept for the day. Hidden on read-only links. |
@@ -263,6 +265,7 @@ Plan and place editing:
 | `proposal-review.tsx` | Compare old and new values for a research proposal, accept field by field. |
 | `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend). |
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
+| `day-weather.tsx` | `DayWeatherStrip` (day page header: icon and name, high and low, chance of rain or snow, Forecast or dashed Typical tag, sunrise and sunset) and `WeatherBadge` (icon, plus the high from `lg`; used on the Today card and calendar cells). `WEATHER_ICON` maps kinds to icons. Data from `use-weather.ts`. |
 | `tag-badges.tsx` | Category and priority badges and options. |
 | `charts.tsx` | Chart helpers for budget and dashboard. |
 
@@ -303,6 +306,8 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `share.ts`, `share-repository.ts` | `share.ts`: `newShareId` and `parseShareId` (128-bit base64url IDs), `MAX_SHARE_DAYS` (30), `toSharedTrip` (builds the copy, §12.8). `share-repository.ts`: the `ShareRepository` interface. |
 | `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS`: sort and filter for the Day page's waiting list and its pins. |
 | `dashboard.ts` | Figures for the dashboard tiles. |
+| `weather.ts` | `WeatherKind`, `weatherKind(wmoCode)`, `typicalWeather(pastYears)`, `yearsBefore`, type `DayWeather`. Kinds are clear, partly, cloudy, fog, drizzle, rain, snow and storm. Typical weather is the average high and low, the % of years with at least 1 mm of rain, and the most common kind. |
+| `sun.ts` | `sunTimes(date, lat, lng)` → sunrise, sunset and daylight minutes in Tokyo time (NOAA solar equations, about a minute's accuracy). |
 | `proposals.ts` | Research proposals: new, open check, accept field by field, research result schema and cleaning. |
 | `place-edit.ts` | Place form: fields, validation, changes, filters (`PLACE_FILTERS`), Maps link parsing, draft places. |
 | `trip-edit.ts` | Stay issues and day changes when stays move. |
@@ -378,6 +383,13 @@ Maps and place helpers:
 | `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
 | `order.ts` | Sort keys with fractional indexing. |
 | `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. |
+
+Weather and daylight:
+
+| File | Role |
+|---|---|
+| `open-meteo.ts` | `placeQueries(name)` (the name, then its first word, e.g. "Tokyo (Ueno)" → "Tokyo"), `locateCity(name)` (geocoding, `countryCode=JP`), `forecast(at)` (16 days, daily weather code, max and min °C, rain chance, Tokyo time), `typical(at, dates)` (the same dates over the last three years, one request per year). Requests in flight are shared; failures are not cached. Results are cached in localStorage under `weather:*` (geocoding 30 days, forecast 3 hours, typical weather 7 days); a version reset clears them. |
+| `use-weather.ts` | `useDaysWeather(entries)` → Map of date to `{sun, weather}`. Dates within 15 days of today (Tokyo) get the forecast, later dates the typical weather, past dates the sun only. Offline, the sun shows once the city's coordinates are cached. |
 
 Version and update:
 
@@ -778,6 +790,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Drag and drop**: stops within a day, between days, from the waiting list (`drop.ts`). Keyboard support.
 - **Bookings button**: lists reservations on the day (wide layout).
 - **Costs**: `costTotal` for the day.
+- **Weather and daylight** (`DayWeatherStrip`): in the header under the cost line, for the day's first city. Weather icon and name, high and low, chance of rain or snow, sunrise and sunset (sunset in amber when before 17:00). A "Forecast" tag for dates within 15 days, a dashed "Typical" tag (a tooltip explains: the same dates over the last three years) for later dates, and the sun only for past dates.
 - **Quick cost**: the "+ ¥" button in the button row logs an expense for that day's date (§12.5).
 
 **Shared view:** the day research panel is hidden. No drag and drop, Went and Skip, up and down buttons, move to another day, log cost, remove, or add from the waiting list. Tapping a waiting place opens its details (it does not add it). The other-days column becomes links to those days. The List, Map and Waiting views, the filters and directions stay. Costs are hidden (`Yen` and `CostLine` render nothing).
@@ -889,6 +902,8 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `budget.ts` | `formatYen`, `formatUsd` | Display formats. |
 | `i18n.ts` | `MessageKey`, `Translate` | Compile-time check that a message key exists. |
 | `version.ts` | `versionFromDescribe` | `v1.0.0-3-gabc` → `1.0.3`. |
+| `weather.ts` | `weatherKind`, `typicalWeather`, `yearsBefore` | WMO weather codes map to eight kinds. Typical weather averages the same dates over past years (highs, lows, % of years with ≥ 1 mm of rain, most common kind). |
+| `sun.ts` | `sunTimes` | Sunrise, sunset and daylight minutes in Tokyo time, from the NOAA solar equations (about a minute's accuracy). Worked out on the device; no service. |
 
 ---
 
@@ -903,6 +918,7 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 - **In memory only:** hours, ratings, photos, route times and distances. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
 - **Share copies** (§12.8) keep place IDs and Google coordinates as the trip does. Coordinates older than 30 days are dropped from the copy. `npm run maps:refresh` brings the copies' coordinates in line with the trip (renewed or deleted), so a copy never keeps them past 30 days. Copies hold no hours, ratings or photos.
 - Google data appears only on a Google map or next to the Google logo. Never on another map provider.
+- Weather and daylight are not Google data. City coordinates come from Open-Meteo's geocoding by the city's name, never from the Maps SDK or stored Google coordinates. Nothing is written to Firestore. Results stay in memory, with the `weather:*` localStorage cache described in §3.5.
 - The browser key is public and restricted by website and API. The script key stays in a git-ignored `.env`.
 - Google Cloud stays in its own projects, not the Firebase project's billing.
 
@@ -936,6 +952,7 @@ Viewers of a share link make the same place-detail calls as members (photos and 
 | **Cloud Firestore** | All trip, plan, user and proposal data | `firestore-*.ts` |
 | **Firebase App Check** | Off (`appCheckSiteKey = null`); code ready for reCAPTCHA v3 | `firebase.ts`, README "Security setup" |
 | **Google Fonts** | Oxanium and Geist Mono, self-hosted at build | `layout.tsx` |
+| **Open-Meteo** (`api.open-meteo.com`, `archive-api.open-meteo.com`, `geocoding-api.open-meteo.com`) | Forecast, typical weather and city geocoding for the day views (§12.3). Free, no key, called from the browser. No Google data. | `open-meteo.ts`, `use-weather.ts` |
 | **GitHub Pages** | Hosting | `deploy.yml` |
 | **Google Maps short links** | Input only (paste or list); links out use `https://www.google.com/maps/search/?api=1&query=…` and `…/dir/?api=1&…` | `place-edit.ts`, `links`, `maps` UI |
 
@@ -1126,7 +1143,7 @@ Details:
 - `places:reset` (`scripts/places-reset.ts`) archives all places and removes their stops, only with `--apply` (dry run by default).
 - `items:clean` (`scripts/items-clean.ts`) removes `startTime`, `durationMin`, `note` and `legNote` from a trip's plan items, only with `--apply` (dry run by default). It needs `TRIP_ID`.
 - The research file format is documented in `docs/research-run.md`.
-- **Day research** (`dayResearch/{date}`, §23.20) runs alongside the place flow. `research:pull` also reads requested days: for each day it creates any missing place proposals for the day's stops and writes `research/days-<date>.json` with `dayBrief` (stop order, straight-line km between stops, no coordinates). A request for a day no stay covers is archived. Bookings and flights go in as times and places only, never confirmations.
+- **Day research** (`dayResearch/{date}`, §23.20) runs alongside the place flow. `research:pull` also reads requested days: for each day it creates any missing place proposals for the day's stops and writes `research/days-<date>.json` with `dayBrief` (stop order, straight-line km between stops, sunrise and sunset of the first city, no coordinates). A request for a day no stay covers is archived. Bookings and flights go in as times and places only, never confirmations.
 - `research:push` takes either the old list of place results or `{places, days}` (`ResultsFileSchema`). Each day analysis is written straight onto the day document as `ready` (`researchedAt` set); cancelled requests are skipped. Place results still become proposals for review.
 - Analyses hold only the researcher's own words, never Google data. The rules for the analysis are in `docs/research-run.md`, section 6, "Day research".
 
@@ -1153,7 +1170,7 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `places:reset` | `scripts/places-reset.ts` | Shows what clearing all places would change; `-- --apply` does it | Yes, with `--apply` |
 | `items:clean` | `scripts/items-clean.ts` | Shows which plan items hold the old stop fields (`startTime`, `durationMin`, `note`, `legNote`); `-- --apply` removes them | Yes, with `--apply` |
 | `flights:push` | `scripts/flights-push.ts` | Saves flights from a file in the git-ignored `research/` folder (`-- research/<file>.json`); a flight with the same ID is replaced. Shows what would change unless `-- --apply` is added | Yes, with `--apply` |
-| `research:pull` | `scripts/research-pull.ts` | Exports place and day research requests for a research run (`research/days-<date>.json` for days); creates missing proposals for the day's stops; archives requests for days no stay covers | Yes (proposals, archived requests) |
+| `research:pull` | `scripts/research-pull.ts` | Exports place and day research requests for a research run (`research/days-<date>.json` for days); creates missing proposals for the day's stops; archives requests for days no stay covers. Each day entry includes `sunrise` and `sunset` for the day's first city | Yes (proposals, archived requests) |
 | `research:push` | `scripts/research-push.ts` | Writes research as proposals for review, and day analyses onto their day; never changes a place | Yes (proposals and day research) |
 | `maps:check` | `scripts/maps-check.ts` | Checks Google keys and test train routes; `-- --embed` serves the Maps Embed test | No |
 | `maps:match` | `scripts/maps-match.ts` | Saves place IDs and coordinates; reports doubtful matches | Yes |
@@ -1173,7 +1190,7 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 ### 22.1 Test setup
 
 - **Vitest** with **jsdom**, configured in `vitest.config.mts`. Alias `@` → `src`. Tests: `src/**/*.test.{ts,tsx}` and `scripts/**/*.test.ts`.
-- **Setup** (`src/test/setup.ts`): jest-dom matchers; Testing Library cleanup after each test; the activity repository replaced with the in-memory `LocalActivityRepository`; `ResizeObserver` stubbed (tooltips need it).
+- **Setup** (`src/test/setup.ts`): jest-dom matchers; Testing Library cleanup after each test; the activity repository replaced with the in-memory `LocalActivityRepository`; `ResizeObserver` stubbed (tooltips need it); `fetch` stubbed to reject, so no test reaches the network (a test that needs it stubs its own).
 - **In-memory repositories** (`local-*.ts`) replace Firebase in tests. Nothing in tests touches the real database.
 - **Fixture:** `src/test/fixture-trip.json` (made-up trip). Only tests import it.
 - **Rules tests:** separate config (`vitest.rules.config.mts`), run on the emulator (§15.3).

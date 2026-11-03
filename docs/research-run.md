@@ -83,7 +83,7 @@ The Dashboard and the Days page show how many places have research to review. Un
 
 `research:pull` handles both. Besides `research/proposals-<date>.json` it writes `research/days-<date>.json`, one entry per requested day. Each entry holds:
 
-- the date and weekday, the cities, the hotel's name, the holiday if any, and that day's bookings and flights (times and places only)
+- the date and weekday, the cities, the hotel's name, sunrise and sunset in the first city (worked out from Open-Meteo's coordinates for the city, not Google's), the holiday if any, and that day's bookings and flights (times and places only)
 - the stops in order, with their `proposalId`
 - `kmBetweenStops`, the straight-line distance from each stop to the next, worked out from the coordinates. The coordinates themselves are not in the file.
 - the user's `request`, and the `previousAnalysis` if the day was researched before

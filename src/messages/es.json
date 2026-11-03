@@ -856,5 +856,23 @@
     "export": "Exportar CSV",
     "tipExport": "Descarga los gastos como archivo de hoja de cálculo, con todos los montos",
     "exported": "Gastos descargados"
+  },
+  "weather": {
+    "clear": "Despejado",
+    "partly": "Parcialmente nublado",
+    "cloudy": "Nublado",
+    "fog": "Niebla",
+    "drizzle": "Llovizna",
+    "rain": "Lluvia",
+    "snow": "Nieve",
+    "storm": "Tormentas",
+    "sunrise": "Amanecer {time}",
+    "sunset": "Atardecer {time}",
+    "temps": "{max}° / {min}°",
+    "precip": "{pct}% de lluvia o nieve",
+    "forecast": "Pronóstico",
+    "typical": "Habitual",
+    "tipTypical": "Cómo fueron estas fechas en los últimos tres años; el pronóstico lo reemplaza 16 días antes",
+    "outlook": "Clima y luz del día"
   }
 }
