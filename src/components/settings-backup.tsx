@@ -14,6 +14,7 @@ import { useActiveTrip } from "@/lib/auth-store";
 import { collectBackup, importBackup } from "@/lib/backup-actions";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
+import { useDayResearch } from "@/lib/use-day-research";
 import { useProposals } from "@/lib/use-proposals";
 import { useTripId } from "@/lib/use-trip-id";
 import { useReadOnly } from "@/lib/viewer-store";
@@ -28,6 +29,7 @@ export function ExportTrip({
   const data = useTripStore((s) => s.data);
   const items = usePlanStore((s) => s.items);
   const proposals = useProposals(tripId);
+  const dayResearch = useDayResearch(tripId);
   const trip = useActiveTrip();
   // The backup holds every amount, so a read-only link never offers it.
   const readOnly = useReadOnly();
@@ -37,7 +39,14 @@ export function ExportTrip({
     if (!tripId) return;
     let backup: Backup;
     try {
-      backup = await collectBackup(tripId, trip, data, items, proposals);
+      backup = await collectBackup(
+        tripId,
+        trip,
+        data,
+        items,
+        proposals,
+        dayResearch,
+      );
     } catch {
       // A file missing part of the trip would look complete, so there's none.
       toast.error(t("backup.exportFailed"));

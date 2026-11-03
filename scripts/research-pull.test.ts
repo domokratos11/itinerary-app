@@ -39,3 +39,11 @@ describe("freeFileName", () => {
     );
   });
 });
+
+describe("freeFileName with a prefix", () => {
+  it("names day exports apart from place requests", () => {
+    expect(freeFileName("2026-11-01", () => false, "days")).toBe(
+      "days-2026-11-01.json",
+    );
+  });
+});

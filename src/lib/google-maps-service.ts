@@ -136,10 +136,12 @@ export class GoogleMapsService implements MapsService {
         polylines = [];
       }
 
-      function frame(pins: MapPin[]) {
+      let shown: MapPin[] = [];
+
+      function frame(pins: MapPin[], always = false) {
         // Only when the pins change, so a new route doesn't move the map.
         const key = pins.map((pin) => pin.id).join("|");
-        if (key === framed || pins.length === 0) return;
+        if ((key === framed && !always) || pins.length === 0) return;
         framed = key;
         if (pins.length === 1) {
           map.setCenter(pins[0].position);
@@ -154,6 +156,7 @@ export class GoogleMapsService implements MapsService {
       return {
         update(pins: MapPin[], lines: MapLine[]) {
           clear();
+          shown = pins;
           markers = pins.map((pin) => {
             const content = new PinElement({
               background: pin.color,
@@ -201,6 +204,23 @@ export class GoogleMapsService implements MapsService {
               }),
           );
           frame(pins);
+        },
+        fit() {
+          frame(shown, true);
+        },
+        focus(id: string) {
+          const index = shown.findIndex((pin) => pin.id === id);
+          if (index < 0) return;
+          map.panTo(shown[index].position);
+          map.setZoom(16);
+          // Bring the pin to the front and scale it up.
+          const marker = markers[index];
+          marker.zIndex = 1000;
+          const pin = marker.firstElementChild;
+          if (pin instanceof HTMLElement) {
+            pin.style.transformOrigin = "bottom center";
+            pin.style.transform = "scale(1.4)";
+          }
         },
         destroy() {
           clear();

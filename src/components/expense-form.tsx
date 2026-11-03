@@ -23,12 +23,14 @@ import {
   type Place,
 } from "@/domain/schemas";
 import { categoryForPlace } from "@/domain/budget";
+import { nightStay } from "@/domain/trip";
 import { EXPENSE_COLOR } from "@/domain/taxonomy";
 import { useActiveTrip, useAuthStore } from "@/lib/auth-store";
 import { t } from "@/lib/i18n";
 import { EXPENSE_ICON } from "@/lib/taxonomy-icons";
 import { todayInTokyo } from "@/lib/tokyo-date";
 import { saveRecord } from "@/lib/trip-actions";
+import { useTrip } from "@/lib/trip-store";
 
 const NOBODY = "nobody";
 
@@ -43,6 +45,7 @@ export type ExpensePrefill = Partial<
     | "placeId"
     | "reservationId"
     | "stayId"
+    | "cityId"
   >
 >;
 
@@ -89,6 +92,7 @@ export function ExpenseForm({
   onClose: () => void;
 }) {
   const members = useActiveTrip()?.members ?? [];
+  const stays = useTrip().stays;
   const me = useAuthStore((s) => s.user?.email?.toLowerCase() ?? null);
   const startDate = expense?.date ?? prefill.date ?? todayInTokyo();
   const [title, setTitle] = useState(expense?.title ?? prefill.title ?? "");
@@ -128,6 +132,10 @@ export function ExpenseForm({
       placeId: expense?.placeId ?? prefill.placeId ?? null,
       reservationId: expense?.reservationId ?? prefill.reservationId ?? null,
       stayId: expense?.stayId ?? prefill.stayId ?? null,
+      // A new cost is put in the city of that night, as a quick entry is.
+      cityId: expense
+        ? expense.cityId
+        : (prefill.cityId ?? nightStay(date, stays)?.cityId ?? null),
       note: note.trim() || null,
       archived: false,
       updatedAt: new Date().toISOString(),

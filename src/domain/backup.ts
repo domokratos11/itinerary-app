@@ -11,10 +11,12 @@ import {
   PlaceRecordSchema,
   PlanItemSchema,
   BudgetSchema,
+  DayResearchSchema,
   ProposalSchema,
   ReservationRecordSchema,
   StayRecordSchema,
   type PlanItem,
+  type DayResearch,
   type Proposal,
 } from "./schemas";
 import type { TripData } from "./trip";
@@ -35,6 +37,7 @@ export type BackupExtras = {
   trip: z.infer<typeof TripDetailsSchema> | null;
   activity: Activity[];
   queue: Record<string, unknown>[];
+  dayResearch?: DayResearch[];
 };
 
 export const BackupSchema = z
@@ -50,6 +53,7 @@ export const BackupSchema = z
     flights: z.array(FlightRecordSchema).default([]),
     items: z.array(PlanItemSchema),
     proposals: z.array(ProposalSchema).default([]),
+    dayResearch: z.array(DayResearchSchema).default([]),
     trip: TripDetailsSchema.nullable().default(null),
     activity: z.array(ActivitySchema).default([]),
     queue: z.array(z.looseObject({})).default([]),
@@ -81,6 +85,7 @@ export function makeBackup(
     items,
     proposals,
     ...extras,
+    dayResearch: extras.dayResearch ?? [],
   };
 }
 

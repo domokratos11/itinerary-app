@@ -68,6 +68,7 @@ function trip(): TripData {
         placeId: null,
         reservationId: null,
         stayId: null,
+        cityId: null,
         note: null,
         archived: false,
         updatedAt: NOW.toISOString(),

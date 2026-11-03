@@ -234,6 +234,16 @@ describe("expenses", () => {
       setDoc(doc(as(ANA), path), { ...expense, category: "bribes" }),
     );
   });
+
+  it("may name the city it was spent in", async () => {
+    const path = "trips/japan/expenses/e2";
+    await assertSucceeds(
+      setDoc(doc(as(ANA), path), { ...expense, id: "e2", cityId: "tokyo" }),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...expense, id: "e2", cityId: 42 }),
+    );
+  });
 });
 
 describe("stops in the plan", () => {
@@ -617,5 +627,55 @@ describe("read-only links", () => {
     await assertFails(deleteDoc(doc(as(EVE), "shares/old")));
     await assertSucceeds(deleteDoc(doc(as(ANA), "shares/old/cities/lima")));
     await assertSucceeds(deleteDoc(doc(as(ANA), "shares/old")));
+  });
+});
+
+describe("day research", () => {
+  const PATH = "trips/japan/dayResearch/2026-12-18";
+  const row = (fields = {}) => ({
+    id: "2026-12-18",
+    date: "2026-12-18",
+    status: "requested",
+    request: "Any winter lights nearby?",
+    analysis: null,
+    requestedAt: NOW,
+    updatedAt: NOW,
+    ...fields,
+  });
+
+  it("lets members ask about a day, keyed by its date", async () => {
+    await assertSucceeds(setDoc(doc(as(ANA), PATH), row()));
+    await assertSucceeds(getDoc(doc(as(ANA), PATH)));
+    await assertFails(getDoc(doc(as(EVE), PATH)));
+    await assertFails(setDoc(doc(as(EVE), PATH), row()));
+  });
+
+  it("refuses a wrong id, status or extra field", async () => {
+    await assertFails(
+      setDoc(doc(as(ANA), PATH), row({ id: "2026-12-19", date: "2026-12-19" })),
+    );
+    await assertFails(setDoc(doc(as(ANA), PATH), row({ status: "done" })));
+    await assertFails(setDoc(doc(as(ANA), PATH), row({ admin: true })));
+    await assertFails(
+      setDoc(doc(as(ANA), PATH), row({ request: "x".repeat(1001) })),
+    );
+  });
+
+  it("deletes only archived research", async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, PATH), row());
+      await setDoc(
+        doc(db, "trips/japan/dayResearch/2026-12-19"),
+        row({ id: "2026-12-19", date: "2026-12-19", status: "archived" }),
+      );
+    });
+    await assertFails(deleteDoc(doc(as(ANA), PATH)));
+    await assertFails(
+      deleteDoc(doc(as(EVE), "trips/japan/dayResearch/2026-12-19")),
+    );
+    await assertSucceeds(
+      deleteDoc(doc(as(ANA), "trips/japan/dayResearch/2026-12-19")),
+    );
   });
 });

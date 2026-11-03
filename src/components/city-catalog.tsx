@@ -15,8 +15,20 @@ import {
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PlaceDetails, type NearbyPlace } from "@/components/place-details";
-import { TripMap } from "@/components/trip-map";
-import { cityPins } from "@/domain/map-pins";
+import { TripMap, type MapFocus } from "@/components/trip-map";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { formatDayLabel } from "@/lib/format-day";
+import { useTripDays } from "@/lib/trip-store";
+import { cityPins, dayFilterPins, type DayLegend } from "@/domain/map-pins";
+import { itemsForDay } from "@/domain/plan";
 import {
   CATEGORIES,
   PRIORITIES,
@@ -43,7 +55,7 @@ import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useReadOnly } from "@/lib/viewer-store";
-import { Pencil, Plus } from "lucide-react";
+import { CalendarDays, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 type Props = {
@@ -54,6 +66,27 @@ type Props = {
   // Opens this place's details first (from search).
   initialPlaceId?: string | null;
 };
+
+// Which colour is which day, over the map's corner.
+function DayLegendList({ legend }: { legend: DayLegend[] }) {
+  return (
+    <ul
+      aria-label={t("cities.dayLegend")}
+      className="flex flex-wrap gap-1 rounded-lg bg-background/90 p-1.5 text-xs shadow-md"
+    >
+      {legend.map((day) => (
+        <li key={day.date} className="flex items-center gap-1 px-1">
+          <span
+            aria-hidden
+            className="size-2.5 rounded-full"
+            style={{ backgroundColor: day.color }}
+          />
+          {formatDayLabel(day.date)}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 const initialFilter: CatalogFilter = {
   category: "all",
@@ -90,12 +123,52 @@ export function CityCatalog({
     [items],
   );
 
-  const visible = useMemo(
-    () => filterPlaces(places, filter, assigned),
-    [places, filter, assigned],
+  // The chosen days narrow the list and the map to their stops, each day in
+  // its own colour. None chosen shows every place.
+  const tripDays = useTripDays();
+  const cityDays = useMemo(
+    () => tripDays.filter((d) => d.cityIds.includes(city.id)),
+    [tripDays, city.id],
   );
+  const [days, setDays] = useState<string[]>([]);
+  const [focus, setFocus] = useState<MapFocus | null>(null);
+  const placesById = useMemo(
+    () => new Map(places.map((p) => [p.id, p])),
+    [places],
+  );
+  const byDay = useMemo(
+    () => (days.length > 0 ? dayFilterPins(days, items, placesById) : null),
+    [days, items, placesById],
+  );
+
+  const visible = useMemo(() => {
+    if (!byDay) return filterPlaces(places, filter, assigned);
+    const onDays = places.filter((p) => byDay.placeIds.has(p.id));
+    return filterPlaces(onDays, { ...filter, unassignedOnly: false }, assigned);
+  }, [places, filter, assigned, byDay]);
   const selected = places.find((p) => p.id === selectedId) ?? null;
-  const pins = useMemo(() => cityPins(visible), [visible]);
+  const pins = useMemo(() => {
+    if (!byDay) return cityPins(visible);
+    const shown = new Set(visible.map((p) => p.id));
+    return byDay.pins.filter((pin) => shown.has(pin.id));
+  }, [visible, byDay]);
+
+  function toggleDay(date: string, on: boolean) {
+    setDays((current) =>
+      on ? [...current, date] : current.filter((d) => d !== date),
+    );
+  }
+
+  function showOnMap(place: PlaceRecord) {
+    setSelectedId(null);
+    setView("map");
+    // A place hidden by the filters can't be centred on, so they step aside.
+    if (!visible.some((p) => p.id === place.id)) {
+      setFilter(initialFilter);
+      setDays([]);
+    }
+    setFocus({ id: place.id });
+  }
   const unpinned = visible.length - pins.length;
   // Estimated cost of this city's planned stops.
   const planned = useMemo(() => {
@@ -246,10 +319,60 @@ export function CityCatalog({
               </SelectContent>
             </Select>
 
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={days.length > 0 ? "secondary" : "outline"}
+                  size="sm"
+                >
+                  <CalendarDays />
+                  {days.length > 0
+                    ? t("cities.daysChosen", { count: days.length })
+                    : t("cities.filterDays")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-56">
+                <DropdownMenuLabel>{t("cities.filterDays")}</DropdownMenuLabel>
+                {cityDays.length === 0 && (
+                  <p className="px-2 py-1.5 text-sm text-muted-foreground">
+                    {t("cities.noDaysHere")}
+                  </p>
+                )}
+                {cityDays.map((day) => {
+                  const stops = itemsForDay(items, day.date).filter((i) =>
+                    placesById.has(i.placeId),
+                  ).length;
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={day.date}
+                      checked={days.includes(day.date)}
+                      onCheckedChange={(on) => toggleDay(day.date, on)}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <span className="flex-1">{formatDayLabel(day.date)}</span>
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {stops > 0 ? t("common.stops", { count: stops }) : "—"}
+                      </span>
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+                {days.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setDays([])}>
+                      <X />
+                      {t("cities.showAllPlaces")}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <div className="flex items-center gap-2">
               <Switch
                 id="unassigned-only"
-                checked={filter.unassignedOnly}
+                disabled={days.length > 0}
+                checked={filter.unassignedOnly && days.length === 0}
                 onCheckedChange={(checked) =>
                   setFilter({ ...filter, unassignedOnly: checked })
                 }
@@ -328,6 +451,8 @@ export function CityCatalog({
               <TripMap
                 pins={pins}
                 onPinClick={setSelectedId}
+                focus={focus}
+                overlay={byDay && <DayLegendList legend={byDay.legend} />}
                 className={
                   sideBySide
                     ? "aspect-[4/3] max-h-[calc(100svh-7rem)]"
@@ -352,6 +477,7 @@ export function CityCatalog({
           if (!open) setSelectedId(null);
         }}
         onArchive={tripId && !readOnly ? archivePlace : undefined}
+        onShowOnMap={showOnMap}
       />
       {adding && tripId && !readOnly && (
         <AddPlace

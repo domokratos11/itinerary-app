@@ -1,4 +1,4 @@
-import type { PlanItem, Proposal } from "./schemas";
+import type { DayResearch, PlanItem, Proposal } from "./schemas";
 import type { TripData } from "./trip";
 
 // Permanent deletion of what's already retired. Nothing is deleted anywhere
@@ -17,7 +17,8 @@ export const CLEANUP_KINDS = [
 
 export type CleanupKind = (typeof CLEANUP_KINDS)[number];
 
-export type CleanupCollection = keyof TripData | "items" | "proposals";
+export type CleanupCollection =
+  keyof TripData | "items" | "proposals" | "dayResearch";
 
 export type CleanupPlan = {
   // What would go, by collection.
@@ -32,6 +33,7 @@ export type CleanupInput = {
   trip: TripData;
   items: PlanItem[];
   proposals: Proposal[];
+  dayResearch?: DayResearch[];
 };
 
 const finished = (p: Proposal) =>
@@ -47,7 +49,7 @@ function archivedOnly(
 
 export function planCleanup(
   kind: CleanupKind,
-  { trip, items, proposals }: CleanupInput,
+  { trip, items, proposals, dayResearch = [] }: CleanupInput,
 ): CleanupPlan {
   switch (kind) {
     case "stays":
@@ -102,8 +104,16 @@ export function planCleanup(
       return { remove: { items: ids }, count: ids.length, skipped: 0 };
     }
     case "research": {
+      // Finished place research, and day research that was cancelled.
       const ids = proposals.filter(finished).map((p) => p.id);
-      return { remove: { proposals: ids }, count: ids.length, skipped: 0 };
+      const days = dayResearch
+        .filter((d) => d.status === "archived")
+        .map((d) => d.id);
+      return {
+        remove: { proposals: ids, dayResearch: days },
+        count: ids.length + days.length,
+        skipped: 0,
+      };
     }
   }
 }

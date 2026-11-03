@@ -1,5 +1,5 @@
 import { makeBackup, type Backup } from "@/domain/backup";
-import type { PlanItem, Proposal } from "@/domain/schemas";
+import type { DayResearch, PlanItem, Proposal } from "@/domain/schemas";
 import type { TripData } from "@/domain/trip";
 import type { TripSummary } from "@/domain/trip-repository";
 import { TRIP_COLLECTIONS } from "@/domain/trip";
@@ -8,6 +8,7 @@ import { activityRepository } from "@/lib/activity-repository-instance";
 import { logActivity } from "@/lib/activity-log";
 import { cleanupRepository } from "@/lib/firestore-cleanup-repository";
 import { planRepository } from "@/lib/plan-repository-instance";
+import { dayResearchRepository } from "@/lib/day-research-repository-instance";
 import { proposalRepository } from "@/lib/proposal-repository-instance";
 import { tripRepository } from "@/lib/trip-repository-instance";
 
@@ -19,6 +20,7 @@ export async function collectBackup(
   data: TripData,
   items: PlanItem[],
   proposals: Proposal[],
+  dayResearch: DayResearch[] = [],
 ): Promise<Backup> {
   const [activity, queue] = await Promise.all([
     activityRepository.all(tripId),
@@ -32,6 +34,7 @@ export async function collectBackup(
     },
     activity,
     queue,
+    dayResearch,
   });
 }
 
@@ -49,6 +52,9 @@ export async function importBackup(
   );
   if (backup.proposals.length)
     await proposalRepository.saveMany(tripId, backup.proposals);
+  await Promise.all(
+    backup.dayResearch.map((row) => dayResearchRepository.save(tripId, row)),
+  );
   if (backup.trip?.budget)
     await tripRepository.updateTrip(tripId, { budget: backup.trip.budget });
   if (backup.activity.length)

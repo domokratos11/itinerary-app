@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
+import { Maximize } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import {
   MapsError,
   type MapLine,
@@ -30,7 +32,14 @@ type Props = {
   className?: string;
   // Shown under the map, such as how many places have no pin yet.
   note?: string | null;
+  // A pin to centre on. A new object each time someone asks, so asking for
+  // the same pin twice still moves the map.
+  focus?: MapFocus | null;
+  // Anything shown over the map's bottom-left corner, such as a legend.
+  overlay?: React.ReactNode;
 };
+
+export type MapFocus = { id: string };
 
 const NO_LINES: MapLine[] = [];
 
@@ -42,10 +51,13 @@ export function TripMap({
   onPinClick,
   className,
   note,
+  focus = null,
+  overlay,
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const view = useRef<MapView | null>(null);
-  const latest = useRef({ pins, lines, onPinClick });
+  const latest = useRef({ pins, lines, onPinClick, focus });
+  const [ready, setReady] = useState(false);
   const online = useOnline();
   const { resolvedTheme } = useTheme();
   const scheme = resolvedTheme === "dark" ? "dark" : "light";
@@ -53,7 +65,7 @@ export function TripMap({
   const configured = mapsService.isConfigured();
 
   useEffect(() => {
-    latest.current = { pins, lines, onPinClick };
+    latest.current = { pins, lines, onPinClick, focus };
   });
 
   // Pins are rebuilt on every render of the screen; redraw only when they
@@ -62,6 +74,12 @@ export function TripMap({
   useEffect(() => {
     view.current?.update(latest.current.pins, latest.current.lines);
   }, [drawn]);
+
+  // After the redraw above, and again once a new map is ready (a phone
+  // switching to the map tab mounts one just for this).
+  useEffect(() => {
+    if (focus) view.current?.focus(focus.id);
+  }, [focus, ready]);
 
   // The colour scheme is fixed when a Google map is created, so a theme change
   // starts a new one. Coming back online tries again after a failed start.
@@ -84,6 +102,7 @@ export function TripMap({
         view.current = map;
         setFailure(null);
         map.update(latest.current.pins, latest.current.lines);
+        setReady(true);
       })
       .catch((error: unknown) => {
         if (!stopped)
@@ -93,6 +112,7 @@ export function TripMap({
       stopped = true;
       created?.destroy();
       view.current = null;
+      setReady(false);
     };
   }, [configured, online, scheme]);
 
@@ -121,6 +141,24 @@ export function TripMap({
           >
             {t(MESSAGE[problem])}
           </p>
+        )}
+        {!problem && ready && pins.length > 0 && (
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            className="absolute top-2 right-2 shadow-md"
+            aria-label={t("map.fit")}
+            title={t("map.fit")}
+            onClick={() => view.current?.fit()}
+          >
+            <Maximize />
+          </Button>
+        )}
+        {!problem && overlay && (
+          <div className="pointer-events-none absolute bottom-2 left-2 max-w-[calc(100%-1rem)]">
+            {overlay}
+          </div>
         )}
       </div>
       {note && <p className="text-xs text-muted-foreground">{note}</p>}

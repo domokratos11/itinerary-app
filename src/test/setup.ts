@@ -20,6 +20,13 @@ vi.stubGlobal(
   },
 );
 
+// Nothing reaches the network: screens that ask for the weather get no
+// answer, as offline. A test that needs fetch stubs its own.
+vi.stubGlobal(
+  "fetch",
+  vi.fn(() => Promise.reject(new Error("No network in tests"))),
+);
+
 afterEach(() => {
   cleanup();
 });

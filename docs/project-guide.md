@@ -108,6 +108,7 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **Google Maps JavaScript API** | script | Map, walking routes, place suggestions, photos, opening hours, rating. Loaded as one script tag the first time it is needed. | `src/lib/google-maps-service.ts` |
 | **Google Places API (New)** | REST | Used by scripts only: text search, place details, IDs and coordinates. | `scripts/maps-api.ts`, `maps-check.ts` |
 | **Google Routes API** | REST | Used by `maps:check` to test train routes. The app's walking routes use the Maps SDK's `Route` class instead. | `scripts/maps-check.ts`, `google-maps-service.ts` |
+| **Open-Meteo** (REST, no key) | — | Forecast, typical weather and city geocoding for the day views. Called from the browser; nothing is stored in Firestore. | `src/lib/open-meteo.ts`, `use-weather.ts` |
 | **Google Fonts** (through `next/font`) | — | Font files, self-hosted at build time. | `layout.tsx` |
 
 ### 2.5 PWA, build and tooling
@@ -141,6 +142,7 @@ Browser (static HTML + JS)
  │     └─ FirestoreShareRepository (src/lib/firestore-share-repository.ts) ── shares/… (members)
  ├─ Read-only viewer (?share=): viewer-store ── use-share-sync ── getViewerDb()
  │     └─ second Firebase app "viewer" (no sign-in, memory cache) ── shares/{id} and its copy
+ ├─ Open-Meteo (src/lib/open-meteo.ts, use-weather.ts) ── forecast, typical weather, geocoding (no key, no Google data)
  └─ service worker (sw.js, precache) and version check (version.json)
 
 Node scripts (scripts/*.ts, run with tsx)
@@ -230,15 +232,18 @@ Screens (one per page):
 | File | Page | Role |
 |---|---|---|
 | `dashboard-screen.tsx` | `/` | Dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research. |
-| `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions; before it, a countdown. |
-| `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. |
+| `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions, and the quick cost button (`QuickExpenseButton`); before it, a countdown. During the trip it also shows the day's weather (`WeatherBadge`). |
+| `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. `trip-days.tsx` holds the Calendar / List toggle (shadcn `ToggleGroup`, next to Today). |
+| `trip-calendar.tsx` | `/days/` | `TripCalendar`: the Calendar view. Monday-first weeks in one continuous grid (December into January). Trip days link to `/day/?date=` (id `day-YYYY-MM-DD`); cells show the day number, stop count, a flight icon, a holiday dot and a today ring. Each hotel night is a city-coloured bar; hotel names show from `lg`. Days outside the trip are muted, not links. A day with research requested shows a search icon; one with a ready analysis shows a sparkles icon. Each trip day cell also shows the day's weather icon (`WeatherBadge`), with the high from `lg`. |
 | `day-screen.tsx` | `/day/` | Loads one day and renders `DayPlan`. |
 | `day-plan.tsx` | `/day/` | The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. |
+| `day-research.tsx` | `/day/` | `DayResearchPanel`: under the flights. "Research this day" (optional message) asks for every place on the day; shows the request, the day analysis (load badge, warnings, nearby ideas, answer, sources) and place updates to review or accept for the day. Hidden on read-only links. |
 | `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view: the day, other days, waiting places. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
-| `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, add place, cost and details. |
+| `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, Days filter (per-day pins with a legend), add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
-| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`) and `MoneyScope`. |
+| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. `ExportExpensesButton` (header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`) and `MoneyScope`. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
+| `quick-expense.tsx` | `/` (Today card) and `/day/` | `QuickExpenseButton({date?})`: a large "+ ¥" button (aria "Log a cost"), shown during the trip on today's date and in the day page's button row. Opens an `EditPanel` with a big numeric amount field, a 4-column grid of category tiles (the last one used is preselected), an optional "What" line and "More details", which opens the full `ExpenseForm` with the same values. Save writes through `saveRecord`; the toast offers Undo. Hidden on read-only links. |
 | `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Share, Backup, Clean up. |
 | `settings-share.tsx` | Settings tab | Read-only share links: create, copy, refresh, change expiry, close (§12.8). |
 | `settings-stays.tsx`, `settings-cities.tsx`, `settings-places.tsx`, `settings-flights.tsx`, `settings-reservations.tsx`, `settings-holidays.tsx`, `settings-trip.tsx` | Settings tabs | Admin editors for each collection. `settings-places.tsx` also holds the research requests and proposal review. |
@@ -250,7 +255,7 @@ Plan and place editing:
 
 | File | Role |
 |---|---|
-| `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, add to day, edit, research. |
+| `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, add to day, edit, research. "Show on map" (under "Open in Google Maps", only when the place has coordinates) via `onShowOnMap`. |
 | `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. |
 | `place-editor.tsx` | Form for a place's fields. |
 | `edit-panel.tsx` | Dialog (wide) or drawer (phone) that wraps forms. |
@@ -258,8 +263,9 @@ Plan and place editing:
 | `place-suggestions.tsx` | The list of Google's suggestions, used by `add-place.tsx` and `settings-stays.tsx`. |
 | `add-to-day.tsx` | Choose day and position for a place. |
 | `proposal-review.tsx` | Compare old and new values for a research proposal, accept field by field. |
-| `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. |
+| `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend). |
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
+| `day-weather.tsx` | `DayWeatherStrip` (day page header: icon and name, high and low, chance of rain or snow, Forecast or dashed Typical tag, sunrise and sunset) and `WeatherBadge` (icon, plus the high from `lg`; used on the Today card and calendar cells). `WEATHER_ICON` maps kinds to icons. Data from `use-weather.ts`. |
 | `tag-badges.tsx` | Category and priority badges and options. |
 | `charts.tsx` | Chart helpers for budget and dashboard. |
 
@@ -283,20 +289,25 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `user-repository.ts` | `UserRepository` interface and the user profile schema (language, last trip). |
 | `activity.ts` | Activity schema, kinds, `ActivityRepository`, and `undoFor`. |
 | `cleanup.ts` | Plans the Clean up step (what is retired and can go) and the `CleanupRepository` interface. |
-| `backup.ts` | Backup file schema and builder. |
+| `backup.ts` | Backup file schema and builder (includes day research). |
+| `day-research.ts` | `DayResearchRepository` interface; `requestDay`, `isOpenDayResearch`, `dayPlaces`, `dayProposals`, `dayBrief`, `DayResultSchema`. Day research: requests and analyses per day, and the day's part of the research file. |
 | `plan.ts` | Plan logic: items for a day, next stop, keys for insert, stop warnings, holiday warnings, costs, hotels for a day. |
 | `days.ts` | `deriveDays`: the trip's days, from the stays (a day belongs to every stay whose range includes it). `tripPhase` (before, during, after). |
 | `legs.ts` | Legs between stops (walk, transit, taxi) and distance formatting. Walking legs are at most `WALK_LEG_MAX_KM` (1.5 km). |
 | `drop.ts` | Drop rules for drag and drop (which target, which order key). |
 | `location.ts` | Google coordinate expiry (30 days) and refresh (after 20 days); match radii for the place matcher. |
 | `live-hours.ts` | Parses Google's opening hours text (English) into periods; "open now". |
-| `map-pins.ts` | Map pins, colours and straight lines for the trip map. |
-| `maps-service.ts` | `MapsService` interface and map types. |
+| `map-pins.ts` | Map pins, colours and straight lines for the trip map. `dayFilterPins(dates, items, places)` returns `{placeIds, pins, legend}` for the City page's day filter, colouring pins per day (`DAY_COLORS`, in date order). |
+| `maps-service.ts` | `MapsService` interface and map types. `MapView` has `fit()` (frame all current pins again) and `focus(id)` (pan to that pin, zoom 16, bring it to the front and scale it up until the next update). |
 | `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting, and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. |
+| `expenses-csv.ts` | `expensesCsv(expenses, {cities, places, person}, tr)`: the expenses CSV for export. Columns date, what, category, amount (JPY), status, paid by, city, place, note, with translated headers and labels; archived expenses left out; sorted by date then title. UTF-8 BOM, CRLF line ends; cells with commas, quotes or line breaks quoted; text starting with `= + - @` gets a leading apostrophe. |
+| `quick-expense.ts` | `QUICK_CATEGORIES` (food, transport, attractions, souvenirs, temples, clothes, other; flights and bookings are logged from their own screens), `parseYen(text)` (digits with commas, spaces or ¥; else null), and `quickExpense({...})`, which builds the record: title = typed text or the category's name; status `paid` when the date is today or earlier (Tokyo), else `planned`; `paidBy` = the signed-in member; `cityId` = the city of that night's hotel; `stayId`, `placeId`, `reservationId` null. |
 | `flights.ts` | Flight logic: flights on a day, flights outside the days, next flight, route, cost label, cost in yen, and the form conversion. |
 | `share.ts`, `share-repository.ts` | `share.ts`: `newShareId` and `parseShareId` (128-bit base64url IDs), `MAX_SHARE_DAYS` (30), `toSharedTrip` (builds the copy, §12.8). `share-repository.ts`: the `ShareRepository` interface. |
 | `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS`: sort and filter for the Day page's waiting list and its pins. |
 | `dashboard.ts` | Figures for the dashboard tiles. |
+| `weather.ts` | `WeatherKind`, `weatherKind(wmoCode)`, `typicalWeather(pastYears)`, `yearsBefore`, type `DayWeather`. Kinds are clear, partly, cloudy, fog, drizzle, rain, snow and storm. Typical weather is the average high and low, the % of years with at least 1 mm of rain, and the most common kind. |
+| `sun.ts` | `sunTimes(date, lat, lng)` → sunrise, sunset and daylight minutes in Tokyo time (NOAA solar equations, about a minute's accuracy). |
 | `proposals.ts` | Research proposals: new, open check, accept field by field, research result schema and cleaning. |
 | `place-edit.ts` | Place form: fields, validation, changes, filters (`PLACE_FILTERS`), Maps link parsing, draft places. |
 | `trip-edit.ts` | Stay issues and day changes when stays move. |
@@ -317,6 +328,7 @@ Firebase and repositories:
 | `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. |
 | `firestore-plan-repository.ts` | Implements `PlanRepository` on `trips/{id}/items`. |
 | `firestore-proposal-repository.ts` | Implements `ProposalRepository` on `trips/{id}/proposals`. |
+| `firestore-day-research-repository.ts` | Implements `DayResearchRepository` (`subscribe`, `save`) on `trips/{id}/dayResearch/{date}`. `local-day-research-repository.ts` is the in-memory version for tests. |
 | `firestore-user-repository.ts` | Implements `UserRepository` on `users/{uid}`. |
 | `firestore-activity-repository.ts` | Implements `ActivityRepository` on `trips/{id}/activity` (newest first, limited). |
 | `firestore-cleanup-repository.ts` | Implements `CleanupRepository`: counts, lists and deletes retired records (the only code that deletes), including `removeShare` for closed or expired share links with their copies. |
@@ -338,6 +350,7 @@ State and sync:
 | `use-trip-sync.ts` | Subscribes to the seven trip collections when access is `member`. |
 | `plan-store.ts` | Zustand: plan items, ready flag, error. |
 | `use-plan-sync.ts` | Subscribes to `items` for the trip. |
+| `use-day-research.ts` | Hook `useDayResearch(tripId)`: live day research. Listens only once access is `member`. |
 | `use-proposals.ts`, `use-activity.ts` | Live proposals (always), and the activity log (only while its sheet is open). |
 | `use-trip-id.ts` | The open trip's ID from the auth store. |
 | `trip-id.ts` | Trip ID format (`[A-Za-z0-9_-]`, 6 to 128 characters), remembering it on the device, choosing a trip, opening trips. |
@@ -356,7 +369,7 @@ Maps and place helpers:
 |---|---|
 | `maps.config.ts` | Maps browser key and Map ID. Public values; restricted in Google Cloud. |
 | `maps-service-instance.ts` | The one `MapsService` instance. |
-| `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. |
+| `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. Remembers the last pins drawn, so `fit()` can frame them again. |
 | `use-walking-legs.ts` | Walking routes for a day's short legs, kept in memory. |
 | `use-place-suggestions.ts` | The debounced search behind `PlaceSuggestions` (add a place and the hotel form). |
 | `tap-limit.ts` | Per-device daily limit on paid Google calls (photos and live details, 30 each per day). |
@@ -371,11 +384,18 @@ Maps and place helpers:
 | `order.ts` | Sort keys with fractional indexing. |
 | `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. |
 
+Weather and daylight:
+
+| File | Role |
+|---|---|
+| `open-meteo.ts` | `placeQueries(name)` (the name, then its first word, e.g. "Tokyo (Ueno)" → "Tokyo"), `locateCity(name)` (geocoding, `countryCode=JP`), `forecast(at)` (16 days, daily weather code, max and min °C, rain chance, Tokyo time), `typical(at, dates)` (the same dates over the last three years, one request per year). Requests in flight are shared; failures are not cached. Results are cached in localStorage under `weather:*` (geocoding 30 days, forecast 3 hours, typical weather 7 days); a version reset clears them. |
+| `use-weather.ts` | `useDaysWeather(entries)` → Map of date to `{sun, weather}`. Dates within 15 days of today (Tokyo) get the forecast, later dates the typical weather, past dates the sun only. Offline, the sun shows once the city's coordinates are cached. |
+
 Version and update:
 
 | File | Role |
 |---|---|
-| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`), cache clearing, reload. |
+| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `days-view`, `quick-expense-category`), cache clearing, reload. |
 | `version-check.ts` | Compares the running version with `version.json` and decides whether to reset. |
 
 ### 3.6 `src/messages`, `src/test`, `scripts`
@@ -497,8 +517,8 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | Page | Screen | Main children |
 |---|---|---|
 | `/` | `DashboardScreen` | `TodayCard`, tiles, `Charts`, `Yen`, `HideAmountsButton` |
-| `/days/` | `TripName`, `TripDates`, `TripPlanStatus`, `ExportTrip`, `TodayCard`, `NeedsNewDay`, `ResearchNotice`, `TripDays` | — |
-| `/day/` | `DayScreen` → `DayPlan` | `FlightCard`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
+| `/days/` | `TripName`, `TripDates`, `TripPlanStatus`, `ExportTrip`, `TodayCard`, `NeedsNewDay`, `ResearchNotice`, `TripDays` (`TripCalendar` or the list, by the `ToggleGroup`) | — |
+| `/day/` | `DayScreen` → `DayPlan` | `FlightCard`, `DayResearchPanel`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
 | `/cities/` | `CitiesScreen` | — |
 | `/budget/` | `BudgetScreen` | `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
@@ -617,6 +637,7 @@ Nothing is deleted in normal use:
 | Plan item | `status: "removed"` (restorable; shown in "Recently changed") |
 | Trip record (city, stay, place, reservation, holiday, expense, flight) | `archived: true` |
 | Proposal | `status: "dismissed"` |
+| Day research | Cancel request sets `status: "archived"` (or goes back to the earlier analysis); Clean up deletes archived day research |
 | Activity entry | kept; deleted only by Clean up or by the rules' delete rule for members |
 | Share link | Close marks it `revoked` (kept). Clean up deletes a link only once it is closed or expired, with all its copy records |
 | Copy record (refresh) | A refresh deletes copies of records that no longer exist in the trip. The trip is not touched |
@@ -671,8 +692,8 @@ The app is designed for a 390px phone first, then widened (CLAUDE.md rule 8). Br
 
 ## 10. Theme
 
-- **Library:** `next-themes`, in `src/components/theme-provider.tsx`. Attribute `class`, default `system`, `enableSystem`, `disableTransitionOnChange`. It sets `class="dark"` on `<html>` before the first paint, so `suppressHydrationWarning` is on `<html>`.
-- **Choices:** Match phone (system), Light, Dark. The button in the Account sheet cycles them (`theme-toggle.tsx`). The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
+- **Library:** `next-themes`, in `src/components/theme-provider.tsx`. Attribute `class`, themes `light` and `dark`, default `light`, `enableSystem={false}`, `disableTransitionOnChange`. It sets `class="dark"` on `<html>` before the first paint, so `suppressHydrationWarning` is on `<html>`.
+- **Choices:** Light and Dark only, with no "Match phone" option. The button in the Account sheet switches between them (`theme-toggle.tsx`). On a device with no stored choice, or with the old stored `system` value, `PickFirstTheme` picks light or dark once from `prefers-color-scheme` and saves it. The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
 - **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, in OKLCH: `--background`, `--foreground`, `--primary` (teal, close to the theme colour), `--muted`, `--border`, `--sidebar-*`, `--chart-1..5`, and others. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`).
 - **Dark variant:** `@custom-variant dark (&:where(.dark, .dark *));` in `globals.css`, so `dark:` classes follow the `dark` class.
 - **Base colour:** `stone` in `components.json`.
@@ -706,11 +727,14 @@ Matching is done by `cmdk`'s fuzzy filter on the `value` string of each item.
 | Filter | Options | Note |
 |---|---|---|
 | View | List, Map | Map shows `TripMap` with the city's pins |
+| Days | Checkbox items, one per day the city covers, with its stop count; "All places" clears | With days chosen, list and map show only places with a non-removed stop on those days (category and priority still apply). Pins are coloured per day (`DAY_COLORS`) and numbered in that day's order, with a legend of the days over the map. A place on two chosen days shows once, with the earlier day. |
 | Category | All, plus each category | Toggle group |
 | Priority | All, must, want, maybe | Select |
-| Unassigned only | yes/no | "Unassigned" = not used by any active plan item |
+| Unassigned only | yes/no | "Unassigned" = not used by any active plan item. Disabled while days are chosen. |
 
 Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordinates (`NEARBY_KM`).
+
+"Show on map" in place details (§3.3) closes the details, switches phones to the Map view, clears the filters if they hide the place, and focuses its pin.
 
 ### 11.3 Settings → Places filters
 
@@ -744,7 +768,7 @@ Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripC
 
 ### 12.2 Days (`/days/`)
 
-Trip name and dates, plan status, export of the trip (`ExportTrip`), today card, "needs a new day" (stops whose day is no longer valid after a stay moved), research notice (proposals to review), and the list of days (`trip-days.tsx`) with city dots, date, stop count, and the flight cards leaving or landing that day. Flights leaving on a date no stay covers (such as the way there and back) appear as cards before the first or after the last group of days.
+Trip name and dates, plan status, export of the trip (`ExportTrip`), today card, "needs a new day" (stops whose day is no longer valid after a stay moved), research notice (proposals to review), and the days in one of two views, chosen with a Calendar / List `ToggleGroup` next to the "Today" button. **Calendar** is the default (`TripCalendar`, `trip-calendar.tsx`): Monday-first weeks in one grid, each trip day linking to `/day/?date=` with its stop count, flight, holiday and today ring; each hotel night is a city-coloured bar. Phones get compact cells; from `lg` cells also show city names, holiday names and "N stops". **List** is the day list grouped by hotel (`trip-days.tsx`, city dots, date, stop count, flight cards leaving or landing that day). Flights leaving on a date no stay covers (such as the way there and back) appear as cards before the first or after the last group of days, in both views. The choice is saved on the device in localStorage under `days-view`, kept through a version reset. Each calendar day has id `day-YYYY-MM-DD`, so "Today" scrolls to it. Research icons (search for a requested day, sparkles for a ready analysis) show on calendar cells.
 
 **Shared view:** Export trip is hidden.
 
@@ -761,17 +785,20 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
   - **Sort and filter** menu: sort by priority (the default), name A to Z or Z to A; filter by priority and category. **Clear** appears when anything differs from the default and resets sorting and filters.
   - **Show on map** is off by default and resets when moving to another day, because `DayScreen` keys `DayPlan` by date. When on, the listed places get pins beside the numbered stops, coloured by category through `cityPins`, and they follow the filters. Clear does not turn the pins off. Tapping a pin opens the place's details. Places with no coordinates are counted in a note under the map.
   - On phones the map is its own tab, so turning it on switches to that tab, where the same controls appear to turn it off. Neither the view nor the button is saved.
-- **Map** (`TripMap`): pins for the day's stops, lines between them.
+- **Day research** (`DayResearchPanel`, under the flights): "Research this day" with an optional message ("Anything specific to look into?"). Sending saves the day as `requested` and asks for research on every place on the day; places with an open proposal are skipped, and already researched places are not asked again. While requested: the date, the message, Change request, Cancel request (goes back to the earlier analysis if there was one, otherwise archives; Undo in the toast). When ready: a collapsible "Day analysis" with the load badge (green, amber or red), reason, summary, warnings (buttons open the named places), nearby ideas (a trip place opens its details, others a Google Maps search link), the answer, sources and date. If the day's places have ready proposals, "N place updates to review" (Review opens Settings > Places) and "Accept all for this day" (confirm, `applyProposals`, Undo). "Research again" asks again and keeps the last analysis until a new one replaces it.
+- **Map** (`TripMap`): pins for the day's stops, lines between them. "Show all pins" frames them again. **Show on map** in place details is offered when the place has a pin on this map (a stop, or a Waiting place shown on the map); phones switch to the map tab.
 - **Drag and drop**: stops within a day, between days, from the waiting list (`drop.ts`). Keyboard support.
 - **Bookings button**: lists reservations on the day (wide layout).
 - **Costs**: `costTotal` for the day.
+- **Weather and daylight** (`DayWeatherStrip`): in the header under the cost line, for the day's first city. Weather icon and name, high and low, chance of rain or snow, sunrise and sunset (sunset in amber when before 17:00). A "Forecast" tag for dates within 15 days, a dashed "Typical" tag (a tooltip explains: the same dates over the last three years) for later dates, and the sun only for past dates.
+- **Quick cost**: the "+ ¥" button in the button row logs an expense for that day's date (§12.5).
 
-**Shared view:** no drag and drop, Went and Skip, up and down buttons, move to another day, log cost, remove, or add from the waiting list. Tapping a waiting place opens its details (it does not add it). The other-days column becomes links to those days. The List, Map and Waiting views, the filters and directions stay. Costs are hidden (`Yen` and `CostLine` render nothing).
+**Shared view:** the day research panel is hidden. No drag and drop, Went and Skip, up and down buttons, move to another day, log cost, remove, or add from the waiting list. Tapping a waiting place opens its details (it does not add it). The other-days column becomes links to those days. The List, Map and Waiting views, the filters and directions stay. Costs are hidden (`Yen` and `CostLine` render nothing).
 
 ### 12.4 Cities (`/cities/`) and City (`/city/?id=`)
 
 - Cities list: each city in trip order with dates and how much is planned.
-- City page: the catalogue (§11.2) for one city, with place details, add place, cost lines, and the map.
+- City page: the catalogue (§11.2) for one city, with place details, add place, cost lines, the Days filter and the map.
 
 **Shared view:** the city page has no edit name, Add place or archive. The filters and the map stay.
 
@@ -779,7 +806,8 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 `budget-screen.tsx` and `domain/budget.ts`:
 
-- **Expenses** (`expenses` collection): title, amount in whole yen, category, date, status (`planned` or `paid`), who paid, and optional links to a place, reservation or stay.
+- **Expenses** (`expenses` collection): title, amount in whole yen, category, date, status (`planned` or `paid`), who paid, and optional links to a place, reservation or stay. `cityId` is the city the money was spent in; `stayId` keeps its meaning (the hotel's own bill).
+- **Quick cost** (`quick-expense.tsx`, on the Today card during the trip and on each day page): a big amount field and a category tile grid (`quick-expense-category` remembers the last tile). The panel shows the day and city it will use. The city is that night's hotel. "More details" opens the full expense form with the same values. Save writes an activity entry; the toast's Undo archives the expense.
 - **Flights**: a flight's cost is not added to the budget by itself. The log cost button on its card opens the expense form filled in, with the amount in yen at the fixed `YEN_PER_USD` rate (USD costs only; yen costs are used as they are).
 - **Estimates**: each place with a cost estimate counts for its category, unless an expense already covers that place, booking or stay (`estimateStops`).
 - **Totals** by category (`totalsByCategory`) and by payer (`totalsByPayer`), and per-day spending (`spendByDay`).
@@ -787,6 +815,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Figures**: spent, planned, budget left, days remaining (`daysRemaining`). USD shown with a fixed rate in `budget.ts` (`YEN_PER_USD`).
 - **Charts**: donut by category, bars by day, gauge of budget used.
 - **Hide amounts**: the eye button (`HideAmountsButton`) hides every amount on the Budget and Dashboard screens. Hidden amounts read as `HIDDEN_AMOUNT` (`¥****`), including chart legends and tooltips, and the dollar hint is gone. Charts still draw from the real numbers. Setting the budget and editing an expense are disabled while hidden. The choice is saved on the device (`hide-amounts.ts`).
+- **Export CSV**: `ExportExpensesButton` in the header, shown when the trip has expenses. Downloads `expenses-<Tokyo date>.csv` built in the browser (Blob and a temporary download link; nothing is sent anywhere) via `expensesCsv` (`domain/expenses-csv.ts`). It always holds the real amounts, even while amounts are hidden. Meant for a spreadsheet or matching card statements after the trip.
 
 **Shared view:** `/budget/` shows `NotOnSharedView`. `Yen`, `CostLine` and `HideAmountsButton` render nothing anywhere in the app, so no amounts appear in place details or on the days.
 
@@ -804,8 +833,8 @@ Tabs (`settings-screen.tsx`):
 | Holidays | holidays and closures |
 | Trip | trip name, members (email list, max 20), budget |
 | Share | read-only share links: name, expiry, copy link, refresh, change expiry, close (§12.8). Members only. |
-| Backup | export the whole trip as JSON, including flights; import only into a trip that has nothing saved. Older backups without flights still import. |
-| Clean up | the retired records (archived, removed, dismissed, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
+| Backup | export the whole trip as JSON, including flights and day research; import only into a trip that has nothing saved. Older backups without flights still import. |
+| Clean up | the retired records (archived, removed, dismissed, archived day research, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
 
 Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, "start fresh" which runs `resetApp`), and sign-out.
 
@@ -830,7 +859,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 **What the copy holds** (`toSharedTrip` in `src/domain/share.ts`):
 
 - Cities, stays, reservations, places, holidays, flights and plan items, in the same record shapes as the trip. Archived records and removed stops are left out.
-- Not included: expenses, the budget and member emails.
+- Not included: expenses, the budget, member emails and day research.
 - Blanked: a place's cost estimate (null); a flight's confirmation number (null), cost (null, currency JPY) and note (null); the notes on stays and reservations (null).
 - Google coordinates older than 30 days are dropped (§14).
 
@@ -850,15 +879,16 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 
 | Module | Key functions | Rule it encodes |
 |---|---|---|
-| `days.ts` | `deriveDays(stays)`, `weekdayOf`, `tripPhase` | A day belongs to every stay whose range includes it, both ends included, so transfer days belong to two cities. |
-| `trip.ts` | `activeTrip`, `stayId` | Archived hidden; stays sorted by check-in; stay ID = `cityId-checkIn`. |
+| `days.ts` | `deriveDays(stays)`, `weekdayOf`, `tripPhase`, `toUtcDate`, `addDays` | A day belongs to every stay whose range includes it, both ends included, so transfer days belong to two cities. |
+| `calendar.ts` | `calendarWeeks(days)`, `stayBands(week, stays)` | `calendarWeeks` gives whole Monday–Sunday weeks around the trip, cells `{date, day, showMonth, monthIndex}`. `stayBands` gives runs of columns per hotel night for the coloured bars. |
+| `trip.ts` | `activeTrip`, `stayId`, `nightStay` | Archived hidden; stays sorted by check-in; stay ID = `cityId-checkIn`. `nightStay(date, stays)` is the hotel slept in that night: on a transfer day, the hotel you arrive at; on the last day, the hotel you leave. `groupDaysByStay` uses it too. |
 | `plan.ts` | `itemsForDay`, `nextStop`, `keysForInsert`, `holidayWarnings`, `stopWarnings`, `costTotal`, `newPlanItem`, `distanceBetweenPlaces`, `placeLocation`, `stayLocation`, `directionsUrl` | Order is a fractional key. Stops have no time of their own. |
 | `legs.ts` | `dayLegs`, `formatWalk`, `formatStation` | Walk if ≤ 1.5 km, else transit or taxi. |
 | `order.ts` (lib) | `keyAt`, `keysBetween` via fractional-indexing | Moving a stop rewrites one key. |
 | `drop.ts` | `planDrop` | Which target a drop lands on (stop, day, list), and which keys change. |
 | `location.ts` | `coordinatesExpired`, `dueForRefresh`, `withoutGoogleCoordinates`, `doubtfulMatch`, `medianPoint` | Google coordinates expire after 30 days and are due for refresh from day 20. `doubtfulMatch` flags a match more than 2 km from coordinates already saved, or far from the city centre (30 km; 200 km for day trips). Flagged matches are reported for a person to confirm. |
 | `live-hours.ts` | `parseGoogleHours`, `openNowFrom`, `hoursDifference` | Reads Google's English opening-hours text into periods, and works out whether a place is open now. |
-| `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor` | Pins per stop, straight lines when no route. |
+| `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor`, `dayFilterPins` | Pins per stop, straight lines when no route. `dayFilterPins` gives the City page's pins and day legend for the chosen days (a place on two days shows once, with the earlier day). |
 | `budget.ts` | `summarizeBudget`, `totalsByCategory`, `totalsByPayer`, `estimateStops`, `spendByDay`, `daysRemaining` | Expenses beat estimates for the same place; yen integers. |
 | `dashboard.ts` | many tile functions (see §12.1) | All figures from in-memory data. |
 | `proposals.ts` | `newProposal`, `isOpenProposal`, `acceptProposal`, `changedFields`, `researchToAccept`, `cleanResearch`, `ResearchResultSchema` | Research never writes a place. Accepting copies chosen fields and their sources; status becomes `researched`. |
@@ -872,6 +902,8 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `budget.ts` | `formatYen`, `formatUsd` | Display formats. |
 | `i18n.ts` | `MessageKey`, `Translate` | Compile-time check that a message key exists. |
 | `version.ts` | `versionFromDescribe` | `v1.0.0-3-gabc` → `1.0.3`. |
+| `weather.ts` | `weatherKind`, `typicalWeather`, `yearsBefore` | WMO weather codes map to eight kinds. Typical weather averages the same dates over past years (highs, lows, % of years with ≥ 1 mm of rain, most common kind). |
+| `sun.ts` | `sunTimes` | Sunrise, sunset and daylight minutes in Tokyo time, from the NOAA solar equations (about a minute's accuracy). Worked out on the device; no service. |
 
 ---
 
@@ -886,6 +918,7 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 - **In memory only:** hours, ratings, photos, route times and distances. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
 - **Share copies** (§12.8) keep place IDs and Google coordinates as the trip does. Coordinates older than 30 days are dropped from the copy. `npm run maps:refresh` brings the copies' coordinates in line with the trip (renewed or deleted), so a copy never keeps them past 30 days. Copies hold no hours, ratings or photos.
 - Google data appears only on a Google map or next to the Google logo. Never on another map provider.
+- Weather and daylight are not Google data. City coordinates come from Open-Meteo's geocoding by the city's name, never from the Maps SDK or stored Google coordinates. Nothing is written to Firestore. Results stay in memory, with the `weather:*` localStorage cache described in §3.5.
 - The browser key is public and restricted by website and API. The script key stays in a git-ignored `.env`.
 - Google Cloud stays in its own projects, not the Firebase project's billing.
 
@@ -919,6 +952,7 @@ Viewers of a share link make the same place-detail calls as members (photos and 
 | **Cloud Firestore** | All trip, plan, user and proposal data | `firestore-*.ts` |
 | **Firebase App Check** | Off (`appCheckSiteKey = null`); code ready for reCAPTCHA v3 | `firebase.ts`, README "Security setup" |
 | **Google Fonts** | Oxanium and Geist Mono, self-hosted at build | `layout.tsx` |
+| **Open-Meteo** (`api.open-meteo.com`, `archive-api.open-meteo.com`, `geocoding-api.open-meteo.com`) | Forecast, typical weather and city geocoding for the day views (§12.3). Free, no key, called from the browser. No Google data. | `open-meteo.ts`, `use-weather.ts` |
 | **GitHub Pages** | Hosting | `deploy.yml` |
 | **Google Maps short links** | Input only (paste or list); links out use `https://www.google.com/maps/search/?api=1&query=…` and `…/dir/?api=1&…` | `place-edit.ts`, `links`, `maps` UI |
 
@@ -964,6 +998,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 - **`shares/{shareId}/{cities|stays|reservations|places|holidays|flights|items}/{id}`** (the copy): read while the link is open, or by members. Writes are for members only and must pass `isSharedCopy`: the existing field checks, with no amount, confirmation or booking note, plan items not `removed`, and no other collection name. This is the only data readable without sign-in.
 - **`items`:** a plan item may hold only `id`, `placeId`, `date`, `order`, `status` and `updatedAt`. The old stop fields (`startTime`, `durationMin`, `note`, `legNote`) are refused.
 - **`queue`** (legacy): members can read and delete, nothing else.
+- **`dayResearch/{date}`:** read, create and update for members, with `id` equal to the date and the `isDayResearch` shape (exact keys, status `requested`, `ready` or `archived`, request at most 1000 characters, analysis null or a map). Delete only when `status` is `archived`. Not copied to share links.
 - **`activity`:** written once, never updated. Members can delete (for Clean up).
 
 ### 15.3 Other security measures
@@ -1049,7 +1084,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 2. The app fetches `version.json` (never cached by the service worker) on start and whenever the tab becomes visible.
 3. If the deployed version differs from `APP_VERSION`, `resetApp(deployed)` runs once per tab (`triedVersion` in sessionStorage, so a stale page cannot cause a loop):
    - signs out, with up to 5 seconds to upload pending edits (`clearSession`);
-   - clears localStorage except `locale`, `theme`, `device-name`, `sidebar-open` and `hide-amounts`;
+   - clears localStorage except `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `days-view` and `quick-expense-category`;
    - clears sessionStorage and all Cache Storage entries, and unregisters service workers;
    - reloads `…/?v=<version>` (the `v` is removed after load).
 4. Storage stamped with another version is reset on start (`storageIsStale`).
@@ -1108,6 +1143,9 @@ Details:
 - `places:reset` (`scripts/places-reset.ts`) archives all places and removes their stops, only with `--apply` (dry run by default).
 - `items:clean` (`scripts/items-clean.ts`) removes `startTime`, `durationMin`, `note` and `legNote` from a trip's plan items, only with `--apply` (dry run by default). It needs `TRIP_ID`.
 - The research file format is documented in `docs/research-run.md`.
+- **Day research** (`dayResearch/{date}`, §23.20) runs alongside the place flow. `research:pull` also reads requested days: for each day it creates any missing place proposals for the day's stops and writes `research/days-<date>.json` with `dayBrief` (stop order, straight-line km between stops, sunrise and sunset of the first city, no coordinates). A request for a day no stay covers is archived. Bookings and flights go in as times and places only, never confirmations.
+- `research:push` takes either the old list of place results or `{places, days}` (`ResultsFileSchema`). Each day analysis is written straight onto the day document as `ready` (`researchedAt` set); cancelled requests are skipped. Place results still become proposals for review.
+- Analyses hold only the researcher's own words, never Google data. The rules for the analysis are in `docs/research-run.md`, section 6, "Day research".
 
 ---
 
@@ -1132,8 +1170,8 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `places:reset` | `scripts/places-reset.ts` | Shows what clearing all places would change; `-- --apply` does it | Yes, with `--apply` |
 | `items:clean` | `scripts/items-clean.ts` | Shows which plan items hold the old stop fields (`startTime`, `durationMin`, `note`, `legNote`); `-- --apply` removes them | Yes, with `--apply` |
 | `flights:push` | `scripts/flights-push.ts` | Saves flights from a file in the git-ignored `research/` folder (`-- research/<file>.json`); a flight with the same ID is replaced. Shows what would change unless `-- --apply` is added | Yes, with `--apply` |
-| `research:pull` | `scripts/research-pull.ts` | Exports research requests for a research run | No |
-| `research:push` | `scripts/research-push.ts` | Writes research as proposals for review; never changes a place | Yes (proposals only) |
+| `research:pull` | `scripts/research-pull.ts` | Exports place and day research requests for a research run (`research/days-<date>.json` for days); creates missing proposals for the day's stops; archives requests for days no stay covers. Each day entry includes `sunrise` and `sunset` for the day's first city | Yes (proposals, archived requests) |
+| `research:push` | `scripts/research-push.ts` | Writes research as proposals for review, and day analyses onto their day; never changes a place | Yes (proposals and day research) |
 | `maps:check` | `scripts/maps-check.ts` | Checks Google keys and test train routes; `-- --embed` serves the Maps Embed test | No |
 | `maps:match` | `scripts/maps-match.ts` | Saves place IDs and coordinates; reports doubtful matches | Yes |
 | `maps:refresh` | `scripts/maps-refresh.ts` | Renews coordinates before 30 days; `--all` refreshes all | Yes |
@@ -1152,7 +1190,7 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 ### 22.1 Test setup
 
 - **Vitest** with **jsdom**, configured in `vitest.config.mts`. Alias `@` → `src`. Tests: `src/**/*.test.{ts,tsx}` and `scripts/**/*.test.ts`.
-- **Setup** (`src/test/setup.ts`): jest-dom matchers; Testing Library cleanup after each test; the activity repository replaced with the in-memory `LocalActivityRepository`; `ResizeObserver` stubbed (tooltips need it).
+- **Setup** (`src/test/setup.ts`): jest-dom matchers; Testing Library cleanup after each test; the activity repository replaced with the in-memory `LocalActivityRepository`; `ResizeObserver` stubbed (tooltips need it); `fetch` stubbed to reject, so no test reaches the network (a test that needs it stubs its own).
 - **In-memory repositories** (`local-*.ts`) replace Firebase in tests. Nothing in tests touches the real database.
 - **Fixture:** `src/test/fixture-trip.json` (made-up trip). Only tests import it.
 - **Rules tests:** separate config (`vitest.rules.config.mts`), run on the emulator (§15.3).
@@ -1207,6 +1245,7 @@ trips/
     flights/{id}               flights, as printed on the ticket
     places/{id}                places (catalogue)
     proposals/{id}             research proposals
+    dayResearch/{date}         day research: request and analysis, one per day (ID is the ISO date)
     items/{id}                 the plan: one document per stop
     queue/{id}                 legacy links from the old queue (read and delete only)
 ```
@@ -1328,6 +1367,7 @@ Null means "not researched yet", not "free" or "none".
 | `status` | `planned` or `paid` | Planned = agreed, not yet paid. |
 | `paidBy` | string ≤ 254, or null | Email or name. |
 | `placeId`, `reservationId`, `stayId` | string ≤ 64, or null | Links to what it pays for; those are not estimated again. |
+| `cityId` | string ≤ 64, or null | Default null. The city the money was spent in. `stayId` keeps its meaning (the hotel's own bill). Allowed by `isExpense` as `optionalString(d.get('cityId', null), 64)`. |
 | `note` | string ≤ 500, or null | |
 | `archived`, `updatedAt` | | |
 
@@ -1394,6 +1434,7 @@ trips/{tripId}
  ├─ proposals/{id} ──► placeId
  ├─ reservations/{id} ── date
  ├─ holidays/{id} ── date
+ ├─ dayResearch/{date} ── date (one per day)
  ├─ expenses/{id} ── placeId | reservationId | stayId (optional)
  ├─ flights/{id} ── departDate, arriveDate (no links)
  ├─ activity/{id} ── targetId (item, place, stay …)
@@ -1414,6 +1455,7 @@ Cross-collection links are **not enforced** by the rules or by the database. The
 | Member | seven collection listeners, full collections | While trip is open | No pagination; the whole trip is loaded. |
 | Member | `items` listener | While trip is open | Plan. |
 | Member | `proposals` listener | While trip is open | Research notice and review. |
+| Member | `dayResearch` listener (`useDayResearch`) | While trip is open | Day research panel and calendar icons. |
 | Member | `activity` orderBy `at` desc, limit 50 | Only while the activity sheet is open | Single-field order; no composite index. |
 | Member | `activity` count and `queue` list | Only in Clean up | `getCountFromServer`, `getDocs`. |
 | Member | `users/{uid}` get and merge-set | Sign-in and trip change | Profile. |
@@ -1464,6 +1506,23 @@ These come from reading the code, not from a live database.
 `id` (string), `airline` (1 to 100), `flightNumber` (1 to 20), `departDate` and `arriveDate` (`YYYY-MM-DD`), `departTime` and `arriveTime` (`HH:MM`), `departAirport` and `arriveAirport` (three capital letters), `departCity` and `arriveCity` (≤ 100 or null), `confirmation` (≤ 40 or null), `costAmount` (number ≥ 0 or null), `costCurrency` (`USD` or `JPY`), `note` (≤ 500 or null), `archived`, `updatedAt`.
 
 Dates and times are local to each airport, as on the ticket, so an arrival can read earlier than its departure. They are never converted. Deletes: only when `archived` is true (§8.3). Older flight bookings stay in `reservations` (§23.6).
+
+---
+
+### 23.20 Day research (`trips/{tripId}/dayResearch/{date}`)
+
+One document per trip day; the ID is the ISO date. Schema `DayResearchSchema`, rules `isDayResearch`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Equals `date`. |
+| `date` | string `YYYY-MM-DD` | The trip day. |
+| `status` | `requested`, `ready`, `archived` | |
+| `request` | string ≤ 1000, or null | The member's message. |
+| `analysis` | map or null | `DayAnalysisSchema`: `load` (`light`, `medium`, `heavy`), `loadReason`, `summary`, `warnings` (≤ 20 of `{kind: closed, conflict, timing, other; placeIds; text}`), `hints` (≤ 10 of `{name, text, placeId or null, mapsUrl or null}`), `answer` (or null), `sources` (`{url, note}`), `researchedAt`. Only the researcher's own words, never Google data. |
+| `requestedAt`, `updatedAt` | ISO strings | |
+
+Rules: members read, create and update, with `id` equal to the date. Delete only when `status` is `archived`. Not copied to share links.
 
 ---
 

@@ -44,7 +44,7 @@ vi.mock("@/lib/use-walking-legs", () => ({
   useWalkingLegs: () => new Map(),
 }));
 vi.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "system", setTheme: vi.fn() }),
+  useTheme: () => ({ theme: "light", setTheme: vi.fn() }),
 }));
 
 const place = testPlace({ cityId: "nagoya" });

@@ -154,7 +154,10 @@
     "nothingToday": "Nothing planned today.",
     "allDoneToday": "All of today's stops are done.",
     "goThere": "Go there",
-    "openToday": "Open today ({done}/{total} done)"
+    "openToday": "Open today ({done}/{total} done)",
+    "viewCalendar": "Calendar",
+    "viewList": "List",
+    "viewAria": "Show the days as"
   },
   "cities": {
     "title": "Cities",
@@ -167,6 +170,11 @@
     "allPriorities": "All priorities",
     "unassignedOnly": "Unassigned only",
     "inPlanBadge": "In plan",
+    "filterDays": "Days",
+    "daysChosen": "{count, plural, one {# day} other {# days}}",
+    "showAllPlaces": "All places",
+    "dayLegend": "Days on the map",
+    "noDaysHere": "No days in this city yet.",
     "noPlaces": "No places yet. Add the first one.",
     "noMatches": "No places match these filters.",
     "unpinned": "{unpinned} of these {total} places have no map pin yet."
@@ -255,6 +263,7 @@
     "details": "Place details",
     "checked": "Checked {date}",
     "openInMaps": "Open in Google Maps",
+    "showOnMap": "Show on map",
     "edit": "Edit place",
     "removeFromPlanFirst": "Remove it from the plan first",
     "inPlanNote": "It's in the plan. Remove it from its day to archive it.",
@@ -313,7 +322,8 @@
     "notConfigured": "The map isn't set up yet.",
     "offline": "You're offline. The map comes back with signal; the list still works.",
     "quota": "The map reached its daily limit. It will be back tomorrow.",
-    "failed": "The map couldn't load. The list still works."
+    "failed": "The map couldn't load. The list still works.",
+    "fit": "Show all pins"
   },
   "settings": {
     "title": "Trip settings",
@@ -554,7 +564,6 @@
     "revokedLink": "closed the read-only link {label}"
   },
   "theme": {
-    "system": "Match phone",
     "light": "Light",
     "dark": "Dark",
     "theme": "Theme",
@@ -787,5 +796,83 @@
     "waitingHint": "Places in this city not on any day yet. Tap one for details.",
     "otherDays": "Other days here",
     "otherDaysHint": "The other days in this city."
+  },
+  "dayResearch": {
+    "request": "Research this day",
+    "tipRequest": "Research every stop again and get a view of the whole day",
+    "again": "Research again",
+    "dialogTitle": "Research this day",
+    "dialogBody": "Every place on this day is researched again, whatever it already has. Then the whole day is looked at: how full it is, closures on this date, clashes, timing and places nearby.",
+    "messageLabel": "Anything specific to look into? (optional)",
+    "messagePlaceholder": "For example: do any of these have winter lights or events then?",
+    "send": "Request",
+    "saved": "Day research requested",
+    "requested": "Research requested on {date}. It is filled in at the next research run.",
+    "yourMessage": "Your message: {message}",
+    "edit": "Change request",
+    "cancel": "Cancel request",
+    "cancelled": "Day research cancelled",
+    "title": "Day analysis",
+    "loadLight": "Light day",
+    "loadMedium": "Medium day",
+    "loadHeavy": "Heavy day",
+    "warnings": "Warnings and notices",
+    "warningClosed": "Closed",
+    "warningConflict": "Clash",
+    "warningTiming": "Timing",
+    "warningOther": "Notice",
+    "hints": "Nearby ideas",
+    "answer": "Your question",
+    "placeUpdates": "{count, plural, one {# place update to review} other {# place updates to review}}",
+    "review": "Review",
+    "acceptAll": "Accept all for this day",
+    "acceptTitle": "Accept the research for this day?",
+    "acceptBody": "{count, plural, one {# place gets} other {# places get}} the researched details. Fields edited by hand are never changed.",
+    "acceptCorrections": "{count, plural, one {# value replaces} other {# values replace}} what is there now.",
+    "researchedOn": "Researched {date}",
+    "show": "Show the day analysis",
+    "hide": "Hide the day analysis",
+    "badgeRequested": "Day research requested",
+    "badgeReady": "Day analysis ready"
+  },
+  "quickExpense": {
+    "open": "Log a cost",
+    "title": "Log a cost",
+    "whenWhere": "{day} · {city}",
+    "what": "What (optional)",
+    "more": "More details",
+    "saved": "Saved ¥{amount}"
+  },
+  "csv": {
+    "date": "Date",
+    "title": "What",
+    "category": "Category",
+    "amountJPY": "Amount (JPY)",
+    "status": "Status",
+    "paidBy": "Paid by",
+    "city": "City",
+    "place": "Place",
+    "note": "Note",
+    "export": "Export CSV",
+    "tipExport": "Download the expenses as a spreadsheet file, with every amount",
+    "exported": "Expenses downloaded"
+  },
+  "weather": {
+    "clear": "Clear",
+    "partly": "Partly cloudy",
+    "cloudy": "Cloudy",
+    "fog": "Fog",
+    "drizzle": "Drizzle",
+    "rain": "Rain",
+    "snow": "Snow",
+    "storm": "Thunderstorms",
+    "sunrise": "Sunrise {time}",
+    "sunset": "Sunset {time}",
+    "temps": "{max}° / {min}°",
+    "precip": "{pct}% rain or snow",
+    "forecast": "Forecast",
+    "typical": "Typical",
+    "tipTypical": "What these dates were like over the last three years; the forecast takes over 16 days before",
+    "outlook": "Weather and daylight"
   }
 }

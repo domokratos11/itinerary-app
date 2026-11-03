@@ -1,6 +1,7 @@
 import type { LatLng } from "@/lib/geo";
 import type { MapLine, MapPin } from "./maps-service";
 import type { Place, PlanItem } from "./schemas";
+import { itemsForDay } from "./plan";
 import { CATEGORY_COLOR } from "./taxonomy";
 import type { Endpoint } from "./trip";
 
@@ -115,4 +116,63 @@ export function straightLines(route: LatLng[]): MapLine[] {
     path: [route[i], to],
     kind: "straight" as const,
   }));
+}
+
+// One colour per chosen day, in date order, as Wanderlog does.
+export const DAY_COLORS = [
+  "#2563eb",
+  "#dc2626",
+  "#16a34a",
+  "#9333ea",
+  "#ea580c",
+  "#0891b2",
+  "#db2777",
+  "#65a30d",
+];
+
+export type DayLegend = { date: string; color: string; stops: number };
+
+export type DayFilterMap = {
+  // The places on any chosen day, for the list as well as the map.
+  placeIds: Set<string>;
+  pins: MapPin[];
+  legend: DayLegend[];
+};
+
+// A city's stops on the chosen days, each day in its own colour and numbered
+// in its order. A place on two chosen days shows once, with the earlier day.
+// `places` are the city's own, so stops elsewhere on a transfer day are left
+// out.
+export function dayFilterPins(
+  dates: string[],
+  items: PlanItem[],
+  places: Map<string, Place>,
+): DayFilterMap {
+  const placeIds = new Set<string>();
+  const pins: MapPin[] = [];
+  const legend: DayLegend[] = [];
+  [...dates].sort().forEach((date, index) => {
+    const color = DAY_COLORS[index % DAY_COLORS.length];
+    const stops = itemsForDay(items, date).flatMap((item) => {
+      const place = places.get(item.placeId);
+      return place ? [place] : [];
+    });
+    legend.push({ date, color, stops: stops.length });
+    stops.forEach((place, order) => {
+      if (placeIds.has(place.id)) return;
+      placeIds.add(place.id);
+      const position = placePoint(place);
+      if (!position) return;
+      pins.push({
+        id: place.id,
+        position,
+        title: place.name,
+        label: String(order + 1),
+        color,
+        emphasised: false,
+        clickable: true,
+      });
+    });
+  });
+  return { placeIds, pins, legend };
 }

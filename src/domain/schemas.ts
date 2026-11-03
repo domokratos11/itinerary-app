@@ -226,6 +226,8 @@ export const ExpenseRecordSchema = z.object({
   placeId: recordId.nullable().default(null),
   reservationId: recordId.nullable().default(null),
   stayId: recordId.nullable().default(null),
+  // The city it was spent in: where that night was, for a quick entry.
+  cityId: recordId.nullable().default(null),
   note: z.string().max(500).nullable(),
   ...recordFields,
 });
@@ -290,6 +292,65 @@ export const ProposalSchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 
+export const DAY_RESEARCH_STATUSES = [
+  "requested",
+  "ready",
+  "archived",
+] as const;
+export const DAY_LOADS = ["light", "medium", "heavy"] as const;
+export const DAY_WARNING_KINDS = [
+  "closed",
+  "conflict",
+  "timing",
+  "other",
+] as const;
+
+// A researcher's view of a whole day, in their own words. It never holds
+// Google data: no coordinates, hours or ratings copied from Maps.
+export const DayAnalysisSchema = z.object({
+  load: z.enum(DAY_LOADS),
+  loadReason: z.string().min(1).max(500),
+  summary: z.string().min(1).max(3000),
+  warnings: z
+    .array(
+      z.object({
+        kind: z.enum(DAY_WARNING_KINDS),
+        placeIds: z.array(recordId).max(10),
+        text: z.string().min(1).max(500),
+      }),
+    )
+    .max(20),
+  // Places near the day's stops that could be added, or not.
+  hints: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(200),
+        text: z.string().min(1).max(500),
+        placeId: recordId.nullable(),
+        mapsUrl: httpsUrl.nullable(),
+      }),
+    )
+    .max(10),
+  // The reply to the request's message, if it had one.
+  answer: z.string().max(3000).nullable(),
+  sources: z
+    .array(z.object({ url: httpsUrl, note: z.string().max(200).nullable() }))
+    .max(30),
+  researchedAt: z.iso.datetime(),
+});
+
+// One per day, under trips/{tripId}/dayResearch/{date}. Asking again keeps the
+// last analysis until the new one replaces it.
+export const DayResearchSchema = z.object({
+  id: recordId,
+  date: isoDate,
+  status: z.enum(DAY_RESEARCH_STATUSES),
+  request: z.string().max(1000).nullable(),
+  analysis: DayAnalysisSchema.nullable(),
+  requestedAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
 // The fields a place record has beyond the basic place.
 export function placeRecordDefaults(): Pick<
   PlaceRecord,
@@ -320,6 +381,9 @@ export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 export type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
 export type Budget = z.infer<typeof BudgetSchema>;
 export type Proposal = z.infer<typeof ProposalSchema>;
+export type DayResearch = z.infer<typeof DayResearchSchema>;
+export type DayAnalysis = z.infer<typeof DayAnalysisSchema>;
+export type DayLoad = (typeof DAY_LOADS)[number];
 export type ProposalFields = z.infer<typeof ProposalFieldsSchema>;
 export type FieldSource = z.infer<typeof FieldSourceSchema>;
 export type NearestStation = z.infer<typeof NearestStationSchema>;

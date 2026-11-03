@@ -10,17 +10,34 @@
  * dismissed and listed. Writes research/proposals-<date>.json (git-ignored),
  * or -2, -3 and so on when that file exists, so a list still being researched
  * is never overwritten. With nothing waiting it writes no file.
+ *
+ * Days asked about in the app (trips/{tripId}/dayResearch, status
+ * "requested") also get a research request for every place on them that has
+ * none open, and are written to research/days-<date>.json for the day
+ * analysis. A request for a day the stays no longer have is archived.
  */
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { z } from "zod";
 import { fileURLToPath } from "node:url";
 
 import { adminDb } from "./admin-db";
+import { dayBrief, dayPlaces } from "../src/domain/day-research";
+import { deriveDays, weekdayOf } from "../src/domain/days";
+import { sunTimes } from "../src/domain/sun";
+import { nightStay } from "../src/domain/trip";
+import { locateCity } from "../src/lib/open-meteo";
 import { missingFields, needsResearch } from "../src/domain/place-edit";
 import { isOpenProposal, newProposal } from "../src/domain/proposals";
 import {
+  DayResearchSchema,
+  FlightRecordSchema,
+  HolidayRecordSchema,
   PlaceRecordSchema,
+  PlanItemSchema,
   ProposalSchema,
+  ReservationRecordSchema,
+  StayRecordSchema,
   type Proposal,
 } from "../src/domain/schemas";
 import { parseTripId } from "../src/lib/trip-id";
@@ -45,10 +62,27 @@ export function orphanedRequests(
 export function freeFileName(
   date: string,
   taken: (name: string) => boolean,
+  prefix = "proposals",
 ): string {
-  let name = `proposals-${date}.json`;
-  for (let n = 2; taken(name); n += 1) name = `proposals-${date}-${n}.json`;
+  let name = `${prefix}-${date}.json`;
+  for (let n = 2; taken(name); n += 1) name = `${prefix}-${date}-${n}.json`;
   return name;
+}
+
+// Sunrise and sunset in the day's first city, found by name through
+// Open-Meteo (not Google). Null when the city can't be found or there is no
+// connection.
+async function daylight(date: string, city: string | undefined) {
+  if (!city) return null;
+  const at = await locateCity(city).catch(() => null);
+  return at ? sunTimes(date, at.lat, at.lng) : null;
+}
+
+function parsed<T>(docs: { data(): unknown }[], schema: z.ZodType<T>): T[] {
+  return docs.flatMap((d) => {
+    const r = schema.safeParse(d.data());
+    return r.success ? [r.data] : [];
+  });
 }
 
 async function main() {
@@ -112,6 +146,86 @@ async function main() {
     console.log(`${added.length} new requests`);
   }
 
+  // Days asked about: every place on them gets a request too.
+  const load = async (name: string) =>
+    (await db.collection(`trips/${tripId}/${name}`).get()).docs;
+  const days = parsed(await load("dayResearch"), DayResearchSchema).filter(
+    (d) => d.status === "requested",
+  );
+  const dayFiles: ReturnType<typeof dayBrief>[] = [];
+  if (days.length > 0) {
+    const live = <T extends { archived: boolean }>(rows: T[]) =>
+      rows.filter((r) => !r.archived);
+    const stays = live(parsed(await load("stays"), StayRecordSchema));
+    const items = parsed(await load("items"), PlanItemSchema);
+    const holidays = live(parsed(await load("holidays"), HolidayRecordSchema));
+    const reservations = live(
+      parsed(await load("reservations"), ReservationRecordSchema),
+    );
+    const flights = live(parsed(await load("flights"), FlightRecordSchema));
+    const tripDays = new Map(deriveDays(stays).map((d) => [d.date, d]));
+    const placesById = new Map(places.map((p) => [p.id, p]));
+    const now = new Date();
+    for (const day of days) {
+      const tripDay = tripDays.get(day.date);
+      if (!tripDay) {
+        await db
+          .doc(`trips/${tripId}/dayResearch/${day.id}`)
+          .update({ status: "archived", updatedAt: now.toISOString() });
+        console.log(`${day.date}: no longer a day of the trip, archived`);
+        continue;
+      }
+      const stops = dayPlaces(day.date, items, placesById);
+      const open = new Map(
+        proposals.filter(isOpenProposal).map((p) => [p.placeId, p.id]),
+      );
+      for (const place of stops) {
+        if (open.has(place.id)) continue;
+        const proposal = newProposal(crypto.randomUUID(), place.id, now);
+        await db.doc(`trips/${tripId}/proposals/${proposal.id}`).set(proposal);
+        proposals.push(proposal);
+        open.set(place.id, proposal.id);
+      }
+      const holiday = holidays.find((h) => h.date === day.date) ?? null;
+      dayFiles.push(
+        dayBrief({
+          research: day,
+          weekday: weekdayOf(day.date),
+          cities: tripDay.cityIds.map((id) => cityNames.get(id) ?? id),
+          hotel: nightStay(day.date, stays)?.hotelName ?? null,
+          holiday: holiday && {
+            name: holiday.name,
+            kind: holiday.kind,
+            note: holiday.note,
+          },
+          // Times and places only: never a booking's note or reference.
+          reservations: reservations
+            .filter((r) => r.date === day.date)
+            .map((r) => ({
+              type: r.type,
+              time: r.time,
+              from: r.from,
+              to: r.to,
+            })),
+          flights: flights
+            .filter(
+              (f) => f.departDate === day.date || f.arriveDate === day.date,
+            )
+            .map((f) => ({
+              flightNumber: f.flightNumber,
+              departDate: f.departDate,
+              departTime: f.departTime,
+              arriveDate: f.arriveDate,
+              arriveTime: f.arriveTime,
+            })),
+          stops,
+          proposalIds: open,
+          sun: await daylight(day.date, cityNames.get(tripDay.cityIds[0])),
+        }),
+      );
+    }
+  }
+
   const byId = new Map(places.map((p) => [p.id, p]));
   const requests = proposals
     .filter((proposal) => proposal.status === "requested")
@@ -147,18 +261,23 @@ async function main() {
     });
 
   console.log(`${requests.length} requests waiting for research`);
-  if (requests.length === 0) process.exit(0);
+  console.log(`${dayFiles.length} days waiting for an analysis`);
+  if (requests.length === 0 && dayFiles.length === 0) process.exit(0);
 
   const dir = path.resolve(process.cwd(), "research");
   mkdirSync(dir, { recursive: true });
-  const file = path.join(
-    dir,
-    freeFileName(new Date().toISOString().slice(0, 10), (name) =>
-      existsSync(path.join(dir, name)),
-    ),
-  );
-  writeFileSync(file, JSON.stringify(requests, null, 2) + "\n");
-  console.log(`Written to ${path.relative(process.cwd(), file)}`);
+  const today = new Date().toISOString().slice(0, 10);
+  const write = (prefix: string, rows: unknown[]) => {
+    if (rows.length === 0) return;
+    const file = path.join(
+      dir,
+      freeFileName(today, (name) => existsSync(path.join(dir, name)), prefix),
+    );
+    writeFileSync(file, JSON.stringify(rows, null, 2) + "\n");
+    console.log(`Written to ${path.relative(process.cwd(), file)}`);
+  };
+  write("proposals", requests);
+  write("days", dayFiles);
   process.exit(0);
 }
 

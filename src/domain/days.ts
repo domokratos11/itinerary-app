@@ -8,7 +8,7 @@ export type TripDay = {
 
 // Calendar dates are plain YYYY-MM-DD strings, so they are compared and
 // stepped in UTC to avoid any time-zone drift.
-function toUtcDate(date: string): Date {
+export function toUtcDate(date: string): Date {
   const [y, m, d] = date.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d));
 }
@@ -17,10 +17,14 @@ function fromUtcDate(value: Date): string {
   return value.toISOString().slice(0, 10);
 }
 
-function nextDay(date: string): string {
+export function addDays(date: string, count: number): string {
   const value = toUtcDate(date);
-  value.setUTCDate(value.getUTCDate() + 1);
+  value.setUTCDate(value.getUTCDate() + count);
   return fromUtcDate(value);
+}
+
+function nextDay(date: string): string {
+  return addDays(date, 1);
 }
 
 // A day belongs to every stay whose check-in to check-out range contains it,

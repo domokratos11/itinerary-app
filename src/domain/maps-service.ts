@@ -36,6 +36,11 @@ export type MapLine = {
 
 export type MapView = {
   update(pins: MapPin[], lines: MapLine[]): void;
+  // Frames every pin again, after someone has moved the map away.
+  fit(): void;
+  // Centres on one pin, zoomed in, and makes it stand out until the next
+  // update.
+  focus(id: string): void;
   destroy(): void;
 };
 

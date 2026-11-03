@@ -55,7 +55,7 @@ vi.mock("@/lib/use-walking-legs", () => ({
   useWalkingLegs: () => new Map(),
 }));
 vi.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "system", setTheme: vi.fn() }),
+  useTheme: () => ({ theme: "light", setTheme: vi.fn() }),
 }));
 
 const NOW = new Date("2026-11-02T00:00:00.000Z");
@@ -104,6 +104,7 @@ function asViewer() {
           placeId: null,
           reservationId: null,
           stayId: null,
+          cityId: null,
           note: null,
           archived: false,
           updatedAt: NOW.toISOString(),

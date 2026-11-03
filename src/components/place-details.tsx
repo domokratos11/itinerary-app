@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Archive, ExternalLink, Pencil, Search, Wallet } from "lucide-react";
+import {
+  Archive,
+  ExternalLink,
+  MapPin,
+  Pencil,
+  Search,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -50,6 +57,9 @@ type Props = {
   inPlan?: boolean;
   // Left out where archiving doesn't apply, such as a stop in a day's plan.
   onArchive?: (place: PlaceRecord) => void;
+  // Closes the details and centres the screen's map on the place. Only
+  // offered for a place with a pin.
+  onShowOnMap?: (place: PlaceRecord) => void;
 };
 
 // Phones get a bottom Drawer; wider screens get a side Sheet.
@@ -59,6 +69,7 @@ export function PlaceDetails({
   inPlan = false,
   onOpenChange,
   onArchive,
+  onShowOnMap,
 }: Props) {
   const wide = useMediaQuery("(min-width: 768px)");
   // Nothing can be changed from a read-only link, and it never shows a cost.
@@ -98,6 +109,11 @@ export function PlaceDetails({
       onEdit={onEdit}
       onLogCost={tripId ? () => setLogging(place.id) : null}
       onArchive={onArchive && !readOnly ? () => onArchive(place) : null}
+      onShowOnMap={
+        onShowOnMap && place.lat !== null && place.lng !== null
+          ? () => onShowOnMap(place)
+          : null
+      }
       readOnly={readOnly}
     />
   );
@@ -156,6 +172,7 @@ function PlaceBody({
   onEdit,
   onLogCost,
   onArchive,
+  onShowOnMap,
   readOnly,
 }: {
   place: PlaceRecord;
@@ -164,6 +181,7 @@ function PlaceBody({
   onEdit: (() => void) | null;
   onLogCost: (() => void) | null;
   onArchive: (() => void) | null;
+  onShowOnMap: (() => void) | null;
   readOnly: boolean;
 }) {
   const mapsLink = place.googlePlaceId
@@ -197,6 +215,12 @@ function PlaceBody({
           </a>
         </Button>
       </Tip>
+      {onShowOnMap && (
+        <Button variant="outline" onClick={onShowOnMap}>
+          <MapPin />
+          {t("place.showOnMap")}
+        </Button>
+      )}
       {!readOnly && <AddToDay place={place} />}
       {onLogCost && (
         <Tip label={t("budget.tipLogCost")}>

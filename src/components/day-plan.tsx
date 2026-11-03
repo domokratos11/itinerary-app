@@ -118,7 +118,11 @@ import {
 import { PlaceDetails } from "@/components/place-details";
 import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { LegLine } from "@/components/leg-line";
-import { TripMap } from "@/components/trip-map";
+import { DayResearchPanel } from "@/components/day-research";
+import { QuickExpenseButton } from "@/components/quick-expense";
+import { DayWeatherStrip } from "@/components/day-weather";
+import { useDaysWeather } from "@/lib/use-weather";
+import { TripMap, type MapFocus } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
 import {
   cityPins,
@@ -171,6 +175,10 @@ export function DayPlan(props: Props) {
   const [view, setView] = useState<"list" | "map" | "waiting">("list");
   const [adding, setAdding] = useState<Waiting | null>(null);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
+  const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
+  const outlook = useDaysWeather([
+    { date: props.date, city: props.cityNames[0] ?? null },
+  ]);
   const [waitingView, setWaitingView] = useState(DEFAULT_WAITING_VIEW);
   const [waitingOnMap, setWaitingOnMap] = useState(false);
   const wide = useMediaQuery("(min-width: 768px)");
@@ -391,6 +399,9 @@ export function DayPlan(props: Props) {
     item,
     place: placesById.get(item.placeId),
   }));
+  const placesOfDay = rows.flatMap((r) =>
+    r.place && !r.place.archived ? [r.place] : [],
+  );
 
   const map = dayMap(rows, props.start, props.end);
   const legs = dayLegs(rows, props.start, props.end);
@@ -454,6 +465,13 @@ export function DayPlan(props: Props) {
     />
   );
   const openPlace = openPlaceId ? placesById.get(openPlaceId) : undefined;
+  function showOnMap() {
+    if (!openPlace) return;
+    setOpenPlaceId(null);
+    // On phones the map is its own tab.
+    if (!wide) setView("map");
+    setMapFocus({ id: openPlace.id });
+  }
   const openNearby = openPlace
     ? (nearbyByPlace(trip.places)[openPlace.id] ?? []).map((n) => ({
         id: n.id,
@@ -486,6 +504,7 @@ export function DayPlan(props: Props) {
           ))}
         </div>
         <CostLine places={stops.map((i) => placesById.get(i.placeId))} />
+        <DayWeatherStrip outlook={outlook.get(props.date)} />
         {holiday && (
           <p className="rounded-md bg-muted px-3 py-2 text-sm">
             <span className="font-medium">{holiday.name}.</span> {holiday.note}
@@ -511,6 +530,12 @@ export function DayPlan(props: Props) {
             ))}
           </div>
         )}
+        <DayResearchPanel
+          date={props.date}
+          placesOfDay={placesOfDay}
+          placesById={placesById}
+          onOpenPlace={setOpenPlaceId}
+        />
         <div className="flex flex-wrap gap-2">
           {nextPlace ? (
             <Tip label={t("day.tipGoNext", { name: nextPlace.name })}>
@@ -533,6 +558,7 @@ export function DayPlan(props: Props) {
           <FullDay start={props.start} end={props.end} stops={stops} />
           <HotelButtons start={props.start} end={props.end} />
           {wide && <BookingsButton reservations={props.reservations} />}
+          <QuickExpenseButton date={props.date} className="ml-auto" />
         </div>
         {!wide && (
           <ToggleGroup
@@ -560,6 +586,7 @@ export function DayPlan(props: Props) {
           pins={pins}
           lines={mapLines}
           onPinClick={setOpenPlaceId}
+          focus={mapFocus}
           className="h-[65svh]"
           note={mapNote}
         />
@@ -618,6 +645,7 @@ export function DayPlan(props: Props) {
               pins={pins}
               lines={mapLines}
               onPinClick={setOpenPlaceId}
+              focus={mapFocus}
               className="min-h-0 flex-1"
               note={mapNote}
             />
@@ -712,6 +740,11 @@ export function DayPlan(props: Props) {
         onOpenChange={(open) => {
           if (!open) setOpenPlaceId(null);
         }}
+        onShowOnMap={
+          openPlace && pins.some((pin) => pin.id === openPlace.id)
+            ? showOnMap
+            : undefined
+        }
       />
     </div>
   );
