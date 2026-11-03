@@ -842,5 +842,19 @@
     "what": "Qué (opcional)",
     "more": "Más detalles",
     "saved": "Guardado ¥{amount}"
+  },
+  "csv": {
+    "date": "Fecha",
+    "title": "Concepto",
+    "category": "Categoría",
+    "amountJPY": "Monto (JPY)",
+    "status": "Estado",
+    "paidBy": "Pagado por",
+    "city": "Ciudad",
+    "place": "Lugar",
+    "note": "Nota",
+    "export": "Exportar CSV",
+    "tipExport": "Descarga los gastos como archivo de hoja de cálculo, con todos los montos",
+    "exported": "Gastos descargados"
   }
 }

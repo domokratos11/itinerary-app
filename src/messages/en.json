@@ -842,5 +842,19 @@
     "what": "What (optional)",
     "more": "More details",
     "saved": "Saved ¥{amount}"
+  },
+  "csv": {
+    "date": "Date",
+    "title": "What",
+    "category": "Category",
+    "amountJPY": "Amount (JPY)",
+    "status": "Status",
+    "paidBy": "Paid by",
+    "city": "City",
+    "place": "Place",
+    "note": "Note",
+    "export": "Export CSV",
+    "tipExport": "Download the expenses as a spreadsheet file, with every amount",
+    "exported": "Expenses downloaded"
   }
 }

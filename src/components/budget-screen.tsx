@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
-import { Archive, Pencil, Plus, Target } from "lucide-react";
+import { Archive, FileSpreadsheet, Pencil, Plus, Target } from "lucide-react";
 import { toast } from "sonner";
 
 import { BudgetGauge, DonutChart, BarList } from "@/components/charts";
@@ -55,7 +55,13 @@ import { usePlanStore } from "@/lib/plan-store";
 import { EXPENSE_ICON } from "@/lib/taxonomy-icons";
 import { todayInTokyo } from "@/lib/tokyo-date";
 import { archiveRecord, saveBudget, saveRecord } from "@/lib/trip-actions";
-import { usePlacesById, useTrip, useTripDays } from "@/lib/trip-store";
+import {
+  useCitiesById,
+  usePlacesById,
+  useTrip,
+  useTripDays,
+} from "@/lib/trip-store";
+import { expensesCsv } from "@/domain/expenses-csv";
 import { useTripId } from "@/lib/use-trip-id";
 import { useReadOnly } from "@/lib/viewer-store";
 import { NotOnSharedView } from "@/components/viewer";
@@ -244,6 +250,7 @@ function BudgetContent() {
         </div>
         <div className="flex flex-wrap gap-2">
           <HideAmountsButton />
+          <ExportExpensesButton />
           {/* The form shows the real amounts, so it waits for them to show.
               The span keeps the hint working on a disabled button. */}
           <Tip
@@ -621,5 +628,39 @@ function BudgetForm({
         ))}
       </div>
     </EditPanel>
+  );
+}
+
+// Downloads every expense as CSV, for a spreadsheet or for matching against
+// card statements after the trip. Made in the browser; nothing is sent.
+// It always holds the real amounts: asking for the file is asking for them.
+function ExportExpensesButton() {
+  const trip = useTrip();
+  const cities = useCitiesById();
+  const places = usePlacesById();
+  if (trip.expenses.length === 0) return null;
+
+  function download() {
+    const csv = expensesCsv(
+      trip.expenses,
+      { cities, places, person: personLabel },
+      t,
+    );
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `expenses-${todayInTokyo()}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    toast(t("csv.exported"));
+  }
+
+  return (
+    <Tip label={t("csv.tipExport")}>
+      <Button variant="outline" onClick={download}>
+        <FileSpreadsheet />
+        {t("csv.export")}
+      </Button>
+    </Tip>
   );
 }
