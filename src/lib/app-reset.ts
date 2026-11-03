@@ -1,6 +1,6 @@
 import { clearSession } from "@/lib/auth";
 import { BASE_PATH } from "@/lib/base-path";
-import { useViewerStore } from "@/lib/viewer-store";
+import { currentShareId } from "@/lib/viewer-store";
 
 // The version this copy of the app was built as.
 export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
@@ -74,8 +74,9 @@ async function clearCaches(): Promise<void> {
 // Leaves this device as if the app had never been opened, apart from
 // preferences, and loads `target` afresh. The person has to sign in again.
 export async function resetApp(target: string): Promise<void> {
-  // Someone on a read-only link stays on it after the reset.
-  const share = useViewerStore.getState().share?.id ?? null;
+  // Someone on a read-only link stays on it after the reset. Read from the
+  // address, as on a first visit this runs before viewer mode has started.
+  const share = currentShareId();
   try {
     if (!share) await clearSession();
   } catch {

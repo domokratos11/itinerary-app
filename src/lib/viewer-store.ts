@@ -65,6 +65,19 @@ export function viewerShareId(
   }
 }
 
+// The same answer without remembering anything, for code that runs before
+// the app starts, such as the version check's reset on a first visit.
+export function currentShareId(): string | null {
+  const query = new URLSearchParams(window.location.search ?? "");
+  const fromUrl = parseShareId(query.get("share"));
+  if (fromUrl || query.has("trip")) return fromUrl;
+  try {
+    return parseShareId(window.sessionStorage.getItem(STORAGE_KEY));
+  } catch {
+    return null;
+  }
+}
+
 // Back to the app as a member would see it, by a full page load so nothing
 // from the link stays in memory.
 export function leaveSharedView(): void {
