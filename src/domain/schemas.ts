@@ -226,6 +226,8 @@ export const ExpenseRecordSchema = z.object({
   placeId: recordId.nullable().default(null),
   reservationId: recordId.nullable().default(null),
   stayId: recordId.nullable().default(null),
+  // The city it was spent in: where that night was, for a quick entry.
+  cityId: recordId.nullable().default(null),
   note: z.string().max(500).nullable(),
   ...recordFields,
 });

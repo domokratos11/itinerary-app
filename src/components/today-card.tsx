@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { ArrowRight, Navigation } from "lucide-react";
 
+import { QuickExpenseButton } from "@/components/quick-expense";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { tripPhase } from "@/domain/days";
@@ -126,6 +127,7 @@ export function TodayCard() {
               {t("home.openToday", { done, total: stops.length })}
             </Link>
           </Button>
+          <QuickExpenseButton date={phase.date} className="ml-auto" />
         </div>
       </CardContent>
     </Card>

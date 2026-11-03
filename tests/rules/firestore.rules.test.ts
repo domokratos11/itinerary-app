@@ -234,6 +234,16 @@ describe("expenses", () => {
       setDoc(doc(as(ANA), path), { ...expense, category: "bribes" }),
     );
   });
+
+  it("may name the city it was spent in", async () => {
+    const path = "trips/japan/expenses/e2";
+    await assertSucceeds(
+      setDoc(doc(as(ANA), path), { ...expense, id: "e2", cityId: "tokyo" }),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...expense, id: "e2", cityId: 42 }),
+    );
+  });
 });
 
 describe("stops in the plan", () => {

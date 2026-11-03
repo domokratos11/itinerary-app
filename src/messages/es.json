@@ -834,5 +834,13 @@
     "hide": "Ocultar el análisis del día",
     "badgeRequested": "Investigación del día solicitada",
     "badgeReady": "Análisis del día listo"
+  },
+  "quickExpense": {
+    "open": "Anotar un gasto",
+    "title": "Anotar un gasto",
+    "whenWhere": "{day} · {city}",
+    "what": "Qué (opcional)",
+    "more": "Más detalles",
+    "saved": "Guardado ¥{amount}"
   }
 }

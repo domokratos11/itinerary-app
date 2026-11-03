@@ -834,5 +834,13 @@
     "hide": "Hide the day analysis",
     "badgeRequested": "Day research requested",
     "badgeReady": "Day analysis ready"
+  },
+  "quickExpense": {
+    "open": "Log a cost",
+    "title": "Log a cost",
+    "whenWhere": "{day} · {city}",
+    "what": "What (optional)",
+    "more": "More details",
+    "saved": "Saved ¥{amount}"
   }
 }

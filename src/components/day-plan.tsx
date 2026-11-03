@@ -119,6 +119,7 @@ import { PlaceDetails } from "@/components/place-details";
 import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { LegLine } from "@/components/leg-line";
 import { DayResearchPanel } from "@/components/day-research";
+import { QuickExpenseButton } from "@/components/quick-expense";
 import { TripMap, type MapFocus } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
 import {
@@ -551,6 +552,7 @@ export function DayPlan(props: Props) {
           <FullDay start={props.start} end={props.end} stops={stops} />
           <HotelButtons start={props.start} end={props.end} />
           {wide && <BookingsButton reservations={props.reservations} />}
+          <QuickExpenseButton date={props.date} className="ml-auto" />
         </div>
         {!wide && (
           <ToggleGroup

@@ -191,7 +191,7 @@ service cloud.firestore {
     }
 
     function isExpense(d) {
-      return d.keys().hasOnly(['id', 'title', 'amountJPY', 'category', 'date', 'status', 'paidBy', 'placeId', 'reservationId', 'stayId', 'note', 'archived', 'updatedAt'])
+      return d.keys().hasOnly(['id', 'title', 'amountJPY', 'category', 'date', 'status', 'paidBy', 'placeId', 'reservationId', 'stayId', 'cityId', 'note', 'archived', 'updatedAt'])
         && d.keys().hasAll(['id', 'title', 'amountJPY', 'category', 'date', 'status', 'paidBy', 'note', 'archived', 'updatedAt'])
         && shortString(d.id, 64) && d.id.size() > 0
         && shortString(d.title, 200) && d.title.size() > 0
@@ -203,6 +203,7 @@ service cloud.firestore {
         && optionalString(d.get('placeId', null), 64)
         && optionalString(d.get('reservationId', null), 64)
         && optionalString(d.get('stayId', null), 64)
+        && optionalString(d.get('cityId', null), 64)
         && optionalString(d.note, 500)
         && isRecord(d);
     }
