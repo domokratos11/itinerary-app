@@ -76,3 +76,67 @@ The script checks the whole file first, then lists anything it dropped and why.
 ## 5. Review
 
 The Dashboard and the Days page show how many places have research to review. Under Settings > Places, each one shows the new values with their sources. Accept all, accept some, or dismiss. Anything you accept can be undone.
+
+## 6. Day research
+
+**Research this day** on a day's page asks for the whole day, with an optional message such as "do any of these have winter lights or events?". It also requests research for every place on the day that has none open, whatever the place already holds, so every stop is checked again.
+
+`research:pull` handles both. Besides `research/proposals-<date>.json` it writes `research/days-<date>.json`, one entry per requested day. Each entry holds:
+
+- the date and weekday, the cities, the hotel's name, the holiday if any, and that day's bookings and flights (times and places only)
+- the stops in order, with their `proposalId`
+- `kmBetweenStops`, the straight-line distance from each stop to the next, worked out from the coordinates. The coordinates themselves are not in the file.
+- the user's `request`, and the `previousAnalysis` if the day was researched before
+
+A request for a day the stays no longer cover is archived.
+
+Ask Claude Code:
+
+> Research the places in `research/proposals-<date>.json` and the days in `research/days-<date>.json`, following `docs/research-run.md`. Write both to `research/results-<date>.json`.
+
+First research the stops as in step 2. Then write one analysis per day, in your own words:
+
+- **`load`**: `light`, `medium` or `heavy`, with a `loadReason`.
+  - `light`: about 3 stops or fewer, little travel.
+  - `heavy`: 6 or more stops, more than about 90 minutes of travel, or a long day trip.
+  - `medium`: anything between.
+  - Count opening hours and the early winter sunset (around 16:30), not just the number of stops.
+- **`summary`**: your overall view of the day: a sensible order, what to book ahead, where it is tight and where it has room.
+- **`warnings`**: each with a `kind` and the `placeIds` it concerns.
+  - `closed`: closed on that date or weekday. Check the year-end closures around Dec 29 to Jan 3, and holidays.
+  - `conflict`: clashes with a booking or flight.
+  - `timing`: hours that don't fit the order, or a place that's best at another time of day.
+  - `other`: anything else.
+  - Leave the list empty when nothing applies.
+- **`hints`**: up to 5 places near the day's stops that aren't on it, each with a short reason.
+  - Use a trip place's `placeId` when one fits; otherwise `null`, with an optional plain Maps search `mapsUrl`.
+- **`answer`**: the reply to `request`, or `null` when there was no message.
+- **`sources`**: `https` pages behind the analysis, each with an optional short `note`.
+
+Nothing from Google goes into an analysis: no ratings, hours or coordinates copied from Maps.
+
+With day analyses, the results file is an object rather than a list:
+
+```json
+{
+  "places": [{ "proposalId": "…", "fields": {}, "sources": [], "notes": null }],
+  "days": [
+    {
+      "date": "2026-12-18",
+      "analysis": {
+        "load": "medium",
+        "loadReason": "Four stops in Ueno and Asakusa, about 3 km in all.",
+        "summary": "…",
+        "warnings": [{ "kind": "closed", "placeIds": ["…"], "text": "…" }],
+        "hints": [
+          { "name": "…", "text": "…", "placeId": null, "mapsUrl": null }
+        ],
+        "answer": null,
+        "sources": [{ "url": "https://…", "note": null }]
+      }
+    }
+  ]
+}
+```
+
+`research:push` takes either form. A day analysis goes straight onto the day, and the day page shows it. The place results still wait in proposals: review them in Settings > Places, or press **Accept all for this day** on the day's analysis. A cancelled day request is skipped.

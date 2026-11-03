@@ -45,6 +45,7 @@ import { cleanupRepository } from "@/lib/firestore-cleanup-repository";
 import { t } from "@/lib/i18n";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
+import { useDayResearch } from "@/lib/use-day-research";
 import { useProposals } from "@/lib/use-proposals";
 import { useShares } from "@/lib/use-shares";
 import { shareStatus } from "@/domain/share";
@@ -73,6 +74,7 @@ async function removePlan(tripId: string, plan: CleanupPlan) {
   const order: CleanupCollection[] = [
     "items",
     "proposals",
+    "dayResearch",
     "places",
     "stays",
     "reservations",
@@ -93,6 +95,7 @@ export function CleanupSettings({ tripId }: { tripId: string }) {
   const trip = useTripStore((s) => s.data);
   const items = usePlanStore((s) => s.items);
   const proposals = useProposals(tripId);
+  const dayResearch = useDayResearch(tripId);
   // Read-only links that have expired or were revoked, with their copies.
   const closedShares = useShares(tripId).filter(
     (s) => shareStatus(s, new Date()) !== "active",
@@ -102,8 +105,8 @@ export function CleanupSettings({ tripId }: { tripId: string }) {
   const [working, setWorking] = useState(false);
 
   const input = useMemo(
-    () => ({ trip, items, proposals }),
-    [trip, items, proposals],
+    () => ({ trip, items, proposals, dayResearch }),
+    [trip, items, proposals, dayResearch],
   );
   const everything = useMemo(() => planEverything(input), [input]);
 

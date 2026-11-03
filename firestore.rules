@@ -55,6 +55,19 @@ service cloud.firestore {
         && optionalNumber(v.walkMin));
     }
 
+    // One day's research, keyed by its date. The analysis is the researcher's
+    // own words; its inside is checked by the app's schema.
+    function isDayResearch(d) {
+      return d.keys().hasOnly(['id', 'date', 'status', 'request', 'analysis', 'requestedAt', 'updatedAt'])
+        && d.keys().hasAll(['id', 'date', 'status', 'request', 'analysis', 'requestedAt', 'updatedAt'])
+        && shortString(d.id, 10) && d.id == d.date
+        && d.status in ['requested', 'ready', 'archived']
+        && optionalString(d.request, 1000)
+        && (d.analysis == null || (d.analysis is map && d.analysis.size() <= 10))
+        && shortString(d.requestedAt, 30)
+        && shortString(d.updatedAt, 30);
+    }
+
     function isProposal(d) {
       return d.keys().hasOnly(['id', 'placeId', 'status', 'fields', 'sources', 'notes', 'requestedAt', 'updatedAt'])
         && d.keys().hasAll(['id', 'placeId', 'status', 'fields', 'sources', 'notes', 'requestedAt', 'updatedAt'])
@@ -391,6 +404,14 @@ service cloud.firestore {
           && isProposal(request.resource.data) && request.resource.data.id == id;
         allow delete: if isMember(tripId)
           && resource.data.status in ['applied', 'dismissed'];
+      }
+
+      // Research of a whole day. Only archived research can be deleted.
+      match /dayResearch/{date} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isDayResearch(request.resource.data) && request.resource.data.id == date;
+        allow delete: if isMember(tripId) && resource.data.status == 'archived';
       }
 
       // Links left from the old Queue: they can only be read and cleaned up.

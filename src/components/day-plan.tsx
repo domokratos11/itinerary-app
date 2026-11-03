@@ -118,6 +118,7 @@ import {
 import { PlaceDetails } from "@/components/place-details";
 import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { LegLine } from "@/components/leg-line";
+import { DayResearchPanel } from "@/components/day-research";
 import { TripMap, type MapFocus } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
 import {
@@ -392,6 +393,9 @@ export function DayPlan(props: Props) {
     item,
     place: placesById.get(item.placeId),
   }));
+  const placesOfDay = rows.flatMap((r) =>
+    r.place && !r.place.archived ? [r.place] : [],
+  );
 
   const map = dayMap(rows, props.start, props.end);
   const legs = dayLegs(rows, props.start, props.end);
@@ -519,6 +523,12 @@ export function DayPlan(props: Props) {
             ))}
           </div>
         )}
+        <DayResearchPanel
+          date={props.date}
+          placesOfDay={placesOfDay}
+          placesById={placesById}
+          onOpenPlace={setOpenPlaceId}
+        />
         <div className="flex flex-wrap gap-2">
           {nextPlace ? (
             <Tip label={t("day.tipGoNext", { name: nextPlace.name })}>

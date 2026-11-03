@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { Plane } from "lucide-react";
+import { Plane, Search, Sparkles } from "lucide-react";
 
 import { calendarWeeks, stayBands } from "@/domain/calendar";
 import type { TripDay } from "@/domain/days";
@@ -11,6 +11,7 @@ import { tint } from "@/domain/taxonomy";
 import { intlLocale, t } from "@/lib/i18n";
 import { dayHref } from "@/lib/links";
 import { useCitiesById, useTrip } from "@/lib/trip-store";
+import { useDayResearch } from "@/lib/use-day-research";
 import { cn } from "@/lib/utils";
 import { useTripId } from "@/lib/use-trip-id";
 
@@ -51,6 +52,11 @@ export function TripCalendar({
   const citiesById = useCitiesById();
   const tripId = useTripId();
   const weeks = useMemo(() => calendarWeeks(days), [days]);
+  const research = useDayResearch(tripId);
+  const researchByDate = useMemo(
+    () => new Map(research.map((r) => [r.date, r.status])),
+    [research],
+  );
   const holidays = useMemo(
     () => new Map(trip.holidays.map((h) => [h.date, h])),
     [trip.holidays],
@@ -98,6 +104,7 @@ export function TripCalendar({
             const flights = flightsOnDay(trip.flights, cell.date);
             const holiday = holidays.get(cell.date);
             const isToday = cell.date === today;
+            const researched = researchByDate.get(cell.date);
             const cities = cell.day.cityIds
               .map((id) => citiesById.get(id)?.name ?? id)
               .join(" → ");
@@ -114,6 +121,11 @@ export function TripCalendar({
                   cities,
                   stops > 0 ? t("common.stops", { count: stops }) : null,
                   holiday?.name ?? null,
+                  researched === "requested"
+                    ? t("dayResearch.badgeRequested")
+                    : researched === "ready"
+                      ? t("dayResearch.badgeReady")
+                      : null,
                 ]
                   .filter(Boolean)
                   .join(", ")}
@@ -175,6 +187,15 @@ export function TripCalendar({
                     </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
+                  )}
+                  {researched === "requested" && (
+                    <Search
+                      aria-hidden
+                      className="size-3 text-muted-foreground"
+                    />
+                  )}
+                  {researched === "ready" && (
+                    <Sparkles aria-hidden className="size-3 text-primary" />
                   )}
                   {flights.length > 0 && (
                     <Plane
