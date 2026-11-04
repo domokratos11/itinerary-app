@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { ImageOff } from "lucide-react";
 
 import {
   Carousel,
@@ -31,6 +32,8 @@ import { useOnline } from "@/lib/use-online";
 
 function messageFor(error: unknown): string {
   if (error instanceof MapsError) {
+    // Expected, but still worth finding in the console.
+    console.info("Google Maps:", error.kind);
     if (error.kind === "quota") return t("live.limit");
     if (error.kind === "offline") return t("live.offline");
     if (error.kind === "not-configured") return t("live.notConfigured");
@@ -80,9 +83,29 @@ export function PlaceLive({ place }: { place: PlaceRecord }) {
 // says why they're missing.
 export function PlacePhotos({ place }: { place: PlaceRecord }) {
   const online = useOnline();
-  if (!online || !place.googlePlaceId || !mapsService.isConfigured())
-    return null;
+  if (!online || !place.googlePlaceId) return null;
+  if (!mapsService.isConfigured())
+    return <PhotoNotice>{t("live.photosNotConfigured")}</PhotoNotice>;
   return <Photos placeId={place.googlePlaceId} />;
+}
+
+// Where the photos would be, a line saying why they aren't.
+function PhotoNotice({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex aspect-[4/1] items-center justify-center gap-2 rounded-lg bg-muted p-4 text-center text-sm text-muted-foreground">
+      <ImageOff className="size-4 shrink-0" />
+      <p>{children}</p>
+    </div>
+  );
+}
+
+function photoProblem(error: unknown): string {
+  if (error instanceof MapsError && error.kind === "quota")
+    return t("live.photoLimit");
+  if (error instanceof MapsError && error.kind === "not-configured")
+    return t("live.photosNotConfigured");
+  messageFor(error);
+  return t("live.photosFailed");
 }
 
 function LiveDetails({
@@ -165,7 +188,9 @@ function LiveDetails({
 
 function Photos({ placeId }: { placeId: string }) {
   const [photos, setPhotos] = useState<PlacePhoto[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  // Photos whose image didn't load: a link can expire or be refused.
+  const [broken, setBroken] = useState<Set<number>>(() => new Set());
   const [api, setApi] = useState<CarouselApi>();
   const [index, setIndex] = useState(0);
   // Each photo's image is requested only once it has been shown: that request
@@ -182,9 +207,7 @@ function Photos({ placeId }: { placeId: string }) {
         setPhotos(answer);
       })
       .catch((error: unknown) => {
-        // The live details beside them say the same, so one message is enough.
-        messageFor(error);
-        if (current) setFailed(true);
+        if (current) setProblem(photoProblem(error));
       });
     return () => {
       current = false;
@@ -205,7 +228,9 @@ function Photos({ placeId }: { placeId: string }) {
     };
   }, [api, placeId]);
 
-  if (failed || photos?.length === 0) return null;
+  if (problem) return <PhotoNotice>{problem}</PhotoNotice>;
+  if (photos?.length === 0)
+    return <PhotoNotice>{t("live.noPhotos")}</PhotoNotice>;
   if (!photos)
     return (
       <Skeleton
@@ -222,7 +247,12 @@ function Photos({ placeId }: { placeId: string }) {
           {photos.map((photo, i) => (
             <CarouselItem key={photo.url}>
               <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-muted">
-                {loaded.has(i) ? (
+                {broken.has(i) ? (
+                  <p className="flex items-center gap-2 p-4 text-center text-sm text-muted-foreground">
+                    <ImageOff className="size-4 shrink-0" />
+                    {t("live.photoBroken")}
+                  </p>
+                ) : loaded.has(i) ? (
                   // eslint-disable-next-line @next/next/no-img-element -- Google's URL, which can't be stored or optimised
                   <img
                     src={photo.url}
@@ -231,10 +261,14 @@ function Photos({ placeId }: { placeId: string }) {
                       total: photos.length,
                     })}
                     className="size-full object-cover"
+                    onError={() => {
+                      console.warn("Google photo didn't load:", placeId, i);
+                      setBroken((known) => new Set([...known, i]));
+                    }}
                   />
                 ) : (
                   <p className="p-4 text-center text-sm text-muted-foreground">
-                    {blocked ? t("live.limit") : t("live.loading")}
+                    {blocked ? t("live.photoLimit") : t("live.loading")}
                   </p>
                 )}
               </div>

@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tip } from "@/components/tip";
 import {
+  CurrencyButton,
   HideAmountsButton,
   MoneyScope,
   useAmountsHidden,
@@ -35,6 +36,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   daysRemaining,
   EMPTY_BUDGET,
+  formatUsdAt,
   summarizeBudget,
   totalsByCategory,
   totalsByPayer,
@@ -62,6 +64,7 @@ import {
   useTripDays,
 } from "@/lib/trip-store";
 import { expensesCsv } from "@/domain/expenses-csv";
+import { capitalizeFirst } from "@/domain/text";
 import { useTripId } from "@/lib/use-trip-id";
 import { useReadOnly } from "@/lib/viewer-store";
 import { NotOnSharedView } from "@/components/viewer";
@@ -250,6 +253,7 @@ function BudgetContent() {
         </div>
         <div className="flex flex-wrap gap-2">
           <HideAmountsButton />
+          <CurrencyButton />
           <ExportExpensesButton />
           {/* The form shows the real amounts, so it waits for them to show.
               The span keeps the hint working on a disabled button. */}
@@ -495,16 +499,35 @@ function ExpenseRow({
         style={{ color: EXPENSE_COLOR[expense.category] }}
       />
       <span className="min-w-0 flex-1">
-        <span className="block font-medium break-words">{expense.title}</span>
+        <span className="block font-medium break-words">
+          {capitalizeFirst(expense.title)}
+        </span>
         <span className="block text-muted-foreground">
           {formatDayLabel(expense.date)} · {personLabel(expense.paidBy)}
         </span>
         {expense.note && <span className="block">{expense.note}</span>}
+        {(expense.reservationId || expense.stayId) && (
+          <Badge variant="secondary" className="mt-1">
+            {expense.reservationId
+              ? t("budget.forBooking")
+              : t("budget.forStay")}
+          </Badge>
+        )}
       </span>
       <span className="flex flex-col items-end gap-1">
         <span className="font-medium tabular-nums">
           <Yen yen={expense.amountJPY} />
         </span>
+        {!hidden &&
+          expense.originalUSD !== null &&
+          expense.rateJPYPerUSD !== null && (
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {t("budget.enteredUsd", {
+                usd: formatUsdAt(expense.originalUSD, 1),
+                rate: expense.rateJPYPerUSD,
+              })}
+            </span>
+          )}
         {expense.status === "planned" && (
           <Badge variant="outline">{t("budget.planned")}</Badge>
         )}
@@ -643,7 +666,12 @@ function ExportExpensesButton() {
   function download() {
     const csv = expensesCsv(
       trip.expenses,
-      { cities, places, person: personLabel },
+      {
+        cities,
+        places,
+        reservations: new Map(trip.reservations.map((r) => [r.id, r])),
+        person: personLabel,
+      },
       t,
     );
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });

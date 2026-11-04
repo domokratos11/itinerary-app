@@ -242,8 +242,9 @@ Screens (one per page):
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, Days filter (per-day pins with a legend), add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
-| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. `ExportExpensesButton` (header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`) and `MoneyScope`. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
-| `quick-expense.tsx` | `/` (Today card) and `/day/` | `QuickExpenseButton({date?})`: a large "+ ¥" button (aria "Log a cost"), shown during the trip on today's date and in the day page's button row. Opens an `EditPanel` with a big numeric amount field, a 4-column grid of category tiles (the last one used is preselected), an optional "What" line and "More details", which opens the full `ExpenseForm` with the same values. Save writes through `saveRecord`; the toast offers Undo. Hidden on read-only links. |
+| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. `ExportExpensesButton` (header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`), the currency button (`CurrencyButton`) and `MoneyScope` (hidden, currency and rate). `Yen` and `useYenValues` show dollars when USD is chosen. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
+| `quick-expense.tsx` | `/` (Today card) and `/day/` | `QuickExpenseButton({date?})`: a large "+ ¥" button (aria "Log a cost"), shown during the trip on today's date and in the day page's button row. Opens an `EditPanel` with a big numeric amount field (`AmountInput`, with the ¥/$ toggle), a 4-column grid of category tiles (the last one used is preselected), an optional "What" line and "More details", which opens the full `ExpenseForm` with the same values. Save writes through `saveRecord`; the toast offers Undo. Hidden on read-only links. |
+| `amount-input.tsx` | Today card and day page (quick cost), expense form (`/budget/`), reservation form (`/settings/`) | `AmountInput`: an amount box with a ¥/$ toggle. In dollars it shows an editable rate (it starts at today's rate from `useUsdRate`) and the yen result. |
 | `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Share, Backup, Clean up. |
 | `settings-share.tsx` | Settings tab | Read-only share links: create, copy, refresh, change expiry, close (§12.8). |
 | `settings-stays.tsx`, `settings-cities.tsx`, `settings-places.tsx`, `settings-flights.tsx`, `settings-reservations.tsx`, `settings-holidays.tsx`, `settings-trip.tsx` | Settings tabs | Admin editors for each collection. `settings-places.tsx` also holds the research requests and proposal review. |
@@ -255,8 +256,8 @@ Plan and place editing:
 
 | File | Role |
 |---|---|
-| `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, add to day, edit, research. "Show on map" (under "Open in Google Maps", only when the place has coordinates) via `onShowOnMap`. |
-| `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. |
+| `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, and one two-column grid of equal outline buttons: Open in Google Maps, Show on map, Add to day, Log cost, Research, Edit and Archive. "Show on map" appears only when the place has coordinates (`onShowOnMap`). `AddToDay` takes `variant` and `className` for its button. |
+| `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. When no photo can show, the area says why: the device's daily photo limit is reached (it resets at midnight Tokyo time), Google did not answer, Maps is not set up or its key was refused, or the place has no photos. A photo that fails to load shows "This photo couldn't load" and logs a console warning. |
 | `place-editor.tsx` | Form for a place's fields. |
 | `edit-panel.tsx` | Dialog (wide) or drawer (phone) that wraps forms. |
 | `add-place.tsx` | Add a place by name (Google suggestions) or by pasted Maps link. |
@@ -299,8 +300,11 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `live-hours.ts` | Parses Google's opening hours text (English) into periods; "open now". |
 | `map-pins.ts` | Map pins, colours and straight lines for the trip map. `dayFilterPins(dates, items, places)` returns `{placeIds, pins, legend}` for the City page's day filter, colouring pins per day (`DAY_COLORS`, in date order). |
 | `maps-service.ts` | `MapsService` interface and map types. `MapView` has `fit()` (frame all current pins again) and `focus(id)` (pan to that pin, zoom 16, bring it to the front and scale it up until the next update). |
-| `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting, and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. |
-| `expenses-csv.ts` | `expensesCsv(expenses, {cities, places, person}, tr)`: the expenses CSV for export. Columns date, what, category, amount (JPY), status, paid by, city, place, note, with translated headers and labels; archived expenses left out; sorted by date then title. UTF-8 BOM, CRLF line ends; cells with commas, quotes or line breaks quoted; text starting with `= + - @` gets a leading apostrophe. |
+| `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting (`formatYen`, `formatUsd`, `formatUsdAt`, `usdToYen`, `parseUsd`, `parseRate`), and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. |
+| `amount.ts` | `AmountEntry` (currency `JPY` or `USD`, amount text, rate text), `readAmount` (turns an entry into `amountJPY`, `originalUSD` and `rateJPYPerUSD`) and `entryFor` (reopens a saved amount). Totals count the whole-yen `amountJPY`. |
+| `booking-cost.ts` | `bookingLabel`, `linkedExpense` (the first live expense linked to a reservation) and `bookingExpense`. Used for a reservation's cost (§12.6). |
+| `text.ts` | `capitalizeFirst`: raises the first letter of older expense titles when they are shown. |
+| `expenses-csv.ts` | `expensesCsv(expenses, {cities, places, person}, tr)`: the expenses CSV for export. Columns date, what, category, amount (JPY), status, paid by, city, place, note, plus amount entered (USD), rate and booking, with translated headers and labels; archived expenses left out; sorted by date then title. UTF-8 BOM, CRLF line ends; cells with commas, quotes or line breaks quoted; text starting with `= + - @` gets a leading apostrophe. |
 | `quick-expense.ts` | `QUICK_CATEGORIES` (food, transport, attractions, souvenirs, temples, clothes, other; flights and bookings are logged from their own screens), `parseYen(text)` (digits with commas, spaces or ¥; else null), and `quickExpense({...})`, which builds the record: title = typed text or the category's name; status `paid` when the date is today or earlier (Tokyo), else `planned`; `paidBy` = the signed-in member; `cityId` = the city of that night's hotel; `stayId`, `placeId`, `reservationId` null. |
 | `flights.ts` | Flight logic: flights on a day, flights outside the days, next flight, route, cost label, cost in yen, and the form conversion. |
 | `share.ts`, `share-repository.ts` | `share.ts`: `newShareId` and `parseShareId` (128-bit base64url IDs), `MAX_SHARE_DAYS` (30), `toSharedTrip` (builds the copy, §12.8). `share-repository.ts`: the `ShareRepository` interface. |
@@ -360,6 +364,8 @@ State and sync:
 | `activity-log.ts` | Writes activity entries without ever failing the change. |
 | `device-name.ts` | The name this device signs its changes with (kept in localStorage). |
 | `hide-amounts.ts` | Zustand store `useHideAmounts` and `setHideAmounts`: whether amounts are hidden on Budget and Dashboard. Saved in localStorage under `hide-amounts`, kept through a version reset. |
+| `display-currency.ts` | Zustand store for the display currency, `"JPY"` or `"USD"`. Saved in localStorage under `display-currency`, per device. Display only (§12.5). Kept through a version reset. |
+| `usd-rate.ts` | Zustand store `useUsdRate`: today's USD to JPY rate, fetched once per session from Frankfurter (§14.4), falling back to the fixed `YEN_PER_USD` offline. Used by the expense, quick cost and reservation forms and by the dollar display. |
 | `backup-actions.ts` | Export and import of the trip file. |
 | `trip-actions.test.ts` etc. | Tests beside each module. |
 
@@ -395,7 +401,7 @@ Version and update:
 
 | File | Role |
 |---|---|
-| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `days-view`, `quick-expense-category`), cache clearing, reload. |
+| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category`), cache clearing, reload. |
 | `version-check.ts` | Compares the running version with `version.json` and decides whether to reset. |
 
 ### 3.6 `src/messages`, `src/test`, `scripts`
@@ -806,16 +812,19 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 `budget-screen.tsx` and `domain/budget.ts`:
 
-- **Expenses** (`expenses` collection): title, amount in whole yen, category, date, status (`planned` or `paid`), who paid, and optional links to a place, reservation or stay. `cityId` is the city the money was spent in; `stayId` keeps its meaning (the hotel's own bill).
-- **Quick cost** (`quick-expense.tsx`, on the Today card during the trip and on each day page): a big amount field and a category tile grid (`quick-expense-category` remembers the last tile). The panel shows the day and city it will use. The city is that night's hotel. "More details" opens the full expense form with the same values. Save writes an activity entry; the toast's Undo archives the expense.
+- **Expenses** (`expenses` collection): title, amount in whole yen (`amountJPY`, the figure every total counts), category, date, status (`planned` or `paid`), who paid, and optional links to a place, reservation or stay. `cityId` is the city the money was spent in; `stayId` keeps its meaning (the hotel's own bill).
+- **Quick cost** (`quick-expense.tsx`, on the Today card during the trip and on each day page): a big amount field (with the ¥/$ toggle, `AmountInput`) and a category tile grid (`quick-expense-category` remembers the last tile). The panel shows the day and city it will use. The city is that night's hotel. "More details" opens the full expense form with the same values. Save writes an activity entry; the toast's Undo archives the expense.
 - **Flights**: a flight's cost is not added to the budget by itself. The log cost button on its card opens the expense form filled in, with the amount in yen at the fixed `YEN_PER_USD` rate (USD costs only; yen costs are used as they are).
 - **Estimates**: each place with a cost estimate counts for its category, unless an expense already covers that place, booking or stay (`estimateStops`).
 - **Totals** by category (`totalsByCategory`) and by payer (`totalsByPayer`), and per-day spending (`spendByDay`).
 - **Budget** on the trip document: total (yen), by category, and number of travellers (the per-adult estimate is multiplied by travellers; `null` = number of members).
-- **Figures**: spent, planned, budget left, days remaining (`daysRemaining`). USD shown with a fixed rate in `budget.ts` (`YEN_PER_USD`).
+- **Figures**: spent, planned, budget left, days remaining (`daysRemaining`). Totals stay in yen. Dollars are shown at today's rate from `usd-rate.ts` (the fixed `YEN_PER_USD` when offline).
 - **Charts**: donut by category, bars by day, gauge of budget used.
 - **Hide amounts**: the eye button (`HideAmountsButton`) hides every amount on the Budget and Dashboard screens. Hidden amounts read as `HIDDEN_AMOUNT` (`¥****`), including chart legends and tooltips, and the dollar hint is gone. Charts still draw from the real numbers. Setting the budget and editing an expense are disabled while hidden. The choice is saved on the device (`hide-amounts.ts`).
+- **Display currency**: the dollar button beside the eye (`CurrencyButton`) shows amounts in dollars, with a yen hint, on Budget and Dashboard. The choice is saved on the device (`display-currency.ts`). It is display only: totals, the budget and storage stay in yen, and hidden amounts still win.
 - **Export CSV**: `ExportExpensesButton` in the header, shown when the trip has expenses. Downloads `expenses-<Tokyo date>.csv` built in the browser (Blob and a temporary download link; nothing is sent anywhere) via `expensesCsv` (`domain/expenses-csv.ts`). It always holds the real amounts, even while amounts are hidden. Meant for a spreadsheet or matching card statements after the trip.
+- **Entering dollars**: `AmountInput` (expense form, quick cost, reservation form) has a ¥/$ toggle. In dollars the rate starts at today's rate and can be edited, and the yen result is shown. `readAmount` (`domain/amount.ts`) turns the entry into `amountJPY`, `originalUSD` and `rateJPYPerUSD`; both dollar fields are null for amounts typed in yen. Reopening an expense shows what was typed (`entryFor`).
+- **Booking costs**: a reservation can have a cost (yen or USD) and a Paid or Planned status (§12.6). Saving it creates or updates one expense linked by `reservationId`, the first live one. Clearing the cost archives that expense. Budget rows show a "Reservation" or "Hotel" badge for linked expenses.
 
 **Shared view:** `/budget/` shows `NotOnSharedView`. `Yen`, `CostLine` and `HideAmountsButton` render nothing anywhere in the app, so no amounts appear in place details or on the days.
 
@@ -829,7 +838,7 @@ Tabs (`settings-screen.tsx`):
 | Cities | cities (name, colour) |
 | Places | places: edit fields, filters, research requests, proposal review (`ProposalReview`), add draft |
 | Flights | flights: airline, flight number, departure and arrival airport, city, date and time, confirmation (optional), cost (USD or yen), note. Archive and restore. Each flight shows on the days it leaves and lands. |
-| Bookings | reservations (train, hotel, tour, ticket). New bookings can no longer be of type flight; an older flight booking can still be edited. |
+| Bookings | reservations (train, hotel, tour, ticket). New bookings can no longer be of type flight; an older flight booking can still be edited. Optional cost in yen or USD, with Paid or Planned; it is saved as one linked expense (§12.5). Reservation cards show that cost. |
 | Holidays | holidays and closures |
 | Trip | trip name, members (email list, max 20), budget |
 | Share | read-only share links: name, expiry, copy link, refresh, change expiry, close (§12.8). Members only. |
@@ -899,7 +908,9 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `cleanup.ts` | `planCleanup`, `planEverything`, `CLEANUP_KINDS` | What Clean up will delete, from the retired records only. |
 | `backup.ts` | `makeBackup`, `BackupSchema`, `backupSummary` | Whole-trip file, validated on import. |
 | `activity.ts` | `undoFor`, `ActivitySchema` | Reverse of a change, if the target has not changed since. |
-| `budget.ts` | `formatYen`, `formatUsd` | Display formats. |
+| `budget.ts` | `formatYen`, `formatUsd`, `formatUsdAt`, `usdToYen`, `parseUsd`, `parseRate` | Display and entry formats for yen and dollars. |
+| `amount.ts` | `readAmount`, `entryFor`, `AmountEntry` | Turns a typed yen or dollar amount into the stored fields (§23.9). |
+| `booking-cost.ts` | `bookingLabel`, `linkedExpense`, `bookingExpense` | A reservation's cost, kept as its linked expense (§12.5). |
 | `i18n.ts` | `MessageKey`, `Translate` | Compile-time check that a message key exists. |
 | `version.ts` | `versionFromDescribe` | `v1.0.0-3-gabc` → `1.0.3`. |
 | `weather.ts` | `weatherKind`, `typicalWeather`, `yearsBefore` | WMO weather codes map to eight kinds. Typical weather averages the same dates over past years (highs, lows, % of years with ≥ 1 mm of rain, most common kind). |
@@ -953,6 +964,7 @@ Viewers of a share link make the same place-detail calls as members (photos and 
 | **Firebase App Check** | Off (`appCheckSiteKey = null`); code ready for reCAPTCHA v3 | `firebase.ts`, README "Security setup" |
 | **Google Fonts** | Oxanium and Geist Mono, self-hosted at build | `layout.tsx` |
 | **Open-Meteo** (`api.open-meteo.com`, `archive-api.open-meteo.com`, `geocoding-api.open-meteo.com`) | Forecast, typical weather and city geocoding for the day views (§12.3). Free, no key, called from the browser. No Google data. | `open-meteo.ts`, `use-weather.ts` |
+| **Frankfurter** (`api.frankfurter.dev`, ECB reference rates) | Today's USD to JPY rate for entering and showing dollars (§12.5). One GET per session (`/v1/latest?base=USD&symbols=JPY`); no key; nothing else is sent. Falls back to the fixed `YEN_PER_USD` offline. | `usd-rate.ts` |
 | **GitHub Pages** | Hosting | `deploy.yml` |
 | **Google Maps short links** | Input only (paste or list); links out use `https://www.google.com/maps/search/?api=1&query=…` and `…/dir/?api=1&…` | `place-edit.ts`, `links`, `maps` UI |
 
@@ -1084,7 +1096,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 2. The app fetches `version.json` (never cached by the service worker) on start and whenever the tab becomes visible.
 3. If the deployed version differs from `APP_VERSION`, `resetApp(deployed)` runs once per tab (`triedVersion` in sessionStorage, so a stale page cannot cause a loop):
    - signs out, with up to 5 seconds to upload pending edits (`clearSession`);
-   - clears localStorage except `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `days-view` and `quick-expense-category`;
+   - clears localStorage except `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view` and `quick-expense-category`;
    - clears sessionStorage and all Cache Storage entries, and unregisters service workers;
    - reloads `…/?v=<version>` (the `v` is removed after load).
 4. Storage stamped with another version is reset on start (`storageIsStale`).
@@ -1108,6 +1120,7 @@ Account sheet → About → "start fresh" runs the same reset.
 - **Google Maps stays in English** (its text is English; `live-hours.ts` parses English).
 - **Adding a language** (CLAUDE.md rule 13): new messages file, `LANGUAGES` in `user-repository.ts`, `INTL_LOCALE` in `i18n.ts`, and the rules' allowed language list in `firestore.rules` (`isUserProfile`).
 - **Validation:** `scripts/validate.ts` checks both message files against `MessagesSchema`.
+- **Capitals:** every message starts with a capital letter. `src/messages/messages.test.ts` checks it; an allowlist covers mid-sentence fragments such as `activity.*`. `reservationType.*` labels are capitalised, so code lowercases them where they sit mid-sentence.
 
 ---
 
@@ -1197,7 +1210,7 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 
 ### 22.2 Test coverage by area (files with tests)
 
-40 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters and i18n; `src/components` has tests for the app gate, screens, place details and the old-link redirect; `scripts` has four.
+40 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, screens, place details and the old-link redirect; `scripts` has four.
 
 ### 22.3 Quality gates
 
@@ -1361,7 +1374,9 @@ Null means "not researched yet", not "free" or "none".
 |---|---|---|
 | `id` | string | |
 | `title` | string 1 to 200 | |
-| `amountJPY` | int ≥ 0 | Whole yen. |
+| `amountJPY` | int ≥ 0 | Whole yen. Every total counts this field. |
+| `originalUSD` | number ≥ 0, or null | Dollars typed in the expense. Null when entered in yen. |
+| `rateJPYPerUSD` | number > 0, or null | The rate used for the conversion. Null when entered in yen. |
 | `category` | `flight`, `booking`, `transport`, `food`, `souvenirs`, `attractions`, `clothes`, `temples`, `other` | |
 | `date` | `YYYY-MM-DD` | |
 | `status` | `planned` or `paid` | Planned = agreed, not yet paid. |
@@ -1370,6 +1385,8 @@ Null means "not researched yet", not "free" or "none".
 | `cityId` | string ≤ 64, or null | Default null. The city the money was spent in. `stayId` keeps its meaning (the hotel's own bill). Allowed by `isExpense` as `optionalString(d.get('cityId', null), 64)`. |
 | `note` | string ≤ 500, or null | |
 | `archived`, `updatedAt` | | |
+
+A reservation's cost is not a field on the reservation (§23.6). It is an expense with `reservationId` set (§12.5), and clearing the cost archives that expense.
 
 ### 23.10 Proposals (`trips/{tripId}/proposals/{id}`)
 

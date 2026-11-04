@@ -35,6 +35,35 @@ export function formatUsd(yen: number): string {
   });
 }
 
+// Dollars as they are shown when the budget is viewed in USD, at a given rate.
+export function formatUsdAt(yen: number, rate: number): string {
+  return (yen / rate).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+}
+
+// A dollar amount converted to whole yen, as it's saved.
+export function usdToYen(usd: number, rate: number): number {
+  return Math.round(usd * rate);
+}
+
+// An amount typed in dollars ("$1,234.50"), or null when it isn't one. At
+// most cents.
+export function parseUsd(text: string): number | null {
+  const clean = text.replace(/[,\s$]/g, "");
+  if (!/^\d+(\.\d{1,2})?$/.test(clean)) return null;
+  return Number(clean);
+}
+
+// A rate typed as yen per dollar, or null when it isn't a positive number.
+export function parseRate(text: string): number | null {
+  const clean = text.replace(/[,\s¥]/g, "");
+  if (!/^\d+(\.\d+)?$/.test(clean)) return null;
+  const rate = Number(clean);
+  return rate > 0 ? rate : null;
+}
+
 // The spending category a place, booking or hotel starts out with.
 export function categoryForPlace(category: Category): ExpenseCategory {
   if (category === "food") return "food";

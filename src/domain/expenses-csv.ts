@@ -1,5 +1,12 @@
+import { bookingLabel } from "./booking-cost";
 import type { Translate } from "./i18n";
-import type { CityRecord, ExpenseRecord, PlaceRecord } from "./schemas";
+import type {
+  CityRecord,
+  ExpenseRecord,
+  PlaceRecord,
+  ReservationRecord,
+} from "./schemas";
+import { capitalizeFirst } from "./text";
 
 // A cell a spreadsheet won't read as a formula: text starting with = + - @
 // (or a tab or carriage return) gets a leading apostrophe.
@@ -18,6 +25,7 @@ export function expensesCsv(
   lookups: {
     cities: Map<string, CityRecord>;
     places: Map<string, PlaceRecord>;
+    reservations: Map<string, ReservationRecord>;
     person: (email: string | null) => string;
   },
   tr: Translate,
@@ -27,10 +35,13 @@ export function expensesCsv(
     tr("csv.title"),
     tr("csv.category"),
     tr("csv.amountJPY"),
+    tr("csv.amountUSD"),
+    tr("csv.rate"),
     tr("csv.status"),
     tr("csv.paidBy"),
     tr("csv.city"),
     tr("csv.place"),
+    tr("csv.booking"),
     tr("csv.note"),
   ];
   const rows = expenses
@@ -42,17 +53,25 @@ export function expensesCsv(
           ? -1
           : 1,
     )
-    .map((e) => [
-      e.date,
-      e.title,
-      tr(`expenseCategory.${e.category}`),
-      e.amountJPY,
-      tr(e.status === "paid" ? "budget.paid" : "budget.planned"),
-      lookups.person(e.paidBy),
-      e.cityId ? (lookups.cities.get(e.cityId)?.name ?? e.cityId) : null,
-      e.placeId ? (lookups.places.get(e.placeId)?.name ?? null) : null,
-      e.note,
-    ]);
+    .map((e) => {
+      const booking = e.reservationId
+        ? lookups.reservations.get(e.reservationId)
+        : undefined;
+      return [
+        e.date,
+        capitalizeFirst(e.title),
+        tr(`expenseCategory.${e.category}`),
+        e.amountJPY,
+        e.originalUSD,
+        e.rateJPYPerUSD,
+        tr(e.status === "paid" ? "budget.paid" : "budget.planned"),
+        lookups.person(e.paidBy),
+        e.cityId ? (lookups.cities.get(e.cityId)?.name ?? e.cityId) : null,
+        e.placeId ? (lookups.places.get(e.placeId)?.name ?? null) : null,
+        booking ? bookingLabel(booking, tr) : null,
+        e.note,
+      ];
+    });
   return (
     "﻿" +
     [header, ...rows].map((row) => row.map(cell).join(",")).join("\r\n") +

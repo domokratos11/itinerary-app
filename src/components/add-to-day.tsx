@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CalendarPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -31,7 +32,15 @@ import { useTripId } from "@/lib/use-trip-id";
 import { formatDayLabel } from "@/lib/format-day";
 
 // "Add to day": a bottom Drawer on phones, a command palette on wider screens.
-export function AddToDay({ place }: { place: Place }) {
+export function AddToDay({
+  place,
+  className = "w-full",
+  variant = "default",
+}: {
+  place: Place;
+  className?: string;
+  variant?: "default" | "outline";
+}) {
   const [open, setOpen] = useState(false);
   const wide = useMediaQuery("(min-width: 768px)");
   const tripId = useTripId();
@@ -88,7 +97,12 @@ export function AddToDay({ place }: { place: Place }) {
   return (
     <>
       <Tip label={t("place.tipAddToDay")}>
-        <Button className="w-full" onClick={() => setOpen(true)}>
+        <Button
+          variant={variant}
+          className={className}
+          onClick={() => setOpen(true)}
+        >
+          <CalendarPlus />
           {t("common.addToDay")}
         </Button>
       </Tip>

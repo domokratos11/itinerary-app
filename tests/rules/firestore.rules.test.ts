@@ -235,6 +235,34 @@ describe("expenses", () => {
     );
   });
 
+  it("may keep the dollars and rate it was entered with", async () => {
+    const path = "trips/japan/expenses/e3";
+    const inUsd = {
+      ...expense,
+      id: "e3",
+      amountJPY: 15829,
+      originalUSD: 100.5,
+      rateJPYPerUSD: 158.29,
+    };
+    await assertSucceeds(setDoc(doc(as(ANA), path), inUsd));
+    await assertSucceeds(
+      setDoc(doc(as(ANA), path), {
+        ...inUsd,
+        originalUSD: null,
+        rateJPYPerUSD: null,
+      }),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...inUsd, originalUSD: "100" }),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...inUsd, rateJPYPerUSD: 0 }),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...inUsd, originalUSD: -1 }),
+    );
+  });
+
   it("may name the city it was spent in", async () => {
     const path = "trips/japan/expenses/e2";
     await assertSucceeds(

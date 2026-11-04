@@ -13,6 +13,7 @@ const KEPT_KEYS = [
   "device-name",
   "sidebar-open",
   "hide-amounts",
+  "display-currency",
   "days-view",
   "quick-expense-category",
 ];
