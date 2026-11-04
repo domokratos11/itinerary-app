@@ -4,16 +4,14 @@ import { useState } from "react";
 import { JapaneseYen, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { AmountInput } from "@/components/amount-input";
 import { EditPanel, Field } from "@/components/edit-panel";
 import { ExpenseForm, type ExpensePrefill } from "@/components/expense-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  parseYen,
-  QUICK_CATEGORIES,
-  quickExpense,
-} from "@/domain/quick-expense";
+import { entryFor, readAmount, type AmountEntry } from "@/domain/amount";
+import { QUICK_CATEGORIES, quickExpense } from "@/domain/quick-expense";
 import type { ExpenseCategory } from "@/domain/schemas";
 import { EXPENSE_COLOR } from "@/domain/taxonomy";
 import { nightStay } from "@/domain/trip";
@@ -24,6 +22,7 @@ import { EXPENSE_ICON } from "@/lib/taxonomy-icons";
 import { todayInTokyo } from "@/lib/tokyo-date";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useCitiesById, useTrip } from "@/lib/trip-store";
+import { useUsdRate } from "@/lib/usd-rate";
 import { cn } from "@/lib/utils";
 import { useTripId } from "@/lib/use-trip-id";
 import { useReadOnly } from "@/lib/viewer-store";
@@ -103,17 +102,20 @@ function QuickExpenseForm({
   const trip = useTrip();
   const citiesById = useCitiesById();
   const me = useAuthStore((s) => s.user?.email?.toLowerCase() ?? null);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState<AmountEntry>(() =>
+    entryFor(null, Math.round(useUsdRate.getState().rate * 100) / 100),
+  );
   const [category, setCategory] = useState<ExpenseCategory>(lastCategory);
   const [title, setTitle] = useState("");
-  const yen = parseYen(amount);
+  const money = readAmount(amount);
+  const yen = money?.amountJPY ?? null;
   const city = citiesById.get(nightStay(date, trip.stays)?.cityId ?? "");
 
   function save() {
-    if (yen === null) return;
+    if (money === null) return;
     const record = quickExpense({
       id: crypto.randomUUID(),
-      amountJPY: yen,
+      ...money,
       category,
       date,
       today: todayInTokyo(),
@@ -135,18 +137,23 @@ function QuickExpenseForm({
       t("activity.savedExpense", { title: record.title }),
     ).catch(() => toast.error(t("common.refused")));
     onClose();
-    toast(t("quickExpense.saved", { amount: yen.toLocaleString("en-US") }), {
-      action: {
-        label: t("common.undo"),
-        onClick: () =>
-          archiveRecord(
-            tripId,
-            "expenses",
-            record,
-            t("activity.archivedExpense", { title: record.title }),
-          ).catch(() => toast.error(t("common.undoFailed"))),
+    toast(
+      t("quickExpense.saved", {
+        amount: money.amountJPY.toLocaleString("en-US"),
+      }),
+      {
+        action: {
+          label: t("common.undo"),
+          onClick: () =>
+            archiveRecord(
+              tripId,
+              "expenses",
+              record,
+              t("activity.archivedExpense", { title: record.title }),
+            ).catch(() => toast.error(t("common.undoFailed"))),
+        },
       },
-    });
+    );
   }
 
   return (
@@ -166,21 +173,13 @@ function QuickExpenseForm({
       onSubmit={save}
     >
       <Field label={t("budget.amount")} htmlFor="quick-amount">
-        <div className="relative">
-          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-2xl text-muted-foreground">
-            ¥
-          </span>
-          <Input
-            id="quick-amount"
-            autoFocus
-            inputMode="numeric"
-            enterKeyHint="done"
-            autoComplete="off"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="h-14 pl-9 text-2xl font-semibold tabular-nums md:text-2xl"
-          />
-        </div>
+        <AmountInput
+          id="quick-amount"
+          autoFocus
+          large
+          value={amount}
+          onChange={setAmount}
+        />
       </Field>
       <Field label={t("common.category")} htmlFor="quick-category">
         <ToggleGroup
@@ -224,7 +223,7 @@ function QuickExpenseForm({
             title: title.trim() || t(`expenseCategory.${category}`),
             category,
             date,
-            ...(yen !== null && { amountJPY: yen }),
+            ...(money !== null && money),
           })
         }
       >

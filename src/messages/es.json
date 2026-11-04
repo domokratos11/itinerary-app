@@ -93,11 +93,11 @@
     "maybe": "Quizá"
   },
   "reservationType": {
-    "flight": "vuelo",
-    "train": "tren",
-    "hotel": "hotel",
-    "tour": "tour",
-    "ticket": "boleto"
+    "flight": "Vuelo",
+    "train": "Tren",
+    "hotel": "Hotel",
+    "tour": "Tour",
+    "ticket": "Boleto"
   },
   "language": {
     "label": "Idioma"
@@ -273,6 +273,8 @@
     "researchReady": "La investigación está lista para revisar en Ajustes",
     "researchPending": "Solicitado. Se completa en la próxima investigación y luego lo revisas aquí.",
     "research": "Investigar este lugar",
+    "reviewResearch": "Revisar investigación",
+    "researchRequested": "Investigación solicitada",
     "added": "Se agregó {name}",
     "addDescription": "Se guarda como borrador hasta que se investigue.",
     "nameOrLink": "Nombre o enlace de Google Maps",
@@ -312,6 +314,11 @@
     "seeOnMaps": "Verlo en Google Maps",
     "photoAlt": "Foto {index} de {total}",
     "loading": "Cargando…",
+    "photoLimit": "Se alcanzó el límite de fotos de hoy en este dispositivo. Se reinicia a medianoche, hora de Japón.",
+    "photosFailed": "Las fotos no cargaron desde Google. Inténtalo más tarde.",
+    "photosNotConfigured": "Las fotos no están disponibles: Google Maps no está configurado o rechazó su clave.",
+    "noPhotos": "Google no tiene fotos de este lugar.",
+    "photoBroken": "Esta foto no cargó.",
     "photoBy": "Foto de",
     "original": "Original en Google Maps",
     "position": "{index} de {total}",
@@ -457,7 +464,11 @@
     "add": "Agregar reservación",
     "timeOptional": "Hora (opcional)",
     "from": "Desde",
-    "to": "Hasta"
+    "to": "Hasta",
+    "cost": "Costo (opcional)",
+    "costHint": "Se guarda en el presupuesto como el gasto de esta reservación. Bórralo para quitarlo.",
+    "noCost": "Sin costo todavía",
+    "extraCost": "Anotar otro gasto de esta reservación"
   },
   "holidays": {
     "holiday": "Festivo",
@@ -640,6 +651,12 @@
     "tipLogCost": "Agrega este lugar al presupuesto, con su nombre y categoría ya puestos",
     "hideAmounts": "Ocultar montos",
     "showAmounts": "Mostrar montos",
+    "showInUsd": "Mostrar montos en dólares estadounidenses",
+    "showInYen": "Mostrar montos en yenes",
+    "yenHint": "≈ {yen} (1 USD = ¥{rate})",
+    "forBooking": "Reservación",
+    "forStay": "Hotel",
+    "enteredUsd": "{usd} a ¥{rate}",
     "showToEdit": "Muestra los montos para editar esto"
   },
   "dashboard": {
@@ -843,11 +860,24 @@
     "more": "Más detalles",
     "saved": "Guardado ¥{amount}"
   },
+  "amount": {
+    "currency": "Moneda",
+    "inYen": "Monto en yenes",
+    "inUsd": "Monto en dólares estadounidenses",
+    "rate": "Yenes por $1",
+    "equals": "= {yen}",
+    "typeUsd": "Escribe el monto en dólares.",
+    "liveRate": "El tipo de cambio de hoy es ¥{rate} por $1. Cámbialo para que coincida con tu tarjeta.",
+    "fixedRate": "No se pudo cargar el tipo de cambio de hoy, así que se usa ¥{rate} por $1. Cámbialo para que coincida con tu tarjeta."
+  },
   "csv": {
     "date": "Fecha",
     "title": "Concepto",
     "category": "Categoría",
     "amountJPY": "Monto (JPY)",
+    "amountUSD": "Monto ingresado (USD)",
+    "rate": "Tipo de cambio (JPY por USD)",
+    "booking": "Reserva",
     "status": "Estado",
     "paidBy": "Pagado por",
     "city": "Ciudad",

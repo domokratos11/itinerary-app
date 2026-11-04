@@ -41,6 +41,7 @@ describe("a place's Google details", () => {
     service.liveDetails.mockReset().mockResolvedValue(answer);
     service.photos.mockReset().mockResolvedValue([]);
     vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "info").mockImplementation(() => {});
   });
 
   it("loads the live details by itself, with no button", async () => {
@@ -67,10 +68,41 @@ describe("a place's Google details", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows nothing for a place Google has no photos of", async () => {
-    const { container } = render(<PlacePhotos place={place} />);
-    await vi.waitFor(() => expect(container).toBeEmptyDOMElement());
+  it("says so for a place Google has no photos of", async () => {
+    render(<PlacePhotos place={place} />);
+    expect(
+      await screen.findByText("Google has no photos for this place."),
+    ).toBeInTheDocument();
     expect(service.photos).toHaveBeenCalledWith("g1");
+  });
+
+  it("says when the day's photo limit is reached", async () => {
+    localStorage.clear();
+    for (let i = 0; i < 40; i++) {
+      clearLiveCache();
+      render(<PlacePhotos place={{ ...place, googlePlaceId: `g${i}` }} />);
+      cleanup();
+    }
+    render(<PlacePhotos place={{ ...place, googlePlaceId: "last" }} />);
+    expect(
+      await screen.findByText(/Photo limit for today reached/),
+    ).toBeInTheDocument();
+  });
+
+  it("says why photos are missing when Google Maps isn't set up", () => {
+    service.isConfigured.mockReturnValue(false);
+    render(<PlacePhotos place={place} />);
+    expect(screen.getByText(/Photos aren't available/)).toBeInTheDocument();
+  });
+
+  it("says when Google's photos can't be loaded", async () => {
+    service.photos.mockRejectedValue(new MapsError("failed"));
+    render(<PlacePhotos place={place} />);
+    expect(
+      await screen.findByText(
+        "Photos couldn't load from Google. Try again later.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("asks Google for nothing without a place ID", () => {

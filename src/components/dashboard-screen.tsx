@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
+  CurrencyButton,
   HideAmountsButton,
   MoneyScope,
   useYenValues,
@@ -345,7 +346,10 @@ function DashboardContent() {
     <div className="flex flex-col gap-4">
       <header className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
-        <HideAmountsButton />
+        <div className="flex gap-2">
+          <HideAmountsButton />
+          <CurrencyButton />
+        </div>
       </header>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

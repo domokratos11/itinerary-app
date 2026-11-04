@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Wallet } from "lucide-react";
 import { toast } from "sonner";
 
+import { AmountInput } from "@/components/amount-input";
 import { EditPanel, Field } from "@/components/edit-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ import {
   type ExpenseStatus,
   type Place,
 } from "@/domain/schemas";
+import { entryFor, readAmount, type AmountEntry } from "@/domain/amount";
 import { categoryForPlace } from "@/domain/budget";
 import { nightStay } from "@/domain/trip";
 import { EXPENSE_COLOR } from "@/domain/taxonomy";
@@ -31,6 +33,7 @@ import { EXPENSE_ICON } from "@/lib/taxonomy-icons";
 import { todayInTokyo } from "@/lib/tokyo-date";
 import { saveRecord } from "@/lib/trip-actions";
 import { useTrip } from "@/lib/trip-store";
+import { useUsdRate } from "@/lib/usd-rate";
 
 const NOBODY = "nobody";
 
@@ -42,6 +45,8 @@ export type ExpensePrefill = Partial<
     | "category"
     | "date"
     | "amountJPY"
+    | "originalUSD"
+    | "rateJPYPerUSD"
     | "placeId"
     | "reservationId"
     | "stayId"
@@ -96,8 +101,12 @@ export function ExpenseForm({
   const me = useAuthStore((s) => s.user?.email?.toLowerCase() ?? null);
   const startDate = expense?.date ?? prefill.date ?? todayInTokyo();
   const [title, setTitle] = useState(expense?.title ?? prefill.title ?? "");
-  const [amount, setAmount] = useState(
-    String(expense?.amountJPY ?? prefill.amountJPY ?? ""),
+  const { rate } = useUsdRate.getState();
+  const [amount, setAmount] = useState<AmountEntry>(() =>
+    entryFor(
+      expense ?? (prefill.amountJPY != null ? prefill : null),
+      Math.round(rate * 100) / 100,
+    ),
   );
   const [category, setCategory] = useState<ExpenseCategory>(
     expense?.category ?? prefill.category ?? "other",
@@ -111,20 +120,17 @@ export function ExpenseForm({
   );
   const [note, setNote] = useState(expense?.note ?? "");
 
-  const yen = Number(amount.replace(/[,\s¥]/g, ""));
+  const money = readAmount(amount);
   const valid =
-    title.trim() !== "" &&
-    amount.trim() !== "" &&
-    Number.isInteger(yen) &&
-    yen >= 0 &&
-    /^\d{4}-\d{2}-\d{2}$/.test(date);
+    title.trim() !== "" && money !== null && /^\d{4}-\d{2}-\d{2}$/.test(date);
   const people = [...new Set([...members, ...(me ? [me] : [])])];
 
   function save() {
+    if (!money) return;
     const record: ExpenseRecord = {
       id: expense?.id ?? crypto.randomUUID(),
       title: title.trim(),
-      amountJPY: yen,
+      ...money,
       category,
       date,
       status,
@@ -166,16 +172,15 @@ export function ExpenseForm({
           onChange={(e) => setTitle(e.target.value)}
         />
       </Field>
+      <Field label={t("budget.amount")} htmlFor="expense-amount">
+        <AmountInput
+          id="expense-amount"
+          value={amount}
+          required
+          onChange={setAmount}
+        />
+      </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={t("budget.amount")} htmlFor="expense-amount">
-          <Input
-            id="expense-amount"
-            inputMode="numeric"
-            value={amount}
-            required
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </Field>
         <Field label={t("common.date")} htmlFor="expense-date">
           <Input
             id="expense-date"
@@ -183,6 +188,13 @@ export function ExpenseForm({
             value={date}
             required
             onChange={(e) => setDate(e.target.value)}
+          />
+        </Field>
+        <Field label={t("budget.status")} htmlFor="expense-status">
+          <StatusToggle
+            id="expense-status"
+            value={status}
+            onChange={setStatus}
           />
         </Field>
       </div>
@@ -202,22 +214,6 @@ export function ExpenseForm({
             ))}
           </SelectContent>
         </Select>
-      </Field>
-      <Field label={t("budget.status")} htmlFor="expense-status">
-        <ToggleGroup
-          id="expense-status"
-          type="single"
-          variant="outline"
-          size="sm"
-          value={status}
-          onValueChange={(v) => v && setStatus(v as ExpenseStatus)}
-          className="justify-start"
-        >
-          <ToggleGroupItem value="paid">{t("budget.paid")}</ToggleGroupItem>
-          <ToggleGroupItem value="planned">
-            {t("budget.planned")}
-          </ToggleGroupItem>
-        </ToggleGroup>
       </Field>
       <Field label={t("budget.paidBy")} htmlFor="expense-paid-by">
         <Select value={paidBy} onValueChange={setPaidBy}>
@@ -246,15 +242,46 @@ export function ExpenseForm({
   );
 }
 
+// Paid or only planned; the expense form and a booking's cost both use it.
+export function StatusToggle({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: ExpenseStatus;
+  onChange: (value: ExpenseStatus) => void;
+}) {
+  return (
+    <ToggleGroup
+      id={id}
+      type="single"
+      variant="outline"
+      value={value}
+      onValueChange={(v) => v && onChange(v as ExpenseStatus)}
+      className="w-full"
+    >
+      <ToggleGroupItem value="paid" className="flex-1">
+        {t("budget.paid")}
+      </ToggleGroupItem>
+      <ToggleGroupItem value="planned" className="flex-1">
+        {t("budget.planned")}
+      </ToggleGroupItem>
+    </ToggleGroup>
+  );
+}
+
 // An icon button that logs the cost of a stop, booking or hotel.
 export function LogCostButton({
   tripId,
   prefill,
   className,
+  label = t("budget.logCost"),
 }: {
   tripId: string;
   prefill: ExpensePrefill;
   className?: string;
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -262,7 +289,8 @@ export function LogCostButton({
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={t("budget.logCost")}
+        aria-label={label}
+        title={label}
         className={className}
         onClick={() => setOpen(true)}
       >

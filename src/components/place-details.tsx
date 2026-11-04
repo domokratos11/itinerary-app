@@ -49,6 +49,11 @@ import { useReadOnly } from "@/lib/viewer-store";
 
 export type NearbyPlace = { id: string; name: string };
 
+// One look for every action in the details, so none stands out over another.
+// Long labels (Spanish ones especially) wrap instead of overflowing.
+const ACTION =
+  "h-auto min-h-10 w-full justify-start py-2 text-left whitespace-normal";
+
 type Props = {
   place: PlaceRecord | null;
   nearby: NearbyPlace[];
@@ -207,57 +212,58 @@ function PlaceBody({
 
       <PlaceLive key={place.id} place={place} />
 
-      <Tip label={t("place.tipOpenInMaps")}>
-        <Button asChild>
-          <a href={mapsLink} target="_blank" rel="noopener noreferrer">
-            <ExternalLink />
-            {t("place.openInMaps")}
-          </a>
-        </Button>
-      </Tip>
-      {onShowOnMap && (
-        <Button variant="outline" onClick={onShowOnMap}>
-          <MapPin />
-          {t("place.showOnMap")}
-        </Button>
-      )}
-      {!readOnly && <AddToDay place={place} />}
-      {onLogCost && (
-        <Tip label={t("budget.tipLogCost")}>
-          <Button variant="outline" onClick={onLogCost}>
-            <Wallet />
-            {t("budget.logCost")}
+      {/* Every action weighs the same: one style, one size, two columns. */}
+      <div className="grid grid-cols-2 gap-2">
+        <Tip label={t("place.tipOpenInMaps")}>
+          <Button variant="outline" className={ACTION} asChild>
+            <a href={mapsLink} target="_blank" rel="noopener noreferrer">
+              <ExternalLink />
+              {t("place.openInMaps")}
+            </a>
           </Button>
         </Tip>
-      )}
-      {(onEdit || onArchive) && (
-        <div className="flex gap-2">
-          {onEdit && (
-            <Button variant="outline" className="flex-1" onClick={onEdit}>
-              <Pencil />
-              {t("place.edit")}
+        {onShowOnMap && (
+          <Button variant="outline" className={ACTION} onClick={onShowOnMap}>
+            <MapPin />
+            {t("place.showOnMap")}
+          </Button>
+        )}
+        {!readOnly && (
+          <AddToDay place={place} variant="outline" className={ACTION} />
+        )}
+        {onLogCost && (
+          <Tip label={t("budget.tipLogCost")}>
+            <Button variant="outline" className={ACTION} onClick={onLogCost}>
+              <Wallet />
+              {t("budget.logCost")}
             </Button>
-          )}
-          {onArchive && (
-            <Button
-              variant="outline"
-              className="flex-1"
-              disabled={inPlan}
-              title={inPlan ? t("place.removeFromPlanFirst") : undefined}
-              onClick={onArchive}
-            >
-              <Archive />
-              {t("common.archive")}
-            </Button>
-          )}
-        </div>
-      )}
+          </Tip>
+        )}
+        {!readOnly && <PlaceResearch place={place} />}
+        {onEdit && (
+          <Button variant="outline" className={ACTION} onClick={onEdit}>
+            <Pencil />
+            {t("place.edit")}
+          </Button>
+        )}
+        {onArchive && (
+          <Button
+            variant="outline"
+            className={ACTION}
+            disabled={inPlan}
+            title={inPlan ? t("place.removeFromPlanFirst") : undefined}
+            onClick={onArchive}
+          >
+            <Archive />
+            {t("common.archive")}
+          </Button>
+        )}
+      </div>
       {onArchive && inPlan && (
         <p className="-mt-2 text-xs text-muted-foreground">
           {t("place.inPlanNote")}
         </p>
       )}
-      {!readOnly && <PlaceResearch place={place} />}
 
       {place.purpose && (
         <Section label={t("common.whyGo")}>{place.purpose}</Section>
@@ -367,23 +373,33 @@ function PlaceResearch({ place }: { place: PlaceRecord }) {
   );
   if (open?.status === "ready")
     return (
-      <Link
-        href={pageHref("/settings/", tripId, { tab: "places" })}
-        className="text-sm underline"
-      >
-        {t("place.researchReady")}
-      </Link>
+      <Button variant="outline" className={ACTION} asChild>
+        <Link
+          href={pageHref("/settings/", tripId, { tab: "places" })}
+          title={t("place.researchReady")}
+        >
+          <Search />
+          {t("place.reviewResearch")}
+        </Link>
+      </Button>
     );
   if (open)
     return (
-      <p className="text-sm text-muted-foreground">
-        {t("place.researchPending")}
-      </p>
+      // The span carries the hint: a disabled button shows none.
+      <Tip label={t("place.researchPending")}>
+        <span className="flex" tabIndex={0}>
+          <Button variant="outline" className={ACTION} disabled>
+            <Search />
+            {t("place.researchRequested")}
+          </Button>
+        </span>
+      </Tip>
     );
   return (
     <Tip label={t("place.tipResearch")}>
       <Button
         variant="outline"
+        className={ACTION}
         onClick={() =>
           requestResearch(tripId, [place], proposals).catch(() =>
             toast.error(t("common.refused")),

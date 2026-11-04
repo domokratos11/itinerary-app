@@ -69,6 +69,8 @@ function trip(): TripData {
         reservationId: null,
         stayId: null,
         cityId: null,
+        originalUSD: null,
+        rateJPYPerUSD: null,
         note: null,
         archived: false,
         updatedAt: NOW.toISOString(),

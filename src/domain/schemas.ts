@@ -228,6 +228,10 @@ export const ExpenseRecordSchema = z.object({
   stayId: recordId.nullable().default(null),
   // The city it was spent in: where that night was, for a quick entry.
   cityId: recordId.nullable().default(null),
+  // Entered in dollars: the amount and the rate used. amountJPY is still what
+  // every total counts; these only say where it came from.
+  originalUSD: z.number().nonnegative().nullable().default(null),
+  rateJPYPerUSD: z.number().positive().nullable().default(null),
   note: z.string().max(500).nullable(),
   ...recordFields,
 });

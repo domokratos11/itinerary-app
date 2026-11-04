@@ -28,6 +28,9 @@ export function parseYen(text: string): number | null {
 export function quickExpense(input: {
   id: string;
   amountJPY: number;
+  // When it was typed in dollars.
+  originalUSD?: number | null;
+  rateJPYPerUSD?: number | null;
   category: ExpenseCategory;
   date: string;
   today: string;
@@ -52,6 +55,8 @@ export function quickExpense(input: {
     reservationId: null,
     stayId: null,
     cityId: stay?.cityId ?? null,
+    originalUSD: input.originalUSD ?? null,
+    rateJPYPerUSD: input.rateJPYPerUSD ?? null,
     note: null,
     archived: false,
     updatedAt: input.now.toISOString(),
