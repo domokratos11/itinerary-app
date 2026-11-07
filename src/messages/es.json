@@ -860,7 +860,8 @@
     "show": "Mostrar el análisis del día",
     "hide": "Ocultar el análisis del día",
     "badgeRequested": "Investigación del día solicitada",
-    "badgeReady": "Análisis del día listo"
+    "badgeReady": "Análisis del día listo",
+    "showFull": "Ver el análisis completo"
   },
   "quickExpense": {
     "open": "Anotar un gasto",

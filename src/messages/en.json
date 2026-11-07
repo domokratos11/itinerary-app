@@ -860,7 +860,8 @@
     "show": "Show the day analysis",
     "hide": "Hide the day analysis",
     "badgeRequested": "Day research requested",
-    "badgeReady": "Day analysis ready"
+    "badgeReady": "Day analysis ready",
+    "showFull": "Show the full analysis"
   },
   "quickExpense": {
     "open": "Log a cost",

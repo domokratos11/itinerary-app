@@ -80,8 +80,8 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **radix-ui** (umbrella package) | ^1.8.1 | Accessible primitives under shadcn components (dialog, select, tabs, tooltip, dropdown, switch, etc.). | `src/components/ui/*` |
 | **class-variance-authority** | ^0.7.1 | Variant styles for buttons, badges and similar components. | `src/components/ui/button.tsx` and others |
 | **cn** (npm package) | ^0.5.0 | The `cn()` class-merging helper. Note: shadcn usually ships `clsx` + `tailwind-merge`; this repo uses the `cn` package instead. | `src/lib/utils.ts` re-exports it |
-| **lucide-react** | ^1.63.0 | Icons. Most components use it (29 files). | many components |
-| **@phosphor-icons/react** | ^2.1.10 | Icons. Also used (9 files). `components.json` declares Phosphor as the icon library, so the two icon sets are mixed. | `add-place.tsx`, `day-plan.tsx` and others |
+| **lucide-react** | ^1.63.0 | Icons. Most of the app's own components use it (45 files). | many components |
+| **@phosphor-icons/react** | ^2.1.10 | Icons. Used only by the nine shadcn/ui components, which `components.json` sets to Phosphor. The app's own components use lucide, so the two icon sets are mixed. | `src/components/ui/` (carousel, checkbox, command, dialog, dropdown-menu, select, sheet, sidebar, sonner) |
 | **cmdk** | ^1.1.1 | The command menu behind the search palette (`Command`, `CommandDialog`). | `src/components/ui/command.tsx`, `search-palette.tsx` |
 | **vaul** | ^1.1.2 | Bottom drawers on phones (`Drawer`). | `src/components/ui/drawer.tsx`, `place-details.tsx`, `edit-panel.tsx`, `add-to-day.tsx` |
 | **sonner** | ^2.0.8 | Toast messages. Sits above the bottom tab bar on phones. | `src/components/ui/sonner.tsx`, root layout |
@@ -247,7 +247,7 @@ Screens (one per page):
 | `day-plan.tsx` | `/day/` | `DayPlan` (about 630 lines), with `DroppableList`, `PhoneWaiting` and the drag collision helpers. The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. Stops and links are in the two files below, and the drag and stop actions in `use-day-plan-actions.ts` (§3.5). |
 | `day-plan-stop.tsx` | `/day/` | `SortableStop` (wide screens, drag grip), `StopCard` (status buttons, map link, move day, cost, remove; phones get up and down buttons) and the `StopOutcome` type. |
 | `day-plan-links.tsx` | `/day/` | `FullDay` (directions for the whole day), `HotelButtons` and `HotelButton` (directions to the hotel), `BookingsButton` (wide screens, side sheet) and `Reservations`. |
-| `day-research.tsx` | `/day/` | `DayResearchPanel`: under the flights. "Research this day" (optional message) asks for every place on the day; shows the request, the day analysis (load badge, warnings, nearby ideas, answer, sources) and place updates to review or accept for the day. Hidden on read-only links. |
+| `day-research.tsx` | `/day/` | `DayResearchPanel`: under the flights. "Research this day" (optional message) asks for every place on the day; shows the request, the day analysis (starts collapsed to a header and a short preview; once opened: load badge, warnings, nearby ideas, answer, sources) and place updates to review or accept for the day. Hidden on read-only links. |
 | `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view: the day, other days, waiting places. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, Days filter (per-day pins with a legend), add place, cost and details. |
@@ -434,14 +434,14 @@ Version and update:
 
 | Area | Files |
 |---|---|
-| All tracked files | 269 |
-| `src/domain` (non-test modules) | 25 |
-| `src/components` (top-level, not `ui`) | 63 |
-| `src/lib` | 68 (including tests) |
+| All tracked files | 355 |
+| `src/domain` (non-test modules) | 39 |
+| `src/components` (top-level, not `ui`) | 76 |
+| `src/lib` | 97 (including tests) |
 | `src/components/ui` | 27 |
-| Scripts | 16 |
+| Scripts | 21 |
 | Docs (`docs/`) | 5 |
-| Test files (`*.test.*`) | 41 |
+| Test files (`*.test.*`) | 72 |
 
 ---
 
@@ -819,7 +819,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
   - **Sort and filter** menu: sort by priority (the default), name A to Z or Z to A; filter by priority and category. **Clear** appears when anything differs from the default and resets sorting and filters.
   - **Show on map** is off by default and resets when moving to another day, because `DayScreen` keys `DayPlan` by date. When on, the listed places get pins beside the numbered stops, coloured by category through `cityPins`, and they follow the filters. Clear does not turn the pins off. Tapping a pin opens the place's details. Places with no coordinates are counted in a note under the map.
   - On phones the map is its own tab, so turning it on switches to that tab, where the same controls appear to turn it off. Neither the view nor the button is saved.
-- **Day research** (`DayResearchPanel`, under the flights): "Research this day" with an optional message ("Anything specific to look into?"). Sending saves the day as `requested` and asks for research on every place on the day; places with an open proposal are skipped, and already researched places are not asked again. While requested: the date, the message, Change request, Cancel request (goes back to the earlier analysis if there was one, otherwise archives; Undo in the toast). When ready: a collapsible "Day analysis" with the load badge (green, amber or red), reason, summary, warnings (buttons open the named places), nearby ideas (a trip place opens its details, others a Google Maps search link), the answer, sources and date. If the day's places have ready proposals, "N place updates to review" (Review opens Settings > Places) and "Accept all for this day" (confirm, `applyProposals`, Undo). "Research again" asks again and keeps the last analysis until a new one replaces it.
+- **Day research** (`DayResearchPanel`, under the flights): "Research this day" with an optional message ("Anything specific to look into?"). Sending saves the day as `requested` and asks for research on every place on the day; places with an open proposal are skipped, and already researched places are not asked again. While requested: the date, the message, Change request, Cancel request (goes back to the earlier analysis if there was one, otherwise archives; Undo in the toast). When ready: a "Day analysis" card that starts collapsed, so the day's stops stay near the top on a phone. The header has the title (a button that opens and closes it, a bigger target than the chevron), the load badge (green, amber or red), a warnings count, "Research again" and a chevron. Collapsed, it shows the load reason (two lines), "N place updates to review" when research is waiting to be accepted, and a "Show the full analysis" link. Opened, it shows the reason, summary, warnings (buttons open the named places), nearby ideas (a trip place opens its details, others a Google Maps search link), the answer, sources and date. Both the title and the chevron carry `aria-expanded` and `aria-controls`. If the day's places have ready proposals, "N place updates to review" (Review opens Settings > Places) and "Accept all for this day" (confirm, `applyProposals`, Undo). "Research again" asks again and keeps the last analysis until a new one replaces it.
 - **Map** (`TripMap`): pins for the day's stops, lines between them. "Show all pins" frames them again. **Show on map** in place details is offered when the place has a pin on this map (a stop, or a Waiting place shown on the map); phones switch to the map tab.
 - **Drag and drop**: stops within a day, between days, from the waiting list (`drop.ts`). Keyboard support.
 - **Bookings button**: lists reservations on the day (wide layout).
@@ -1254,7 +1254,7 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 
 ### 22.2 Test coverage by area (files with tests)
 
-40 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, screens, place details and the old-link redirect; `scripts` has four.
+72 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, screens, place details and the old-link redirect; `scripts` has four.
 
 ### 22.3 Quality gates
 
@@ -1594,7 +1594,7 @@ Removed on 2026-11-01: the Feasibility plan, docs/remaining-work-plan.md, links/
 
 | Item | Status | What to do |
 |---|---|---|
-| `components.json` vs code | Declares `iconLibrary: phosphor`, but 29 files use lucide and 9 use Phosphor. | Pick one icon set. |
+| `components.json` vs code | Declares `iconLibrary: phosphor`, but 45 files use lucide and 9 use Phosphor. | Pick one icon set. |
 | `cn` npm package | Used instead of the usual `clsx` and `tailwind-merge` pair. | Works; note it when adding shadcn components. |
 | Rules not in CI | `test:rules` and `lint` are not run by the deploy workflow. | Add to CI if wanted. |
 | `firestore.rules` not deployed by CI | Must be pasted into the Firebase console. | Keep in the release steps (README). |

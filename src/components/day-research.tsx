@@ -103,7 +103,10 @@ export function DayResearchPanel({
   const proposals = useProposals(readOnly ? null : tripId);
   const row = rows.find((r) => r.date === date) ?? null;
   const [asking, setAsking] = useState(false);
-  const [open, setOpen] = useState(true);
+  // Closed until asked: the full analysis is long, and on a phone it pushed
+  // the day's stops off the screen. The header still shows how heavy the
+  // day is and how many warnings it has.
+  const [open, setOpen] = useState(false);
   const [accepting, setAccepting] = useState<ResearchToAccept[] | null>(null);
 
   const toAccept = useMemo(
@@ -212,9 +215,19 @@ export function DayResearchPanel({
       {analysis && (
         <Card size="sm" className="gap-3">
           <CardHeader className="flex flex-row flex-wrap items-center gap-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="size-4 text-primary" />
-              {t("dayResearch.title")}
+            <CardTitle className="text-base">
+              {/* The title opens and closes it too: a bigger target than the
+                  chevron on a phone. */}
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-controls={`day-research-${date}`}
+                onClick={() => setOpen(!open)}
+                className="flex items-center gap-2 rounded-sm text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                <Sparkles className="size-4 text-primary" />
+                {t("dayResearch.title")}
+              </button>
             </CardTitle>
             <Badge
               variant="outline"
@@ -234,6 +247,7 @@ export function DayResearchPanel({
                 size="icon-sm"
                 variant="ghost"
                 aria-expanded={open}
+                aria-controls={`day-research-${date}`}
                 aria-label={
                   open ? t("dayResearch.hide") : t("dayResearch.show")
                 }
@@ -243,8 +257,33 @@ export function DayResearchPanel({
               </Button>
             </span>
           </CardHeader>
+          {!open && (
+            <CardContent className="flex flex-col gap-1 text-sm">
+              <p className="line-clamp-2 text-muted-foreground">
+                {analysis.loadReason}
+              </p>
+              {toAccept.length > 0 && (
+                <p className="font-medium">
+                  {t("dayResearch.placeUpdates", { count: toAccept.length })}
+                </p>
+              )}
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto w-fit p-0"
+                aria-expanded={false}
+                aria-controls={`day-research-${date}`}
+                onClick={() => setOpen(true)}
+              >
+                {t("dayResearch.showFull")}
+              </Button>
+            </CardContent>
+          )}
           {open && (
-            <CardContent className="flex flex-col gap-4 text-sm">
+            <CardContent
+              id={`day-research-${date}`}
+              className="flex flex-col gap-4 text-sm"
+            >
               <p className="text-muted-foreground">{analysis.loadReason}</p>
               <p className="whitespace-pre-line">{analysis.summary}</p>
 
