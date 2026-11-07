@@ -86,10 +86,12 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **vaul** | ^1.1.2 | Bottom drawers on phones (`Drawer`). | `src/components/ui/drawer.tsx`, `place-details.tsx`, `edit-panel.tsx`, `add-to-day.tsx` |
 | **sonner** | ^2.0.8 | Toast messages. Sits above the bottom tab bar on phones. | `src/components/ui/sonner.tsx`, root layout |
 | **embla-carousel-react** | ^8.6.0 | Carousel for Google photos. | `src/components/ui/carousel.tsx`, `place-live.tsx` |
-| **recharts** | ^3.8.0 | Budget charts (bars, donut, gauge), wrapped by shadcn `chart`. | `src/components/charts.tsx`, `ui/chart.tsx`, `budget-screen.tsx`, `dashboard-screen.tsx` |
+| **recharts** | ^3.8.0 | Budget and dashboard charts (bars, donut, gauge), wrapped by shadcn `chart`. Loaded on first use through `charts-lazy.tsx` (`next/dynamic`, `ssr: false`), so it is not in any page's first load. | `src/components/charts.tsx`, `charts-lazy.tsx`, `ui/chart.tsx`, `budget-screen.tsx`, `dashboard-screen.tsx` |
 | **@dnd-kit/core**, **sortable**, **utilities** | ^6.3.1 / ^10.0.0 / ^3.2.2 | Drag and drop of stops within a day, between days, and from the waiting list. Pointer and keyboard sensors. | `day-plan.tsx`, `day-side-panel.tsx`, `drop.ts` (domain) |
 | **fractional-indexing** | ^4.0.0 | Sort keys for plan items, so moving one stop changes only that item. | `src/lib/order.ts` |
 | **Zod** | ^4.6.7 | Runtime schemas. Used to validate every Firestore document on read, the bundled sample trip, the message files, the research files and the backup file. | `src/domain/schemas.ts`, `user-repository.ts`, `proposals.ts`, `backup.ts`, `scripts/validate.ts` |
+
+Charts are the only large library kept out of the first load. Measured first-load JS (gzip, scripts in the exported HTML): Dashboard 706 -> 600 KB, Budget 693 -> 586 KB, Days unchanged at about 591 KB. The recharts code is still precached by the service worker, so charts work offline (§17.2).
 
 ### 2.3 State, i18n and theming
 
@@ -273,7 +275,9 @@ Plan and place editing:
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
 | `day-weather.tsx` | `DayWeatherStrip` (day page header: icon and name, high and low, chance of rain or snow, Forecast or dashed Typical tag, sunrise and sunset) and `WeatherBadge` (icon, plus the high from `lg`; used on the Today card and calendar cells). `WEATHER_ICON` maps kinds to icons. Data from `use-weather.ts`. |
 | `tag-badges.tsx` | Category and priority badges and options. |
-| `charts.tsx` | Chart helpers for budget and dashboard. |
+| `charts.tsx` | The recharts charts only: `DonutChart`, `BudgetGauge`, `ColumnChart`, `StackedColumnChart`. Not imported by screens directly. |
+| `chart-parts.tsx` | Chart pieces drawn without recharts: `Series` type, `SeriesLegend`, `BarList` and an internal `ChartValue`. |
+| `charts-lazy.tsx` | What screens import. Wraps the four recharts charts with `next/dynamic` (`ssr: false`), each with a `Skeleton` of the chart's own size so nothing moves, and re-exports `BarList`, `SeriesLegend` and `Series`. Used by `dashboard-screen.tsx` and `budget-screen.tsx`. |
 
 Base components:
 
@@ -780,7 +784,7 @@ Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordi
 
 ### 12.1 Dashboard (`/`)
 
-Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, next flight (`nextFlight`), route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts.tsx` (recharts via shadcn chart).
+Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, next flight (`nextFlight`), route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts-lazy.tsx` (recharts via shadcn chart, loaded on first use).
 
 **Shared view:** the budget tile, the Money section and cost per city are removed. The "Watch out" list has no research or Settings links.
 
@@ -1096,6 +1100,7 @@ Run this by hand on both phones before the trip:
 - `workbox-config.cjs` → `out/sw.js` with `generateSW`.
 - Precaches `**/*.{html,js,css,json,png,svg,ico,webmanifest,txt,woff2}` in `out/`. Excludes `version.json`.
 - `ignoreURLParametersMatching: [/.*/]`: query strings (`?trip=`, `?date=`) are ignored, so each page matches its one precached file.
+- The recharts chunk is precached even though charts load on first use, so the charts still open offline (§2.2).
 - `skipWaiting` and `clientsClaim`: a new worker takes over at once. `cleanupOutdatedCaches` removes old files.
 - Registered only in production (`service-worker-register.tsx`), at `${BASE_PATH}/sw.js`.
 - The `.txt` files (Next's route data) are cached so a page and its data come from the same build.

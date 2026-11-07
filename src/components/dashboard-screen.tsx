@@ -20,7 +20,7 @@ import {
   DonutChart,
   SeriesLegend,
   StackedColumnChart,
-} from "@/components/charts";
+} from "@/components/charts-lazy";
 import {
   categorySeries,
   GaugeCenter,

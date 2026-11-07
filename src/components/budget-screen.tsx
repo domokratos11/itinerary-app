@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Archive, FileSpreadsheet, Pencil, Plus, Target } from "lucide-react";
 import { toast } from "sonner";
 
-import { BudgetGauge, DonutChart, BarList } from "@/components/charts";
+import { BudgetGauge, DonutChart, BarList } from "@/components/charts-lazy";
 import { EditPanel, Field } from "@/components/edit-panel";
 import {
   ExpenseCategoryOption,
