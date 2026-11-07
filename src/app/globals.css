@@ -113,6 +113,21 @@
   }
 }
 
+/* Asked for less motion in the phone's settings: drawers, sheets, toasts,
+   pulses and the dnd-kit reorder all stop moving. They still end in the same
+   place; only the in-between goes. !important beats the inline transitions
+   dnd-kit sets. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .dark {
   --background: oklch(0.147 0.004 49.25);
   --foreground: oklch(0.985 0.001 106.423);

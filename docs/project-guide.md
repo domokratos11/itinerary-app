@@ -406,7 +406,7 @@ Maps and place helpers:
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
 | `order.ts` | Sort keys with fractional indexing. |
-| `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. |
+| `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. `prefersReducedMotion()` is the plain check (not a hook) for motion started from code, such as scrolling to today; it reads the phone's "reduce motion" setting. |
 
 Weather and daylight:
 
@@ -715,6 +715,8 @@ The app is designed for a 390px phone first, then widened (CLAUDE.md rule 8). Br
 | Sections | Bottom tab bar | Sidebar (or header links between 768 and 1023px) |
 | Details | Drawer from bottom | Side sheet |
 | Toasts | Above the tab bar | Bottom right |
+
+Reduced motion applies to both layouts. When the phone's "reduce motion" setting is on, `globals.css` cuts every animation and transition to 0.01 ms, runs each animation once and turns off smooth scrolling. Drawers, sheets, dialogs, toasts, pulses and the dnd-kit reorder then change at once instead of sliding. The duration is 0.01 ms rather than `none` so `animationend` and `transitionend` still fire, which vaul and Radix wait for before unmounting. Motion started from code checks `prefersReducedMotion()` (`src/lib/use-media-query.ts`): "scroll to today" in `trip-days.tsx` jumps instead of scrolling smoothly. Tests in `use-media-query.test.ts`.
 
 ---
 

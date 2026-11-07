@@ -15,3 +15,12 @@ export function useMediaQuery(query: string): boolean {
     () => false,
   );
 }
+
+// For motion started from code (scrolling to a day): CSS can't reach it, so
+// it asks the same question the stylesheet's reduced-motion rule does.
+export function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true
+  );
+}
