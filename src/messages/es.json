@@ -121,14 +121,20 @@
     "chooseTrip": "Elige un viaje",
     "noTripsTitle": "Aún no hay viajes",
     "noTripsBody": "{email} no está en la lista de miembros de ningún viaje. Pide a alguien de un viaje que agregue tu correo, o usa otra cuenta.",
-    "newTrip": "Nuevo viaje"
+    "newTrip": "Nuevo viaje",
+    "tryAgain": "Intentar de nuevo"
   },
   "auth": {
     "popupBlocked": "El navegador bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.",
     "unauthorizedDomain": "Este sitio aún no tiene permiso para iniciar sesión. Agrégalo en Firebase → Authentication → Settings → Authorized domains.",
     "operationNotAllowed": "El inicio de sesión con Google está desactivado. Actívalo en Firebase → Authentication → Sign-in method.",
     "network": "Sin conexión. Inicia sesión cuando tengas internet.",
-    "failed": "No se pudo iniciar sesión. Inténtalo de nuevo."
+    "failed": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+    "storageBlocked": "Este navegador bloquea el almacenamiento que necesita el inicio de sesión. Desactiva la navegación privada o permite los datos del sitio y vuelve a intentarlo.",
+    "tooMany": "Demasiados intentos de inicio de sesión. Espera unos minutos y vuelve a intentarlo.",
+    "disabled": "Esta cuenta de Google no puede iniciar sesión aquí.",
+    "standaloneRetry": "La ventana de inicio de sesión no pudo comunicarse con la app. Cierra la app por completo, ábrela de nuevo e inténtalo otra vez.",
+    "timeout": "El inicio de sesión no terminó. Si aún hay una ventana de Google abierta, termina allí; si no, vuelve a intentarlo."
   },
   "newTrip": {
     "descriptionOnline": "Empieza vacío, contigo como único miembro.",

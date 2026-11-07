@@ -121,14 +121,20 @@
     "chooseTrip": "Choose a trip",
     "noTripsTitle": "No trips yet",
     "noTripsBody": "{email} isn't on any trip's member list. Ask someone on a trip to add your email, or use another account.",
-    "newTrip": "New trip"
+    "newTrip": "New trip",
+    "tryAgain": "Try again"
   },
   "auth": {
     "popupBlocked": "The browser blocked the sign-in window. Allow pop-ups for this site and try again.",
     "unauthorizedDomain": "This site isn't allowed to sign in yet. Add it under Firebase → Authentication → Settings → Authorized domains.",
     "operationNotAllowed": "Google sign-in is turned off. Enable it under Firebase → Authentication → Sign-in method.",
     "network": "No connection. Sign in once you're online.",
-    "failed": "Sign-in failed. Try again."
+    "failed": "Sign-in failed. Try again.",
+    "storageBlocked": "This browser is blocking the storage sign-in needs. Turn off private browsing or allow site data, then try again.",
+    "tooMany": "Too many sign-in attempts. Wait a few minutes and try again.",
+    "disabled": "This Google account can't sign in here.",
+    "standaloneRetry": "The sign-in window couldn't reach the app. Close the app completely, open it again and try once more.",
+    "timeout": "Sign-in didn't finish. If a Google window is still open, finish there; otherwise try again."
   },
   "newTrip": {
     "descriptionOnline": "It starts empty, with you as its only member.",

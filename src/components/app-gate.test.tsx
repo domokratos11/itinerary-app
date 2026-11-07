@@ -77,7 +77,9 @@ describe("AppGate", () => {
       screen.getByRole("button", { name: "Sign in with Google" }),
     );
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Blocked pop-up"),
+      expect(toast.error).toHaveBeenCalledWith("Blocked pop-up", {
+        action: expect.objectContaining({ label: "Try again" }),
+      }),
     );
   });
 

@@ -41,26 +41,71 @@ export function watchUser(
 export async function signInWithGoogle(): Promise<boolean> {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  // From the home-screen app on iPhone the popup sometimes never reports
+  // back. Stop waiting, so the button can be tapped again; if the popup does
+  // finish later, the sign-in still counts.
+  const gaveUp = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new SignInTimeout(t("auth.timeout"))),
+      SIGN_IN_TIMEOUT_MS,
+    );
+  });
   try {
-    await signInWithPopup(getFirebaseAuth(), provider);
+    await Promise.race([signInWithPopup(getFirebaseAuth(), provider), gaveUp]);
     return true;
   } catch (error) {
+    if (error instanceof SignInTimeout) throw error;
     const code = error instanceof FirebaseError ? error.code : "";
     if (
       code === "auth/popup-closed-by-user" ||
       code === "auth/cancelled-popup-request"
     )
       return false;
-    throw new Error(t(SIGN_IN_ERRORS[code] ?? "auth.failed"));
+    throw new Error(t(signInErrorKey(code, isStandalone())));
+  } finally {
+    clearTimeout(timer);
   }
 }
+
+export const SIGN_IN_TIMEOUT_MS = 90_000;
+
+class SignInTimeout extends Error {}
 
 const SIGN_IN_ERRORS: Record<string, MessageKey> = {
   "auth/popup-blocked": "auth.popupBlocked",
   "auth/unauthorized-domain": "auth.unauthorizedDomain",
   "auth/operation-not-allowed": "auth.operationNotAllowed",
   "auth/network-request-failed": "auth.network",
+  "auth/web-storage-unsupported": "auth.storageBlocked",
+  "auth/too-many-requests": "auth.tooMany",
+  "auth/user-disabled": "auth.disabled",
 };
+
+// Failures that, in the home-screen app, usually mean the popup couldn't
+// reach back to it; a fresh start of the app tends to fix them.
+const STANDALONE_RETRY = new Set([
+  "auth/popup-blocked",
+  "auth/web-storage-unsupported",
+  "auth/internal-error",
+]);
+
+export function signInErrorKey(code: string, standalone: boolean): MessageKey {
+  if (standalone && STANDALONE_RETRY.has(code)) return "auth.standaloneRetry";
+  return SIGN_IN_ERRORS[code] ?? "auth.failed";
+}
+
+// True when the app was opened from the home screen rather than a browser
+// tab. iOS reports it through navigator.standalone, others through CSS.
+export function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  const iosStandalone = (navigator as Navigator & { standalone?: boolean })
+    .standalone;
+  return (
+    iosStandalone === true ||
+    window.matchMedia?.("(display-mode: standalone)").matches === true
+  );
+}
 
 // Signs out and wipes the trip from this device's offline cache. Edits not
 // yet synced are lost, so callers should say so.

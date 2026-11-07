@@ -203,16 +203,18 @@ function NewTripButton() {
 
 function SignInButton() {
   const [busy, setBusy] = useState(false);
+  const start = () => {
+    setBusy(true);
+    signInWithGoogle()
+      .catch((error: Error) =>
+        toast.error(error.message, {
+          action: { label: t("gate.tryAgain"), onClick: start },
+        }),
+      )
+      .finally(() => setBusy(false));
+  };
   return (
-    <Button
-      disabled={busy}
-      onClick={() => {
-        setBusy(true);
-        signInWithGoogle()
-          .catch((error: Error) => toast.error(error.message))
-          .finally(() => setBusy(false));
-      }}
-    >
+    <Button disabled={busy} onClick={start}>
       {busy ? t("gate.signingIn") : t("gate.signIn")}
     </Button>
   );

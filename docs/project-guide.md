@@ -333,7 +333,7 @@ Firebase and repositories:
 |---|---|
 | `firebase.ts` | Starts the Firebase app (once), App Check (off unless a key is set), and Firestore with a persistent local cache and multi-tab manager. `getFirebaseAuth()` for Auth. `getDb()` throws in viewer mode. `getViewerDb()` is a separate app named "viewer" with a memory cache, used only by the shared view. |
 | `firebase.config.ts` | Firebase web config and the App Check site key (`null` = off). Public values; access is decided by the rules. |
-| `auth.ts` | The only file that talks to `firebase/auth` for sign-in: Google popup, `watchUser`, sign-out, session clear. |
+| `auth.ts` | The only file that talks to `firebase/auth` for sign-in: Google popup, `watchUser`, sign-out, session clear. `signInWithGoogle()` stops waiting after `SIGN_IN_TIMEOUT_MS` (90 s) and throws "Sign-in didn't finish", so the button can be tapped again; a popup that finishes later still signs in through `onAuthStateChanged`. `signInErrorKey(code, standalone)` maps Firebase codes to message keys, and `isStandalone()` detects the home-screen app (`navigator.standalone` on iOS, or `display-mode: standalone`). |
 | `tracked-firestore.ts` | `setDoc`, `updateDoc`, `deleteDoc` and `writeBatch`, with the same signatures as `firebase/firestore`, each wrapped with `trackWrite` so the write counts in `sync-store.ts` until the server confirms (`writeBatch` wraps `commit`). Every `firestore-*-repository.ts` imports these four from here, not from `firebase/firestore`. `watchStartupWrites()` calls `waitForPendingWrites(getDb())` once. |
 | `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. |
 | `firestore-plan-repository.ts` | Implements `PlanRepository` on `trips/{id}/items`. |
@@ -1052,7 +1052,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 
 | Concept | How it works |
 |---|---|
-| **Sign-in** | Google popup. Errors mapped to messages: popup blocked, unauthorized domain, operation not allowed, network (`SIGN_IN_ERRORS`). |
+| **Sign-in** | Google popup. Errors mapped to messages by `signInErrorKey`: popup blocked, unauthorized domain, operation not allowed, network, web storage blocked, too many attempts, account disabled (`SIGN_IN_ERRORS`). In the home-screen app, popup blocked, storage blocked and internal error show "close the app completely, open it again and try once more" (`auth.standaloneRetry`). The sign-in button waits at most 90 s; a failed sign-in toast has a "Try again" action. Redirect sign-in is still not used: it needs the auth domain on the site's own origin root, which a GitHub Pages project site does not have. |
 | **Session** | Firebase keeps it in IndexedDB, so it survives reloads and works offline. |
 | **Trip list** | `watchMyTrips(email)`: `where("members", "array-contains", email)`. Needs no index (single-field). |
 | **Opening a trip** | From the link (`?trip=`), the remembered trip, the last trip, or the only trip. Opening another trip reloads the page. |
@@ -1062,6 +1062,16 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 | **New trip** | `config/access.tripCreators` must contain the email. Name required. |
 | **Language** | Saved in `users/{uid}.language` and applied at sign-in. |
 | **Sign-out** | Clears this device's trip cache. Unsynced edits are lost, which the UI warns about. |
+
+### Testing sign-in on phones
+
+Run this by hand on both phones before the trip:
+
+1. In Safari (or Chrome on Android), sign in, then sign out.
+2. Add the app to the home screen, open it from there and sign in. On iPhone the home-screen app keeps its own sign-in, separate from Safari.
+3. Close the home-screen app completely, reopen it, and check you are still signed in and the trip opens.
+4. Turn on airplane mode, reopen the app from the home screen, and check that the plan still shows.
+5. If the sign-in window hangs, wait for the "Sign-in didn't finish" message and use Try again.
 
 ---
 
