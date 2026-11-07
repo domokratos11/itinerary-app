@@ -87,7 +87,7 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **sonner** | ^2.0.8 | Toast messages. Sits above the bottom tab bar on phones. | `src/components/ui/sonner.tsx`, root layout |
 | **embla-carousel-react** | ^8.6.0 | Carousel for Google photos. | `src/components/ui/carousel.tsx`, `place-live.tsx` |
 | **recharts** | ^3.8.0 | Budget and dashboard charts (bars, donut, gauge), wrapped by shadcn `chart`. Loaded on first use through `charts-lazy.tsx` (`next/dynamic`, `ssr: false`), so it is not in any page's first load. | `src/components/charts.tsx`, `charts-lazy.tsx`, `ui/chart.tsx`, `budget-screen.tsx`, `dashboard-screen.tsx` |
-| **@dnd-kit/core**, **sortable**, **utilities** | ^6.3.1 / ^10.0.0 / ^3.2.2 | Drag and drop of stops within a day, between days, and from the waiting list. Pointer and keyboard sensors. | `day-plan.tsx`, `day-side-panel.tsx`, `drop.ts` (domain) |
+| **@dnd-kit/core**, **sortable**, **utilities** | ^6.3.1 / ^10.0.0 / ^3.2.2 | Drag and drop of stops within a day, between days, and from the waiting list. Pointer and keyboard sensors. | `day-plan.tsx`, `day-plan-stop.tsx`, `use-day-plan-actions.ts`, `day-side-panel.tsx`, `drop.ts` (domain) |
 | **fractional-indexing** | ^4.0.0 | Sort keys for plan items, so moving one stop changes only that item. | `src/lib/order.ts` |
 | **Zod** | ^4.6.7 | Runtime schemas. Used to validate every Firestore document on read, the bundled sample trip, the message files, the research files and the backup file. | `src/domain/schemas.ts`, `user-repository.ts`, `proposals.ts`, `backup.ts`, `scripts/validate.ts` |
 
@@ -238,18 +238,23 @@ Screens (one per page):
 
 | File | Page | Role |
 |---|---|---|
-| `dashboard-screen.tsx` | `/` | Dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research. |
+| `dashboard-screen.tsx` | `/` | `DashboardScreen` and `DashboardContent`: dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research. Imports the budget figures from `budget-figures.tsx`. |
+| `dashboard-parts.tsx` | `/` | The pieces the dashboard is built from: `Tile`, `Panel`, `Hint`, `Empty` and `ClockTiles`. |
 | `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions, and the quick cost button (`QuickExpenseButton`); before it, a countdown. During the trip it also shows the day's weather (`WeatherBadge`). |
 | `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. `trip-days.tsx` holds the Calendar / List toggle (shadcn `ToggleGroup`, next to Today). |
 | `trip-calendar.tsx` | `/days/` | `TripCalendar`: the Calendar view. Monday-first weeks in one continuous grid (December into January). Trip days link to `/day/?date=` (id `day-YYYY-MM-DD`); cells show the day number, stop count, a flight icon, a holiday dot and a today ring. Each hotel night is a city-coloured bar; hotel names show from `lg`. Days outside the trip are muted, not links. A day with research requested shows a search icon; one with a ready analysis shows a sparkles icon. Each trip day cell also shows the day's weather icon (`WeatherBadge`), with the high from `lg`. |
 | `day-screen.tsx` | `/day/` | Loads one day and renders `DayPlan`. |
-| `day-plan.tsx` | `/day/` | The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. |
+| `day-plan.tsx` | `/day/` | `DayPlan` (about 630 lines), with `DroppableList`, `PhoneWaiting` and the drag collision helpers. The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. Stops and links are in the two files below, and the drag and stop actions in `use-day-plan-actions.ts` (§3.5). |
+| `day-plan-stop.tsx` | `/day/` | `SortableStop` (wide screens, drag grip), `StopCard` (status buttons, map link, move day, cost, remove; phones get up and down buttons) and the `StopOutcome` type. |
+| `day-plan-links.tsx` | `/day/` | `FullDay` (directions for the whole day), `HotelButtons` and `HotelButton` (directions to the hotel), `BookingsButton` (wide screens, side sheet) and `Reservations`. |
 | `day-research.tsx` | `/day/` | `DayResearchPanel`: under the flights. "Research this day" (optional message) asks for every place on the day; shows the request, the day analysis (load badge, warnings, nearby ideas, answer, sources) and place updates to review or accept for the day. Hidden on read-only links. |
 | `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view: the day, other days, waiting places. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, Days filter (per-day pins with a legend), add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
-| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. `ExportExpensesButton` (header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`), the currency button (`CurrencyButton`) and `MoneyScope` (hidden, currency and rate). `Yen` and `useYenValues` show dollars when USD is chosen. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
+| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | `BudgetScreen` and `BudgetContent`: expenses, totals by category and payer, charts, gauge. `ExportExpensesButton` (in `budget-parts.tsx`, header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`), the currency button (`CurrencyButton`) and `MoneyScope` (hidden, currency and rate). `Yen` and `useYenValues` show dollars when USD is chosen. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
+| `budget-figures.tsx` | `/budget/` and `/` | `useBudgetFigures`, `categorySeries`, `spentPercent`, `GaugeCenter`, `Figure` and `SummaryFigures`. The Dashboard imports these from here, not from the Budget screen. |
+| `budget-parts.tsx` | `/budget/` | `TargetRow`, `ExpenseRow`, `BudgetForm` and `ExportExpensesButton`. |
 | `quick-expense.tsx` | `/` (Today card) and `/day/` | `QuickExpenseButton({date?})`: a large "+ ¥" button (aria "Log a cost"), shown during the trip on today's date and in the day page's button row. Opens an `EditPanel` with a big numeric amount field (`AmountInput`, with the ¥/$ toggle), a 4-column grid of category tiles (the last one used is preselected), an optional "What" line and "More details", which opens the full `ExpenseForm` with the same values. Save writes through `saveRecord`; the toast offers Undo. Hidden on read-only links. |
 | `amount-input.tsx` | Today card and day page (quick cost), expense form (`/budget/`), reservation form (`/settings/`) | `AmountInput`: an amount box with a ¥/$ toggle. In dollars it shows an editable rate (it starts at today's rate from `useUsdRate`) and the yen result. |
 | `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Share, Backup, Clean up. |
@@ -366,6 +371,7 @@ State and sync:
 | `plan-store.ts` | Zustand: plan items, ready flag, error. |
 | `use-plan-sync.ts` | Subscribes to `items` for the trip. |
 | `use-day-research.ts` | Hook `useDayResearch(tripId)`: live day research. Listens only once access is `member`. |
+| `use-day-plan-actions.ts` | Hook `useDayPlanActions({ tripId, date, items, stops, placesById, citiesById, tripDays })` for the Day page: the dnd-kit sensors (pointer, touch with a 200 ms delay, keyboard), the `dragging` state, `handleDragEnd` (uses `planDrop`), and the stop actions `addToDay`, `stepBy`, `moveToDay`, `remove` and `mark`, each with its toast and Undo. With `tripId` null (read-only link) they do nothing. |
 | `sync-store.ts` | Zustand `useSyncStore`: `pending` (writes from this session the server has not confirmed) and `startup` (true until edits queued in an earlier session, before a reload, are sent). `trackWrite(promise)` counts a write until it settles; `trackStartupWrites(promise)` does the same for those earlier edits; `syncStatus(state, online)` returns `"saved"`, `"saving"` or `"waiting"`. Firestore write promises settle only when the server confirms, so offline writes stay counted. |
 | `use-proposals.ts`, `use-activity.ts` | Live proposals (always), and the activity log (only while its sheet is open). |
 | `use-trip-id.ts` | The open trip's ID from the auth store. |
@@ -537,12 +543,12 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 
 | Page | Screen | Main children |
 |---|---|---|
-| `/` | `DashboardScreen` | `TodayCard`, tiles, `Charts`, `Yen`, `HideAmountsButton` |
+| `/` | `DashboardScreen` → `DashboardContent` | `TodayCard`, `Tile`, `Panel`, `ClockTiles` (`dashboard-parts.tsx`), `Charts`, `Yen`, `HideAmountsButton` |
 | `/days/` | `TripName`, `TripDates`, `TripPlanStatus`, `ExportTrip`, `TodayCard`, `NeedsNewDay`, `ResearchNotice`, `TripDays` (`TripCalendar` or the list, by the `ToggleGroup`) | — |
-| `/day/` | `DayScreen` → `DayPlan` | `FlightCard`, `DayResearchPanel`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
+| `/day/` | `DayScreen` → `DayPlan` | `SortableStop`, `StopCard` (`day-plan-stop.tsx`), `FullDay`, `HotelButtons`, `BookingsButton`, `Reservations` (`day-plan-links.tsx`), `FlightCard`, `DayResearchPanel`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
 | `/cities/` | `CitiesScreen` | — |
-| `/budget/` | `BudgetScreen` | `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
+| `/budget/` | `BudgetScreen` → `BudgetContent` | `SummaryFigures`, `ExpenseRow`, `TargetRow`, `BudgetForm`, `ExportExpensesButton` (`budget-parts.tsx`, `budget-figures.tsx`), `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
 | `/settings/` | `SettingsScreen` | one panel per tab (`Stays`, `Cities`, `Places`, `Flights`, `Reservations`, `Holidays`, `Trip`, `Share`, `Backup`, `Cleanup`); `EditPanel` in each; `ProposalReview` in Places; `NotOnSharedView` in viewer mode |
 
 ### 6.3 Shared overlays
@@ -796,7 +802,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 ### 12.3 Day (`/day/?date=`)
 
-`day-plan.tsx` (large file) shows, for one date:
+`day-plan.tsx` shows, for one date (the stop cards and links are in `day-plan-stop.tsx` and `day-plan-links.tsx`, and the drag and stop actions in `use-day-plan-actions.ts`; see §3.3 and §3.5):
 
 - **Flights** leaving or landing that day appear as cards at the top, with the times as on the ticket.
 - **Stops** in order: place, category and priority badges, and cost. Each stop has **Went** and **Skip** buttons, which set `status` to `done` or `skipped` through `updateItem`; tapping the active one sets it back to `planned`. The stop's name is a button with an info icon that opens `PlaceDetails`, the same as tapping its map pin.
@@ -826,7 +832,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 ### 12.5 Budget (`/budget/`)
 
-`budget-screen.tsx` and `domain/budget.ts`:
+`budget-screen.tsx` and `domain/budget.ts` (the figures and the rows are in `budget-figures.tsx` and `budget-parts.tsx`, §3.3):
 
 - **Expenses** (`expenses` collection): title, amount in whole yen (`amountJPY`, the figure every total counts), category, date, status (`planned` or `paid`), who paid, and optional links to a place, reservation or stay. `cityId` is the city the money was spent in; `stayId` keeps its meaning (the hotel's own bill).
 - **Quick cost** (`quick-expense.tsx`, on the Today card during the trip and on each day page): a big amount field (with the ¥/$ toggle, `AmountInput`) and a category tile grid (`quick-expense-category` remembers the last tile). The panel shows the day and city it will use. The city is that night's hotel. "More details" opens the full expense form with the same values. Save writes an activity entry; the toast's Undo archives the expense.
@@ -1587,7 +1593,8 @@ Removed on 2026-11-01: the Feasibility plan, docs/remaining-work-plan.md, links/
 | `firestore.rules` not deployed by CI | Must be pasted into the Firebase console. | Keep in the release steps (README). |
 | App Check | Code present; off. | Turn on with a reCAPTCHA v3 key once the site is stable. |
 | Shadcn sidebar mobile sheet | Has no trigger in the app; never opens on phones. | Intentional (the Days page covers it), or remove the sheet path. |
-| Day-side-panel and day-plan | `day-plan.tsx` is a large file with several concerns. | Split when next changed. |
+| Large component files | `day-plan.tsx` (about 630 lines), `dashboard-screen.tsx` (about 630) and `budget-screen.tsx` (about 300) were split into smaller files in the frontend audit (§3.3). Behaviour did not change. | Split further only if they grow again. |
+| Day-side-panel | Not part of the split; still one file. | Split when next changed. |
 | Tests in `src/app/days/` | A test sits beside its page instead of with the components. | Move if the layout is tidied. |
 
 ---

@@ -1,44 +1,21 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   DndContext,
   DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
   closestCenter,
   pointerWithin,
-  useSensor,
-  useSensors,
   type CollisionDetection,
-  type DragEndEvent,
   type SensorDescriptor,
   type SensorOptions,
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
-  BedDouble,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
-  GripVertical,
-  Info,
-  Navigation,
-  Plus,
-  SkipForward,
-  Ticket,
-  Trash2,
-} from "lucide-react";
+import { Info, Navigation, Plus } from "lucide-react";
 import Link from "next/link";
-import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -52,42 +29,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetBody,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import {
   directionsUrl,
-  holidayWarnings,
   itemsForDay,
-  legsForDay,
   nextStop,
   placeLocation,
-  stopWarnings,
   waitingPlaces,
 } from "@/domain/plan";
-import type {
-  FlightRecord,
-  PlanItem,
-  Place,
-  Reservation,
-} from "@/domain/schemas";
+import type { FlightRecord, Reservation } from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
-import { planDrop, type DragSource, type DropTarget } from "@/domain/drop";
-import { isDraft } from "@/domain/place-edit";
 import {
   DayColumn,
   DragPreview,
@@ -102,21 +52,12 @@ import {
   WaitingColumn,
   WaitingTags,
 } from "@/components/day-side-panel";
-import { LogCostButton, placePrefill } from "@/components/expense-form";
 import { Tip } from "@/components/tip";
 import { t } from "@/lib/i18n";
 import { CostLine } from "@/components/cost-line";
 import { FlightCard } from "@/components/flight-card";
 import { formatDayLabel } from "@/lib/format-day";
-import {
-  addPlaceAt,
-  placeItem,
-  removeItem,
-  restoreItem,
-  updateItem,
-} from "@/lib/plan-actions";
 import { PlaceDetails } from "@/components/place-details";
-import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
 import { LegLine } from "@/components/leg-line";
 import { DayResearchPanel } from "@/components/day-research";
 import { QuickExpenseButton } from "@/components/quick-expense";
@@ -124,13 +65,7 @@ import { DayWeatherStrip } from "@/components/day-weather";
 import { useDaysWeather } from "@/lib/use-weather";
 import { TripMap, type MapFocus } from "@/components/trip-map";
 import { dayLegs } from "@/domain/legs";
-import {
-  cityPins,
-  dayMap,
-  endpointPoint,
-  placePoint,
-  stopColor,
-} from "@/domain/map-pins";
+import { cityPins, dayMap, endpointPoint, placePoint } from "@/domain/map-pins";
 import { applyWaitingView, DEFAULT_WAITING_VIEW } from "@/domain/waiting-view";
 import type { MapLine } from "@/domain/maps-service";
 import { useWalkingLegs } from "@/lib/use-walking-legs";
@@ -148,6 +83,14 @@ import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTripId } from "@/lib/use-trip-id";
 import { useReadOnly } from "@/lib/viewer-store";
+import { useDayPlanActions } from "@/lib/use-day-plan-actions";
+import {
+  FullDay,
+  BookingsButton,
+  HotelButtons,
+  Reservations,
+} from "@/components/day-plan-links";
+import { SortableStop, StopCard } from "@/components/day-plan-stop";
 
 type Props = {
   date: string;
@@ -171,7 +114,6 @@ export function DayPlan(props: Props) {
   const citiesById = useCitiesById();
   const trip = useTrip();
   const tripDays = useTripDays();
-  const [dragging, setDragging] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "map" | "waiting">("list");
   const [adding, setAdding] = useState<Waiting | null>(null);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
@@ -186,29 +128,25 @@ export function DayPlan(props: Props) {
     () => itemsForDay(items, props.date),
     [items, props.date],
   );
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 6 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-
-  // Every write goes through plan-actions and PlanRepository. Saves are not
-  // awaited: the local cache applies them at once and only a refusal is shown.
-  function move(
-    item: PlanItem,
-    date: string,
-    index: number,
-    others: PlanItem[],
-  ) {
-    if (!tripId) return;
-    placeItem(tripId, item, date, index, others).catch(() =>
-      toast.error(t("common.refused")),
-    );
-  }
+  const {
+    sensors,
+    dragging,
+    setDragging,
+    handleDragEnd,
+    addToDay,
+    stepBy,
+    moveToDay,
+    remove,
+    mark,
+  } = useDayPlanActions({
+    tripId,
+    date: props.date,
+    items,
+    stops,
+    placesById,
+    citiesById,
+    tripDays,
+  });
 
   // Wide screens: what can be dragged in from the side panel, and the other
   // days of this day's cities to drop a stop on.
@@ -236,156 +174,9 @@ export function DayPlan(props: Props) {
     return counts;
   }, [items]);
 
-  function sourceFor(id: string): DragSource | null {
-    const parsed = parseDragId(id);
-    if (parsed?.kind === "place") {
-      const place = placesById.get(parsed.value);
-      return place
-        ? { kind: "place", placeId: place.id, cityId: place.cityId }
-        : null;
-    }
-    const item = stops.find((i) => i.id === id);
-    return item
-      ? {
-          kind: "stop",
-          item,
-          cityId: placesById.get(item.placeId)?.cityId ?? null,
-        }
-      : null;
-  }
-
-  function targetFor(id: string): DropTarget | null {
-    if (id === LIST_ID) return { kind: "list" };
-    const parsed = parseDragId(id);
-    if (parsed?.kind === "day") return { kind: "day", date: parsed.value };
-    const index = stops.findIndex((i) => i.id === id);
-    return index < 0 ? null : { kind: "stop", index };
-  }
-
-  function nameOf(source: DragSource): string {
-    if (source.kind === "stop")
-      return placesById.get(source.item.placeId)?.name ?? t("day.thisStop");
-    return placesById.get(source.placeId)?.name ?? t("day.thisPlace");
-  }
-
-  function handleDragEnd({ active, over }: DragEndEvent) {
-    setDragging(null);
-    if (!over || !tripId) return;
-    const source = sourceFor(String(active.id));
-    const target = targetFor(String(over.id));
-    if (!source || !target) return;
-    const movingId = source.kind === "stop" ? source.item.id : null;
-    const dayItems = (date: string) =>
-      itemsForDay(items, date).filter((i) => i.id !== movingId);
-    const plan = planDrop(source, target, {
-      date: props.date,
-      stops,
-      days: tripDays,
-      dayLength: (date) => dayItems(date).length,
-    });
-    if (plan.kind === "none") return;
-    if (plan.kind === "refuse") {
-      const city =
-        citiesById.get(source.cityId ?? "")?.name ?? t("day.itsCity");
-      toast.error(
-        plan.reason === "not-a-day"
-          ? t("day.notATripDayDrop")
-          : t("day.cityNotOnDay", {
-              city,
-              day: formatDayLabel(plan.date),
-              name: nameOf(source),
-            }),
-      );
-      return;
-    }
-
-    const id = tripId;
-    const label = formatDayLabel(plan.date);
-    if (source.kind === "stop") {
-      const before = source.item;
-      move(before, plan.date, plan.index, dayItems(plan.date));
-      if (plan.date !== before.date)
-        toast(t("day.moved", { name: nameOf(source), day: label }), {
-          action: {
-            label: t("common.undo"),
-            onClick: () => undo(restoreItem(id, before)),
-          },
-        });
-      return;
-    }
-
-    addToDay(source.placeId, plan.date, plan.index, dayItems(plan.date));
-  }
-
-  function addToDay(
-    placeId: string,
-    date: string,
-    index: number,
-    dayItems: PlanItem[],
-  ) {
-    if (!tripId) return;
-    const id = tripId;
-    const name = placesById.get(placeId)?.name ?? t("day.thisPlace");
-    addPlaceAt(id, placeId, date, index, dayItems)
-      .then((stop) =>
-        toast(t("common.addedToDay", { name, day: formatDayLabel(date) }), {
-          action: {
-            label: t("common.undo"),
-            onClick: () => undo(removeItem(id, stop)),
-          },
-        }),
-      )
-      .catch(() => toast.error(t("common.refused")));
-  }
-
-  function undo(write: Promise<void>) {
-    write.catch(() => toast.error(t("common.undoFailed")));
-  }
-
-  function stepBy(item: PlanItem, delta: number) {
-    const index = stops.findIndex((i) => i.id === item.id);
-    const target = index + delta;
-    if (target < 0 || target >= stops.length) return;
-    move(
-      item,
-      props.date,
-      target,
-      stops.filter((i) => i.id !== item.id),
-    );
-  }
-
-  function moveToDay(item: PlanItem, date: string) {
-    if (date === item.date) return;
-    const dayItems = itemsForDay(items, date);
-    move(item, date, dayItems.length, dayItems);
-  }
-
-  function remove(item: PlanItem) {
-    if (!tripId) return;
-    const id = tripId;
-    removeItem(id, item).catch(() => toast.error(t("common.refused")));
-    toast(t("day.removed"), {
-      action: {
-        label: t("common.undo"),
-        onClick: () => {
-          restoreItem(id, item).catch(() =>
-            toast.error(t("common.undoFailed")),
-          );
-        },
-      },
-    });
-  }
-
   const next = nextStop(stops);
   const holiday = trip.holidays.find((h) => h.date === props.date);
 
-  // Tapping the status a stop already has takes it back to planned.
-  function mark(item: PlanItem, status: StopOutcome) {
-    if (!tripId) return;
-    updateItem(tripId, item, {
-      status: item.status === status ? "planned" : status,
-    }).catch(() => toast.error(t("common.refused")));
-  }
   const nextPlace = next ? placesById.get(next.placeId) : undefined;
 
   function dayOptionsFor(cityId: string | undefined) {
@@ -833,453 +624,5 @@ function PhoneWaiting({
         ))}
       </ul>
     </section>
-  );
-}
-
-// The day's bookings (flights, trains, tickets) from the trip settings.
-function Reservations({ reservations }: { reservations: Reservation[] }) {
-  if (reservations.length === 0) return null;
-  return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-sm font-medium text-muted-foreground uppercase">
-        {t("day.reservations")}
-      </h2>
-      {reservations.map((r, i) => (
-        <Card key={`${r.type}-${i}`} size="sm">
-          <CardContent className="flex flex-col gap-1 text-sm">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">{t(`reservationType.${r.type}`)}</Badge>
-              {r.time && <span className="font-medium">{r.time}</span>}
-            </div>
-            <div>
-              {r.from && r.to ? `${r.from} → ${r.to}` : (r.from ?? r.to ?? "")}
-            </div>
-            {r.note && <div className="text-muted-foreground">{r.note}</div>}
-          </CardContent>
-        </Card>
-      ))}
-    </section>
-  );
-}
-
-// Wide screens: the day's bookings behind a button, to leave room for the plan.
-function BookingsButton({ reservations }: { reservations: Reservation[] }) {
-  if (reservations.length === 0) return null;
-  return (
-    <Sheet>
-      <Tip label={t("day.tipBookings")}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Ticket />
-            {t("day.bookings", { count: reservations.length })}
-          </Button>
-        </SheetTrigger>
-      </Tip>
-      <SheetContent side="right">
-        <SheetHeader className="text-left">
-          <SheetTitle>{t("day.reservations")}</SheetTitle>
-          <SheetDescription className="sr-only">
-            {t("day.tipBookings")}
-          </SheetDescription>
-        </SheetHeader>
-        <SheetBody>
-          <Reservations reservations={reservations} />
-        </SheetBody>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-// Directions to the day's hotel. Most days start and end at the same one, and
-// that needs only one button.
-function HotelButtons({
-  start,
-  end,
-}: {
-  start: Endpoint | null;
-  end: Endpoint | null;
-}) {
-  if (start && end && start.name === end.name)
-    return <HotelButton text={start.name} endpoint={start} />;
-  return (
-    <>
-      {start && (
-        <HotelButton
-          text={t("day.hotelEndpoint", {
-            label: t("day.start"),
-            name: start.name,
-          })}
-          endpoint={start}
-        />
-      )}
-      {end && (
-        <HotelButton
-          text={t("day.hotelEndpoint", { label: t("day.end"), name: end.name })}
-          endpoint={end}
-        />
-      )}
-    </>
-  );
-}
-
-function HotelButton({ text, endpoint }: { text: string; endpoint: Endpoint }) {
-  const label = <span className="max-w-48 truncate">{text}</span>;
-  if (!endpoint.location)
-    return (
-      <Button variant="outline" size="sm" disabled>
-        <BedDouble />
-        {label}
-      </Button>
-    );
-  return (
-    <Tip label={t("day.tipHotel", { name: endpoint.name })}>
-      <Button asChild variant="outline" size="sm">
-        <a
-          href={directionsUrl(endpoint.location)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <BedDouble />
-          {label}
-        </a>
-      </Button>
-    </Tip>
-  );
-}
-
-type StopOutcome = "done" | "skipped";
-
-type StopProps = {
-  // Its place in the day, the same number as its pin on the map.
-  number: number;
-  item: PlanItem;
-  place: Place | undefined;
-  dayOptions: { date: string; label: string }[];
-  currentDate: string;
-  onRemove: () => void;
-  onMark: (status: StopOutcome) => void;
-  onMoveDay: (date: string) => void;
-  onOpenPlace: () => void;
-  // On a read-only link: the stop and its map link, nothing to change.
-  readOnly: boolean;
-};
-
-// Wide screens: drag the grip to reorder, or focus it and use Space and the
-// arrow keys.
-function SortableStop({
-  id,
-  leg,
-  ...props
-}: StopProps & { id: string; leg: ReactNode }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.6 : 1,
-  };
-  return (
-    <li ref={setNodeRef} style={style} className="flex flex-col gap-3">
-      {leg}
-      <StopCard
-        {...props}
-        handle={
-          props.readOnly ? undefined : (
-            <Tip label={t("day.dragToReorder")}>
-              <button
-                type="button"
-                aria-label={t("day.dragToReorder")}
-                className="mt-0.5 cursor-grab touch-none rounded-sm text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
-                {...attributes}
-                {...listeners}
-              >
-                <GripVertical />
-              </button>
-            </Tip>
-          )
-        }
-      />
-    </li>
-  );
-}
-
-// Phones use the up/down buttons instead of dragging.
-function StopCard({
-  number,
-  item,
-  place,
-  dayOptions,
-  currentDate,
-  onRemove,
-  onMark,
-  onMoveDay,
-  onOpenPlace,
-  readOnly,
-  handle,
-  buttons,
-}: StopProps & {
-  handle?: ReactNode;
-  buttons?: {
-    canUp: boolean;
-    canDown: boolean;
-    onUp: () => void;
-    onDown: () => void;
-  };
-}) {
-  const { holidays } = useTrip();
-  const memberTripId = useTripId();
-  const tripId = readOnly ? null : memberTripId;
-  const name = place?.name ?? item.placeId;
-  const finished = item.status === "done" || item.status === "skipped";
-  const warnings = place
-    ? [
-        ...stopWarnings(place, item.date, t),
-        ...holidayWarnings(place, item.date, holidays, t),
-      ]
-    : [];
-
-  return (
-    <Card size="sm" className={cn(finished && "opacity-70")}>
-      <CardHeader className="flex items-start gap-3">
-        {handle}
-        <span
-          aria-hidden
-          className="flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white tabular-nums"
-          style={{ backgroundColor: stopColor(item.status) }}
-        >
-          {number}
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <CardTitle
-            className={cn(
-              "text-base",
-              item.status === "done" && "line-through",
-            )}
-          >
-            {place ? (
-              <button
-                type="button"
-                aria-label={t("day.openDetails", { name })}
-                onClick={onOpenPlace}
-                className="rounded-sm text-left underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              >
-                {name}
-                <Info
-                  aria-hidden
-                  className="ml-1.5 inline size-4 align-[-0.125em] text-muted-foreground"
-                />
-              </button>
-            ) : (
-              name
-            )}
-          </CardTitle>
-          <div className="flex flex-wrap gap-2">
-            {place && (
-              <>
-                <CategoryBadge category={place.category} />
-                <PriorityBadge priority={place.priority} />
-              </>
-            )}
-            {finished && (
-              <Badge>
-                {item.status === "done"
-                  ? t("common.done")
-                  : t("common.skipped")}
-              </Badge>
-            )}
-            {place && isDraft(place) && (
-              <Badge variant="outline" className="border-dashed">
-                {t("common.notResearched")}
-              </Badge>
-            )}
-            {!finished &&
-              warnings.map((warning) => (
-                <Badge key={warning} variant="destructive">
-                  {warning}
-                </Badge>
-              ))}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {!readOnly && (
-            <>
-              <Button
-                variant={item.status === "done" ? "default" : "outline"}
-                size="sm"
-                aria-pressed={item.status === "done"}
-                aria-label={t("day.wentName", { name })}
-                className="flex-1 sm:flex-none"
-                onClick={() => onMark("done")}
-              >
-                <Check />
-                {t("day.went")}
-              </Button>
-              <Button
-                variant={item.status === "skipped" ? "default" : "outline"}
-                size="sm"
-                aria-pressed={item.status === "skipped"}
-                aria-label={t("day.skipName", { name })}
-                className="flex-1 sm:flex-none"
-                onClick={() => onMark("skipped")}
-              >
-                <SkipForward />
-                {t("day.skip")}
-              </Button>
-              {/* On phones: these two on top, the small actions, then the day. */}
-              <span aria-hidden className="basis-full sm:hidden" />
-            </>
-          )}
-          {place && (
-            <Tip label={t("place.tipOpenInMaps")}>
-              <Button asChild variant="outline" size="sm">
-                <a
-                  href={place.mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink />
-                  {t("common.map")}
-                </a>
-              </Button>
-            </Tip>
-          )}
-          {buttons && !readOnly && (
-            <>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label={t("day.moveUp")}
-                disabled={!buttons.canUp}
-                onClick={buttons.onUp}
-              >
-                <ChevronUp />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label={t("day.moveDown")}
-                disabled={!buttons.canDown}
-                onClick={buttons.onDown}
-              >
-                <ChevronDown />
-              </Button>
-            </>
-          )}
-          {dayOptions.length > 1 && !readOnly && (
-            <Select value={currentDate} onValueChange={onMoveDay}>
-              <SelectTrigger
-                size="sm"
-                className="order-last w-full sm:order-none sm:w-44"
-              >
-                <SelectValue placeholder={t("common.moveTo")} />
-              </SelectTrigger>
-              <SelectContent>
-                {dayOptions.map((d) => (
-                  <SelectItem key={d.date} value={d.date}>
-                    {d.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {place && tripId && (
-            <LogCostButton
-              tripId={tripId}
-              prefill={{ ...placePrefill(place), date: item.date }}
-              className="ml-auto"
-            />
-          )}
-          {!readOnly && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t("day.remove")}
-              className={cn(!(place && tripId) && "ml-auto")}
-              onClick={onRemove}
-            >
-              <Trash2 />
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function FullDay({
-  start,
-  end,
-  stops,
-}: {
-  start: Endpoint | null;
-  end: Endpoint | null;
-  stops: PlanItem[];
-}) {
-  const placesById = usePlacesById();
-  const legs = useMemo(() => {
-    if (!start?.location || !end?.location) return null;
-    const points = stops.flatMap((item) => {
-      const place = placesById.get(item.placeId);
-      return place
-        ? [{ name: place.name, location: placeLocation(place) }]
-        : [];
-    });
-    return legsForDay({ name: start.name, location: start.location }, points, {
-      name: end.name,
-      location: end.location,
-    });
-  }, [start, end, stops, placesById]);
-
-  return (
-    <Sheet>
-      <Tip label={t("day.tipFullDay")}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="sm">
-            {t("day.fullDay")}
-          </Button>
-        </SheetTrigger>
-      </Tip>
-      <SheetContent
-        side="bottom"
-        className="max-h-[80dvh] overflow-y-auto pb-[env(safe-area-inset-bottom)]"
-      >
-        <SheetHeader className="text-left">
-          <SheetTitle>{t("day.fullDay")}</SheetTitle>
-          <SheetDescription>{t("day.fullDayDescription")}</SheetDescription>
-        </SheetHeader>
-        <SheetBody className="gap-2">
-          {legs === null && (
-            <p className="text-sm text-muted-foreground">
-              {t("day.fullDayNeedsHotel")}
-            </p>
-          )}
-          {legs?.length === 0 && (
-            <p className="text-sm text-muted-foreground">{t("day.noStops")}</p>
-          )}
-          {legs?.map((leg) => (
-            <a
-              key={`${leg.from}-${leg.to}`}
-              href={leg.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between rounded-md border p-3 text-sm"
-            >
-              <span>
-                {leg.from} → {leg.to}
-              </span>
-              <ExternalLink className="size-4 text-muted-foreground" />
-            </a>
-          ))}
-        </SheetBody>
-      </SheetContent>
-    </Sheet>
   );
 }
