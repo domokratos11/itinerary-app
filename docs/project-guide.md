@@ -467,9 +467,10 @@ Settings that matter (`next.config.ts`):
 `.github/workflows/deploy.yml`:
 
 - Triggers: push to `main`, or manual run.
-- Job `build`: checkout with full history (needed for the version from tags), Node LTS, `npm ci`, `npm run test`, `npm run validate`, `npm run build`, upload `out/` as the Pages artifact.
+- Job `build`: checkout with full history (needed for the version from tags), Node LTS, `npm ci`, `npm run test`, `npm run validate`, `npm run lint`, `npm run typecheck` (`tsc --noEmit`), `npm run build`, upload `out/` as the Pages artifact. A failing step stops the deploy.
 - Job `deploy`: `actions/deploy-pages@v4`.
-- **Not in CI:** `npm run lint` and `npm run test:rules`. Run them by hand. `firestore.rules` is also **not** published by the deploy: paste it into the Firebase console (Firestore → Rules → Publish).
+- **Lint and the type check are in CI.** Before this, only the tests, validation and build ran there, so the ESLint rule that refuses typed text in JSX (§19) only ran locally.
+- **Not in CI:** `npm run test:rules`. Run it by hand. `firestore.rules` is also **not** published by the deploy: paste it into the Firebase console (Firestore → Rules → Publish).
 
 ---
 
@@ -1245,12 +1246,13 @@ From `CLAUDE.md` rule 11, before finishing any change:
 npm run test
 npm run validate
 npm run lint
+npm run typecheck
 npm run build
 ```
 
 And after changing `firestore.rules`: `npm run test:rules`.
 
-CI runs `test`, `validate` and `build`. Lint and rules tests are manual.
+CI (§4.3) runs `test`, `validate`, `lint`, `typecheck` and `build`, in that order. Rules tests are manual.
 
 ### 22.4 Visual checks
 
