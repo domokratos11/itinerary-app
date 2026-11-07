@@ -187,6 +187,8 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | File | Route |
 |---|---|
 | `layout.tsx` | Root layout for every page (fonts, metadata, providers, gates, header, sidebar, tab bar). |
+| `error.tsx` | Crash screen for any page (Client Component). Shown inside the root layout, so the header, sidebar and tab bar stay. Buttons: "Try again" (`retry()`) and "Go to Dashboard" (`/`, keeps `?trip=`). |
+| `global-error.tsx` | Crash screen for the root layout itself (Client Component). Replaces the whole document, so it renders its own `<html>` and `<body>`, imports `globals.css` and applies the saved dark theme from `localStorage.theme`. Buttons: "Try again" and "Reload app". |
 | `page.tsx` | `/`: Dashboard. |
 | `days/page.tsx` | `/days/`: the list of days, with trip header, today card, notices and the day list. |
 | `day/page.tsx` | `/day/?date=YYYY-MM-DD`: one day. One static page for all dates. |
@@ -200,6 +202,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `globals.css` | Theme tokens, Tailwind import, dark variant, base styles. |
 | `favicon.ico` | Browser icon. |
 | `days/page.test.tsx` | A test kept beside its page. |
+| `error.test.tsx` | Test for the crash screen in `error.tsx`, kept beside it. |
 
 Every page file is a Server Component that renders a `main` wrapper and one client screen component inside `Suspense`. The page itself reads no data. Every route also accepts `?share=` for the read-only view (§5, §12.8).
 
@@ -226,6 +229,7 @@ Shared chrome and gates:
 | `language-select.tsx` | Language picker. |
 | `trip-name.tsx`, `trip-dates.tsx`, `trip-plan-status.tsx` | Small trip header pieces. |
 | `old-link-redirect.tsx` | Forwards old `/day/2026-…/` and `/city/nagoya/` links to the query-string form. |
+| `error-screen.tsx` | `ErrorScreen`: the shared card for the crash screens (`error.tsx`, `global-error.tsx`). Shows a title and text (`error.*` keys), the buttons passed in, and logs the error with `console.error`. Uses `role="alert"`. |
 
 Screens (one per page):
 
@@ -415,14 +419,14 @@ Version and update:
 
 | Area | Files |
 |---|---|
-| All tracked files | 266 |
+| All tracked files | 269 |
 | `src/domain` (non-test modules) | 25 |
-| `src/components` (top-level, not `ui`) | 62 |
+| `src/components` (top-level, not `ui`) | 63 |
 | `src/lib` | 68 (including tests) |
 | `src/components/ui` | 27 |
 | Scripts | 16 |
 | Docs (`docs/`) | 5 |
-| Test files (`*.test.*`) | 40 |
+| Test files (`*.test.*`) | 41 |
 
 ---
 
@@ -512,11 +516,13 @@ All routes are static. Dynamic data comes from query strings, read in the browse
        OfflineBanner                      shown when offline
        <div flex>
          AppSidebar (Suspense)            wide screens only (lg and up)
-         <div>{children}</div>            the page: main > screen component
+         <div>{children}</div>            the page: main > screen component (error.tsx catches a crash here)
        BottomNav (Suspense)               phone tab bar (below md)
        VersionTag                         desktop corner text (md and up)
    Toaster (sonner)                       above the tab bar on phones
 ```
+
+**Crash screens.** `error.tsx` is a boundary inside the root layout, around `{children}`. A crash in a page replaces only that page; the header, sidebar and tab bar stay. `global-error.tsx` sits above the layout. A crash in the layout itself (AppGate, header, sidebar) replaces the whole document, so it renders its own `<html>` and `<body>`, loads `globals.css` and applies the saved dark theme, because next-themes is not running there. Both use `ErrorScreen` (§3.3).
 
 ### 6.2 Screen components per page
 

@@ -904,5 +904,12 @@
     "typical": "Typical",
     "tipTypical": "What these dates were like over the last three years; the forecast takes over 16 days before",
     "outlook": "Weather and daylight"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "body": "This screen ran into a problem. Your plan is safe. Try again, or go back to the dashboard.",
+    "retry": "Try again",
+    "goHome": "Go to Dashboard",
+    "reload": "Reload app"
   }
 }

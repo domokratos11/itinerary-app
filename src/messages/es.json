@@ -904,5 +904,12 @@
     "typical": "Habitual",
     "tipTypical": "Cómo fueron estas fechas en los últimos tres años; el pronóstico lo reemplaza 16 días antes",
     "outlook": "Clima y luz del día"
+  },
+  "error": {
+    "title": "Algo salió mal",
+    "body": "Esta pantalla tuvo un problema. Tu plan está a salvo. Inténtalo de nuevo o vuelve al panel.",
+    "retry": "Intentar de nuevo",
+    "goHome": "Ir al panel",
+    "reload": "Recargar la app"
   }
 }
