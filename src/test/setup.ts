@@ -10,6 +10,14 @@ vi.mock("@/lib/activity-repository-instance", async () => {
   return { activityRepository: new LocalActivityRepository() };
 });
 
+// The app loads the recharts charts on first use (charts-lazy.tsx). In tests
+// that import would land during a later test and slow it past its timeout,
+// so tests get the charts directly, as one module.
+vi.mock("@/components/charts-lazy", async () => ({
+  ...(await import("@/components/chart-parts")),
+  ...(await import("@/components/charts")),
+}));
+
 // Tooltips measure themselves with this, and jsdom doesn't have it.
 vi.stubGlobal(
   "ResizeObserver",

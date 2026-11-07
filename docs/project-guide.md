@@ -1248,6 +1248,7 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 
 - **Vitest** with **jsdom**, configured in `vitest.config.mts`. Alias `@` → `src`. Tests: `src/**/*.test.{ts,tsx}` and `scripts/**/*.test.ts`.
 - **Setup** (`src/test/setup.ts`): jest-dom matchers; Testing Library cleanup after each test; the activity repository replaced with the in-memory `LocalActivityRepository`; `ResizeObserver` stubbed (tooltips need it); `fetch` stubbed to reject, so no test reaches the network (a test that needs it stubs its own).
+- **Charts in tests:** the app loads the recharts charts on first use (`src/components/charts-lazy.tsx`, via `next/dynamic`). The setup mocks `@/components/charts-lazy` for every test to return the real charts directly (the exports of `@/components/chart-parts` and `@/components/charts` as one module), because a dynamic import landing during a later test slowed it past its timeout (the read-only link test in `viewer.test.tsx` took up to 15 s under the full suite).
 - **In-memory repositories** (`local-*.ts`) replace Firebase in tests. Nothing in tests touches the real database.
 - **Fixture:** `src/test/fixture-trip.json` (made-up trip). Only tests import it.
 - **Rules tests:** separate config (`vitest.rules.config.mts`), run on the emulator (§15.3).
