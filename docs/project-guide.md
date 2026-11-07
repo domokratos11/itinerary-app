@@ -335,6 +335,7 @@ Firebase and repositories:
 | `firebase.config.ts` | Firebase web config and the App Check site key (`null` = off). Public values; access is decided by the rules. |
 | `auth.ts` | The only file that talks to `firebase/auth` for sign-in: Google popup, `watchUser`, sign-out, session clear. `signInWithGoogle()` stops waiting after `SIGN_IN_TIMEOUT_MS` (90 s) and throws "Sign-in didn't finish", so the button can be tapped again; a popup that finishes later still signs in through `onAuthStateChanged`. `signInErrorKey(code, standalone)` maps Firebase codes to message keys, and `isStandalone()` detects the home-screen app (`navigator.standalone` on iOS, or `display-mode: standalone`). |
 | `tracked-firestore.ts` | `setDoc`, `updateDoc`, `deleteDoc` and `writeBatch`, with the same signatures as `firebase/firestore`, each wrapped with `trackWrite` so the write counts in `sync-store.ts` until the server confirms (`writeBatch` wraps `commit`). Every `firestore-*-repository.ts` imports these four from here, not from `firebase/firestore`. `watchStartupWrites()` calls `waitForPendingWrites(getDb())` once. |
+| `storage-persist.ts` | Asks the browser to keep the offline copy of the trip (IndexedDB). `storageStatus()` returns `kept`, `may-be-cleared` or `unsupported` from `navigator.storage.persisted()`; `requestPersistentStorage()` calls `navigator.storage.persist()` only when the copy is not already kept. Browsers usually decide without a prompt (Chrome by engagement, Safari for home-screen apps). Tests in `storage-persist.test.ts`. |
 | `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. |
 | `firestore-plan-repository.ts` | Implements `PlanRepository` on `trips/{id}/items`. |
 | `firestore-proposal-repository.ts` | Implements `ProposalRepository` on `trips/{id}/proposals`. |
@@ -586,7 +587,7 @@ What happens on first load, in order:
 | `member`, trip collections not yet loaded | Splash |
 | `member`, loaded | The app |
 
-7. **Listeners open only for `member`** (`PlanSync`): `usePlanSync(tripId)` subscribes to `items`, `useTripSync(tripId)` subscribes to the seven collections. Until then the rules would refuse them.
+7. **Listeners open only for `member`** (`PlanSync`): `usePlanSync(tripId)` subscribes to `items`, `useTripSync(tripId)` subscribes to the seven collections. Until then the rules would refuse them. In the same effect, `MemberSync` calls `watchStartupWrites()` and `requestPersistentStorage()` (§17.1) once the trip is live.
 8. **Remembering**: once a member is confirmed, the trip ID is saved in localStorage and in `users/{uid}.lastTripId`.
 
 **Viewer mode (`?share=`)** replaces steps 5, 7 and 8 for that tab:
@@ -857,6 +858,8 @@ Tabs (`settings-screen.tsx`):
 
 Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, "start fresh" which runs `resetApp`), and sign-out.
 
+**Offline copy (Settings → About, `settings-about.tsx`):** the About section shows "Offline copy: kept on this device." when the browser has agreed to keep the offline copy (§17.1), or "Offline copy: the browser may clear it…" with an "Ask to keep it" link button. The button calls `requestPersistentStorage()`; if the browser still refuses, a toast suggests adding the app to the home screen. The line is hidden when the browser has no storage API. Texts are the `about.storage*` keys.
+
 **Shared view:** `/settings/` shows `NotOnSharedView`. The Account sheet is replaced by the viewer sheet (§12.8).
 
 ### 12.7 Trip switcher and trip creation
@@ -1084,6 +1087,7 @@ Run this by hand on both phones before the trip:
 - **Offline screens:** while signed in but with no answer and no connection, `AppGate` shows "offline" rather than a spinner.
 - **Banner:** `OfflineBanner` shows when offline (`useOnline`) and appends the number of writes waiting, if any.
 - **Sync indicator:** `SyncStatus` in the header shows whether this session's edits have reached the server. It reads `useSyncStore.pending`, so an edit made offline reads "waiting" with a count and returns to "saved" once the connection comes back and the server confirms. `startup` covers edits queued before a reload: `MemberSync` calls `watchStartupWrites()` once the member's trip is live, which waits for those writes with `waitForPendingWrites`, and the status reads "saving" until they are sent. Read-only share links do not show it.
+- **Persistent storage:** the browser may clear a site's storage under space pressure, or (Safari) after a while without a visit. Once a member's trip is live, `MemberSync` calls `requestPersistentStorage()` (`src/lib/storage-persist.ts`), which asks the browser to keep the copy (`navigator.storage.persist()`), only when it is not already kept. Chrome usually agrees by site engagement, Safari for home-screen apps. Settings → About shows whether the copy is kept and lets the member ask again (§12.6).
 - **Walking routes and place details:** not stored offline (Google's terms); the day shows straight-line distances.
 
 ### 17.2 Service worker (PWA)

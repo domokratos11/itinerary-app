@@ -375,7 +375,11 @@
     "clear": "Borrar datos e iniciar sesión de nuevo",
     "confirmTitle": "¿Borrar los datos de este dispositivo?",
     "confirmBody": "Esto cierra tu sesión y quita de este dispositivo la copia del viaje. El viaje sigue seguro en la nube. Los cambios hechos sin conexión que aún no se sincronizan podrían perderse.",
-    "confirmSubmit": "Borrar e iniciar sesión de nuevo"
+    "confirmSubmit": "Borrar e iniciar sesión de nuevo",
+    "storageKept": "Copia sin conexión: guardada en este dispositivo.",
+    "storageAtRisk": "Copia sin conexión: el navegador podría borrarla si el dispositivo se queda sin espacio.",
+    "storageAsk": "Pedir que se conserve",
+    "storageRefused": "El navegador aún no aceptó. Agregar la app a la pantalla de inicio suele ayudar."
   },
   "stays": {
     "privateHint": "Todos los del viaje pueden leer esto. No agregues números de reservación o confirmación.",

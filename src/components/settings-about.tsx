@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { EditPanel } from "@/components/edit-panel";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 import { APP_VERSION, resetApp } from "@/lib/app-reset";
+import {
+  requestPersistentStorage,
+  storageStatus,
+  type StorageStatus,
+} from "@/lib/storage-persist";
 import { checkForUpdate } from "@/lib/version-check";
 
 // Which version this is, and the way to start fresh by hand. New versions are
@@ -31,6 +36,7 @@ export function AboutSettings() {
       <p className="text-sm text-muted-foreground">
         {t("common.version", { version: APP_VERSION })}
       </p>
+      <OfflineCopyStatus />
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" disabled={busy} onClick={check}>
           {t("about.check")}
@@ -60,5 +66,40 @@ export function AboutSettings() {
         </EditPanel>
       )}
     </section>
+  );
+}
+
+// Whether the browser promised to keep the offline copy of the trip.
+function OfflineCopyStatus() {
+  const [status, setStatus] = useState<StorageStatus | null>(null);
+  useEffect(() => {
+    let live = true;
+    void storageStatus().then((s) => live && setStatus(s));
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (status === null || status === "unsupported") return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      <p>
+        {status === "kept" ? t("about.storageKept") : t("about.storageAtRisk")}
+      </p>
+      {status === "may-be-cleared" && (
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto p-0"
+          onClick={() =>
+            void requestPersistentStorage().then((s) => {
+              setStatus(s);
+              if (s !== "kept") toast(t("about.storageRefused"));
+            })
+          }
+        >
+          {t("about.storageAsk")}
+        </Button>
+      )}
+    </div>
   );
 }

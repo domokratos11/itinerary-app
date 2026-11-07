@@ -9,6 +9,7 @@ import { useTripId } from "@/lib/use-trip-id";
 import { usePlanSync } from "@/lib/use-plan-sync";
 import { useShareSync } from "@/lib/use-share-sync";
 import { useTripSync } from "@/lib/use-trip-sync";
+import { requestPersistentStorage } from "@/lib/storage-persist";
 import { watchStartupWrites } from "@/lib/tracked-firestore";
 import { viewerShareId } from "@/lib/viewer-store";
 
@@ -36,9 +37,12 @@ function MemberSync({ fromUrl }: { fromUrl: string | null }) {
   const liveTripId = member ? tripId : null;
   usePlanSync(liveTripId);
   useTripSync(liveTripId);
-  // Edits queued offline before a reload show as "sending" until they go.
+  // Edits queued offline before a reload show as "sending" until they go,
+  // and the offline copy asks not to be cleared by the browser.
   useEffect(() => {
-    if (liveTripId) watchStartupWrites();
+    if (!liveTripId) return;
+    watchStartupWrites();
+    void requestPersistentStorage();
   }, [liveTripId]);
   return null;
 }

@@ -375,7 +375,11 @@
     "clear": "Clear data and sign in again",
     "confirmTitle": "Clear this device's data?",
     "confirmBody": "This signs you out and removes the app's copy of the trip from this device. The trip itself stays safe in the cloud. Changes made offline that haven't synced yet may be lost.",
-    "confirmSubmit": "Clear and sign in again"
+    "confirmSubmit": "Clear and sign in again",
+    "storageKept": "Offline copy: kept on this device.",
+    "storageAtRisk": "Offline copy: the browser may clear it if the device runs low on space.",
+    "storageAsk": "Ask to keep it",
+    "storageRefused": "The browser didn't agree yet. Adding the app to the home screen usually helps."
   },
   "stays": {
     "privateHint": "Everyone on the trip can read this. Don't add booking or confirmation numbers.",
