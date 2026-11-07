@@ -48,7 +48,7 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 | `npm run build`                                       | Static export to `out/`                                                                        |
 | `npm run preview`                                     | Serve `out/` like GitHub Pages, at `http://localhost:4173/itinerary-app/`                      |
 | `npm run lint` / `npm run format`                     | ESLint / Prettier                                                                              |
-| `npm run typecheck`                                   | TypeScript check of the whole project (`tsc --noEmit`)                                         |
+| `npm run typecheck`                                   | Route types (`next typegen`), then a TypeScript check of the whole project (`tsc --noEmit`)    |
 
 ## Layout
 
