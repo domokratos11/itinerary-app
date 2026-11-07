@@ -478,7 +478,7 @@ Settings that matter (`next.config.ts`):
 `.github/workflows/deploy.yml`:
 
 - Triggers: push to `main`, or manual run.
-- Job `build`: checkout with full history (needed for the version from tags), Node LTS, `npm ci`, `npm run test`, `npm run validate`, `npm run lint`, `npm run typecheck` (`tsc --noEmit`), `npm run build`, upload `out/` as the Pages artifact. A failing step stops the deploy.
+- Job `build`: checkout with full history (needed for the version from tags), Node LTS, `npm ci`, `npm run test`, `npm run validate`, `npm run lint`, `npm run typecheck` (`next typegen && tsc --noEmit`; typegen first, because a fresh checkout has no generated route types), `npm run build`, upload `out/` as the Pages artifact. A failing step stops the deploy.
 - Job `deploy`: `actions/deploy-pages@v4`.
 - **Lint and the type check are in CI.** Before this, only the tests, validation and build ran there, so the ESLint rule that refuses typed text in JSX (§19) only ran locally.
 - **Not in CI:** `npm run test:rules`. Run it by hand. `firestore.rules` is also **not** published by the deploy: paste it into the Firebase console (Firestore → Rules → Publish).
@@ -1221,7 +1221,7 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `validate` | `scripts/validate.ts` | Zod check of the JSON kept in the repo (fixture trip and message files) | No |
 | `lint` | — | ESLint | — |
 | `format` / `format:check` | — | Prettier | — |
-| `typecheck` | — | `tsc --noEmit` | — |
+| `typecheck` | — | `next typegen && tsc --noEmit` (typegen generates the route types first) | — |
 | `drafts:pull` | `scripts/drafts-pull.ts` | Exports draft places to `research/` | No |
 | `places:push` | `scripts/places-push.ts` | Writes researched places into the trip | Yes |
 | `places:reset` | `scripts/places-reset.ts` | Shows what clearing all places would change; `-- --apply` does it | Yes, with `--apply` |
@@ -1270,6 +1270,8 @@ npm run build
 ```
 
 And after changing `firestore.rules`: `npm run test:rules`.
+
+`npm run typecheck` runs `next typegen` before `tsc --noEmit`, because `next-env.d.ts` imports the generated `.next/types/routes.d.ts` (global types such as `LayoutProps`). Those files exist only after `next typegen`, `next dev` or `next build`, so a plain `tsc --noEmit` fails on a fresh checkout.
 
 CI (§4.3) runs `test`, `validate`, `lint`, `typecheck` and `build`, in that order. Rules tests are manual.
 
