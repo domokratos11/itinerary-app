@@ -14,6 +14,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { VersionGate } from "@/components/version-gate";
 import { Toaster } from "@/components/ui/sonner";
 import { BASE_PATH } from "@/lib/base-path";
+import { LANG_BOOT_SCRIPT } from "@/lib/lang-boot";
 import { cn } from "@/lib/utils";
 
 // Oxanium has no Japanese glyphs, so Japanese text falls back to the
@@ -82,6 +83,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         geistMono.variable,
       )}
     >
+      <head>
+        {/* Sets <html lang> from the saved language before the first paint;
+            the static HTML can only say "en". */}
+        <script dangerouslySetInnerHTML={{ __html: LANG_BOOT_SCRIPT }} />
+      </head>
       {/* Grammarly and similar extensions edit <body> before React loads.
           These ask Grammarly to stay away; nothing here needs it. */}
       <body

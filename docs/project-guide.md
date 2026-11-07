@@ -383,6 +383,7 @@ State and sync:
 | `device-name.ts` | The name this device signs its changes with (kept in localStorage). |
 | `hide-amounts.ts` | Zustand store `useHideAmounts` and `setHideAmounts`: whether amounts are hidden on Budget and Dashboard. Saved in localStorage under `hide-amounts`, kept through a version reset. |
 | `display-currency.ts` | Zustand store for the display currency, `"JPY"` or `"USD"`. Saved in localStorage under `display-currency`, per device. Display only (§12.5). Kept through a version reset. |
+| `lang-boot.ts` | `LOCALE_STORAGE_KEY` (`"locale"`, the localStorage key for the chosen language, also used by `i18n.ts`) and `LANG_BOOT_SCRIPT`, the inline script the root layout puts in `<head>`. It sets `<html lang>` before the first paint: the stored language if valid, else Spanish for an `es*` browser, else English (the same rule as `initLocale`). Tests in `lang-boot.test.ts`. |
 | `usd-rate.ts` | Zustand store `useUsdRate`: today's USD to JPY rate, fetched once per session from Frankfurter (§14.4), falling back to the fixed `YEN_PER_USD` offline. Used by the expense, quick cost and reservation forms and by the dollar display. |
 | `backup-actions.ts` | Export and import of the trip file. |
 | `trip-actions.test.ts` etc. | Tests beside each module. |
@@ -518,6 +519,9 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 
 ```
 <html lang="en">                            src/app/layout.tsx (Server Component)
+ <head>
+  <script>LANG_BOOT_SCRIPT</script>        inline, before first paint: sets lang from the saved or browser language
+ </head>
  <body>
   ThemeProvider                            next-themes; dark class on <html>
    VersionGate                             version check, storage reset, initLocale
@@ -570,7 +574,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 
 What happens on first load, in order:
 
-1. **Static HTML** is served. It contains the `Splash` (the icon) and nothing else about the trip. Nothing about the trip is in the HTML.
+1. **Static HTML** is served. It contains the `Splash` (the icon) and nothing else about the trip. Nothing about the trip is in the HTML. Its `<html lang>` is `"en"`, but the inline `LANG_BOOT_SCRIPT` in `<head>` runs before the first paint and sets `lang` to the saved or browser language, so screen readers use the right voice from the start.
 2. **`VersionGate`** (client) runs first:
    - `initLocale()` sets the language: the last choice from localStorage, otherwise the browser language (Spanish if it starts with `es`, else English).
    - In production only: removes `?v=` from the URL; if the stored version is different, resets the device (`resetApp`), which keeps `?share=` in the URL so a viewer returns to the shared view; otherwise fetches `version.json`, and shows the app once the check answers or after 2 seconds, whichever comes first.
@@ -1154,6 +1158,7 @@ Account sheet → About → "start fresh" runs the same reset.
 - **Lint:** `eslint.config.mjs` rejects text typed into JSX, `aria-label`, `placeholder`, `title`, `alt` and toast calls. Allowed literals: arrows, dots, currency sign, "Google Maps", "Ctrl K".
 - **Domain code** takes a `Translate` parameter when it produces words, so it stays language-free.
 - **Dates:** `Intl` with `en-US` or `es-419` (Latin American Spanish), via `intlLocale()`.
+- **Before first paint:** the inline `LANG_BOOT_SCRIPT` (`src/lib/lang-boot.ts`, in `<head>` of the root layout) sets `<html lang>` from the stored choice (key `LOCALE_STORAGE_KEY`, `"locale"`) or the browser language, so the static HTML's `lang="en"` is never what screen readers hear for Spanish users. Tests in `lang-boot.test.ts`.
 - **Switching:** `setLocale` saves to localStorage and `<html lang>`, updates the store, and `LocaleRoot` remounts the app so every `t()` runs again.
 - **Saved per person:** `users/{uid}.language`. Used on every device after sign-in.
 - **Google Maps stays in English** (its text is English; `live-hours.ts` parses English).
