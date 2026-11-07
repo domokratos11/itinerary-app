@@ -1,8 +1,9 @@
-import { collection, doc, onSnapshot, writeBatch } from "firebase/firestore";
+import { collection, doc, onSnapshot } from "firebase/firestore";
 
 import type { ProposalRepository } from "@/domain/proposal-repository";
 import { ProposalSchema, type Proposal } from "@/domain/schemas";
 import { getDb } from "@/lib/firebase";
+import { writeBatch } from "@/lib/tracked-firestore";
 
 // Reads and writes trips/{tripId}/proposals/{id}. Rows that fail the schema
 // are skipped.

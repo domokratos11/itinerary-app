@@ -6,8 +6,6 @@ import {
   onSnapshot,
   orderBy,
   query,
-  setDoc,
-  writeBatch,
 } from "firebase/firestore";
 
 import {
@@ -16,6 +14,7 @@ import {
   type ActivityRepository,
 } from "@/domain/activity";
 import { getDb } from "@/lib/firebase";
+import { setDoc, writeBatch } from "@/lib/tracked-firestore";
 
 // Reads and writes trips/{tripId}/activity/{id}. Only the newest entries
 // are read, so the log can grow without costing more reads.

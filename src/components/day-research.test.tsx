@@ -89,7 +89,12 @@ describe("DayResearchPanel", () => {
     await repo.save("trip", ready);
     const onOpenPlace = vi.fn();
     panel(onOpenPlace);
+    // Starts closed: the load and its reason show, the details don't.
     expect(screen.getByText("Heavy day")).toBeTruthy();
+    expect(screen.queryByText("Closed on Mondays.")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show the full analysis" }),
+    );
     expect(screen.getByText("Closed on Mondays.")).toBeTruthy();
     expect(
       screen.getByText("Yes, the park has lights until 22:00."),

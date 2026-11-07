@@ -11,6 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { flightsOnDay, flightsOutsideDays } from "@/domain/flights";
 import type { FlightRecord } from "@/domain/schemas";
 import { groupDaysByStay } from "@/domain/trip";
+import { prefersReducedMotion } from "@/lib/use-media-query";
 import { intlLocale, t } from "@/lib/i18n";
 import { cityHref, dayHref, pageHref } from "@/lib/links";
 import { usePlanStore } from "@/lib/plan-store";
@@ -102,7 +103,10 @@ export function TripDays() {
     const target = now < first ? first : now > last ? last : now;
     document
       .getElementById(`day-${target}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      ?.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "center",
+      });
   }
 
   function chooseView(value: string) {

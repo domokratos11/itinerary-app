@@ -121,14 +121,20 @@
     "chooseTrip": "Elige un viaje",
     "noTripsTitle": "Aún no hay viajes",
     "noTripsBody": "{email} no está en la lista de miembros de ningún viaje. Pide a alguien de un viaje que agregue tu correo, o usa otra cuenta.",
-    "newTrip": "Nuevo viaje"
+    "newTrip": "Nuevo viaje",
+    "tryAgain": "Intentar de nuevo"
   },
   "auth": {
     "popupBlocked": "El navegador bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.",
     "unauthorizedDomain": "Este sitio aún no tiene permiso para iniciar sesión. Agrégalo en Firebase → Authentication → Settings → Authorized domains.",
     "operationNotAllowed": "El inicio de sesión con Google está desactivado. Actívalo en Firebase → Authentication → Sign-in method.",
     "network": "Sin conexión. Inicia sesión cuando tengas internet.",
-    "failed": "No se pudo iniciar sesión. Inténtalo de nuevo."
+    "failed": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+    "storageBlocked": "Este navegador bloquea el almacenamiento que necesita el inicio de sesión. Desactiva la navegación privada o permite los datos del sitio y vuelve a intentarlo.",
+    "tooMany": "Demasiados intentos de inicio de sesión. Espera unos minutos y vuelve a intentarlo.",
+    "disabled": "Esta cuenta de Google no puede iniciar sesión aquí.",
+    "standaloneRetry": "La ventana de inicio de sesión no pudo comunicarse con la app. Cierra la app por completo, ábrela de nuevo e inténtalo otra vez.",
+    "timeout": "El inicio de sesión no terminó. Si aún hay una ventana de Google abierta, termina allí; si no, vuelve a intentarlo."
   },
   "newTrip": {
     "descriptionOnline": "Empieza vacío, contigo como único miembro.",
@@ -369,7 +375,11 @@
     "clear": "Borrar datos e iniciar sesión de nuevo",
     "confirmTitle": "¿Borrar los datos de este dispositivo?",
     "confirmBody": "Esto cierra tu sesión y quita de este dispositivo la copia del viaje. El viaje sigue seguro en la nube. Los cambios hechos sin conexión que aún no se sincronizan podrían perderse.",
-    "confirmSubmit": "Borrar e iniciar sesión de nuevo"
+    "confirmSubmit": "Borrar e iniciar sesión de nuevo",
+    "storageKept": "Copia sin conexión: guardada en este dispositivo.",
+    "storageAtRisk": "Copia sin conexión: el navegador podría borrarla si el dispositivo se queda sin espacio.",
+    "storageAsk": "Pedir que se conserve",
+    "storageRefused": "El navegador aún no aceptó. Agregar la app a la pantalla de inicio suele ayudar."
   },
   "stays": {
     "privateHint": "Todos los del viaje pueden leer esto. No agregues números de reservación o confirmación.",
@@ -850,7 +860,8 @@
     "show": "Mostrar el análisis del día",
     "hide": "Ocultar el análisis del día",
     "badgeRequested": "Investigación del día solicitada",
-    "badgeReady": "Análisis del día listo"
+    "badgeReady": "Análisis del día listo",
+    "showFull": "Ver el análisis completo"
   },
   "quickExpense": {
     "open": "Anotar un gasto",
@@ -904,5 +915,19 @@
     "typical": "Habitual",
     "tipTypical": "Cómo fueron estas fechas en los últimos tres años; el pronóstico lo reemplaza 16 días antes",
     "outlook": "Clima y luz del día"
+  },
+  "error": {
+    "title": "Algo salió mal",
+    "body": "Esta pantalla tuvo un problema. Tu plan está a salvo. Inténtalo de nuevo o vuelve al panel.",
+    "retry": "Intentar de nuevo",
+    "goHome": "Ir al panel",
+    "reload": "Recargar la app"
+  },
+  "sync": {
+    "saved": "Todos los cambios guardados",
+    "saving": "{count, plural, one {Guardando # cambio…} other {Guardando # cambios…}}",
+    "savingEarlier": "Enviando cambios anteriores…",
+    "waiting": "{count, plural, one {# cambio esperando conexión.} other {# cambios esperando conexión.}}",
+    "waitingEarlier": "Hay cambios anteriores esperando conexión."
   }
 }

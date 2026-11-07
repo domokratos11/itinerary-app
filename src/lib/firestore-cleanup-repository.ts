@@ -1,10 +1,8 @@
 import {
   collection,
-  deleteDoc,
   doc,
   getCountFromServer,
   getDocs,
-  writeBatch,
 } from "firebase/firestore";
 
 import type {
@@ -14,6 +12,7 @@ import type {
 } from "@/domain/cleanup";
 import { SHARED_COLLECTIONS } from "@/domain/share";
 import { getDb } from "@/lib/firebase";
+import { deleteDoc, writeBatch } from "@/lib/tracked-firestore";
 
 // A write batch holds at most 500 writes, so larger lists go in chunks.
 const CHUNK = 450;

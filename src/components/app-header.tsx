@@ -14,6 +14,7 @@ import {
 import { AccountSheet } from "@/components/account-sheet";
 import { ActivitySheet } from "@/components/activity-sheet";
 import { SearchPalette } from "@/components/search-palette";
+import { SyncStatus } from "@/components/sync-status";
 import { Tip } from "@/components/tip";
 import { TripSwitcher } from "@/components/trip-switcher";
 import { ViewerSheet } from "@/components/viewer";
@@ -124,6 +125,7 @@ export function AppHeader() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-1">
+          {!readOnly && <SyncStatus />}
           <SearchPalette />
           {readOnly ? (
             <ViewerSheet />

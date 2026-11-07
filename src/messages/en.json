@@ -121,14 +121,20 @@
     "chooseTrip": "Choose a trip",
     "noTripsTitle": "No trips yet",
     "noTripsBody": "{email} isn't on any trip's member list. Ask someone on a trip to add your email, or use another account.",
-    "newTrip": "New trip"
+    "newTrip": "New trip",
+    "tryAgain": "Try again"
   },
   "auth": {
     "popupBlocked": "The browser blocked the sign-in window. Allow pop-ups for this site and try again.",
     "unauthorizedDomain": "This site isn't allowed to sign in yet. Add it under Firebase → Authentication → Settings → Authorized domains.",
     "operationNotAllowed": "Google sign-in is turned off. Enable it under Firebase → Authentication → Sign-in method.",
     "network": "No connection. Sign in once you're online.",
-    "failed": "Sign-in failed. Try again."
+    "failed": "Sign-in failed. Try again.",
+    "storageBlocked": "This browser is blocking the storage sign-in needs. Turn off private browsing or allow site data, then try again.",
+    "tooMany": "Too many sign-in attempts. Wait a few minutes and try again.",
+    "disabled": "This Google account can't sign in here.",
+    "standaloneRetry": "The sign-in window couldn't reach the app. Close the app completely, open it again and try once more.",
+    "timeout": "Sign-in didn't finish. If a Google window is still open, finish there; otherwise try again."
   },
   "newTrip": {
     "descriptionOnline": "It starts empty, with you as its only member.",
@@ -369,7 +375,11 @@
     "clear": "Clear data and sign in again",
     "confirmTitle": "Clear this device's data?",
     "confirmBody": "This signs you out and removes the app's copy of the trip from this device. The trip itself stays safe in the cloud. Changes made offline that haven't synced yet may be lost.",
-    "confirmSubmit": "Clear and sign in again"
+    "confirmSubmit": "Clear and sign in again",
+    "storageKept": "Offline copy: kept on this device.",
+    "storageAtRisk": "Offline copy: the browser may clear it if the device runs low on space.",
+    "storageAsk": "Ask to keep it",
+    "storageRefused": "The browser didn't agree yet. Adding the app to the home screen usually helps."
   },
   "stays": {
     "privateHint": "Everyone on the trip can read this. Don't add booking or confirmation numbers.",
@@ -850,7 +860,8 @@
     "show": "Show the day analysis",
     "hide": "Hide the day analysis",
     "badgeRequested": "Day research requested",
-    "badgeReady": "Day analysis ready"
+    "badgeReady": "Day analysis ready",
+    "showFull": "Show the full analysis"
   },
   "quickExpense": {
     "open": "Log a cost",
@@ -904,5 +915,19 @@
     "typical": "Typical",
     "tipTypical": "What these dates were like over the last three years; the forecast takes over 16 days before",
     "outlook": "Weather and daylight"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "body": "This screen ran into a problem. Your plan is safe. Try again, or go back to the dashboard.",
+    "retry": "Try again",
+    "goHome": "Go to Dashboard",
+    "reload": "Reload app"
+  },
+  "sync": {
+    "saved": "All changes saved",
+    "saving": "{count, plural, one {Saving # change…} other {Saving # changes…}}",
+    "savingEarlier": "Sending earlier changes…",
+    "waiting": "{count, plural, one {# change waiting for a connection.} other {# changes waiting for a connection.}}",
+    "waitingEarlier": "Earlier changes are waiting for a connection."
   }
 }

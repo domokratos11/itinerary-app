@@ -80,16 +80,18 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **radix-ui** (umbrella package) | ^1.8.1 | Accessible primitives under shadcn components (dialog, select, tabs, tooltip, dropdown, switch, etc.). | `src/components/ui/*` |
 | **class-variance-authority** | ^0.7.1 | Variant styles for buttons, badges and similar components. | `src/components/ui/button.tsx` and others |
 | **cn** (npm package) | ^0.5.0 | The `cn()` class-merging helper. Note: shadcn usually ships `clsx` + `tailwind-merge`; this repo uses the `cn` package instead. | `src/lib/utils.ts` re-exports it |
-| **lucide-react** | ^1.63.0 | Icons. Most components use it (29 files). | many components |
-| **@phosphor-icons/react** | ^2.1.10 | Icons. Also used (9 files). `components.json` declares Phosphor as the icon library, so the two icon sets are mixed. | `add-place.tsx`, `day-plan.tsx` and others |
+| **lucide-react** | ^1.63.0 | Icons. Most of the app's own components use it (45 files). | many components |
+| **@phosphor-icons/react** | ^2.1.10 | Icons. Used only by the nine shadcn/ui components, which `components.json` sets to Phosphor. The app's own components use lucide, so the two icon sets are mixed. | `src/components/ui/` (carousel, checkbox, command, dialog, dropdown-menu, select, sheet, sidebar, sonner) |
 | **cmdk** | ^1.1.1 | The command menu behind the search palette (`Command`, `CommandDialog`). | `src/components/ui/command.tsx`, `search-palette.tsx` |
 | **vaul** | ^1.1.2 | Bottom drawers on phones (`Drawer`). | `src/components/ui/drawer.tsx`, `place-details.tsx`, `edit-panel.tsx`, `add-to-day.tsx` |
 | **sonner** | ^2.0.8 | Toast messages. Sits above the bottom tab bar on phones. | `src/components/ui/sonner.tsx`, root layout |
 | **embla-carousel-react** | ^8.6.0 | Carousel for Google photos. | `src/components/ui/carousel.tsx`, `place-live.tsx` |
-| **recharts** | ^3.8.0 | Budget charts (bars, donut, gauge), wrapped by shadcn `chart`. | `src/components/charts.tsx`, `ui/chart.tsx`, `budget-screen.tsx`, `dashboard-screen.tsx` |
-| **@dnd-kit/core**, **sortable**, **utilities** | ^6.3.1 / ^10.0.0 / ^3.2.2 | Drag and drop of stops within a day, between days, and from the waiting list. Pointer and keyboard sensors. | `day-plan.tsx`, `day-side-panel.tsx`, `drop.ts` (domain) |
+| **recharts** | ^3.8.0 | Budget and dashboard charts (bars, donut, gauge), wrapped by shadcn `chart`. Loaded on first use through `charts-lazy.tsx` (`next/dynamic`, `ssr: false`), so it is not in any page's first load. | `src/components/charts.tsx`, `charts-lazy.tsx`, `ui/chart.tsx`, `budget-screen.tsx`, `dashboard-screen.tsx` |
+| **@dnd-kit/core**, **sortable**, **utilities** | ^6.3.1 / ^10.0.0 / ^3.2.2 | Drag and drop of stops within a day, between days, and from the waiting list. Pointer and keyboard sensors. | `day-plan.tsx`, `day-plan-stop.tsx`, `use-day-plan-actions.ts`, `day-side-panel.tsx`, `drop.ts` (domain) |
 | **fractional-indexing** | ^4.0.0 | Sort keys for plan items, so moving one stop changes only that item. | `src/lib/order.ts` |
 | **Zod** | ^4.6.7 | Runtime schemas. Used to validate every Firestore document on read, the bundled sample trip, the message files, the research files and the backup file. | `src/domain/schemas.ts`, `user-repository.ts`, `proposals.ts`, `backup.ts`, `scripts/validate.ts` |
+
+Charts are the only large library kept out of the first load. Measured first-load JS (gzip, scripts in the exported HTML): Dashboard 706 -> 600 KB, Budget 693 -> 586 KB, Days unchanged at about 591 KB. The recharts code is still precached by the service worker, so charts work offline (§17.2).
 
 ### 2.3 State, i18n and theming
 
@@ -187,6 +189,8 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | File | Route |
 |---|---|
 | `layout.tsx` | Root layout for every page (fonts, metadata, providers, gates, header, sidebar, tab bar). |
+| `error.tsx` | Crash screen for any page (Client Component). Shown inside the root layout, so the header, sidebar and tab bar stay. Buttons: "Try again" (`retry()`) and "Go to Dashboard" (`/`, keeps `?trip=`). |
+| `global-error.tsx` | Crash screen for the root layout itself (Client Component). Replaces the whole document, so it renders its own `<html>` and `<body>`, imports `globals.css` and applies the saved dark theme from `localStorage.theme`. Buttons: "Try again" and "Reload app". |
 | `page.tsx` | `/`: Dashboard. |
 | `days/page.tsx` | `/days/`: the list of days, with trip header, today card, notices and the day list. |
 | `day/page.tsx` | `/day/?date=YYYY-MM-DD`: one day. One static page for all dates. |
@@ -200,6 +204,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `globals.css` | Theme tokens, Tailwind import, dark variant, base styles. |
 | `favicon.ico` | Browser icon. |
 | `days/page.test.tsx` | A test kept beside its page. |
+| `error.test.tsx` | Test for the crash screen in `error.tsx`, kept beside it. |
 
 Every page file is a Server Component that renders a `main` wrapper and one client screen component inside `Suspense`. The page itself reads no data. Every route also accepts `?share=` for the read-only view (§5, §12.8).
 
@@ -210,14 +215,15 @@ Shared chrome and gates:
 | File | Role |
 |---|---|
 | `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member` and the trip has loaded, or when a shared view is active. |
-| `app-header.tsx` | Top bar (trip switcher, section links on tablets, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the five sections) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
+| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the five sections) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
 | `plan-sync.tsx` | Mounted once. Renders `MemberSync` (auth, plan and trip listeners) for members, or `ViewerSync` (loads the shared copy, §12.8) when the tab is in viewer mode. |
 | `locale-root.tsx` | Remounts the app when the language changes. |
 | `service-worker-register.tsx` | Registers `sw.js` in production. |
-| `offline-banner.tsx` | Shows "offline" text; edits still save on the device. |
+| `offline-banner.tsx` | Shows "offline" text (`useOnline`) and, when writes are waiting, the count from `useSyncStore`; edits still save on the device. |
+| `sync-status.tsx` | `SyncStatus`: icon button in the header, left of search, hidden on read-only links. Shows whether edits have reached the server (§17.1): cloud-check "All changes saved" (muted), cloud-upload "Saving N changes…" (pulsing), cloud-off "N changes waiting for a connection." (amber, offline with pending writes). Tooltip on hover or focus; a tap shows the same text in a toast, since tooltips do not open on tap. |
 | `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Match phone / Light / Dark button. |
 | `search-palette.tsx` | The Ctrl+K / ⌘K search over days, hotels and places. |
 | `trip-switcher.tsx`, `new-trip.tsx` | Trip name menu; panel to create a trip (for permitted creators). |
@@ -226,23 +232,29 @@ Shared chrome and gates:
 | `language-select.tsx` | Language picker. |
 | `trip-name.tsx`, `trip-dates.tsx`, `trip-plan-status.tsx` | Small trip header pieces. |
 | `old-link-redirect.tsx` | Forwards old `/day/2026-…/` and `/city/nagoya/` links to the query-string form. |
+| `error-screen.tsx` | `ErrorScreen`: the shared card for the crash screens (`error.tsx`, `global-error.tsx`). Shows a title and text (`error.*` keys), the buttons passed in, and logs the error with `console.error`. Uses `role="alert"`. |
 
 Screens (one per page):
 
 | File | Page | Role |
 |---|---|---|
-| `dashboard-screen.tsx` | `/` | Dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research. |
+| `dashboard-screen.tsx` | `/` | `DashboardScreen` and `DashboardContent`: dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research. Imports the budget figures from `budget-figures.tsx`. |
+| `dashboard-parts.tsx` | `/` | The pieces the dashboard is built from: `Tile`, `Panel`, `Hint`, `Empty` and `ClockTiles`. |
 | `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions, and the quick cost button (`QuickExpenseButton`); before it, a countdown. During the trip it also shows the day's weather (`WeatherBadge`). |
 | `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. `trip-days.tsx` holds the Calendar / List toggle (shadcn `ToggleGroup`, next to Today). |
 | `trip-calendar.tsx` | `/days/` | `TripCalendar`: the Calendar view. Monday-first weeks in one continuous grid (December into January). Trip days link to `/day/?date=` (id `day-YYYY-MM-DD`); cells show the day number, stop count, a flight icon, a holiday dot and a today ring. Each hotel night is a city-coloured bar; hotel names show from `lg`. Days outside the trip are muted, not links. A day with research requested shows a search icon; one with a ready analysis shows a sparkles icon. Each trip day cell also shows the day's weather icon (`WeatherBadge`), with the high from `lg`. |
 | `day-screen.tsx` | `/day/` | Loads one day and renders `DayPlan`. |
-| `day-plan.tsx` | `/day/` | The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. |
-| `day-research.tsx` | `/day/` | `DayResearchPanel`: under the flights. "Research this day" (optional message) asks for every place on the day; shows the request, the day analysis (load badge, warnings, nearby ideas, answer, sources) and place updates to review or accept for the day. Hidden on read-only links. |
+| `day-plan.tsx` | `/day/` | `DayPlan` (about 630 lines), with `DroppableList`, `PhoneWaiting` and the drag collision helpers. The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. Stops and links are in the two files below, and the drag and stop actions in `use-day-plan-actions.ts` (§3.5). |
+| `day-plan-stop.tsx` | `/day/` | `SortableStop` (wide screens, drag grip), `StopCard` (status buttons, map link, move day, cost, remove; phones get up and down buttons) and the `StopOutcome` type. |
+| `day-plan-links.tsx` | `/day/` | `FullDay` (directions for the whole day), `HotelButtons` and `HotelButton` (directions to the hotel), `BookingsButton` (wide screens, side sheet) and `Reservations`. |
+| `day-research.tsx` | `/day/` | `DayResearchPanel`: under the flights. "Research this day" (optional message) asks for every place on the day; shows the request, the day analysis (starts collapsed to a header and a short preview; once opened: load badge, warnings, nearby ideas, answer, sources) and place updates to review or accept for the day. Hidden on read-only links. |
 | `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view: the day, other days, waiting places. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, Days filter (per-day pins with a legend), add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
-| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | Expenses, totals by category and payer, charts, gauge. `ExportExpensesButton` (header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`), the currency button (`CurrencyButton`) and `MoneyScope` (hidden, currency and rate). `Yen` and `useYenValues` show dollars when USD is chosen. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
+| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | `BudgetScreen` and `BudgetContent`: expenses, totals by category and payer, charts, gauge. `ExportExpensesButton` (in `budget-parts.tsx`, header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`), the currency button (`CurrencyButton`) and `MoneyScope` (hidden, currency and rate). `Yen` and `useYenValues` show dollars when USD is chosen. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
+| `budget-figures.tsx` | `/budget/` and `/` | `useBudgetFigures`, `categorySeries`, `spentPercent`, `GaugeCenter`, `Figure` and `SummaryFigures`. The Dashboard imports these from here, not from the Budget screen. |
+| `budget-parts.tsx` | `/budget/` | `TargetRow`, `ExpenseRow`, `BudgetForm` and `ExportExpensesButton`. |
 | `quick-expense.tsx` | `/` (Today card) and `/day/` | `QuickExpenseButton({date?})`: a large "+ ¥" button (aria "Log a cost"), shown during the trip on today's date and in the day page's button row. Opens an `EditPanel` with a big numeric amount field (`AmountInput`, with the ¥/$ toggle), a 4-column grid of category tiles (the last one used is preselected), an optional "What" line and "More details", which opens the full `ExpenseForm` with the same values. Save writes through `saveRecord`; the toast offers Undo. Hidden on read-only links. |
 | `amount-input.tsx` | Today card and day page (quick cost), expense form (`/budget/`), reservation form (`/settings/`) | `AmountInput`: an amount box with a ¥/$ toggle. In dollars it shows an editable rate (it starts at today's rate from `useUsdRate`) and the yen result. |
 | `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Share, Backup, Clean up. |
@@ -268,7 +280,9 @@ Plan and place editing:
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
 | `day-weather.tsx` | `DayWeatherStrip` (day page header: icon and name, high and low, chance of rain or snow, Forecast or dashed Typical tag, sunrise and sunset) and `WeatherBadge` (icon, plus the high from `lg`; used on the Today card and calendar cells). `WEATHER_ICON` maps kinds to icons. Data from `use-weather.ts`. |
 | `tag-badges.tsx` | Category and priority badges and options. |
-| `charts.tsx` | Chart helpers for budget and dashboard. |
+| `charts.tsx` | The recharts charts only: `DonutChart`, `BudgetGauge`, `ColumnChart`, `StackedColumnChart`. Not imported by screens directly. |
+| `chart-parts.tsx` | Chart pieces drawn without recharts: `Series` type, `SeriesLegend`, `BarList` and an internal `ChartValue`. |
+| `charts-lazy.tsx` | What screens import. Wraps the four recharts charts with `next/dynamic` (`ssr: false`), each with a `Skeleton` of the chart's own size so nothing moves, and re-exports `BarList`, `SeriesLegend` and `Series`. Used by `dashboard-screen.tsx` and `budget-screen.tsx`. |
 
 Base components:
 
@@ -328,7 +342,9 @@ Firebase and repositories:
 |---|---|
 | `firebase.ts` | Starts the Firebase app (once), App Check (off unless a key is set), and Firestore with a persistent local cache and multi-tab manager. `getFirebaseAuth()` for Auth. `getDb()` throws in viewer mode. `getViewerDb()` is a separate app named "viewer" with a memory cache, used only by the shared view. |
 | `firebase.config.ts` | Firebase web config and the App Check site key (`null` = off). Public values; access is decided by the rules. |
-| `auth.ts` | The only file that talks to `firebase/auth` for sign-in: Google popup, `watchUser`, sign-out, session clear. |
+| `auth.ts` | The only file that talks to `firebase/auth` for sign-in: Google popup, `watchUser`, sign-out, session clear. `signInWithGoogle()` stops waiting after `SIGN_IN_TIMEOUT_MS` (90 s) and throws "Sign-in didn't finish", so the button can be tapped again; a popup that finishes later still signs in through `onAuthStateChanged`. `signInErrorKey(code, standalone)` maps Firebase codes to message keys, and `isStandalone()` detects the home-screen app (`navigator.standalone` on iOS, or `display-mode: standalone`). |
+| `tracked-firestore.ts` | `setDoc`, `updateDoc`, `deleteDoc` and `writeBatch`, with the same signatures as `firebase/firestore`, each wrapped with `trackWrite` so the write counts in `sync-store.ts` until the server confirms (`writeBatch` wraps `commit`). Every `firestore-*-repository.ts` imports these four from here, not from `firebase/firestore`. `watchStartupWrites()` calls `waitForPendingWrites(getDb())` once. |
+| `storage-persist.ts` | Asks the browser to keep the offline copy of the trip (IndexedDB). `storageStatus()` returns `kept`, `may-be-cleared` or `unsupported` from `navigator.storage.persisted()`; `requestPersistentStorage()` calls `navigator.storage.persist()` only when the copy is not already kept. Browsers usually decide without a prompt (Chrome by engagement, Safari for home-screen apps). Tests in `storage-persist.test.ts`. |
 | `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. |
 | `firestore-plan-repository.ts` | Implements `PlanRepository` on `trips/{id}/items`. |
 | `firestore-proposal-repository.ts` | Implements `ProposalRepository` on `trips/{id}/proposals`. |
@@ -355,6 +371,8 @@ State and sync:
 | `plan-store.ts` | Zustand: plan items, ready flag, error. |
 | `use-plan-sync.ts` | Subscribes to `items` for the trip. |
 | `use-day-research.ts` | Hook `useDayResearch(tripId)`: live day research. Listens only once access is `member`. |
+| `use-day-plan-actions.ts` | Hook `useDayPlanActions({ tripId, date, items, stops, placesById, citiesById, tripDays })` for the Day page: the dnd-kit sensors (pointer, touch with a 200 ms delay, keyboard), the `dragging` state, `handleDragEnd` (uses `planDrop`), and the stop actions `addToDay`, `stepBy`, `moveToDay`, `remove` and `mark`, each with its toast and Undo. With `tripId` null (read-only link) they do nothing. |
+| `sync-store.ts` | Zustand `useSyncStore`: `pending` (writes from this session the server has not confirmed) and `startup` (true until edits queued in an earlier session, before a reload, are sent). `trackWrite(promise)` counts a write until it settles; `trackStartupWrites(promise)` does the same for those earlier edits; `syncStatus(state, online)` returns `"saved"`, `"saving"` or `"waiting"`. Firestore write promises settle only when the server confirms, so offline writes stay counted. |
 | `use-proposals.ts`, `use-activity.ts` | Live proposals (always), and the activity log (only while its sheet is open). |
 | `use-trip-id.ts` | The open trip's ID from the auth store. |
 | `trip-id.ts` | Trip ID format (`[A-Za-z0-9_-]`, 6 to 128 characters), remembering it on the device, choosing a trip, opening trips. |
@@ -365,6 +383,7 @@ State and sync:
 | `device-name.ts` | The name this device signs its changes with (kept in localStorage). |
 | `hide-amounts.ts` | Zustand store `useHideAmounts` and `setHideAmounts`: whether amounts are hidden on Budget and Dashboard. Saved in localStorage under `hide-amounts`, kept through a version reset. |
 | `display-currency.ts` | Zustand store for the display currency, `"JPY"` or `"USD"`. Saved in localStorage under `display-currency`, per device. Display only (§12.5). Kept through a version reset. |
+| `lang-boot.ts` | `LOCALE_STORAGE_KEY` (`"locale"`, the localStorage key for the chosen language, also used by `i18n.ts`) and `LANG_BOOT_SCRIPT`, the inline script the root layout puts in `<head>`. It sets `<html lang>` before the first paint: the stored language if valid, else Spanish for an `es*` browser, else English (the same rule as `initLocale`). Tests in `lang-boot.test.ts`. |
 | `usd-rate.ts` | Zustand store `useUsdRate`: today's USD to JPY rate, fetched once per session from Frankfurter (§14.4), falling back to the fixed `YEN_PER_USD` offline. Used by the expense, quick cost and reservation forms and by the dollar display. |
 | `backup-actions.ts` | Export and import of the trip file. |
 | `trip-actions.test.ts` etc. | Tests beside each module. |
@@ -388,7 +407,7 @@ Maps and place helpers:
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
 | `order.ts` | Sort keys with fractional indexing. |
-| `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. |
+| `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. `prefersReducedMotion()` is the plain check (not a hook) for motion started from code, such as scrolling to today; it reads the phone's "reduce motion" setting. |
 
 Weather and daylight:
 
@@ -415,14 +434,14 @@ Version and update:
 
 | Area | Files |
 |---|---|
-| All tracked files | 266 |
-| `src/domain` (non-test modules) | 25 |
-| `src/components` (top-level, not `ui`) | 62 |
-| `src/lib` | 68 (including tests) |
+| All tracked files | 355 |
+| `src/domain` (non-test modules) | 39 |
+| `src/components` (top-level, not `ui`) | 76 |
+| `src/lib` | 97 (including tests) |
 | `src/components/ui` | 27 |
-| Scripts | 16 |
+| Scripts | 21 |
 | Docs (`docs/`) | 5 |
-| Test files (`*.test.*`) | 40 |
+| Test files (`*.test.*`) | 72 |
 
 ---
 
@@ -459,9 +478,10 @@ Settings that matter (`next.config.ts`):
 `.github/workflows/deploy.yml`:
 
 - Triggers: push to `main`, or manual run.
-- Job `build`: checkout with full history (needed for the version from tags), Node LTS, `npm ci`, `npm run test`, `npm run validate`, `npm run build`, upload `out/` as the Pages artifact.
+- Job `build`: checkout with full history (needed for the version from tags), Node LTS, `npm ci`, `npm run test`, `npm run validate`, `npm run lint`, `npm run typecheck` (`tsc --noEmit`), `npm run build`, upload `out/` as the Pages artifact. A failing step stops the deploy.
 - Job `deploy`: `actions/deploy-pages@v4`.
-- **Not in CI:** `npm run lint` and `npm run test:rules`. Run them by hand. `firestore.rules` is also **not** published by the deploy: paste it into the Firebase console (Firestore → Rules → Publish).
+- **Lint and the type check are in CI.** Before this, only the tests, validation and build ran there, so the ESLint rule that refuses typed text in JSX (§19) only ran locally.
+- **Not in CI:** `npm run test:rules`. Run it by hand. `firestore.rules` is also **not** published by the deploy: paste it into the Firebase console (Firestore → Rules → Publish).
 
 ---
 
@@ -499,6 +519,9 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 
 ```
 <html lang="en">                            src/app/layout.tsx (Server Component)
+ <head>
+  <script>LANG_BOOT_SCRIPT</script>        inline, before first paint: sets lang from the saved or browser language
+ </head>
  <body>
   ThemeProvider                            next-themes; dark class on <html>
    VersionGate                             version check, storage reset, initLocale
@@ -507,27 +530,29 @@ All routes are static. Dynamic data comes from query strings, read in the browse
     LocaleRoot                            remounts the app on language change
      AppGate                              splash / sign-in / trip picker / member app / shared view
       AppSidebarProvider                  sidebar open state (localStorage)
-       AppHeader (Suspense)               trip switcher, section links (md), search, activity, account
+       AppHeader (Suspense)               trip switcher, section links (md), sync status, search, activity, account
                                           (viewer: trip name, Read-only badge, search, ViewerSheet)
        OfflineBanner                      shown when offline
        <div flex>
          AppSidebar (Suspense)            wide screens only (lg and up)
-         <div>{children}</div>            the page: main > screen component
+         <div>{children}</div>            the page: main > screen component (error.tsx catches a crash here)
        BottomNav (Suspense)               phone tab bar (below md)
        VersionTag                         desktop corner text (md and up)
    Toaster (sonner)                       above the tab bar on phones
 ```
 
+**Crash screens.** `error.tsx` is a boundary inside the root layout, around `{children}`. A crash in a page replaces only that page; the header, sidebar and tab bar stay. `global-error.tsx` sits above the layout. A crash in the layout itself (AppGate, header, sidebar) replaces the whole document, so it renders its own `<html>` and `<body>`, loads `globals.css` and applies the saved dark theme, because next-themes is not running there. Both use `ErrorScreen` (§3.3).
+
 ### 6.2 Screen components per page
 
 | Page | Screen | Main children |
 |---|---|---|
-| `/` | `DashboardScreen` | `TodayCard`, tiles, `Charts`, `Yen`, `HideAmountsButton` |
+| `/` | `DashboardScreen` → `DashboardContent` | `TodayCard`, `Tile`, `Panel`, `ClockTiles` (`dashboard-parts.tsx`), `Charts`, `Yen`, `HideAmountsButton` |
 | `/days/` | `TripName`, `TripDates`, `TripPlanStatus`, `ExportTrip`, `TodayCard`, `NeedsNewDay`, `ResearchNotice`, `TripDays` (`TripCalendar` or the list, by the `ToggleGroup`) | — |
-| `/day/` | `DayScreen` → `DayPlan` | `FlightCard`, `DayResearchPanel`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
+| `/day/` | `DayScreen` → `DayPlan` | `SortableStop`, `StopCard` (`day-plan-stop.tsx`), `FullDay`, `HotelButtons`, `BookingsButton`, `Reservations` (`day-plan-links.tsx`), `FlightCard`, `DayResearchPanel`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
 | `/cities/` | `CitiesScreen` | — |
-| `/budget/` | `BudgetScreen` | `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
+| `/budget/` | `BudgetScreen` → `BudgetContent` | `SummaryFigures`, `ExpenseRow`, `TargetRow`, `BudgetForm`, `ExportExpensesButton` (`budget-parts.tsx`, `budget-figures.tsx`), `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
 | `/settings/` | `SettingsScreen` | one panel per tab (`Stays`, `Cities`, `Places`, `Flights`, `Reservations`, `Holidays`, `Trip`, `Share`, `Backup`, `Cleanup`); `EditPanel` in each; `ProposalReview` in Places; `NotOnSharedView` in viewer mode |
 
 ### 6.3 Shared overlays
@@ -549,7 +574,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 
 What happens on first load, in order:
 
-1. **Static HTML** is served. It contains the `Splash` (the icon) and nothing else about the trip. Nothing about the trip is in the HTML.
+1. **Static HTML** is served. It contains the `Splash` (the icon) and nothing else about the trip. Nothing about the trip is in the HTML. Its `<html lang>` is `"en"`, but the inline `LANG_BOOT_SCRIPT` in `<head>` runs before the first paint and sets `lang` to the saved or browser language, so screen readers use the right voice from the start.
 2. **`VersionGate`** (client) runs first:
    - `initLocale()` sets the language: the last choice from localStorage, otherwise the browser language (Spanish if it starts with `es`, else English).
    - In production only: removes `?v=` from the URL; if the stored version is different, resets the device (`resetApp`), which keeps `?share=` in the URL so a viewer returns to the shared view; otherwise fetches `version.json`, and shows the app once the check answers or after 2 seconds, whichever comes first.
@@ -577,7 +602,7 @@ What happens on first load, in order:
 | `member`, trip collections not yet loaded | Splash |
 | `member`, loaded | The app |
 
-7. **Listeners open only for `member`** (`PlanSync`): `usePlanSync(tripId)` subscribes to `items`, `useTripSync(tripId)` subscribes to the seven collections. Until then the rules would refuse them.
+7. **Listeners open only for `member`** (`PlanSync`): `usePlanSync(tripId)` subscribes to `items`, `useTripSync(tripId)` subscribes to the seven collections. Until then the rules would refuse them. In the same effect, `MemberSync` calls `watchStartupWrites()` and `requestPersistentStorage()` (§17.1) once the trip is live.
 8. **Remembering**: once a member is confirmed, the trip ID is saved in localStorage and in `users/{uid}.lastTripId`.
 
 **Viewer mode (`?share=`)** replaces steps 5, 7 and 8 for that tab:
@@ -631,7 +656,8 @@ UI event (drop, edit, add, archive, budget change)
 ```
 
 - Offline: Firestore's local cache queues the write and syncs when the connection returns. The promise resolves when the server has the write.
-- Batches: `saveMany` uses `writeBatch` in chunks of 450 (Firestore limit is 500 per batch).
+- Counting: every write goes through `tracked-firestore.ts`, which calls `trackWrite` (`sync-store.ts`) on its promise. The write counts as pending from the moment it is made until that promise settles, so the header's `SyncStatus` shows "saving" while it is in flight and "waiting" when offline (§17.1). Writes queued before a reload are counted through `trackStartupWrites` instead.
+- Batches: `saveMany` uses `writeBatch` in chunks of 450 (Firestore limit is 500 per batch). Each committed batch is counted the same way.
 - Share links (members only, Settings → Share): create writes `shares/{shareId}` and its copy; **Refresh** (publish) rewrites the copy from the current trip; **Change expiry** updates `expiresAt`; **Close link** sets `revoked: true`, which cannot be undone. Each action writes one activity entry (kind `settings`). The trip itself is only read.
 
 ### 8.3 Deletes
@@ -693,6 +719,8 @@ The app is designed for a 390px phone first, then widened (CLAUDE.md rule 8). Br
 | Sections | Bottom tab bar | Sidebar (or header links between 768 and 1023px) |
 | Details | Drawer from bottom | Side sheet |
 | Toasts | Above the tab bar | Bottom right |
+
+Reduced motion applies to both layouts. When the phone's "reduce motion" setting is on, `globals.css` cuts every animation and transition to 0.01 ms, runs each animation once and turns off smooth scrolling. Drawers, sheets, dialogs, toasts, pulses and the dnd-kit reorder then change at once instead of sliding. The duration is 0.01 ms rather than `none` so `animationend` and `transitionend` still fire, which vaul and Radix wait for before unmounting. Motion started from code checks `prefersReducedMotion()` (`src/lib/use-media-query.ts`): "scroll to today" in `trip-days.tsx` jumps instead of scrolling smoothly. Tests in `use-media-query.test.ts`.
 
 ---
 
@@ -768,7 +796,7 @@ Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordi
 
 ### 12.1 Dashboard (`/`)
 
-Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, next flight (`nextFlight`), route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts.tsx` (recharts via shadcn chart).
+Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, next flight (`nextFlight`), route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts-lazy.tsx` (recharts via shadcn chart, loaded on first use).
 
 **Shared view:** the budget tile, the Money section and cost per city are removed. The "Watch out" list has no research or Settings links.
 
@@ -780,7 +808,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 ### 12.3 Day (`/day/?date=`)
 
-`day-plan.tsx` (large file) shows, for one date:
+`day-plan.tsx` shows, for one date (the stop cards and links are in `day-plan-stop.tsx` and `day-plan-links.tsx`, and the drag and stop actions in `use-day-plan-actions.ts`; see §3.3 and §3.5):
 
 - **Flights** leaving or landing that day appear as cards at the top, with the times as on the ticket.
 - **Stops** in order: place, category and priority badges, and cost. Each stop has **Went** and **Skip** buttons, which set `status` to `done` or `skipped` through `updateItem`; tapping the active one sets it back to `planned`. The stop's name is a button with an info icon that opens `PlaceDetails`, the same as tapping its map pin.
@@ -791,7 +819,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
   - **Sort and filter** menu: sort by priority (the default), name A to Z or Z to A; filter by priority and category. **Clear** appears when anything differs from the default and resets sorting and filters.
   - **Show on map** is off by default and resets when moving to another day, because `DayScreen` keys `DayPlan` by date. When on, the listed places get pins beside the numbered stops, coloured by category through `cityPins`, and they follow the filters. Clear does not turn the pins off. Tapping a pin opens the place's details. Places with no coordinates are counted in a note under the map.
   - On phones the map is its own tab, so turning it on switches to that tab, where the same controls appear to turn it off. Neither the view nor the button is saved.
-- **Day research** (`DayResearchPanel`, under the flights): "Research this day" with an optional message ("Anything specific to look into?"). Sending saves the day as `requested` and asks for research on every place on the day; places with an open proposal are skipped, and already researched places are not asked again. While requested: the date, the message, Change request, Cancel request (goes back to the earlier analysis if there was one, otherwise archives; Undo in the toast). When ready: a collapsible "Day analysis" with the load badge (green, amber or red), reason, summary, warnings (buttons open the named places), nearby ideas (a trip place opens its details, others a Google Maps search link), the answer, sources and date. If the day's places have ready proposals, "N place updates to review" (Review opens Settings > Places) and "Accept all for this day" (confirm, `applyProposals`, Undo). "Research again" asks again and keeps the last analysis until a new one replaces it.
+- **Day research** (`DayResearchPanel`, under the flights): "Research this day" with an optional message ("Anything specific to look into?"). Sending saves the day as `requested` and asks for research on every place on the day; places with an open proposal are skipped, and already researched places are not asked again. While requested: the date, the message, Change request, Cancel request (goes back to the earlier analysis if there was one, otherwise archives; Undo in the toast). When ready: a "Day analysis" card that starts collapsed, so the day's stops stay near the top on a phone. The header has the title (a button that opens and closes it, a bigger target than the chevron), the load badge (green, amber or red), a warnings count, "Research again" and a chevron. Collapsed, it shows the load reason (two lines), "N place updates to review" when research is waiting to be accepted, and a "Show the full analysis" link. Opened, it shows the reason, summary, warnings (buttons open the named places), nearby ideas (a trip place opens its details, others a Google Maps search link), the answer, sources and date. Both the title and the chevron carry `aria-expanded` and `aria-controls`. If the day's places have ready proposals, "N place updates to review" (Review opens Settings > Places) and "Accept all for this day" (confirm, `applyProposals`, Undo). "Research again" asks again and keeps the last analysis until a new one replaces it.
 - **Map** (`TripMap`): pins for the day's stops, lines between them. "Show all pins" frames them again. **Show on map** in place details is offered when the place has a pin on this map (a stop, or a Waiting place shown on the map); phones switch to the map tab.
 - **Drag and drop**: stops within a day, between days, from the waiting list (`drop.ts`). Keyboard support.
 - **Bookings button**: lists reservations on the day (wide layout).
@@ -810,7 +838,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 ### 12.5 Budget (`/budget/`)
 
-`budget-screen.tsx` and `domain/budget.ts`:
+`budget-screen.tsx` and `domain/budget.ts` (the figures and the rows are in `budget-figures.tsx` and `budget-parts.tsx`, §3.3):
 
 - **Expenses** (`expenses` collection): title, amount in whole yen (`amountJPY`, the figure every total counts), category, date, status (`planned` or `paid`), who paid, and optional links to a place, reservation or stay. `cityId` is the city the money was spent in; `stayId` keeps its meaning (the hotel's own bill).
 - **Quick cost** (`quick-expense.tsx`, on the Today card during the trip and on each day page): a big amount field (with the ¥/$ toggle, `AmountInput`) and a category tile grid (`quick-expense-category` remembers the last tile). The panel shows the day and city it will use. The city is that night's hotel. "More details" opens the full expense form with the same values. Save writes an activity entry; the toast's Undo archives the expense.
@@ -846,6 +874,8 @@ Tabs (`settings-screen.tsx`):
 | Clean up | the retired records (archived, removed, dismissed, archived day research, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
 
 Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, "start fresh" which runs `resetApp`), and sign-out.
+
+**Offline copy (Settings → About, `settings-about.tsx`):** the About section shows "Offline copy: kept on this device." when the browser has agreed to keep the offline copy (§17.1), or "Offline copy: the browser may clear it…" with an "Ask to keep it" link button. The button calls `requestPersistentStorage()`; if the browser still refuses, a toast suggests adding the app to the home screen. The line is hidden when the browser has no storage API. Texts are the `about.storage*` keys.
 
 **Shared view:** `/settings/` shows `NotOnSharedView`. The Account sheet is replaced by the viewer sheet (§12.8).
 
@@ -1042,7 +1072,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 
 | Concept | How it works |
 |---|---|
-| **Sign-in** | Google popup. Errors mapped to messages: popup blocked, unauthorized domain, operation not allowed, network (`SIGN_IN_ERRORS`). |
+| **Sign-in** | Google popup. Errors mapped to messages by `signInErrorKey`: popup blocked, unauthorized domain, operation not allowed, network, web storage blocked, too many attempts, account disabled (`SIGN_IN_ERRORS`). In the home-screen app, popup blocked, storage blocked and internal error show "close the app completely, open it again and try once more" (`auth.standaloneRetry`). The sign-in button waits at most 90 s; a failed sign-in toast has a "Try again" action. Redirect sign-in is still not used: it needs the auth domain on the site's own origin root, which a GitHub Pages project site does not have. |
 | **Session** | Firebase keeps it in IndexedDB, so it survives reloads and works offline. |
 | **Trip list** | `watchMyTrips(email)`: `where("members", "array-contains", email)`. Needs no index (single-field). |
 | **Opening a trip** | From the link (`?trip=`), the remembered trip, the last trip, or the only trip. Opening another trip reloads the page. |
@@ -1053,6 +1083,16 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 | **Language** | Saved in `users/{uid}.language` and applied at sign-in. |
 | **Sign-out** | Clears this device's trip cache. Unsynced edits are lost, which the UI warns about. |
 
+### Testing sign-in on phones
+
+Run this by hand on both phones before the trip:
+
+1. In Safari (or Chrome on Android), sign in, then sign out.
+2. Add the app to the home screen, open it from there and sign in. On iPhone the home-screen app keeps its own sign-in, separate from Safari.
+3. Close the home-screen app completely, reopen it, and check you are still signed in and the trip opens.
+4. Turn on airplane mode, reopen the app from the home screen, and check that the plan still shows.
+5. If the sign-in window hangs, wait for the "Sign-in didn't finish" message and use Try again.
+
 ---
 
 ## 17. Offline, PWA and caching
@@ -1062,7 +1102,9 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 - **Firestore persistent cache** (`persistentLocalCache` with `persistentMultipleTabManager`): the trip is readable offline once it has been loaded. Writes made offline are queued and sent when the connection returns.
 - **Listeners** keep working offline from the cache. A missing trip document from the cache does not count as "missing"; the app waits for the server (`metadata.fromCache`).
 - **Offline screens:** while signed in but with no answer and no connection, `AppGate` shows "offline" rather than a spinner.
-- **Banner:** `OfflineBanner` shows when `navigator.onLine` is false.
+- **Banner:** `OfflineBanner` shows when offline (`useOnline`) and appends the number of writes waiting, if any.
+- **Sync indicator:** `SyncStatus` in the header shows whether this session's edits have reached the server. It reads `useSyncStore.pending`, so an edit made offline reads "waiting" with a count and returns to "saved" once the connection comes back and the server confirms. `startup` covers edits queued before a reload: `MemberSync` calls `watchStartupWrites()` once the member's trip is live, which waits for those writes with `waitForPendingWrites`, and the status reads "saving" until they are sent. Read-only share links do not show it.
+- **Persistent storage:** the browser may clear a site's storage under space pressure, or (Safari) after a while without a visit. Once a member's trip is live, `MemberSync` calls `requestPersistentStorage()` (`src/lib/storage-persist.ts`), which asks the browser to keep the copy (`navigator.storage.persist()`), only when it is not already kept. Chrome usually agrees by site engagement, Safari for home-screen apps. Settings → About shows whether the copy is kept and lets the member ask again (§12.6).
 - **Walking routes and place details:** not stored offline (Google's terms); the day shows straight-line distances.
 
 ### 17.2 Service worker (PWA)
@@ -1070,6 +1112,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 - `workbox-config.cjs` → `out/sw.js` with `generateSW`.
 - Precaches `**/*.{html,js,css,json,png,svg,ico,webmanifest,txt,woff2}` in `out/`. Excludes `version.json`.
 - `ignoreURLParametersMatching: [/.*/]`: query strings (`?trip=`, `?date=`) are ignored, so each page matches its one precached file.
+- The recharts chunk is precached even though charts load on first use, so the charts still open offline (§2.2).
 - `skipWaiting` and `clientsClaim`: a new worker takes over at once. `cleanupOutdatedCaches` removes old files.
 - Registered only in production (`service-worker-register.tsx`), at `${BASE_PATH}/sw.js`.
 - The `.txt` files (Next's route data) are cached so a page and its data come from the same build.
@@ -1115,6 +1158,7 @@ Account sheet → About → "start fresh" runs the same reset.
 - **Lint:** `eslint.config.mjs` rejects text typed into JSX, `aria-label`, `placeholder`, `title`, `alt` and toast calls. Allowed literals: arrows, dots, currency sign, "Google Maps", "Ctrl K".
 - **Domain code** takes a `Translate` parameter when it produces words, so it stays language-free.
 - **Dates:** `Intl` with `en-US` or `es-419` (Latin American Spanish), via `intlLocale()`.
+- **Before first paint:** the inline `LANG_BOOT_SCRIPT` (`src/lib/lang-boot.ts`, in `<head>` of the root layout) sets `<html lang>` from the stored choice (key `LOCALE_STORAGE_KEY`, `"locale"`) or the browser language, so the static HTML's `lang="en"` is never what screen readers hear for Spanish users. Tests in `lang-boot.test.ts`.
 - **Switching:** `setLocale` saves to localStorage and `<html lang>`, updates the store, and `LocaleRoot` remounts the app so every `t()` runs again.
 - **Saved per person:** `users/{uid}.language`. Used on every device after sign-in.
 - **Google Maps stays in English** (its text is English; `live-hours.ts` parses English).
@@ -1204,13 +1248,14 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 
 - **Vitest** with **jsdom**, configured in `vitest.config.mts`. Alias `@` → `src`. Tests: `src/**/*.test.{ts,tsx}` and `scripts/**/*.test.ts`.
 - **Setup** (`src/test/setup.ts`): jest-dom matchers; Testing Library cleanup after each test; the activity repository replaced with the in-memory `LocalActivityRepository`; `ResizeObserver` stubbed (tooltips need it); `fetch` stubbed to reject, so no test reaches the network (a test that needs it stubs its own).
+- **Charts in tests:** the app loads the recharts charts on first use (`src/components/charts-lazy.tsx`, via `next/dynamic`). The setup mocks `@/components/charts-lazy` for every test to return the real charts directly (the exports of `@/components/chart-parts` and `@/components/charts` as one module), because a dynamic import landing during a later test slowed it past its timeout (the read-only link test in `viewer.test.tsx` took up to 15 s under the full suite).
 - **In-memory repositories** (`local-*.ts`) replace Firebase in tests. Nothing in tests touches the real database.
 - **Fixture:** `src/test/fixture-trip.json` (made-up trip). Only tests import it.
 - **Rules tests:** separate config (`vitest.rules.config.mts`), run on the emulator (§15.3).
 
 ### 22.2 Test coverage by area (files with tests)
 
-40 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, screens, place details and the old-link redirect; `scripts` has four.
+72 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, screens, place details and the old-link redirect; `scripts` has four.
 
 ### 22.3 Quality gates
 
@@ -1220,12 +1265,13 @@ From `CLAUDE.md` rule 11, before finishing any change:
 npm run test
 npm run validate
 npm run lint
+npm run typecheck
 npm run build
 ```
 
 And after changing `firestore.rules`: `npm run test:rules`.
 
-CI runs `test`, `validate` and `build`. Lint and rules tests are manual.
+CI (§4.3) runs `test`, `validate`, `lint`, `typecheck` and `build`, in that order. Rules tests are manual.
 
 ### 22.4 Visual checks
 
@@ -1549,13 +1595,14 @@ Removed on 2026-11-01: the Feasibility plan, docs/remaining-work-plan.md, links/
 
 | Item | Status | What to do |
 |---|---|---|
-| `components.json` vs code | Declares `iconLibrary: phosphor`, but 29 files use lucide and 9 use Phosphor. | Pick one icon set. |
+| `components.json` vs code | Declares `iconLibrary: phosphor`, but 45 files use lucide and 9 use Phosphor. | Pick one icon set. |
 | `cn` npm package | Used instead of the usual `clsx` and `tailwind-merge` pair. | Works; note it when adding shadcn components. |
 | Rules not in CI | `test:rules` and `lint` are not run by the deploy workflow. | Add to CI if wanted. |
 | `firestore.rules` not deployed by CI | Must be pasted into the Firebase console. | Keep in the release steps (README). |
 | App Check | Code present; off. | Turn on with a reCAPTCHA v3 key once the site is stable. |
 | Shadcn sidebar mobile sheet | Has no trigger in the app; never opens on phones. | Intentional (the Days page covers it), or remove the sheet path. |
-| Day-side-panel and day-plan | `day-plan.tsx` is a large file with several concerns. | Split when next changed. |
+| Large component files | `day-plan.tsx` (about 630 lines), `dashboard-screen.tsx` (about 630) and `budget-screen.tsx` (about 300) were split into smaller files in the frontend audit (§3.3). Behaviour did not change. | Split further only if they grow again. |
+| Day-side-panel | Not part of the split; still one file. | Split when next changed. |
 | Tests in `src/app/days/` | A test sits beside its page instead of with the components. | Move if the layout is tidied. |
 
 ---

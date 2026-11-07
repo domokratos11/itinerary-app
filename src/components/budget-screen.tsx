@@ -1,20 +1,17 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
-import { Archive, FileSpreadsheet, Pencil, Plus, Target } from "lucide-react";
+import { useState } from "react";
+import { Plus, Target } from "lucide-react";
 import { toast } from "sonner";
 
-import { BudgetGauge, DonutChart, BarList } from "@/components/charts";
-import { EditPanel, Field } from "@/components/edit-panel";
+import { BudgetGauge, DonutChart, BarList } from "@/components/charts-lazy";
 import {
   ExpenseCategoryOption,
   ExpenseForm,
   personLabel,
 } from "@/components/expense-form";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Tip } from "@/components/tip";
 import {
   CurrencyButton,
@@ -22,9 +19,7 @@ import {
   MoneyScope,
   useAmountsHidden,
   useYenValues,
-  Yen,
 } from "@/components/yen";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -33,165 +28,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  daysRemaining,
-  EMPTY_BUDGET,
-  formatUsdAt,
-  summarizeBudget,
-  totalsByCategory,
-  totalsByPayer,
-  type BudgetSummary,
-  type CategoryTotal,
-} from "@/domain/budget";
+import { EMPTY_BUDGET, totalsByPayer } from "@/domain/budget";
 import {
   EXPENSE_CATEGORIES,
-  type Budget,
   type ExpenseCategory,
   type ExpenseRecord,
 } from "@/domain/schemas";
-import { EXPENSE_COLOR } from "@/domain/taxonomy";
-import { useActiveTrip } from "@/lib/auth-store";
-import { formatDayLabel } from "@/lib/format-day";
 import { t } from "@/lib/i18n";
-import { usePlanStore } from "@/lib/plan-store";
-import { EXPENSE_ICON } from "@/lib/taxonomy-icons";
-import { todayInTokyo } from "@/lib/tokyo-date";
-import { archiveRecord, saveBudget, saveRecord } from "@/lib/trip-actions";
-import {
-  useCitiesById,
-  usePlacesById,
-  useTrip,
-  useTripDays,
-} from "@/lib/trip-store";
-import { expensesCsv } from "@/domain/expenses-csv";
-import { capitalizeFirst } from "@/domain/text";
+import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTripId } from "@/lib/use-trip-id";
 import { useReadOnly } from "@/lib/viewer-store";
 import { NotOnSharedView } from "@/components/viewer";
-
-const noopSubscribe = () => () => {};
-
-// The budget's figures from the live trip; the Dashboard uses them as well.
-export function useBudgetFigures(): {
-  summary: BudgetSummary;
-  categories: CategoryTotal[];
-  expenses: ExpenseRecord[];
-  budget: Budget | null;
-} {
-  const trip = useActiveTrip();
-  const expenses = useTrip().expenses;
-  const items = usePlanStore((s) => s.items);
-  const placesById = usePlacesById();
-  const days = useTripDays();
-  const today = useSyncExternalStore(noopSubscribe, todayInTokyo, () => null);
-  const budget = trip?.budget ?? null;
-  const memberCount = trip?.members.length ?? 1;
-  return useMemo(
-    () => ({
-      expenses,
-      budget,
-      categories: totalsByCategory(expenses, budget),
-      summary: summarizeBudget({
-        expenses,
-        items,
-        placesById,
-        budget,
-        memberCount,
-        remainingDays: today ? daysRemaining(today, days) : 0,
-      }),
-    }),
-    [expenses, items, placesById, budget, memberCount, today, days],
-  );
-}
-
-export function categorySeries(categories: CategoryTotal[]) {
-  return categories.map(({ category, paid }) => ({
-    key: category,
-    label: t(`expenseCategory.${category}`),
-    value: paid,
-    color: EXPENSE_COLOR[category],
-    icon: EXPENSE_ICON[category],
-  }));
-}
-
-export function spentPercent({ spent, budget }: BudgetSummary): number {
-  return budget ? (spent / budget) * 100 : 0;
-}
-
-// The amount in the middle of the budget ring.
-export function GaugeCenter({ summary }: { summary: BudgetSummary }) {
-  const over = summary.over > 0;
-  return (
-    <>
-      <span className="text-xl font-semibold tabular-nums">
-        <Yen yen={over ? summary.over : (summary.left ?? summary.spent)} />
-      </span>
-      <span className="text-xs text-muted-foreground">
-        {over
-          ? t("budget.overBy")
-          : summary.left === null
-            ? t("budget.spent")
-            : t("budget.left")}
-      </span>
-    </>
-  );
-}
-
-export function Figure({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: ReactNode;
-  hint?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-lg font-semibold tabular-nums">{value}</span>
-      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
-    </div>
-  );
-}
-
-export function SummaryFigures({ summary }: { summary: BudgetSummary }) {
-  return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-      <Figure
-        label={t("budget.budget")}
-        value={
-          summary.budget === null ? (
-            t("budget.notSet")
-          ) : (
-            <Yen yen={summary.budget} />
-          )
-        }
-      />
-      <Figure label={t("budget.spent")} value={<Yen yen={summary.spent} />} />
-      <Figure
-        label={t("budget.committed")}
-        value={<Yen yen={summary.committed} />}
-        hint={t("budget.committedHint")}
-      />
-      <Figure
-        label={t("budget.forecast")}
-        value={<Yen yen={summary.forecast} />}
-        hint={
-          summary.unpriced > 0
-            ? t("budget.forecastUnpriced", { count: summary.unpriced })
-            : t("budget.forecastHint")
-        }
-      />
-      {summary.safePerDay !== null && (
-        <Figure
-          label={t("budget.safePerDay")}
-          value={<Yen yen={summary.safePerDay} />}
-        />
-      )}
-    </div>
-  );
-}
+import {
+  categorySeries,
+  GaugeCenter,
+  spentPercent,
+  SummaryFigures,
+  useBudgetFigures,
+} from "@/components/budget-figures";
+import {
+  BudgetForm,
+  ExpenseRow,
+  ExportExpensesButton,
+  TargetRow,
+} from "@/components/budget-parts";
 
 // The trip's shared money: what's set aside, what has gone and on what.
 export function BudgetScreen() {
@@ -436,259 +296,5 @@ function BudgetContent() {
         />
       )}
     </div>
-  );
-}
-
-function TargetRow({ row }: { row: CategoryTotal }) {
-  const money = useYenValues();
-  const { category, paid, target } = row;
-  const Icon = EXPENSE_ICON[category];
-  const color = EXPENSE_COLOR[category];
-  const over = target !== null && paid > target;
-  return (
-    <li className="flex flex-col gap-1">
-      <span className="flex items-center gap-2">
-        <Icon className="size-4 shrink-0" style={{ color }} />
-        <span className="min-w-0 flex-1 truncate">
-          {t(`expenseCategory.${category}`)}
-        </span>
-        <span
-          className={
-            over
-              ? "font-medium text-destructive tabular-nums"
-              : "text-muted-foreground tabular-nums"
-          }
-        >
-          <Yen yen={paid}>
-            {target === null
-              ? money.format(paid)
-              : t("budget.ofTarget", {
-                  paid: money.format(paid),
-                  target: money.format(target),
-                })}
-          </Yen>
-        </span>
-      </span>
-      {target !== null && (
-        <Progress
-          value={target > 0 ? Math.min(100, (paid / target) * 100) : 100}
-          color={over ? "var(--destructive)" : color}
-          className="h-2"
-          aria-label={t(`expenseCategory.${category}`)}
-        />
-      )}
-    </li>
-  );
-}
-
-function ExpenseRow({
-  expense,
-  onEdit,
-  onArchive,
-}: {
-  expense: ExpenseRecord;
-  onEdit: () => void;
-  onArchive: () => void;
-}) {
-  const Icon = EXPENSE_ICON[expense.category];
-  const hidden = useAmountsHidden();
-  return (
-    <li className="flex items-start gap-3 rounded-lg border p-3 text-sm">
-      <Icon
-        className="mt-0.5 size-4 shrink-0"
-        style={{ color: EXPENSE_COLOR[expense.category] }}
-      />
-      <span className="min-w-0 flex-1">
-        <span className="block font-medium break-words">
-          {capitalizeFirst(expense.title)}
-        </span>
-        <span className="block text-muted-foreground">
-          {formatDayLabel(expense.date)} · {personLabel(expense.paidBy)}
-        </span>
-        {expense.note && <span className="block">{expense.note}</span>}
-        {(expense.reservationId || expense.stayId) && (
-          <Badge variant="secondary" className="mt-1">
-            {expense.reservationId
-              ? t("budget.forBooking")
-              : t("budget.forStay")}
-          </Badge>
-        )}
-      </span>
-      <span className="flex flex-col items-end gap-1">
-        <span className="font-medium tabular-nums">
-          <Yen yen={expense.amountJPY} />
-        </span>
-        {!hidden &&
-          expense.originalUSD !== null &&
-          expense.rateJPYPerUSD !== null && (
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {t("budget.enteredUsd", {
-                usd: formatUsdAt(expense.originalUSD, 1),
-                rate: expense.rateJPYPerUSD,
-              })}
-            </span>
-          )}
-        {expense.status === "planned" && (
-          <Badge variant="outline">{t("budget.planned")}</Badge>
-        )}
-      </span>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label={
-          hidden
-            ? t("budget.showToEdit")
-            : t("common.editName", { name: expense.title })
-        }
-        disabled={hidden}
-        onClick={onEdit}
-      >
-        <Pencil />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label={t("budget.archiveName", { name: expense.title })}
-        onClick={onArchive}
-      >
-        <Archive />
-      </Button>
-    </li>
-  );
-}
-
-const yenOrNull = (text: string): number | null => {
-  const clean = text.replace(/[,\s¥]/g, "");
-  return clean === "" ? null : Number(clean);
-};
-const validYen = (value: number | null) =>
-  value === null || (Number.isInteger(value) && value >= 0);
-
-function BudgetForm({
-  tripId,
-  budget,
-  onClose,
-}: {
-  tripId: string;
-  budget: Budget;
-  onClose: () => void;
-}) {
-  const [total, setTotal] = useState(budget.totalJPY?.toString() ?? "");
-  const [travellers, setTravellers] = useState(
-    budget.travellers?.toString() ?? "",
-  );
-  const [targets, setTargets] = useState<Record<string, string>>(
-    Object.fromEntries(
-      Object.entries(budget.byCategory).map(([c, v]) => [c, String(v)]),
-    ),
-  );
-  const people = yenOrNull(travellers);
-  const valid =
-    validYen(yenOrNull(total)) &&
-    (people === null ||
-      (Number.isInteger(people) && people >= 1 && people <= 20)) &&
-    EXPENSE_CATEGORIES.every((c) => validYen(yenOrNull(targets[c] ?? "")));
-
-  function save() {
-    const byCategory: Budget["byCategory"] = {};
-    for (const c of EXPENSE_CATEGORIES) {
-      const value = yenOrNull(targets[c] ?? "");
-      if (value !== null) byCategory[c] = value;
-    }
-    saveBudget(tripId, {
-      totalJPY: yenOrNull(total),
-      byCategory,
-      travellers: people,
-    }).catch(() => toast.error(t("common.refused")));
-    onClose();
-  }
-
-  return (
-    <EditPanel
-      open
-      onOpenChange={(open) => !open && onClose()}
-      title={t("budget.setBudget")}
-      description={t("budget.setBudgetHint")}
-      canSubmit={valid}
-      onSubmit={save}
-    >
-      <div className="grid grid-cols-2 gap-3">
-        <Field label={t("budget.total")} htmlFor="budget-total">
-          <Input
-            id="budget-total"
-            inputMode="numeric"
-            value={total}
-            onChange={(e) => setTotal(e.target.value)}
-          />
-        </Field>
-        <Field
-          label={t("budget.travellers")}
-          htmlFor="budget-travellers"
-          hint={t("budget.travellersHint")}
-        >
-          <Input
-            id="budget-travellers"
-            inputMode="numeric"
-            value={travellers}
-            onChange={(e) => setTravellers(e.target.value)}
-          />
-        </Field>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        {EXPENSE_CATEGORIES.map((c) => (
-          <Field
-            key={c}
-            label={t(`expenseCategory.${c}`)}
-            htmlFor={`budget-${c}`}
-          >
-            <Input
-              id={`budget-${c}`}
-              inputMode="numeric"
-              value={targets[c] ?? ""}
-              onChange={(e) => setTargets({ ...targets, [c]: e.target.value })}
-            />
-          </Field>
-        ))}
-      </div>
-    </EditPanel>
-  );
-}
-
-// Downloads every expense as CSV, for a spreadsheet or for matching against
-// card statements after the trip. Made in the browser; nothing is sent.
-// It always holds the real amounts: asking for the file is asking for them.
-function ExportExpensesButton() {
-  const trip = useTrip();
-  const cities = useCitiesById();
-  const places = usePlacesById();
-  if (trip.expenses.length === 0) return null;
-
-  function download() {
-    const csv = expensesCsv(
-      trip.expenses,
-      {
-        cities,
-        places,
-        reservations: new Map(trip.reservations.map((r) => [r.id, r])),
-        person: personLabel,
-      },
-      t,
-    );
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `expenses-${todayInTokyo()}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-    toast(t("csv.exported"));
-  }
-
-  return (
-    <Tip label={t("csv.tipExport")}>
-      <Button variant="outline" onClick={download}>
-        <FileSpreadsheet />
-        {t("csv.export")}
-      </Button>
-    </Tip>
   );
 }

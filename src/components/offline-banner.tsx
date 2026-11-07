@@ -1,25 +1,14 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { t } from "@/lib/i18n";
+import { useSyncStore } from "@/lib/sync-store";
+import { useOnline } from "@/lib/use-online";
 
 // Shown while the phone has no connection. Edits are still saved on the
-// phone and sent when the connection returns.
-function subscribe(onChange: () => void) {
-  window.addEventListener("online", onChange);
-  window.addEventListener("offline", onChange);
-  return () => {
-    window.removeEventListener("online", onChange);
-    window.removeEventListener("offline", onChange);
-  };
-}
-
+// phone and sent when the connection returns; the count says how many wait.
 export function OfflineBanner() {
-  const online = useSyncExternalStore(
-    subscribe,
-    () => navigator.onLine,
-    () => true,
-  );
+  const online = useOnline();
+  const pending = useSyncStore((s) => s.pending);
   if (online) return null;
   return (
     <div
@@ -27,6 +16,7 @@ export function OfflineBanner() {
       className="bg-muted px-4 py-2 text-center text-sm text-muted-foreground"
     >
       {t("misc.offlineBanner")}
+      {pending > 0 && ` ${t("sync.waiting", { count: pending })}`}
     </div>
   );
 }

@@ -5,8 +5,9 @@ import type { MessageKey, MessageValues } from "@/domain/i18n";
 import type { Language } from "@/domain/user-repository";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
+import { LOCALE_STORAGE_KEY } from "@/lib/lang-boot";
 
-const STORAGE_KEY = "locale";
+const STORAGE_KEY = LOCALE_STORAGE_KEY;
 
 // What Intl formats dates with. "es-419" is Latin American Spanish.
 const INTL_LOCALE: Record<Language, string> = { en: "en-US", es: "es-419" };

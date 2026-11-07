@@ -1,8 +1,9 @@
-import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
+import { collection, doc, onSnapshot } from "firebase/firestore";
 
 import type { PlanRepository } from "@/domain/plan-repository";
 import { PlanItemSchema, type PlanItem } from "@/domain/schemas";
 import { getDb } from "@/lib/firebase";
+import { setDoc } from "@/lib/tracked-firestore";
 
 // Reads and writes trips/{tripId}/items/{itemId}. Rows that fail the schema
 // are skipped, so one bad write cannot break the whole day view.

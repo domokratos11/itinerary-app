@@ -1,8 +1,9 @@
-import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
+import { collection, doc, onSnapshot } from "firebase/firestore";
 
 import type { DayResearchRepository } from "@/domain/day-research";
 import { DayResearchSchema, type DayResearch } from "@/domain/schemas";
 import { getDb } from "@/lib/firebase";
+import { setDoc } from "@/lib/tracked-firestore";
 
 // Reads and writes trips/{tripId}/dayResearch/{date}. Rows that fail the
 // schema are skipped.

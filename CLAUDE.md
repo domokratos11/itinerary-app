@@ -16,7 +16,7 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 8. **Mobile-first, and desktop too.** Design for a 390px-wide screen first, then widen. Every screen change is designed for both layouts: phones (bottom tab bar, drawers) and desktop from `lg` (sidebar, side sheets, use of the extra width). Check it at 390px and at 1280px or wider before finishing, and say so if it couldn't be checked.
 9. **Privacy.** The repo is public. Never commit hotel or flight confirmation numbers, booking references, passport or other personal ID numbers, member emails or service-account keys. Trip IDs live only in links and in Firestore, never in the repo.
 10. **Access needs sign-in and membership, and nothing shows before it.** `AppGate` wraps the whole app in the root layout and renders it only for a signed-in member whose trip has arrived, so the static HTML holds only a splash. `firestore.rules` lets a request through only when it is signed in with Google and its email is in the trip document's `members` array. Every rule for a trip uses `isMember(tripId)`; never loosen it to "trip exists". After sign-in the app finds the person's trips with `where("members", "array-contains", email)` (`watchMyTrips`), so no link is needed; a `?trip=` link still opens that trip if they are a member. Only emails in `config/access.tripCreators` can create trips. In the app, Firestore listeners start only once `useAuthStore` says `access === "member"` (a listener refused before sign-in stays dead). Auth goes through `src/lib/auth.ts`; screens never import `firebase/auth`. The Node scripts use the Admin SDK (`scripts/admin-db.ts`) with the developer's Google Cloud login.
-11. **Before finishing any task**, run `npm run test`, `npm run validate`, `npm run lint` and `npm run build`, and fix anything that fails. After changing `firestore.rules`, also run `npm run test:rules` (local emulator, needs Java).
+11. **Before finishing any task**, run `npm run test`, `npm run validate`, `npm run lint`, `npm run typecheck` and `npm run build`, and fix anything that fails. After changing `firestore.rules`, also run `npm run test:rules` (local emulator, needs Java).
 
 12. **Versions come from git.** `main` carries a `v*` tag; each merge after it adds one to the last number (`next.config.ts`, `src/domain/version.ts`), so nothing is bumped by hand. A new major or minor is a new tag. When a device finds a different version, `src/lib/app-reset.ts` clears its storage and caches and signs it out, keeping only preferences. `version.json` must stay out of the service worker's precache.
 
@@ -48,6 +48,7 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 | `npm run build`                                       | Static export to `out/`                                                                        |
 | `npm run preview`                                     | Serve `out/` like GitHub Pages, at `http://localhost:4173/itinerary-app/`                      |
 | `npm run lint` / `npm run format`                     | ESLint / Prettier                                                                              |
+| `npm run typecheck`                                   | TypeScript check of the whole project (`tsc --noEmit`)                                         |
 
 ## Layout
 
@@ -60,4 +61,4 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 - `scripts/`: Node scripts run with tsx
 - `public/.nojekyll`: copied into `out/` so GitHub Pages serves `_next/`
 
-Deploys: `.github/workflows/deploy.yml` runs tests, validation and the build on every push to `main`, then publishes `out/` to GitHub Pages.
+Deploys: `.github/workflows/deploy.yml` runs tests, validation, lint, the type check and the build on every push to `main`, then publishes `out/` to GitHub Pages.
