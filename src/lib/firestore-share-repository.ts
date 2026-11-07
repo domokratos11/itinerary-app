@@ -5,11 +5,8 @@ import {
   getDocsFromServer,
   onSnapshot,
   query,
-  setDoc,
   Timestamp,
-  updateDoc,
   where,
-  writeBatch,
   type DocumentData,
   type Firestore,
 } from "firebase/firestore";
@@ -38,6 +35,7 @@ import type {
   ShareRepository,
 } from "@/domain/share-repository";
 import { getDb, getViewerDb } from "@/lib/firebase";
+import { setDoc, updateDoc, writeBatch } from "@/lib/tracked-firestore";
 
 const SCHEMAS: { [C in SharedCollection]: z.ZodType<SharedTrip[C][number]> } = {
   cities: CityRecordSchema,

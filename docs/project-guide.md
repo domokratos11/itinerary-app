@@ -213,14 +213,15 @@ Shared chrome and gates:
 | File | Role |
 |---|---|
 | `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member` and the trip has loaded, or when a shared view is active. |
-| `app-header.tsx` | Top bar (trip switcher, section links on tablets, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the five sections) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
+| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the five sections) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
 | `plan-sync.tsx` | Mounted once. Renders `MemberSync` (auth, plan and trip listeners) for members, or `ViewerSync` (loads the shared copy, §12.8) when the tab is in viewer mode. |
 | `locale-root.tsx` | Remounts the app when the language changes. |
 | `service-worker-register.tsx` | Registers `sw.js` in production. |
-| `offline-banner.tsx` | Shows "offline" text; edits still save on the device. |
+| `offline-banner.tsx` | Shows "offline" text (`useOnline`) and, when writes are waiting, the count from `useSyncStore`; edits still save on the device. |
+| `sync-status.tsx` | `SyncStatus`: icon button in the header, left of search, hidden on read-only links. Shows whether edits have reached the server (§17.1): cloud-check "All changes saved" (muted), cloud-upload "Saving N changes…" (pulsing), cloud-off "N changes waiting for a connection." (amber, offline with pending writes). Tooltip on hover or focus; a tap shows the same text in a toast, since tooltips do not open on tap. |
 | `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Match phone / Light / Dark button. |
 | `search-palette.tsx` | The Ctrl+K / ⌘K search over days, hotels and places. |
 | `trip-switcher.tsx`, `new-trip.tsx` | Trip name menu; panel to create a trip (for permitted creators). |
@@ -333,6 +334,7 @@ Firebase and repositories:
 | `firebase.ts` | Starts the Firebase app (once), App Check (off unless a key is set), and Firestore with a persistent local cache and multi-tab manager. `getFirebaseAuth()` for Auth. `getDb()` throws in viewer mode. `getViewerDb()` is a separate app named "viewer" with a memory cache, used only by the shared view. |
 | `firebase.config.ts` | Firebase web config and the App Check site key (`null` = off). Public values; access is decided by the rules. |
 | `auth.ts` | The only file that talks to `firebase/auth` for sign-in: Google popup, `watchUser`, sign-out, session clear. |
+| `tracked-firestore.ts` | `setDoc`, `updateDoc`, `deleteDoc` and `writeBatch`, with the same signatures as `firebase/firestore`, each wrapped with `trackWrite` so the write counts in `sync-store.ts` until the server confirms (`writeBatch` wraps `commit`). Every `firestore-*-repository.ts` imports these four from here, not from `firebase/firestore`. `watchStartupWrites()` calls `waitForPendingWrites(getDb())` once. |
 | `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. |
 | `firestore-plan-repository.ts` | Implements `PlanRepository` on `trips/{id}/items`. |
 | `firestore-proposal-repository.ts` | Implements `ProposalRepository` on `trips/{id}/proposals`. |
@@ -359,6 +361,7 @@ State and sync:
 | `plan-store.ts` | Zustand: plan items, ready flag, error. |
 | `use-plan-sync.ts` | Subscribes to `items` for the trip. |
 | `use-day-research.ts` | Hook `useDayResearch(tripId)`: live day research. Listens only once access is `member`. |
+| `sync-store.ts` | Zustand `useSyncStore`: `pending` (writes from this session the server has not confirmed) and `startup` (true until edits queued in an earlier session, before a reload, are sent). `trackWrite(promise)` counts a write until it settles; `trackStartupWrites(promise)` does the same for those earlier edits; `syncStatus(state, online)` returns `"saved"`, `"saving"` or `"waiting"`. Firestore write promises settle only when the server confirms, so offline writes stay counted. |
 | `use-proposals.ts`, `use-activity.ts` | Live proposals (always), and the activity log (only while its sheet is open). |
 | `use-trip-id.ts` | The open trip's ID from the auth store. |
 | `trip-id.ts` | Trip ID format (`[A-Za-z0-9_-]`, 6 to 128 characters), remembering it on the device, choosing a trip, opening trips. |
@@ -511,7 +514,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
     LocaleRoot                            remounts the app on language change
      AppGate                              splash / sign-in / trip picker / member app / shared view
       AppSidebarProvider                  sidebar open state (localStorage)
-       AppHeader (Suspense)               trip switcher, section links (md), search, activity, account
+       AppHeader (Suspense)               trip switcher, section links (md), sync status, search, activity, account
                                           (viewer: trip name, Read-only badge, search, ViewerSheet)
        OfflineBanner                      shown when offline
        <div flex>
@@ -637,7 +640,8 @@ UI event (drop, edit, add, archive, budget change)
 ```
 
 - Offline: Firestore's local cache queues the write and syncs when the connection returns. The promise resolves when the server has the write.
-- Batches: `saveMany` uses `writeBatch` in chunks of 450 (Firestore limit is 500 per batch).
+- Counting: every write goes through `tracked-firestore.ts`, which calls `trackWrite` (`sync-store.ts`) on its promise. The write counts as pending from the moment it is made until that promise settles, so the header's `SyncStatus` shows "saving" while it is in flight and "waiting" when offline (§17.1). Writes queued before a reload are counted through `trackStartupWrites` instead.
+- Batches: `saveMany` uses `writeBatch` in chunks of 450 (Firestore limit is 500 per batch). Each committed batch is counted the same way.
 - Share links (members only, Settings → Share): create writes `shares/{shareId}` and its copy; **Refresh** (publish) rewrites the copy from the current trip; **Change expiry** updates `expiresAt`; **Close link** sets `revoked: true`, which cannot be undone. Each action writes one activity entry (kind `settings`). The trip itself is only read.
 
 ### 8.3 Deletes
@@ -1068,7 +1072,8 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 - **Firestore persistent cache** (`persistentLocalCache` with `persistentMultipleTabManager`): the trip is readable offline once it has been loaded. Writes made offline are queued and sent when the connection returns.
 - **Listeners** keep working offline from the cache. A missing trip document from the cache does not count as "missing"; the app waits for the server (`metadata.fromCache`).
 - **Offline screens:** while signed in but with no answer and no connection, `AppGate` shows "offline" rather than a spinner.
-- **Banner:** `OfflineBanner` shows when `navigator.onLine` is false.
+- **Banner:** `OfflineBanner` shows when offline (`useOnline`) and appends the number of writes waiting, if any.
+- **Sync indicator:** `SyncStatus` in the header shows whether this session's edits have reached the server. It reads `useSyncStore.pending`, so an edit made offline reads "waiting" with a count and returns to "saved" once the connection comes back and the server confirms. `startup` covers edits queued before a reload: `MemberSync` calls `watchStartupWrites()` once the member's trip is live, which waits for those writes with `waitForPendingWrites`, and the status reads "saving" until they are sent. Read-only share links do not show it.
 - **Walking routes and place details:** not stored offline (Google's terms); the day shows straight-line distances.
 
 ### 17.2 Service worker (PWA)

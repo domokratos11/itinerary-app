@@ -911,5 +911,12 @@
     "retry": "Intentar de nuevo",
     "goHome": "Ir al panel",
     "reload": "Recargar la app"
+  },
+  "sync": {
+    "saved": "Todos los cambios guardados",
+    "saving": "{count, plural, one {Guardando # cambio…} other {Guardando # cambios…}}",
+    "savingEarlier": "Enviando cambios anteriores…",
+    "waiting": "{count, plural, one {# cambio esperando conexión.} other {# cambios esperando conexión.}}",
+    "waitingEarlier": "Hay cambios anteriores esperando conexión."
   }
 }

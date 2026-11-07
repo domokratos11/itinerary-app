@@ -4,10 +4,7 @@ import {
   getDoc,
   onSnapshot,
   query,
-  setDoc,
-  updateDoc,
   where,
-  writeBatch,
 } from "firebase/firestore";
 import { z } from "zod";
 
@@ -33,6 +30,7 @@ import {
   StayRecordSchema,
 } from "@/domain/schemas";
 import { getDb } from "@/lib/firebase";
+import { setDoc, updateDoc, writeBatch } from "@/lib/tracked-firestore";
 
 const SCHEMAS: { [C in TripCollection]: z.ZodType<TripRecordOf[C]> } = {
   cities: CityRecordSchema,

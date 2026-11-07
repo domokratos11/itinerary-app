@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
 import {
   EMPTY_PROFILE,
@@ -7,6 +7,7 @@ import {
   type UserRepository,
 } from "@/domain/user-repository";
 import { getDb } from "@/lib/firebase";
+import { setDoc } from "@/lib/tracked-firestore";
 
 // Reads and writes users/{uid}.
 export class FirestoreUserRepository implements UserRepository {

@@ -911,5 +911,12 @@
     "retry": "Try again",
     "goHome": "Go to Dashboard",
     "reload": "Reload app"
+  },
+  "sync": {
+    "saved": "All changes saved",
+    "saving": "{count, plural, one {Saving # change…} other {Saving # changes…}}",
+    "savingEarlier": "Sending earlier changes…",
+    "waiting": "{count, plural, one {# change waiting for a connection.} other {# changes waiting for a connection.}}",
+    "waitingEarlier": "Earlier changes are waiting for a connection."
   }
 }
