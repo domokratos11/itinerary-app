@@ -4,6 +4,7 @@ import type { Translate } from "./i18n";
 import type {
   ExpenseRecord,
   ExpenseStatus,
+  PaymentMethod,
   Reservation,
   ReservationRecord,
 } from "./schemas";
@@ -41,6 +42,7 @@ export function bookingExpense(input: {
   existing: ExpenseRecord | null;
   amount: AmountResult;
   status: ExpenseStatus;
+  paymentMethod?: PaymentMethod;
   paidBy: string | null;
   cityId: string | null;
   id: string;
@@ -60,6 +62,7 @@ export function bookingExpense(input: {
     reservationId: reservation.id,
     stayId: existing?.stayId ?? null,
     cityId: existing ? existing.cityId : input.cityId,
+    paymentMethod: input.paymentMethod ?? existing?.paymentMethod ?? "card",
     note: existing?.note ?? null,
     archived: false,
     updatedAt: input.now.toISOString(),

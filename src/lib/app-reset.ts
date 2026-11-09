@@ -16,6 +16,7 @@ const KEPT_KEYS = [
   "display-currency",
   "days-view",
   "quick-expense-category",
+  "payment-method",
 ];
 const VERSION_KEY = "app-version";
 // The version this tab last reset for. GitHub Pages may keep serving the old

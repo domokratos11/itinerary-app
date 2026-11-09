@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet } from "lucide-react";
+import { Banknote, CreditCard, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 import { AmountInput } from "@/components/amount-input";
@@ -21,10 +21,11 @@ import {
   type ExpenseCategory,
   type ExpenseRecord,
   type ExpenseStatus,
+  type PaymentMethod,
   type Place,
 } from "@/domain/schemas";
 import { entryFor, readAmount, type AmountEntry } from "@/domain/amount";
-import { categoryForPlace } from "@/domain/budget";
+import { categoryForPlace, payerOf } from "@/domain/budget";
 import { nightStay } from "@/domain/trip";
 import { EXPENSE_COLOR } from "@/domain/taxonomy";
 import { useActiveTrip, useAuthStore } from "@/lib/auth-store";
@@ -34,8 +35,7 @@ import { todayInTokyo } from "@/lib/tokyo-date";
 import { saveRecord } from "@/lib/trip-actions";
 import { useTrip } from "@/lib/trip-store";
 import { useUsdRate } from "@/lib/usd-rate";
-
-const NOBODY = "nobody";
+import { lastPaymentMethod, rememberPaymentMethod } from "@/lib/payment-method";
 
 // What the form starts with when logging a place, booking or hotel.
 export type ExpensePrefill = Partial<
@@ -51,6 +51,7 @@ export type ExpensePrefill = Partial<
     | "reservationId"
     | "stayId"
     | "cityId"
+    | "paymentMethod"
   >
 >;
 
@@ -115,15 +116,26 @@ export function ExpenseForm({
   const [status, setStatus] = useState<ExpenseStatus>(
     expense?.status ?? (startDate > todayInTokyo() ? "planned" : "paid"),
   );
-  const [paidBy, setPaidBy] = useState(
-    expense ? (expense.paidBy ?? NOBODY) : (me ?? NOBODY),
+  // Always a real person: an old expense with no payer opens on the trip's
+  // first member, the one it's counted under.
+  const [paidBy, setPaidBy] = useState<string | null>(
+    expense ? payerOf(expense, members) : (me ?? members[0] ?? null),
+  );
+  const [method, setMethod] = useState<PaymentMethod>(
+    () =>
+      expense?.paymentMethod ?? prefill.paymentMethod ?? lastPaymentMethod(),
   );
   const [note, setNote] = useState(expense?.note ?? "");
 
   const money = readAmount(amount);
   const valid =
-    title.trim() !== "" && money !== null && /^\d{4}-\d{2}-\d{2}$/.test(date);
-  const people = [...new Set([...members, ...(me ? [me] : [])])];
+    title.trim() !== "" &&
+    money !== null &&
+    paidBy !== null &&
+    /^\d{4}-\d{2}-\d{2}$/.test(date);
+  const people = [
+    ...new Set([...members, ...(me ? [me] : []), ...(paidBy ? [paidBy] : [])]),
+  ];
 
   function save() {
     if (!money) return;
@@ -134,7 +146,8 @@ export function ExpenseForm({
       category,
       date,
       status,
-      paidBy: paidBy === NOBODY ? null : paidBy,
+      paidBy,
+      paymentMethod: method,
       placeId: expense?.placeId ?? prefill.placeId ?? null,
       reservationId: expense?.reservationId ?? prefill.reservationId ?? null,
       stayId: expense?.stayId ?? prefill.stayId ?? null,
@@ -146,6 +159,7 @@ export function ExpenseForm({
       archived: false,
       updatedAt: new Date().toISOString(),
     };
+    if (!expense) rememberPaymentMethod(method);
     saveRecord(
       tripId,
       "expenses",
@@ -215,21 +229,29 @@ export function ExpenseForm({
           </SelectContent>
         </Select>
       </Field>
-      <Field label={t("budget.paidBy")} htmlFor="expense-paid-by">
-        <Select value={paidBy} onValueChange={setPaidBy}>
-          <SelectTrigger id="expense-paid-by" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {people.map((email) => (
-              <SelectItem key={email} value={email}>
-                {personLabel(email)}
-              </SelectItem>
-            ))}
-            <SelectItem value={NOBODY}>{t("budget.nobody")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t("budget.paidBy")} htmlFor="expense-paid-by">
+          <Select value={paidBy ?? undefined} onValueChange={setPaidBy}>
+            <SelectTrigger id="expense-paid-by" className="w-full">
+              <SelectValue placeholder={t("budget.pickPayer")} />
+            </SelectTrigger>
+            <SelectContent>
+              {people.map((email) => (
+                <SelectItem key={email} value={email}>
+                  {personLabel(email)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label={t("budget.paidWith")} htmlFor="expense-method">
+          <PaymentToggle
+            id="expense-method"
+            value={method}
+            onChange={setMethod}
+          />
+        </Field>
+      </div>
       <Field label={t("common.noteOptional")} htmlFor="expense-note">
         <Input
           id="expense-note"
@@ -267,6 +289,40 @@ export function StatusToggle({
       <ToggleGroupItem value="planned" className="flex-1">
         {t("budget.planned")}
       </ToggleGroupItem>
+    </ToggleGroup>
+  );
+}
+
+export const PAYMENT_ICON = { card: CreditCard, cash: Banknote } as const;
+
+// Card or cash; every way of logging an expense asks it.
+export function PaymentToggle({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: PaymentMethod;
+  onChange: (value: PaymentMethod) => void;
+}) {
+  return (
+    <ToggleGroup
+      id={id}
+      type="single"
+      variant="outline"
+      value={value}
+      onValueChange={(v) => v && onChange(v as PaymentMethod)}
+      className="w-full"
+    >
+      {(["card", "cash"] as const).map((m) => {
+        const Icon = PAYMENT_ICON[m];
+        return (
+          <ToggleGroupItem key={m} value={m} className="flex-1">
+            <Icon />
+            {t(`paymentMethod.${m}`)}
+          </ToggleGroupItem>
+        );
+      })}
     </ToggleGroup>
   );
 }

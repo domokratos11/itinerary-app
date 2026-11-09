@@ -71,6 +71,7 @@ function trip(): TripData {
         cityId: null,
         originalUSD: null,
         rateJPYPerUSD: null,
+        paymentMethod: "card",
         note: null,
         archived: false,
         updatedAt: NOW.toISOString(),

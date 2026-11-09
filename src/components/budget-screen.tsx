@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Target } from "lucide-react";
 import { toast } from "sonner";
 
-import { BudgetGauge, DonutChart, BarList } from "@/components/charts-lazy";
+import { BudgetGauge, DonutChart } from "@/components/charts-lazy";
 import {
   ExpenseCategoryOption,
   ExpenseForm,
+  PAYMENT_ICON,
   personLabel,
 } from "@/components/expense-form";
 import { Button } from "@/components/ui/button";
@@ -28,14 +29,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { EMPTY_BUDGET, totalsByPayer } from "@/domain/budget";
+import {
+  EMPTY_BUDGET,
+  EXPENSE_SORTS,
+  filterExpenses,
+  NO_FILTER,
+  totalsByMember,
+  type ExpenseFilter,
+  type ExpenseSort,
+} from "@/domain/budget";
+import { summarizeCash } from "@/domain/cash";
 import {
   EXPENSE_CATEGORIES,
-  type ExpenseCategory,
+  PAYMENT_METHODS,
   type ExpenseRecord,
 } from "@/domain/schemas";
+import { useActiveTrip } from "@/lib/auth-store";
 import { t } from "@/lib/i18n";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
+import { useTrip } from "@/lib/trip-store";
 import { useTripId } from "@/lib/use-trip-id";
 import { useReadOnly } from "@/lib/viewer-store";
 import { NotOnSharedView } from "@/components/viewer";
@@ -50,10 +62,14 @@ import {
   BudgetForm,
   ExpenseRow,
   ExportExpensesButton,
+  MemberTargetRow,
   TargetRow,
 } from "@/components/budget-parts";
+import { PersonPanel } from "@/components/budget-person";
+import { CashSection } from "@/components/cash-section";
 
-// The trip's shared money: what's set aside, what has gone and on what.
+// The trip's shared money: what's set aside, what has gone, on what and who
+// paid it, and the cash that moves between people without being spent.
 export function BudgetScreen() {
   // A read-only link never shows money; this covers a typed address.
   if (useReadOnly()) return <NotOnSharedView />;
@@ -68,21 +84,28 @@ function BudgetContent() {
   const tripId = useTripId();
   const money = useYenValues();
   const hidden = useAmountsHidden();
+  const tripMembers = useActiveTrip()?.members;
+  const members = useMemo(() => tripMembers ?? [], [tripMembers]);
+  const cash = useTrip().cash;
   const { summary, categories, expenses, budget } = useBudgetFigures();
   const [editing, setEditing] = useState<{
     expense: ExpenseRecord | null;
   } | null>(null);
   const [settingTargets, setSettingTargets] = useState(false);
-  const [status, setStatus] = useState<"all" | "paid" | "planned">("all");
-  const [category, setCategory] = useState<ExpenseCategory | "all">("all");
+  const [filter, setFilter] = useState<ExpenseFilter>(NO_FILTER);
+  const [sort, setSort] = useState<ExpenseSort>("newest");
+  const [person, setPerson] = useState<string | null>(null);
 
-  const visible = expenses.filter(
-    (e) =>
-      (status === "all" || e.status === status) &&
-      (category === "all" || e.category === category),
+  const visible = filterExpenses(expenses, filter, sort, members);
+  const memberRows = totalsByMember(expenses, members, budget);
+  const cashSummary = useMemo(
+    () => summarizeCash(cash, expenses, members),
+    [cash, expenses, members],
   );
-  const payers = totalsByPayer(expenses);
   const percent = spentPercent(summary);
+  const personRow = memberRows.find((r) => r.email === person) ?? null;
+  const people = memberRows.map((r) => r.email);
+  const narrowed = Object.entries(filter).some(([, v]) => v !== "all");
 
   function archive(expense: ExpenseRecord) {
     if (!tripId) return;
@@ -197,24 +220,18 @@ function BudgetContent() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">{t("budget.byPerson")}</CardTitle>
+            <CardTitle className="text-base">{t("budget.byMember")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {payers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("budget.nothingPaid")}
-              </p>
-            ) : (
-              <BarList
-                rows={payers.map((p) => ({
-                  key: p.paidBy ?? "nobody",
-                  label: personLabel(p.paidBy),
-                  value: p.paid,
-                  color: "var(--primary)",
-                }))}
-                {...money}
-              />
-            )}
+            <ul className="flex flex-col gap-2 text-sm">
+              {memberRows.map((row) => (
+                <MemberTargetRow
+                  key={row.email}
+                  row={row}
+                  onOpen={() => setPerson(row.email)}
+                />
+              ))}
+            </ul>
           </CardContent>
         </Card>
       </div>
@@ -224,27 +241,84 @@ function BudgetContent() {
           <CardTitle className="text-base">{t("budget.expenses")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
             <ToggleGroup
               type="single"
               variant="outline"
               size="sm"
-              value={status}
-              onValueChange={(v) => v && setStatus(v as typeof status)}
+              value={filter.status}
+              onValueChange={(v) =>
+                v &&
+                setFilter({ ...filter, status: v as ExpenseFilter["status"] })
+              }
               aria-label={t("budget.status")}
+              className="col-span-2 w-full sm:w-fit"
             >
-              <ToggleGroupItem value="all">{t("cities.all")}</ToggleGroupItem>
-              <ToggleGroupItem value="paid">{t("budget.paid")}</ToggleGroupItem>
-              <ToggleGroupItem value="planned">
+              <ToggleGroupItem value="all" className="flex-1">
+                {t("cities.all")}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="paid" className="flex-1">
+                {t("budget.paid")}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="planned" className="flex-1">
                 {t("budget.planned")}
               </ToggleGroupItem>
             </ToggleGroup>
             <Select
-              value={category}
-              onValueChange={(v) => setCategory(v as typeof category)}
+              value={filter.person}
+              onValueChange={(v) => setFilter({ ...filter, person: v })}
             >
               <SelectTrigger
-                className="w-full min-w-44 sm:w-fit"
+                className="w-full sm:w-fit sm:min-w-36"
+                aria-label={t("budget.person")}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("budget.allPeople")}</SelectItem>
+                {people.map((email) => (
+                  <SelectItem key={email} value={email}>
+                    {personLabel(email)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={filter.method}
+              onValueChange={(v) =>
+                setFilter({ ...filter, method: v as ExpenseFilter["method"] })
+              }
+            >
+              <SelectTrigger
+                className="w-full sm:w-fit sm:min-w-36"
+                aria-label={t("budget.payment")}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("budget.allMethods")}</SelectItem>
+                {PAYMENT_METHODS.map((m) => {
+                  const Icon = PAYMENT_ICON[m];
+                  return (
+                    <SelectItem key={m} value={m}>
+                      <Icon />
+                      {t(`paymentMethod.${m}`)}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <Select
+              value={filter.category}
+              onValueChange={(v) =>
+                setFilter({
+                  ...filter,
+                  category: v as ExpenseFilter["category"],
+                })
+              }
+            >
+              <SelectTrigger
+                className="w-full sm:w-fit sm:min-w-44"
                 aria-label={t("common.category")}
               >
                 <SelectValue />
@@ -258,6 +332,24 @@ function BudgetContent() {
                 ))}
               </SelectContent>
             </Select>
+            <Select
+              value={sort}
+              onValueChange={(v) => setSort(v as ExpenseSort)}
+            >
+              <SelectTrigger
+                className="w-full sm:ml-auto sm:w-fit sm:min-w-44"
+                aria-label={t("budget.sort")}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EXPENSE_SORTS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {t(`expenseSort.${s}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {visible.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -266,19 +358,52 @@ function BudgetContent() {
                 : t("budget.noMatches")}
             </p>
           ) : (
-            <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-              {visible.map((expense) => (
-                <ExpenseRow
-                  key={expense.id}
-                  expense={expense}
-                  onEdit={() => setEditing({ expense })}
-                  onArchive={() => archive(expense)}
-                />
-              ))}
-            </ul>
+            <>
+              {narrowed && (
+                <p className="text-xs text-muted-foreground">
+                  {t("budget.personCount", { count: visible.length })}
+                </p>
+              )}
+              <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                {visible.map((expense) => (
+                  <ExpenseRow
+                    key={expense.id}
+                    expense={expense}
+                    onEdit={() => setEditing({ expense })}
+                    onArchive={() => archive(expense)}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </CardContent>
       </Card>
+
+      {tripId && (
+        <CashSection
+          tripId={tripId}
+          cash={cash}
+          summary={cashSummary}
+          members={members}
+        />
+      )}
+
+      {/* The details step aside while an expense is edited from them, so two
+          panels never stack, and come back when it closes. */}
+      <PersonPanel
+        person={personRow}
+        open={personRow !== null && editing === null}
+        expenses={expenses}
+        members={members}
+        cash={cashSummary.people.find((p) => p.email === person) ?? null}
+        onOpenChange={(open) => !open && setPerson(null)}
+        onEdit={(expense) => setEditing({ expense })}
+        onArchive={archive}
+        onShowInList={(email) => {
+          setFilter({ ...NO_FILTER, person: email });
+          setPerson(null);
+        }}
+      />
 
       {editing && tripId && (
         <ExpenseForm

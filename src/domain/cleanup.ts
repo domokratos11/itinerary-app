@@ -11,6 +11,7 @@ export const CLEANUP_KINDS = [
   "holidays",
   "expenses",
   "flights",
+  "cash",
   "stops",
   "research",
 ] as const;
@@ -57,6 +58,7 @@ export function planCleanup(
     case "holidays":
     case "expenses":
     case "flights":
+    case "cash":
       return archivedOnly(trip[kind], kind);
     case "cities": {
       // A city stays while a live place or hotel still points at it.

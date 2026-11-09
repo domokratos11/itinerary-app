@@ -33,6 +33,7 @@ const expense = (fields: Partial<ExpenseRecord>): ExpenseRecord => ({
   cityId: "tokyo",
   originalUSD: null,
   rateJPYPerUSD: null,
+  paymentMethod: "card",
   note: "Card",
   archived: false,
   updatedAt: "2026-10-01T00:00:00.000Z",

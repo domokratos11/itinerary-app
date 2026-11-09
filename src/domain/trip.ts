@@ -2,6 +2,7 @@ import { deriveDays, type TripDay } from "./days";
 import type { Translate } from "./i18n";
 import { stayLocation, type Location } from "./plan";
 import type {
+  CashRecord,
   CityRecord,
   ExpenseRecord,
   FlightRecord,
@@ -24,6 +25,7 @@ export type TripData = {
   holidays: HolidayRecord[];
   expenses: ExpenseRecord[];
   flights: FlightRecord[];
+  cash: CashRecord[];
 };
 
 export type TripCollection = keyof TripData;
@@ -35,6 +37,7 @@ export const TRIP_COLLECTIONS: TripCollection[] = [
   "holidays",
   "expenses",
   "flights",
+  "cash",
 ];
 
 export type TripRecordOf = {
@@ -49,6 +52,7 @@ export const EMPTY_TRIP: TripData = {
   holidays: [],
   expenses: [],
   flights: [],
+  cash: [],
 };
 
 export function stayId(stay: Pick<Stay, "cityId" | "checkIn">): string {
@@ -96,6 +100,9 @@ export function activeTrip(data: TripData): TripData {
         const kb = `${b.departDate} ${b.departTime}`;
         return ka < kb ? -1 : ka > kb ? 1 : 0;
       }),
+    cash: data.cash
+      .filter((c) => !c.archived)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
   };
 }
 

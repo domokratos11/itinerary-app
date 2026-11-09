@@ -18,6 +18,7 @@ const expense = (fields: Partial<ExpenseRecord>): ExpenseRecord => ({
   cityId: null,
   originalUSD: null,
   rateJPYPerUSD: null,
+  paymentMethod: "card",
   note: null,
   archived: false,
   updatedAt: "2026-12-16T00:00:00.000Z",
@@ -80,16 +81,16 @@ describe("expensesCsv", () => {
   it("starts with a byte-order mark and a header", () => {
     expect(csv.startsWith("﻿")).toBe(true);
     expect(lines[0]).toBe(
-      "date,title,category,amountJPY,amountUSD,rate,status,paidBy,city,place,booking,note",
+      "date,title,category,amountJPY,amountUSD,rate,status,paidBy,paymentMethod,city,place,booking,note",
     );
   });
 
   it("lists live expenses by date, quoting and guarding cells", () => {
     expect(lines[1]).toBe(
-      "2026-12-16,Lunch,food,1200,,,paid,ana,Tokyo,Ueno Zoo,,'=SUM(A1)",
+      "2026-12-16,Lunch,food,1200,,,paid,ana,card,Tokyo,Ueno Zoo,,'=SUM(A1)",
     );
     expect(lines[2]).toBe(
-      '2026-12-17,"Tea, ""matcha""",food,1200,,,paid,ana,,,,',
+      '2026-12-17,"Tea, ""matcha""",food,1200,,,paid,ana,card,,,,',
     );
     expect(csv).not.toContain("Gone");
     expect(lines.at(-1)).toBe("");
@@ -97,7 +98,7 @@ describe("expensesCsv", () => {
 
   it("keeps the dollars and rate, names the booking and raises the title", () => {
     expect(lines[3]).toBe(
-      "2026-12-20,Train · Tokyo · Kyoto,food,15829,100,158.29,paid,ana,,,train · Tokyo · Kyoto,",
+      "2026-12-20,Train · Tokyo · Kyoto,food,15829,100,158.29,paid,ana,card,,,train · Tokyo · Kyoto,",
     );
   });
 });
