@@ -47,6 +47,10 @@ next-env.d.ts
 *service-account*.json
 *-firebase-adminsdk-*.json
 
+# Claude Code worktrees: full repo copies that Tailwind and ESLint would
+# otherwise scan (Tailwind skips what git ignores)
+/.claude/worktrees/
+
 # Firestore emulator logs from npm run test:rules
 firestore-debug.log
 ui-debug.log

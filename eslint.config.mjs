@@ -63,6 +63,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Claude Code worktrees: full copies of the repo with their own build
+    // output, which made lint take many minutes.
+    ".claude/**",
   ]),
 ]);
 

@@ -182,7 +182,6 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `AGENTS.md` | Notice that this Next.js version has breaking changes; read the bundled docs in `node_modules/next/dist/docs/` before coding. Written by `next dev`. |
 | `CLAUDE.md` | Standing project rules (the 15+ numbered rules, commands, layout). |
 | `README.md` | Setup for Firebase, versions, languages. |
-| `.claude/launch.json` | Dev server configuration for the preview tools. |
 
 ### 3.2 `src/app`: routes
 
