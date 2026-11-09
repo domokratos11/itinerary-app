@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Banknote,
   BedDouble,
   Eraser,
   Globe,
@@ -58,6 +59,7 @@ const ICONS: Record<CleanupKind, LucideIcon> = {
   holidays: CalendarOff,
   expenses: Wallet,
   flights: Plane,
+  cash: Banknote,
   stops: Route,
   research: Search,
 };
@@ -81,6 +83,7 @@ async function removePlan(tripId: string, plan: CleanupPlan) {
     "holidays",
     "expenses",
     "flights",
+    "cash",
     "cities",
   ];
   for (const name of order) {

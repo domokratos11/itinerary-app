@@ -5,6 +5,8 @@ import {
   type Category,
   type ExpenseCategory,
   type ExpenseRecord,
+  type ExpenseStatus,
+  type PaymentMethod,
   type Place,
   type PlanItem,
   type Reservation,
@@ -14,6 +16,7 @@ export const EMPTY_BUDGET: Budget = {
   totalJPY: null,
   byCategory: {},
   travellers: null,
+  byMember: {},
 };
 
 export function formatYen(yen: number): string {
@@ -107,17 +110,142 @@ export function totalsByCategory(
   });
 }
 
+// Who paid an expense. One saved without a payer counts as the trip's first
+// member, the person who made the trip.
+export function payerOf(
+  expense: Pick<ExpenseRecord, "paidBy">,
+  members: readonly string[],
+): string | null {
+  return expense.paidBy ?? members[0] ?? null;
+}
+
 export type PayerTotal = { paidBy: string | null; paid: number };
 
 // What each person has paid so far, the most first. It doesn't settle up.
-export function totalsByPayer(expenses: ExpenseRecord[]): PayerTotal[] {
+export function totalsByPayer(
+  expenses: ExpenseRecord[],
+  members: readonly string[] = [],
+): PayerTotal[] {
   const totals = new Map<string | null, number>();
-  for (const e of expenses)
-    if (e.status === "paid")
-      totals.set(e.paidBy, (totals.get(e.paidBy) ?? 0) + e.amountJPY);
+  for (const e of expenses) {
+    if (e.status !== "paid") continue;
+    const who = payerOf(e, members);
+    totals.set(who, (totals.get(who) ?? 0) + e.amountJPY);
+  }
   return [...totals]
     .map(([paidBy, paid]) => ({ paidBy, paid }))
     .sort((a, b) => b.paid - a.paid);
+}
+
+export type MemberTotal = {
+  email: string;
+  paid: number;
+  planned: number;
+  target: number | null;
+};
+
+// One row per member, in the members' order, against their own target. Only
+// who paid counts, whatever it was for. Someone who paid but has left the
+// trip still gets a row at the end, so no money goes missing.
+export function totalsByMember(
+  expenses: ExpenseRecord[],
+  members: readonly string[],
+  budget: Budget | null,
+): MemberTotal[] {
+  const people = [...members];
+  for (const e of expenses) {
+    const who = payerOf(e, members);
+    if (who !== null && !people.includes(who)) people.push(who);
+  }
+  return people.map((email) => {
+    const own = expenses.filter((e) => payerOf(e, members) === email);
+    return {
+      email,
+      paid: sum(own.filter((e) => e.status === "paid")),
+      planned: sum(own.filter((e) => e.status === "planned")),
+      target: budget?.byMember?.[email] ?? null,
+    };
+  });
+}
+
+export type PersonDetails = {
+  paid: number;
+  planned: number;
+  byCard: number;
+  byCash: number;
+  count: number;
+  // Paid, by category in the fixed order; categories with nothing left out.
+  categories: { category: ExpenseCategory; paid: number }[];
+};
+
+// What one person paid, for their details panel.
+export function personDetails(
+  expenses: ExpenseRecord[],
+  email: string,
+  members: readonly string[],
+): PersonDetails {
+  const own = expenses.filter((e) => payerOf(e, members) === email);
+  const paid = own.filter((e) => e.status === "paid");
+  return {
+    paid: sum(paid),
+    planned: sum(own.filter((e) => e.status === "planned")),
+    byCard: sum(paid.filter((e) => e.paymentMethod === "card")),
+    byCash: sum(paid.filter((e) => e.paymentMethod === "cash")),
+    count: own.length,
+    categories: EXPENSE_CATEGORIES.map((category) => ({
+      category,
+      paid: sum(paid.filter((e) => e.category === category)),
+    })).filter((row) => row.paid > 0),
+  };
+}
+
+export const EXPENSE_SORTS = ["newest", "oldest", "highest", "lowest"] as const;
+export type ExpenseSort = (typeof EXPENSE_SORTS)[number];
+
+export type ExpenseFilter = {
+  status: ExpenseStatus | "all";
+  category: ExpenseCategory | "all";
+  person: string | "all";
+  method: PaymentMethod | "all";
+};
+
+export const NO_FILTER: ExpenseFilter = {
+  status: "all",
+  category: "all",
+  person: "all",
+  method: "all",
+};
+
+// The expenses that match every filter, in the chosen order. Ties keep the
+// newest change first, so the order never jumps.
+export function filterExpenses(
+  expenses: ExpenseRecord[],
+  filter: ExpenseFilter,
+  sort: ExpenseSort,
+  members: readonly string[],
+): ExpenseRecord[] {
+  const byDate = (a: ExpenseRecord, b: ExpenseRecord) =>
+    a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+  const byChange = (a: ExpenseRecord, b: ExpenseRecord) =>
+    a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0;
+  const order: Record<
+    ExpenseSort,
+    (a: ExpenseRecord, b: ExpenseRecord) => number
+  > = {
+    newest: (a, b) => byDate(b, a),
+    oldest: byDate,
+    highest: (a, b) => b.amountJPY - a.amountJPY,
+    lowest: (a, b) => a.amountJPY - b.amountJPY,
+  };
+  return expenses
+    .filter(
+      (e) =>
+        (filter.status === "all" || e.status === filter.status) &&
+        (filter.category === "all" || e.category === filter.category) &&
+        (filter.method === "all" || e.paymentMethod === filter.method) &&
+        (filter.person === "all" || payerOf(e, members) === filter.person),
+    )
+    .sort((a, b) => order[sort](a, b) || byChange(a, b));
 }
 
 export type StopEstimate = { yen: number; unpriced: number };

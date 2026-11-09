@@ -61,7 +61,12 @@ describe("backup", () => {
         trip: {
           name: "Peru",
           members: ["ana@example.com"],
-          budget: { totalJPY: 1000, byCategory: {}, travellers: 2 },
+          budget: {
+            totalJPY: 1000,
+            byCategory: {},
+            travellers: 2,
+            byMember: {},
+          },
         },
         activity: [
           {

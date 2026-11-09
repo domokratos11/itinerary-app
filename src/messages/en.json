@@ -582,7 +582,9 @@
     "restoredFlight": "restored the flight {flight}",
     "sharedLink": "made a read-only link: {label}",
     "refreshedLink": "refreshed the read-only link {label}",
-    "revokedLink": "closed the read-only link {label}"
+    "revokedLink": "closed the read-only link {label}",
+    "savedCash": "saved a cash record of {yen}",
+    "archivedCash": "archived a cash record of {yen}"
   },
   "theme": {
     "light": "Light",
@@ -667,7 +669,27 @@
     "forBooking": "Reservation",
     "forStay": "Hotel",
     "enteredUsd": "{usd} at ¥{rate}",
-    "showToEdit": "Show the amounts to edit this"
+    "showToEdit": "Show the amounts to edit this",
+    "pickPayer": "Pick who paid",
+    "paidWith": "Paid with",
+    "byMember": "Against each person",
+    "memberTargets": "Target per person",
+    "memberTargetsHint": "What each person may pay, whatever it's for.",
+    "seePerson": "See what {name} paid",
+    "allPeople": "Everyone",
+    "allMethods": "Card and cash",
+    "person": "Person",
+    "payment": "Payment",
+    "sort": "Sort",
+    "plannedExtra": "+{planned} planned",
+    "personIntro": "Everything {name} paid, whatever it was for.",
+    "byCard": "By card",
+    "inCash": "In cash",
+    "personCategories": "Paid by category",
+    "personExpenses": "Their expenses",
+    "personNothing": "{name} hasn't paid anything yet.",
+    "personCount": "{count, plural, one {# expense} other {# expenses}}",
+    "seeAll": "Show their expenses in the list"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -748,7 +770,8 @@
     "done": "Deleted {count, plural, one {# item} other {# items}}",
     "flights": "Archived flights",
     "shares": "Closed share links",
-    "sharesNote": "Links that expired or were closed, with their copy of the trip."
+    "sharesNote": "Links that expired or were closed, with their copy of the trip.",
+    "cash": "Archived cash records"
   },
   "flights": {
     "title": "Flights",
@@ -896,7 +919,8 @@
     "note": "Note",
     "export": "Export CSV",
     "tipExport": "Download the expenses as a spreadsheet file, with every amount",
-    "exported": "Expenses downloaded"
+    "exported": "Expenses downloaded",
+    "paymentMethod": "Paid with"
   },
   "weather": {
     "clear": "Clear",
@@ -929,5 +953,49 @@
     "savingEarlier": "Sending earlier changes…",
     "waiting": "{count, plural, one {# change waiting for a connection.} other {# changes waiting for a connection.}}",
     "waitingEarlier": "Earlier changes are waiting for a connection."
+  },
+  "expenseSort": {
+    "newest": "Newest first",
+    "oldest": "Oldest first",
+    "highest": "Highest amount",
+    "lowest": "Lowest amount"
+  },
+  "paymentMethod": {
+    "card": "Card",
+    "cash": "Cash"
+  },
+  "cash": {
+    "title": "Cash",
+    "intro": "Withdrawals and cash handed between you. They don't count in the budget; what's bought with the cash does, logged as an expense paid in cash.",
+    "withdrawal": "Withdrawal",
+    "handover": "Handover",
+    "addWithdrawal": "Add withdrawal",
+    "addHandover": "Hand over cash",
+    "editWithdrawal": "Edit withdrawal",
+    "editHandover": "Edit handover",
+    "tipWithdrawal": "Record cash taken out of an ATM",
+    "tipHandover": "Record cash given to someone on the trip, or paid back",
+    "onHand": "On hand",
+    "onHandHint": "Withdrawn and received, less handed over and paid in cash",
+    "withdrawn": "Withdrawn",
+    "received": "Received",
+    "given": "Handed over",
+    "spentCash": "Paid in cash",
+    "usdCharged": "{usd} charged",
+    "usdMissing": "{count, plural, one {# withdrawal still needs} other {# withdrawals still need}} the dollars charged.",
+    "noUsd": "No USD yet",
+    "owes": "{from} owes {to} {yen}",
+    "allSquare": "Nobody owes anyone.",
+    "owing": "Who owes whom",
+    "none": "No withdrawals or handovers yet.",
+    "movements": "Withdrawals and handovers",
+    "who": "Who took it out",
+    "from": "From",
+    "to": "To",
+    "handedTo": "{from} to {to}",
+    "amountUSD": "Charged in USD (optional)",
+    "amountUSDHint": "From your bank, typed as it shows there. It's never worked out from a rate; add it later if you don't have it yet.",
+    "samePerson": "Pick two different people.",
+    "settleHint": "Paying back is a handover the other way."
   }
 }

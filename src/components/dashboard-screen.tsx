@@ -29,6 +29,7 @@ import {
   useBudgetFigures,
 } from "@/components/budget-figures";
 import { personLabel } from "@/components/expense-form";
+import { useActiveTrip } from "@/lib/auth-store";
 import { TodayCard } from "@/components/today-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,6 +99,7 @@ function DashboardContent() {
   const tripId = useTripId();
   const money = useYenValues();
   const trip = useTrip();
+  const members = useActiveTrip()?.members;
   const days = useTripDays();
   const items = usePlanStore((s) => s.items);
   const placesById = usePlacesById();
@@ -156,7 +158,7 @@ function DashboardContent() {
   const next = nextReservation(trip.reservations, today);
   const flight = nextFlight(trip.flights, today);
   const legs = routeLegs(days);
-  const payers = totalsByPayer(expenses);
+  const payers = totalsByPayer(expenses, members);
   const spending = spendByDay(expenses, days);
   const percent = spentPercent(summary);
 

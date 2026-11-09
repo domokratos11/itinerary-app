@@ -38,6 +38,13 @@ export const EXPENSE_CATEGORIES = [
 
 export const EXPENSE_STATUSES = ["planned", "paid"] as const;
 
+// How an expense was paid. Records saved before this existed read as card.
+export const PAYMENT_METHODS = ["card", "cash"] as const;
+
+// Cash that moves without being spent: taken from an ATM, or handed from
+// one member to another. Never counted in the budget.
+export const CASH_KINDS = ["withdrawal", "handover"] as const;
+
 // ISO calendar date, e.g. 2026-12-17.
 const isoDate = z.iso.date();
 
@@ -232,6 +239,22 @@ export const ExpenseRecordSchema = z.object({
   // every total counts; these only say where it came from.
   originalUSD: z.number().nonnegative().nullable().default(null),
   rateJPYPerUSD: z.number().positive().nullable().default(null),
+  paymentMethod: z.enum(PAYMENT_METHODS).default("card"),
+  note: z.string().max(500).nullable(),
+  ...recordFields,
+});
+
+// Cash taken out or handed over: who (`by`), to whom for a handover, the yen,
+// and for a withdrawal the dollars the bank charged, typed by hand later and
+// never worked out from a rate. It never reaches the budget's totals.
+export const CashRecordSchema = z.object({
+  id: recordId,
+  kind: z.enum(CASH_KINDS),
+  date: isoDate,
+  amountJPY: z.number().int().nonnegative(),
+  amountUSD: z.number().nonnegative().nullable(),
+  by: z.string().min(1).max(254),
+  to: z.string().min(1).max(254).nullable(),
   note: z.string().max(500).nullable(),
   ...recordFields,
 });
@@ -245,6 +268,10 @@ export const BudgetSchema = z.object({
     z.number().int().nonnegative(),
   ),
   travellers: z.number().int().positive().max(20).nullable(),
+  // A spending target per member, by email: what that person may pay.
+  byMember: z
+    .record(z.string().max(254), z.number().int().nonnegative())
+    .default({}),
 });
 
 // A whole trip's structure in one object; the sample trip the tests use.
@@ -256,6 +283,7 @@ export const TripDataSchema = z.object({
   holidays: z.array(HolidayRecordSchema),
   expenses: z.array(ExpenseRecordSchema).default([]),
   flights: z.array(FlightRecordSchema).default([]),
+  cash: z.array(CashRecordSchema).default([]),
 });
 
 export const PROPOSAL_STATUSES = [
@@ -383,6 +411,9 @@ export type PlaceRecord = z.infer<typeof PlaceRecordSchema>;
 export type ExpenseRecord = z.infer<typeof ExpenseRecordSchema>;
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 export type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+export type CashRecord = z.infer<typeof CashRecordSchema>;
+export type CashKind = (typeof CASH_KINDS)[number];
 export type Budget = z.infer<typeof BudgetSchema>;
 export type Proposal = z.infer<typeof ProposalSchema>;
 export type DayResearch = z.infer<typeof DayResearchSchema>;

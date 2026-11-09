@@ -582,7 +582,9 @@
     "restoredFlight": "restauró el vuelo {flight}",
     "sharedLink": "creó un enlace de solo lectura: {label}",
     "refreshedLink": "actualizó el enlace de solo lectura {label}",
-    "revokedLink": "cerró el enlace de solo lectura {label}"
+    "revokedLink": "cerró el enlace de solo lectura {label}",
+    "savedCash": "guardó un movimiento de efectivo de {yen}",
+    "archivedCash": "archivó un movimiento de efectivo de {yen}"
   },
   "theme": {
     "light": "Claro",
@@ -667,7 +669,27 @@
     "forBooking": "Reservación",
     "forStay": "Hotel",
     "enteredUsd": "{usd} a ¥{rate}",
-    "showToEdit": "Muestra los montos para editar esto"
+    "showToEdit": "Muestra los montos para editar esto",
+    "pickPayer": "Elige quién pagó",
+    "paidWith": "Pagado con",
+    "byMember": "Frente a cada persona",
+    "memberTargets": "Objetivo por persona",
+    "memberTargetsHint": "Lo que puede pagar cada persona, sea para lo que sea.",
+    "seePerson": "Ver lo que pagó {name}",
+    "allPeople": "Todos",
+    "allMethods": "Tarjeta y efectivo",
+    "person": "Persona",
+    "payment": "Pago",
+    "sort": "Ordenar",
+    "plannedExtra": "+{planned} previsto",
+    "personIntro": "Todo lo que pagó {name}, sea para lo que sea.",
+    "byCard": "Con tarjeta",
+    "inCash": "En efectivo",
+    "personCategories": "Pagado por categoría",
+    "personExpenses": "Sus gastos",
+    "personNothing": "{name} aún no ha pagado nada.",
+    "personCount": "{count, plural, one {# gasto} other {# gastos}}",
+    "seeAll": "Mostrar sus gastos en la lista"
   },
   "dashboard": {
     "title": "Panel",
@@ -748,7 +770,8 @@
     "done": "{count, plural, one {Se eliminó # elemento} other {Se eliminaron # elementos}}",
     "flights": "Vuelos archivados",
     "shares": "Enlaces compartidos cerrados",
-    "sharesNote": "Enlaces que caducaron o se cerraron, con su copia del viaje."
+    "sharesNote": "Enlaces que caducaron o se cerraron, con su copia del viaje.",
+    "cash": "Movimientos de efectivo archivados"
   },
   "flights": {
     "title": "Vuelos",
@@ -896,7 +919,8 @@
     "note": "Nota",
     "export": "Exportar CSV",
     "tipExport": "Descarga los gastos como archivo de hoja de cálculo, con todos los montos",
-    "exported": "Gastos descargados"
+    "exported": "Gastos descargados",
+    "paymentMethod": "Pagado con"
   },
   "weather": {
     "clear": "Despejado",
@@ -929,5 +953,49 @@
     "savingEarlier": "Enviando cambios anteriores…",
     "waiting": "{count, plural, one {# cambio esperando conexión.} other {# cambios esperando conexión.}}",
     "waitingEarlier": "Hay cambios anteriores esperando conexión."
+  },
+  "expenseSort": {
+    "newest": "Más recientes primero",
+    "oldest": "Más antiguos primero",
+    "highest": "Monto más alto",
+    "lowest": "Monto más bajo"
+  },
+  "paymentMethod": {
+    "card": "Tarjeta",
+    "cash": "Efectivo"
+  },
+  "cash": {
+    "title": "Efectivo",
+    "intro": "Retiros y efectivo que se pasan entre ustedes. No cuentan en el presupuesto; lo que se compra con ese efectivo sí, registrado como un gasto pagado en efectivo.",
+    "withdrawal": "Retiro",
+    "handover": "Entrega",
+    "addWithdrawal": "Agregar retiro",
+    "addHandover": "Entregar efectivo",
+    "editWithdrawal": "Editar retiro",
+    "editHandover": "Editar entrega",
+    "tipWithdrawal": "Registra efectivo sacado de un cajero",
+    "tipHandover": "Registra efectivo dado a alguien del viaje, o una devolución",
+    "onHand": "En mano",
+    "onHandHint": "Lo retirado y recibido, menos lo entregado y lo pagado en efectivo",
+    "withdrawn": "Retirado",
+    "received": "Recibido",
+    "given": "Entregado",
+    "spentCash": "Pagado en efectivo",
+    "usdCharged": "{usd} cobrados",
+    "usdMissing": "{count, plural, one {A # retiro aún le falta} other {A # retiros aún les falta}} el monto cobrado en dólares.",
+    "noUsd": "Sin USD aún",
+    "owes": "{from} le debe {yen} a {to}",
+    "allSquare": "Nadie le debe a nadie.",
+    "owing": "Quién le debe a quién",
+    "none": "Aún no hay retiros ni entregas.",
+    "movements": "Retiros y entregas",
+    "who": "Quién lo sacó",
+    "from": "De",
+    "to": "Para",
+    "handedTo": "{from} a {to}",
+    "amountUSD": "Cobrado en USD (opcional)",
+    "amountUSDHint": "Del banco, tal como aparece ahí. Nunca se calcula con un tipo de cambio; agrégalo después si aún no lo tienes.",
+    "samePerson": "Elige dos personas distintas.",
+    "settleHint": "Devolver dinero es una entrega en sentido contrario."
   }
 }

@@ -47,7 +47,12 @@ describe("collectBackup", () => {
       after: null,
     };
     await activityRepository.add("trip-1", entry);
-    const budget = { totalJPY: 1000, byCategory: {}, travellers: 2 };
+    const budget = {
+      totalJPY: 1000,
+      byCategory: {},
+      travellers: 2,
+      byMember: {},
+    };
     const backup = await collectBackup(
       "trip-1",
       { id: "trip-1", name: "Peru", members: ["ana@example.com"], budget },
@@ -99,6 +104,7 @@ describe("importBackup", () => {
       places: 1,
       holidays: fixtureTrip.holidays.length,
       flights: 0,
+      cash: 0,
       expenses: 0,
     });
 

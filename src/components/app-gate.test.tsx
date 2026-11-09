@@ -26,6 +26,7 @@ const allLoaded = {
   holidays: true,
   expenses: true,
   flights: true,
+  cash: true,
 };
 
 function renderGate() {

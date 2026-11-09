@@ -263,6 +263,21 @@ describe("expenses", () => {
     );
   });
 
+  it("may say it was paid by card or in cash", async () => {
+    const path = "trips/japan/expenses/e4";
+    for (const paymentMethod of ["card", "cash"])
+      await assertSucceeds(
+        setDoc(doc(as(ANA), path), { ...expense, id: "e4", paymentMethod }),
+      );
+    await assertFails(
+      setDoc(doc(as(ANA), path), {
+        ...expense,
+        id: "e4",
+        paymentMethod: "crypto",
+      }),
+    );
+  });
+
   it("may name the city it was spent in", async () => {
     const path = "trips/japan/expenses/e2";
     await assertSucceeds(
@@ -271,6 +286,46 @@ describe("expenses", () => {
     await assertFails(
       setDoc(doc(as(ANA), path), { ...expense, id: "e2", cityId: 42 }),
     );
+  });
+});
+
+describe("cash", () => {
+  const withdrawal = {
+    id: "c1",
+    kind: "withdrawal",
+    date: "2026-12-16",
+    amountJPY: 20000,
+    amountUSD: null,
+    by: ANA,
+    to: null,
+    note: null,
+    archived: false,
+    updatedAt: NOW,
+  };
+  const path = "trips/japan/cash/c1";
+
+  it("records withdrawals, with or without the dollars", async () => {
+    await assertSucceeds(setDoc(doc(as(ANA), path), withdrawal));
+    await assertSucceeds(
+      setDoc(doc(as(ANA), path), { ...withdrawal, amountUSD: 128.4 }),
+    );
+    await assertFails(setDoc(doc(as(EVE), path), withdrawal));
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...withdrawal, amountUSD: "128" }),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...withdrawal, amountJPY: 1.5 }),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...withdrawal, kind: "loan" }),
+    );
+  });
+
+  it("hands cash only to someone else", async () => {
+    const handover = { ...withdrawal, kind: "handover", to: BEN };
+    await assertSucceeds(setDoc(doc(as(ANA), path), handover));
+    await assertFails(setDoc(doc(as(ANA), path), { ...handover, to: null }));
+    await assertFails(setDoc(doc(as(ANA), path), { ...handover, to: ANA }));
   });
 });
 
@@ -322,6 +377,22 @@ describe("the trip's budget", () => {
       }),
     );
   });
+
+  it("may hold a target per member", async () => {
+    const trip = "trips/peru";
+    await assertSucceeds(
+      updateDoc(doc(as(BEN), trip), {
+        budget: { ...budget, byMember: { [BEN]: 80000 } },
+        updatedAt: NOW,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(as(BEN), trip), {
+        budget: { ...budget, byMember: "lots" },
+        updatedAt: NOW,
+      }),
+    );
+  });
 });
 
 describe("clean up", () => {
@@ -338,6 +409,7 @@ describe("clean up", () => {
     "holidays",
     "expenses",
     "flights",
+    "cash",
   ])("deletes only archived %s, only for members", async (name) => {
     const live = `trips/japan/${name}/live`;
     const retired = `trips/japan/${name}/retired`;

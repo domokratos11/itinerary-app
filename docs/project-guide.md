@@ -251,10 +251,12 @@ Screens (one per page):
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, Days filter (per-day pins with a legend), add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
-| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | `BudgetScreen` and `BudgetContent`: expenses, totals by category and payer, charts, gauge. `ExportExpensesButton` (in `budget-parts.tsx`, header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`), the currency button (`CurrencyButton`) and `MoneyScope` (hidden, currency and rate). `Yen` and `useYenValues` show dollars when USD is chosen. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
+| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | `BudgetScreen` and `BudgetContent`: expenses (with filters and sort), the "Against each person" card, the Cash card, totals by category, charts, gauge. The expense form asks for the payment method (card or cash) and the payer, which is always a member. `ExportExpensesButton` (in `budget-parts.tsx`, header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`), the currency button (`CurrencyButton`) and `MoneyScope` (hidden, currency and rate). `Yen` and `useYenValues` show dollars when USD is chosen. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
 | `budget-figures.tsx` | `/budget/` and `/` | `useBudgetFigures`, `categorySeries`, `spentPercent`, `GaugeCenter`, `Figure` and `SummaryFigures`. The Dashboard imports these from here, not from the Budget screen. |
-| `budget-parts.tsx` | `/budget/` | `TargetRow`, `ExpenseRow`, `BudgetForm` and `ExportExpensesButton`. |
-| `quick-expense.tsx` | `/` (Today card) and `/day/` | `QuickExpenseButton({date?})`: a large "+ ¥" button (aria "Log a cost"), shown during the trip on today's date and in the day page's button row. Opens an `EditPanel` with a big numeric amount field (`AmountInput`, with the ¥/$ toggle), a 4-column grid of category tiles (the last one used is preselected), an optional "What" line and "More details", which opens the full `ExpenseForm` with the same values. Save writes through `saveRecord`; the toast offers Undo. Hidden on read-only links. |
+| `budget-parts.tsx` | `/budget/` | `TargetRow`, `MemberTargetRow` (one row per member: paid against their target, planned below), `ExpenseRow` (shows the payer and card or cash), `BudgetForm` (total, categories, travellers, per-person targets) and `ExportExpensesButton`. |
+| `budget-person.tsx` | `/budget/` | `PersonPanel`: one member's details. A side Sheet from 768px, a bottom Drawer on phones. Shows paid, planned, paid by card, paid in cash, their cash on hand, paid by category and their expenses (editable), with a button to filter the list to that person. |
+| `cash-section.tsx` | `/budget/` | `CashSection`: the Cash card. Lists withdrawals and handovers, with add, edit and archive. Shows each member's cash on hand, the total withdrawn with dollars charged (and how many withdrawals still lack dollars), and who owes whom. |
+| `quick-expense.tsx` | `/` (Today card) and `/day/` | `QuickExpenseButton({date?})`: a large "+ ¥" button (aria "Log a cost"), shown during the trip on today's date and in the day page's button row. Opens an `EditPanel` with a big numeric amount field (`AmountInput`, with the ¥/$ toggle), a card or cash choice (the last one used is preselected), a 4-column grid of category tiles (the last one used is preselected), an optional "What" line and "More details", which opens the full `ExpenseForm` with the same values. Save writes through `saveRecord`; the toast offers Undo. Hidden on read-only links. |
 | `amount-input.tsx` | Today card and day page (quick cost), expense form (`/budget/`), reservation form (`/settings/`) | `AmountInput`: an amount box with a ¥/$ toggle. In dollars it shows an editable rate (it starts at today's rate from `useUsdRate`) and the yen result. |
 | `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Share, Backup, Clean up. |
 | `settings-share.tsx` | Settings tab | Read-only share links: create, copy, refresh, change expiry, close (§12.8). |
@@ -295,15 +297,16 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 
 | File | Role |
 |---|---|
-| `schemas.ts` | The Zod schemas for every Firestore record and the enums (categories, priorities, statuses, expense categories, reservation types). |
-| `trip.ts` | `TripData` type, `TRIP_COLLECTIONS`, `EMPTY_TRIP`, `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
+| `schemas.ts` | The Zod schemas for every Firestore record and the enums (categories, priorities, statuses, expense categories, reservation types, payment methods, cash kinds). `CashRecordSchema` is the cash record; `ExpenseRecordSchema` has `paymentMethod` (default `card`); `BudgetSchema` has `byMember`. |
+| `cash.ts` | `summarizeCash(cash, expenses, members)`: each member's cash on hand (withdrawn + received − handed over − paid in cash), the total withdrawn with dollars charged, and who owes whom (handovers net out per pair). Pure; never part of the budget totals. |
+| `trip.ts` | `TripData` type, `TRIP_COLLECTIONS` (the eight trip collections, `cash` last), `EMPTY_TRIP`, `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
 | `trip-repository.ts` | `TripRepository` interface and `TripAccess` / `TripSummary` types. |
 | `plan-repository.ts` | `PlanRepository` interface; `markRemoved`. |
 | `proposal-repository.ts` | `ProposalRepository` interface. |
 | `user-repository.ts` | `UserRepository` interface and the user profile schema (language, last trip). |
 | `activity.ts` | Activity schema, kinds, `ActivityRepository`, and `undoFor`. |
 | `cleanup.ts` | Plans the Clean up step (what is retired and can go) and the `CleanupRepository` interface. |
-| `backup.ts` | Backup file schema and builder (includes day research). |
+| `backup.ts` | Backup file schema and builder (includes day research and cash records). |
 | `day-research.ts` | `DayResearchRepository` interface; `requestDay`, `isOpenDayResearch`, `dayPlaces`, `dayProposals`, `dayBrief`, `DayResultSchema`. Day research: requests and analyses per day, and the day's part of the research file. |
 | `plan.ts` | Plan logic: items for a day, next stop, keys for insert, stop warnings, holiday warnings, costs, hotels for a day. |
 | `days.ts` | `deriveDays`: the trip's days, from the stays (a day belongs to every stay whose range includes it). `tripPhase` (before, during, after). |
@@ -313,11 +316,11 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `live-hours.ts` | Parses Google's opening hours text (English) into periods; "open now". |
 | `map-pins.ts` | Map pins, colours and straight lines for the trip map. `dayFilterPins(dates, items, places)` returns `{placeIds, pins, legend}` for the City page's day filter, colouring pins per day (`DAY_COLORS`, in date order). |
 | `maps-service.ts` | `MapsService` interface and map types. `MapView` has `fit()` (frame all current pins again) and `focus(id)` (pan to that pin, zoom 16, bring it to the front and scale it up until the next update). |
-| `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting (`formatYen`, `formatUsd`, `formatUsdAt`, `usdToYen`, `parseUsd`, `parseRate`), and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. |
+| `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting (`formatYen`, `formatUsd`, `formatUsdAt`, `usdToYen`, `parseUsd`, `parseRate`), and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. `payerOf` gives an expense's payer: its `paidBy`, or the trip's first member when there is none. `totalsByMember` gives each member's paid and planned against their `byMember` target. `personDetails` gives one member's figures for `PersonPanel`. `filterExpenses` applies the status, person, payment and category filters and the sort. |
 | `amount.ts` | `AmountEntry` (currency `JPY` or `USD`, amount text, rate text), `readAmount` (turns an entry into `amountJPY`, `originalUSD` and `rateJPYPerUSD`) and `entryFor` (reopens a saved amount). Totals count the whole-yen `amountJPY`. |
 | `booking-cost.ts` | `bookingLabel`, `linkedExpense` (the first live expense linked to a reservation) and `bookingExpense`. Used for a reservation's cost (§12.6). |
 | `text.ts` | `capitalizeFirst`: raises the first letter of older expense titles when they are shown. |
-| `expenses-csv.ts` | `expensesCsv(expenses, {cities, places, person}, tr)`: the expenses CSV for export. Columns date, what, category, amount (JPY), status, paid by, city, place, note, plus amount entered (USD), rate and booking, with translated headers and labels; archived expenses left out; sorted by date then title. UTF-8 BOM, CRLF line ends; cells with commas, quotes or line breaks quoted; text starting with `= + - @` gets a leading apostrophe. |
+| `expenses-csv.ts` | `expensesCsv(expenses, {cities, places, person}, tr)`: the expenses CSV for export. Columns date, what, category, amount (JPY), status, paid by, paid with (card or cash), city, place, note, plus amount entered (USD), rate and booking, with translated headers and labels; archived expenses left out; sorted by date then title. UTF-8 BOM, CRLF line ends; cells with commas, quotes or line breaks quoted; text starting with `= + - @` gets a leading apostrophe. |
 | `quick-expense.ts` | `QUICK_CATEGORIES` (food, transport, attractions, souvenirs, temples, clothes, other; flights and bookings are logged from their own screens), `parseYen(text)` (digits with commas, spaces or ¥; else null), and `quickExpense({...})`, which builds the record: title = typed text or the category's name; status `paid` when the date is today or earlier (Tokyo), else `planned`; `paidBy` = the signed-in member; `cityId` = the city of that night's hotel; `stayId`, `placeId`, `reservationId` null. |
 | `flights.ts` | Flight logic: flights on a day, flights outside the days, next flight, route, cost label, cost in yen, and the form conversion. |
 | `share.ts`, `share-repository.ts` | `share.ts`: `newShareId` and `parseShareId` (128-bit base64url IDs), `MAX_SHARE_DAYS` (30), `toSharedTrip` (builds the copy, §12.8). `share-repository.ts`: the `ShareRepository` interface. |
@@ -366,7 +369,7 @@ State and sync:
 | `auth-store.ts` | Zustand: sign-in status, user, trips, access, canCreateTrips, trip ID. `useActiveTrip()`. |
 | `use-auth-sync.ts` | Watches sign-in, loads the person's trips and profile, picks a trip, checks membership, remembers the trip. |
 | `trip-store.ts` | Zustand: trip collections, loaded flags, error. Hooks `useTrip`, `useTripDays`, `usePlacesById`, `useCitiesById`. |
-| `use-trip-sync.ts` | Subscribes to the seven trip collections when access is `member`. |
+| `use-trip-sync.ts` | Subscribes to the eight trip collections (`TRIP_COLLECTIONS`, including `cash`) when access is `member`. |
 | `plan-store.ts` | Zustand: plan items, ready flag, error. |
 | `use-plan-sync.ts` | Subscribes to `items` for the trip. |
 | `use-day-research.ts` | Hook `useDayResearch(tripId)`: live day research. Listens only once access is `member`. |
@@ -382,6 +385,7 @@ State and sync:
 | `device-name.ts` | The name this device signs its changes with (kept in localStorage). |
 | `hide-amounts.ts` | Zustand store `useHideAmounts` and `setHideAmounts`: whether amounts are hidden on Budget and Dashboard. Saved in localStorage under `hide-amounts`, kept through a version reset. |
 | `display-currency.ts` | Zustand store for the display currency, `"JPY"` or `"USD"`. Saved in localStorage under `display-currency`, per device. Display only (§12.5). Kept through a version reset. |
+| `payment-method.ts` | `lastPaymentMethod()` and `rememberPaymentMethod(method)`: the last card or cash choice, saved in localStorage under `payment-method` (`PAYMENT_METHOD_KEY`), per device. Every expense form starts from it. Kept through a version reset. |
 | `lang-boot.ts` | `LOCALE_STORAGE_KEY` (`"locale"`, the localStorage key for the chosen language, also used by `i18n.ts`) and `LANG_BOOT_SCRIPT`, the inline script the root layout puts in `<head>`. It sets `<html lang>` before the first paint: the stored language if valid, else Spanish for an `es*` browser, else English (the same rule as `initLocale`). Tests in `lang-boot.test.ts`. |
 | `usd-rate.ts` | Zustand store `useUsdRate`: today's USD to JPY rate, fetched once per session from Frankfurter (§14.4), falling back to the fixed `YEN_PER_USD` offline. Used by the expense, quick cost and reservation forms and by the dollar display. |
 | `backup-actions.ts` | Export and import of the trip file. |
@@ -419,7 +423,7 @@ Version and update:
 
 | File | Role |
 |---|---|
-| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category`), cache clearing, reload. |
+| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category`, `payment-method`), cache clearing, reload. |
 | `version-check.ts` | Compares the running version with `version.json` and decides whether to reset. |
 
 ### 3.6 `src/messages`, `src/test`, `scripts`
@@ -551,7 +555,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `/day/` | `DayScreen` → `DayPlan` | `SortableStop`, `StopCard` (`day-plan-stop.tsx`), `FullDay`, `HotelButtons`, `BookingsButton`, `Reservations` (`day-plan-links.tsx`), `FlightCard`, `DayResearchPanel`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
 | `/cities/` | `CitiesScreen` | — |
-| `/budget/` | `BudgetScreen` → `BudgetContent` | `SummaryFigures`, `ExpenseRow`, `TargetRow`, `BudgetForm`, `ExportExpensesButton` (`budget-parts.tsx`, `budget-figures.tsx`), `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
+| `/budget/` | `BudgetScreen` → `BudgetContent` | `SummaryFigures`, `ExpenseRow`, `TargetRow`, `MemberTargetRow`, `BudgetForm`, `ExportExpensesButton` (`budget-parts.tsx`, `budget-figures.tsx`), `PersonPanel` (`budget-person.tsx`), `CashSection` (`cash-section.tsx`), `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
 | `/settings/` | `SettingsScreen` | one panel per tab (`Stays`, `Cities`, `Places`, `Flights`, `Reservations`, `Holidays`, `Trip`, `Share`, `Backup`, `Cleanup`); `EditPanel` in each; `ProposalReview` in Places; `NotOnSharedView` in viewer mode |
 
 ### 6.3 Shared overlays
@@ -618,7 +622,7 @@ What happens on first load, in order:
 ### 8.1 Reads
 
 ```
-Firestore (trips/{id}/cities|stays|reservations|places|holidays|expenses|flights)
+Firestore (trips/{id}/cities|stays|reservations|places|holidays|expenses|flights|cash)
    └─ onSnapshot ─ FirestoreTripRepository.subscribe ─ zod parse (bad rows skipped)
         └─ useTripSync ─ tripStore.setCollection(name, rows)
              └─ hooks: useTrip() (archived hidden, sorted), useTripDays(), usePlacesById(), useCitiesById()
@@ -666,7 +670,7 @@ Nothing is deleted in normal use:
 | Thing | "Remove" means |
 |---|---|
 | Plan item | `status: "removed"` (restorable; shown in "Recently changed") |
-| Trip record (city, stay, place, reservation, holiday, expense, flight) | `archived: true` |
+| Trip record (city, stay, place, reservation, holiday, expense, flight, cash record) | `archived: true` |
 | Proposal | `status: "dismissed"` |
 | Day research | Cancel request sets `status: "archived"` (or goes back to the earlier analysis); Clean up deletes archived day research |
 | Activity entry | kept; deleted only by Clean up or by the rules' delete rule for members |
@@ -839,19 +843,24 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 `budget-screen.tsx` and `domain/budget.ts` (the figures and the rows are in `budget-figures.tsx` and `budget-parts.tsx`, §3.3):
 
-- **Expenses** (`expenses` collection): title, amount in whole yen (`amountJPY`, the figure every total counts), category, date, status (`planned` or `paid`), who paid, and optional links to a place, reservation or stay. `cityId` is the city the money was spent in; `stayId` keeps its meaning (the hotel's own bill).
+- **Expenses** (`expenses` collection): title, amount in whole yen (`amountJPY`, the figure every total counts), category, date, status (`planned` or `paid`), who paid, how it was paid (`paymentMethod`: `card` or `cash`), and optional links to a place, reservation or stay. `cityId` is the city the money was spent in; `stayId` keeps its meaning (the hotel's own bill).
+- **Payer:** every expense has a member as payer. The "Not assigned" option is gone. An older expense with no payer counts under the trip's first member (`payerOf`). The Dashboard's "Paid by each person" bars use the same rule.
+- **Payment method:** every way of logging an expense asks card or cash: the expense form, the quick cost entry, Log cost from a stop, stay or flight, and a booking's cost in Settings. The last choice is remembered on the device (`payment-method.ts`). Records saved before the field read as `card`.
+- **Filters and sort:** the expense list can be filtered by status, person, payment (card or cash) and category, and sorted by newest, oldest, highest amount or lowest amount (`filterExpenses`).
+- **Against each person:** replaces the old "Paid by each person" card. One row per member shows what they paid against their own target (`byMember` on the budget), with planned spending below. Tapping a row opens `PersonPanel`: paid, planned, by card, in cash, their cash on hand, paid by category, and their expenses (editable), plus a button to filter the list to that person.
+- **Cash** (`cash` collection, §23.21): the Cash card records withdrawals and handovers. Each member's cash on hand is withdrawn + received − handed over − paid in cash. The card shows the total withdrawn, the dollars the bank charged (typed by hand, never worked out from a rate), how many withdrawals still lack dollars, and who owes whom. Handovers net out per pair, so paying a person back is a handover the other way. Cash records never count in the budget totals.
 - **Quick cost** (`quick-expense.tsx`, on the Today card during the trip and on each day page): a big amount field (with the ¥/$ toggle, `AmountInput`) and a category tile grid (`quick-expense-category` remembers the last tile). The panel shows the day and city it will use. The city is that night's hotel. "More details" opens the full expense form with the same values. Save writes an activity entry; the toast's Undo archives the expense.
 - **Flights**: a flight's cost is not added to the budget by itself. The log cost button on its card opens the expense form filled in, with the amount in yen at the fixed `YEN_PER_USD` rate (USD costs only; yen costs are used as they are).
 - **Estimates**: each place with a cost estimate counts for its category, unless an expense already covers that place, booking or stay (`estimateStops`).
 - **Totals** by category (`totalsByCategory`) and by payer (`totalsByPayer`), and per-day spending (`spendByDay`).
-- **Budget** on the trip document: total (yen), by category, and number of travellers (the per-adult estimate is multiplied by travellers; `null` = number of members).
+- **Budget** on the trip document: total (yen), by category, number of travellers (the per-adult estimate is multiplied by travellers; `null` = number of members), and `byMember`, a spending target per member email (what that person may pay, whatever it was for). All are set in the Set budget form.
 - **Figures**: spent, planned, budget left, days remaining (`daysRemaining`). Totals stay in yen. Dollars are shown at today's rate from `usd-rate.ts` (the fixed `YEN_PER_USD` when offline).
 - **Charts**: donut by category, bars by day, gauge of budget used.
 - **Hide amounts**: the eye button (`HideAmountsButton`) hides every amount on the Budget and Dashboard screens. Hidden amounts read as `HIDDEN_AMOUNT` (`¥****`), including chart legends and tooltips, and the dollar hint is gone. Charts still draw from the real numbers. Setting the budget and editing an expense are disabled while hidden. The choice is saved on the device (`hide-amounts.ts`).
 - **Display currency**: the dollar button beside the eye (`CurrencyButton`) shows amounts in dollars, with a yen hint, on Budget and Dashboard. The choice is saved on the device (`display-currency.ts`). It is display only: totals, the budget and storage stay in yen, and hidden amounts still win.
 - **Export CSV**: `ExportExpensesButton` in the header, shown when the trip has expenses. Downloads `expenses-<Tokyo date>.csv` built in the browser (Blob and a temporary download link; nothing is sent anywhere) via `expensesCsv` (`domain/expenses-csv.ts`). It always holds the real amounts, even while amounts are hidden. Meant for a spreadsheet or matching card statements after the trip.
 - **Entering dollars**: `AmountInput` (expense form, quick cost, reservation form) has a ¥/$ toggle. In dollars the rate starts at today's rate and can be edited, and the yen result is shown. `readAmount` (`domain/amount.ts`) turns the entry into `amountJPY`, `originalUSD` and `rateJPYPerUSD`; both dollar fields are null for amounts typed in yen. Reopening an expense shows what was typed (`entryFor`).
-- **Booking costs**: a reservation can have a cost (yen or USD) and a Paid or Planned status (§12.6). Saving it creates or updates one expense linked by `reservationId`, the first live one. Clearing the cost archives that expense. Budget rows show a "Reservation" or "Hotel" badge for linked expenses.
+- **Booking costs**: a reservation can have a cost (yen or USD) and a Paid or Planned status (§12.6). Saving it creates or updates one expense linked by `reservationId`, the first live one, with the card or cash choice made for it. Clearing the cost archives that expense. Budget rows show a "Reservation" or "Hotel" badge for linked expenses.
 
 **Shared view:** `/budget/` shows `NotOnSharedView`. `Yen`, `CostLine` and `HideAmountsButton` render nothing anywhere in the app, so no amounts appear in place details or on the days.
 
@@ -867,10 +876,10 @@ Tabs (`settings-screen.tsx`):
 | Flights | flights: airline, flight number, departure and arrival airport, city, date and time, confirmation (optional), cost (USD or yen), note. Archive and restore. Each flight shows on the days it leaves and lands. |
 | Bookings | reservations (train, hotel, tour, ticket). New bookings can no longer be of type flight; an older flight booking can still be edited. Optional cost in yen or USD, with Paid or Planned; it is saved as one linked expense (§12.5). Reservation cards show that cost. |
 | Holidays | holidays and closures |
-| Trip | trip name, members (email list, max 20), budget |
+| Trip | trip name, members (email list, max 20), budget (total, by category, travellers, and per-member targets) |
 | Share | read-only share links: name, expiry, copy link, refresh, change expiry, close (§12.8). Members only. |
-| Backup | export the whole trip as JSON, including flights and day research; import only into a trip that has nothing saved. Older backups without flights still import. |
-| Clean up | the retired records (archived, removed, dismissed, archived day research, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
+| Backup | export the whole trip as JSON, including flights, cash records and day research; import only into a trip that has nothing saved. Older backups without flights still import. |
+| Clean up | the retired records (archived, including archived cash records, removed, dismissed, archived day research, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
 
 Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, "start fresh" which runs `resetApp`), and sign-out.
 
@@ -897,7 +906,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 **What the copy holds** (`toSharedTrip` in `src/domain/share.ts`):
 
 - Cities, stays, reservations, places, holidays, flights and plan items, in the same record shapes as the trip. Archived records and removed stops are left out.
-- Not included: expenses, the budget, member emails and day research.
+- Not included: expenses, the budget, cash records, member emails and day research. `sharedTripData` gives the viewer an empty cash list.
 - Blanked: a place's cost estimate (null); a flight's confirmation number (null), cost (null, currency JPY) and note (null); the notes on stays and reservations (null).
 - Google coordinates older than 30 days are dropped (§14).
 
@@ -1016,7 +1025,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 | 1. Identity | Firebase Auth with Google; rules require `request.auth` and `email_verified == true` | `auth.ts`, `firestore.rules` `isSignedIn()` |
 | 2. Membership | The trip's `members` array (lowercase emails) must contain the caller's email | `isMember(tripId)` |
 | 3. Trip creation | Only emails in `config/access.tripCreators` can create trips; the creator must be in the new trip's members | `isTripCreator()`, `isNewTrip()` |
-| 4. Data shape | Every write must match a whitelist of fields and types, with size limits and enums | `isPlanItem`, `isCity`, `isStay`, `isReservation`, `isHoliday`, `isFlight`, `isPlace`, `isExpense`, `isProposal`, `isActivity`, `isBudget`, `isUserProfile`, `isNewTrip`, `isTripEdit` |
+| 4. Data shape | Every write must match a whitelist of fields and types, with size limits and enums | `isPlanItem`, `isCity`, `isStay`, `isReservation`, `isHoliday`, `isFlight`, `isPlace`, `isExpense`, `isCash`, `isProposal`, `isActivity`, `isBudget`, `isUserProfile`, `isNewTrip`, `isTripEdit` |
 | 5. Document ID match | Every write checks that the document ID equals the record's `id` field | each `match` block |
 | 6. Deletes | Only retired records can be deleted (archived, removed, dismissed, applied); share links only once closed or expired; trips are never deleted; activity can be deleted by members | each `allow delete` |
 | 7. App gate | Nothing renders or listens before a member is confirmed | `AppGate`, `use-trip-sync`, `use-plan-sync`, `useAuthStore.access` |
@@ -1034,7 +1043,10 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
   - `create`: trip creators only, with one member (themselves) and a name of up to 100 characters.
   - `update`: members only, and only the fields `name`, `members` (1 to 20, must include the caller), `budget`, `updatedAt`.
   - `delete`: never.
-- **Trip subcollections** (`cities`, `stays`, `reservations`, `holidays`, `expenses`, `flights`, `places`, `proposals`, `items`, `activity`): read and write for members, with the schema check on each write. Delete only if already retired.
+- **Trip subcollections** (`cities`, `stays`, `reservations`, `holidays`, `expenses`, `flights`, `cash`, `places`, `proposals`, `items`, `activity`): read and write for members, with the schema check on each write. Delete only if already retired.
+- **`expenses`:** `paymentMethod` is optional and must be `card` or `cash` (missing reads as `card`).
+- **`budget`** (on the trip document): `byMember` is optional, a map of at most 20 entries.
+- **`cash/{id}`:** members only. `isCash` checks the field whitelist and types. A handover needs a `to` different from `by`. Delete only when `archived` is true.
 - **`shares/{shareId}`:** `get` is allowed to anyone while the link is open (`revoked == false` and `request.time < expiresAt`), and to members of its trip. `list` is for members only, with a query on `tripId`. `create` and `update` are for members only, through `isShare`: at most 30 days ahead (plus 1 hour of clock drift), `tripId` and `createdAt` unchanged, and a revoked link cannot be reopened. `delete` is for members only, once the link is revoked or expired.
 - **`shares/{shareId}/{cities|stays|reservations|places|holidays|flights|items}/{id}`** (the copy): read while the link is open, or by members. Writes are for members only and must pass `isSharedCopy`: the existing field checks, with no amount, confirmation or booking note, plan items not `removed`, and no other collection name. This is the only data readable without sign-in.
 - **`items`:** a plan item may hold only `id`, `placeId`, `date`, `order`, `status` and `updatedAt`. The old stop fields (`startTime`, `durationMin`, `note`, `legNote`) are refused.
@@ -1054,7 +1066,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 - **Tokens and keys** in Maps: `maps:check` verifies the keys.
 - **Content Security Policy:** none is set in the repo (static hosting on Pages gives no header control).
 - **App Check:** code is present but off (`appCheckSiteKey = null`). Turning it on requires a reCAPTCHA v3 key and Firebase console setup.
-- **Rules tests:** `tests/rules/firestore.rules.test.ts` (27 test cases) run against the emulator: `npm run test:rules`. Java must be installed. The test project is `demo-itinerary`, so the real database is never touched.
+- **Rules tests:** `tests/rules/firestore.rules.test.ts` (including the cash, payment method and per-member budget rules) run against the emulator: `npm run test:rules`. Java must be installed. The test project is `demo-itinerary`, so the real database is never touched.
 
 ### 15.4 What the rules do not cover
 
@@ -1138,7 +1150,7 @@ Run this by hand on both phones before the trip:
 2. The app fetches `version.json` (never cached by the service worker) on start and whenever the tab becomes visible.
 3. If the deployed version differs from `APP_VERSION`, `resetApp(deployed)` runs once per tab (`triedVersion` in sessionStorage, so a stale page cannot cause a loop):
    - signs out, with up to 5 seconds to upload pending edits (`clearSession`);
-   - clears localStorage except `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view` and `quick-expense-category`;
+   - clears localStorage except `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category` and `payment-method`;
    - clears sessionStorage and all Cache Storage entries, and unregisters service workers;
    - reloads `…/?v=<version>` (the `v` is removed after load).
 4. Storage stamped with another version is reset on start (`storageIsStale`).
@@ -1302,6 +1314,7 @@ trips/
     reservations/{id}          trains, hotels, tours, tickets, and older flight bookings
     holidays/{id}              holidays and closures
     expenses/{id}              spending
+    cash/{id}                  cash withdrawals and handovers (never in budget totals)
     flights/{id}               flights, as printed on the ticket
     places/{id}                places (catalogue)
     proposals/{id}             research proposals
@@ -1335,7 +1348,7 @@ Deletes: members only, and only once the link is revoked or expired.
 | `createdBy` | string | Email of the creator. Set at creation only. |
 | `createdAt` | ISO datetime string | Set at creation. |
 | `updatedAt` | ISO datetime string (≤30 chars) | Set on every update. |
-| `budget` | map or absent | `totalJPY` (int ≥ 0 or null), `byCategory` (map of expense category → int ≥ 0), `travellers` (int 1 to 20 or null). |
+| `budget` | map or absent | `totalJPY` (int ≥ 0 or null), `byCategory` (map of expense category → int ≥ 0), `travellers` (int 1 to 20 or null), `byMember` (optional map of member email → int ≥ 0 or null, at most 20 entries; a spending target per person). |
 
 Only `name`, `members`, `budget` and `updatedAt` may change on update.
 
@@ -1427,7 +1440,8 @@ Null means "not researched yet", not "free" or "none".
 | `category` | `flight`, `booking`, `transport`, `food`, `souvenirs`, `attractions`, `clothes`, `temples`, `other` | |
 | `date` | `YYYY-MM-DD` | |
 | `status` | `planned` or `paid` | Planned = agreed, not yet paid. |
-| `paidBy` | string ≤ 254, or null | Email or name. |
+| `paidBy` | string ≤ 254, or null | Email or name. Null (older records) counts under the trip's first member (`payerOf`). |
+| `paymentMethod` | `card` or `cash` | Optional in the rules; the schema default is `card`, so records saved before the field read as card. |
 | `placeId`, `reservationId`, `stayId` | string ≤ 64, or null | Links to what it pays for; those are not estimated again. |
 | `cityId` | string ≤ 64, or null | Default null. The city the money was spent in. `stayId` keeps its meaning (the hotel's own bill). Allowed by `isExpense` as `optionalString(d.get('cityId', null), 64)`. |
 | `note` | string ≤ 500, or null | |
@@ -1500,6 +1514,7 @@ trips/{tripId}
  ├─ holidays/{id} ── date
  ├─ dayResearch/{date} ── date (one per day)
  ├─ expenses/{id} ── placeId | reservationId | stayId (optional)
+ ├─ cash/{id} ── date (withdrawals and handovers; no link to expenses)
  ├─ flights/{id} ── departDate, arriveDate (no links)
  ├─ activity/{id} ── targetId (item, place, stay …)
  └─ queue/{id} (legacy, no links enforced)
@@ -1516,7 +1531,7 @@ Cross-collection links are **not enforced** by the rules or by the database. The
 | Signed-in person | `trips` where `members array-contains email` | Once per session, and on change | Single-field query. Works without a composite index. |
 | Signed-in person | `config/access` get | Once | Decides the "New trip" button. |
 | Member | `trips/{id}` get (live) | While trip is open | Membership check; live so removal is noticed. |
-| Member | seven collection listeners, full collections | While trip is open | No pagination; the whole trip is loaded. |
+| Member | eight collection listeners (`TRIP_COLLECTIONS`, including `cash`), full collections | While trip is open | No pagination; the whole trip is loaded. |
 | Member | `items` listener | While trip is open | Plan. |
 | Member | `proposals` listener | While trip is open | Research notice and review. |
 | Member | `dayResearch` listener (`useDayResearch`) | While trip is open | Day research panel and calendar icons. |
@@ -1558,7 +1573,7 @@ These come from reading the code, not from a live database.
 6. **Activity text language.** `summary` is written in the writer's language at the time, so one log can mix English and Spanish.
 7. **Activity deletion by members.** Only Clean up is meant to delete activity; the rules let any member delete an entry directly.
 8. **`items` placeId is not checked** against the places collection, so a stop can point to a missing place.
-9. **Trip-wide budget** sits on the trip document, so any member can change it; there is no per-person budget.
+9. **Trip-wide budget** sits on the trip document, so any member can change it. Per-member targets (`byMember`) are there too, and any member can change them.
 10. **Member list lock-out guard** only checks that the saver is in the list; any member can add or remove others.
 11. **Unbounded growth:** activity and expenses have no retention limit; Clean up is manual.
 12. **Schema drift risk:** Zod schemas and rules list the same fields by hand. A new field must be added in both, in `firestore.rules` and in `schemas.ts`, or writes fail or data is skipped on read.
@@ -1587,6 +1602,24 @@ One document per trip day; the ID is the ISO date. Schema `DayResearchSchema`, r
 | `requestedAt`, `updatedAt` | ISO strings | |
 
 Rules: members read, create and update, with `id` equal to the date. Delete only when `status` is `archived`. Not copied to share links.
+
+### 23.21 Cash (`trips/{tripId}/cash/{id}`)
+
+Records cash that moves without being spent: a withdrawal from a bank, or a handover of cash from one member to another. Schema `CashRecordSchema`, rules `isCash`. Cash never counts in the budget totals.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Equals the document ID. |
+| `kind` | `withdrawal` or `handover` | |
+| `date` | `YYYY-MM-DD` | |
+| `amountJPY` | int ≥ 0 | Whole yen. |
+| `amountUSD` | number ≥ 0, or null | Only for withdrawals: the dollars the bank charged, typed by hand. Never worked out from a rate. |
+| `by` | email | Who withdrew the cash, or who handed it over. |
+| `to` | email, or null | Who received the cash in a handover. Null for a withdrawal. Must differ from `by`. |
+| `note` | string ≤ 500, or null | |
+| `archived`, `updatedAt` | bool, ISO string | Delete only when `archived` is true (§8.3). |
+
+Cash is included in backups, and Clean up deletes archived cash records. It is never in read-only share links (§12.8).
 
 ---
 

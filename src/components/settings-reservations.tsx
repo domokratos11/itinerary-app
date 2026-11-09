@@ -6,7 +6,11 @@ import { toast } from "sonner";
 
 import { AmountInput } from "@/components/amount-input";
 import { EditPanel, Field } from "@/components/edit-panel";
-import { LogCostButton, StatusToggle } from "@/components/expense-form";
+import {
+  LogCostButton,
+  PaymentToggle,
+  StatusToggle,
+} from "@/components/expense-form";
 import { Yen } from "@/components/yen";
 import {
   entryFor,
@@ -20,7 +24,11 @@ import {
   linkedExpense,
 } from "@/domain/booking-cost";
 import { categoryForReservation } from "@/domain/budget";
-import type { ExpenseRecord, ExpenseStatus } from "@/domain/schemas";
+import type {
+  ExpenseRecord,
+  ExpenseStatus,
+  PaymentMethod,
+} from "@/domain/schemas";
 import { nightStay } from "@/domain/trip";
 import { useAuthStore } from "@/lib/auth-store";
 import { todayInTokyo } from "@/lib/tokyo-date";
@@ -42,6 +50,7 @@ import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip, useTripStore } from "@/lib/trip-store";
+import { lastPaymentMethod, rememberPaymentMethod } from "@/lib/payment-method";
 
 type Editing = { record: ReservationRecord | null } | null;
 type ReservationType = ReservationRecord["type"];
@@ -75,6 +84,7 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
         existing,
         amount: cost.amount,
         status: cost.status,
+        paymentMethod: cost.method,
         paidBy: me,
         cityId: nightStay(record.date, trip.stays)?.cityId ?? null,
         id: crypto.randomUUID(),
@@ -210,7 +220,11 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
   );
 }
 
-type BookingCost = { amount: AmountResult | null; status: ExpenseStatus };
+type BookingCost = {
+  amount: AmountResult | null;
+  status: ExpenseStatus;
+  method: PaymentMethod;
+};
 
 // The booking's cost on its card, or that it has none yet.
 function BookingCostLine({ cost }: { cost: ExpenseRecord | null }) {
@@ -259,6 +273,9 @@ function ReservationForm({
   const [status, setStatus] = useState<ExpenseStatus>(
     cost?.status ?? (date && date <= todayInTokyo() ? "paid" : "planned"),
   );
+  const [method, setMethod] = useState<PaymentMethod>(
+    () => cost?.paymentMethod ?? lastPaymentMethod(),
+  );
   const noCost = amount.amount.trim() === "";
   const money = noCost ? null : readAmount(amount);
   const valid =
@@ -286,7 +303,10 @@ function ReservationForm({
       onOpenChange={(open) => !open && onCancel()}
       title={reservation ? t("bookings.edit") : t("bookings.add")}
       canSubmit={valid}
-      onSubmit={() => onSave(build(), { amount: money, status })}
+      onSubmit={() => {
+        if (!cost && money) rememberPaymentMethod(method);
+        onSave(build(), { amount: money, status, method });
+      }}
     >
       <Field label={t("common.type")} htmlFor="res-type">
         <Select
@@ -361,6 +381,15 @@ function ReservationForm({
           />
         </Field>
       </div>
+      {!noCost && (
+        <Field label={t("budget.paidWith")} htmlFor="res-cost-method">
+          <PaymentToggle
+            id="res-cost-method"
+            value={method}
+            onChange={setMethod}
+          />
+        </Field>
+      )}
       <Field
         label={t("common.noteOptional")}
         htmlFor="res-note"

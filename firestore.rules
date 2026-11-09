@@ -191,7 +191,7 @@ service cloud.firestore {
     }
 
     function isExpense(d) {
-      return d.keys().hasOnly(['id', 'title', 'amountJPY', 'category', 'date', 'status', 'paidBy', 'placeId', 'reservationId', 'stayId', 'cityId', 'originalUSD', 'rateJPYPerUSD', 'note', 'archived', 'updatedAt'])
+      return d.keys().hasOnly(['id', 'title', 'amountJPY', 'category', 'date', 'status', 'paidBy', 'placeId', 'reservationId', 'stayId', 'cityId', 'originalUSD', 'rateJPYPerUSD', 'paymentMethod', 'note', 'archived', 'updatedAt'])
         && d.keys().hasAll(['id', 'title', 'amountJPY', 'category', 'date', 'status', 'paidBy', 'note', 'archived', 'updatedAt'])
         && shortString(d.id, 64) && d.id.size() > 0
         && shortString(d.title, 200) && d.title.size() > 0
@@ -208,18 +208,37 @@ service cloud.firestore {
           || (d.originalUSD is number && d.originalUSD >= 0))
         && (d.get('rateJPYPerUSD', null) == null
           || (d.rateJPYPerUSD is number && d.rateJPYPerUSD > 0))
+        && d.get('paymentMethod', 'card') in ['card', 'cash']
+        && optionalString(d.note, 500)
+        && isRecord(d);
+    }
+
+    // Cash taken from an ATM or handed to another member. Kept apart from
+    // expenses, so it never counts as spending.
+    function isCash(d) {
+      return d.keys().hasOnly(['id', 'kind', 'date', 'amountJPY', 'amountUSD', 'by', 'to', 'note', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'kind', 'date', 'amountJPY', 'amountUSD', 'by', 'to', 'note', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && d.kind in ['withdrawal', 'handover']
+        && d.date is string && d.date.size() == 10
+        && d.amountJPY is int && d.amountJPY >= 0
+        && (d.amountUSD == null || (d.amountUSD is number && d.amountUSD >= 0))
+        && shortString(d.by, 254) && d.by.size() > 0
+        && optionalString(d.to, 254)
+        && (d.kind == 'withdrawal' || (d.to != null && d.to != d.by))
         && optionalString(d.note, 500)
         && isRecord(d);
     }
 
     function isBudget(v) {
       return v == null || (v is map
-        && v.keys().hasOnly(['totalJPY', 'byCategory', 'travellers'])
+        && v.keys().hasOnly(['totalJPY', 'byCategory', 'travellers', 'byMember'])
         && v.keys().hasAll(['totalJPY', 'byCategory', 'travellers'])
         && (v.totalJPY == null || (v.totalJPY is int && v.totalJPY >= 0))
         && v.byCategory is map
         && v.byCategory.keys().hasOnly(['flight', 'booking', 'transport', 'food', 'souvenirs', 'attractions', 'clothes', 'temples', 'other'])
-        && (v.travellers == null || (v.travellers is int && v.travellers > 0 && v.travellers <= 20)));
+        && (v.travellers == null || (v.travellers is int && v.travellers > 0 && v.travellers <= 20))
+        && v.get('byMember', {}) is map && v.get('byMember', {}).size() <= 20);
     }
 
     function isSignedIn() {
@@ -385,6 +404,13 @@ service cloud.firestore {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isFlight(request.resource.data) && request.resource.data.id == id;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
+      }
+
+      match /cash/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isCash(request.resource.data) && request.resource.data.id == id;
         allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 

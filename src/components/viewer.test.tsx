@@ -107,6 +107,7 @@ function asViewer() {
           cityId: null,
           originalUSD: null,
           rateJPYPerUSD: null,
+          paymentMethod: "card",
           note: null,
           archived: false,
           updatedAt: NOW.toISOString(),
@@ -121,6 +122,7 @@ function asViewer() {
       holidays: true,
       expenses: true,
       flights: true,
+      cash: true,
     },
     error: null,
   });

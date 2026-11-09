@@ -4,6 +4,7 @@ import { ActivitySchema, type Activity } from "./activity";
 import type { Translate } from "./i18n";
 import { withoutGoogleCoordinates } from "./location";
 import {
+  CashRecordSchema,
   CityRecordSchema,
   ExpenseRecordSchema,
   FlightRecordSchema,
@@ -51,6 +52,7 @@ export const BackupSchema = z
     holidays: z.array(HolidayRecordSchema).default([]),
     expenses: z.array(ExpenseRecordSchema).default([]),
     flights: z.array(FlightRecordSchema).default([]),
+    cash: z.array(CashRecordSchema).default([]),
     items: z.array(PlanItemSchema),
     proposals: z.array(ProposalSchema).default([]),
     dayResearch: z.array(DayResearchSchema).default([]),

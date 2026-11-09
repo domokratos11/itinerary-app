@@ -5,10 +5,14 @@ import {
   categoryForReservation,
   daysRemaining,
   estimateStops,
+  filterExpenses,
   formatYen,
+  NO_FILTER,
+  personDetails,
   spendByDay,
   summarizeBudget,
   totalsByCategory,
+  totalsByMember,
   totalsByPayer,
 } from "./budget";
 import type { TripDay } from "./days";
@@ -103,7 +107,12 @@ describe("summarizeBudget", () => {
         expense({ amountJPY: 30000 }),
         expense({ id: "e2", amountJPY: 20000, status: "planned" }),
       ],
-      budget: { totalJPY: 100000, byCategory: {}, travellers: null },
+      budget: {
+        totalJPY: 100000,
+        byCategory: {},
+        travellers: null,
+        byMember: {},
+      },
     });
     expect(summary).toMatchObject({
       spent: 30000,
@@ -121,7 +130,12 @@ describe("summarizeBudget", () => {
     const summary = summarizeBudget({
       ...input,
       expenses: [expense({ amountJPY: 120000 })],
-      budget: { totalJPY: 100000, byCategory: {}, travellers: 3 },
+      budget: {
+        totalJPY: 100000,
+        byCategory: {},
+        travellers: 3,
+        byMember: {},
+      },
     });
     expect(summary).toMatchObject({
       left: 0,
@@ -148,7 +162,12 @@ describe("totals", () => {
         expense({ amountJPY: 500 }),
         expense({ id: "e2", amountJPY: 300, status: "planned" }),
       ],
-      { totalJPY: null, byCategory: { food: 900 }, travellers: null },
+      {
+        totalJPY: null,
+        byCategory: { food: 900 },
+        travellers: null,
+        byMember: {},
+      },
     );
     expect(rows[0].category).toBe("flight");
     expect(rows.find((r) => r.category === "food")).toEqual({
@@ -170,6 +189,110 @@ describe("totals", () => {
       { paidBy: "bo@example.com", paid: 400 },
       { paidBy: "ana@example.com", paid: 100 },
     ]);
+  });
+
+  it("puts an expense with no payer on the trip's first member", () => {
+    expect(
+      totalsByPayer(
+        [expense({ paidBy: null }), expense({ id: "e2", amountJPY: 50 })],
+        ["ana@example.com", "bo@example.com"],
+      ),
+    ).toEqual([{ paidBy: "ana@example.com", paid: 1050 }]);
+  });
+
+  it("gives every member a row against their own target", () => {
+    const rows = totalsByMember(
+      [
+        expense({ amountJPY: 500 }),
+        expense({ id: "e2", amountJPY: 300, status: "planned" }),
+        expense({ id: "e3", amountJPY: 70, paidBy: "old@example.com" }),
+      ],
+      ["ana@example.com", "bo@example.com"],
+      {
+        totalJPY: null,
+        byCategory: {},
+        travellers: null,
+        byMember: { "bo@example.com": 2000 },
+      },
+    );
+    expect(rows).toEqual([
+      { email: "ana@example.com", paid: 500, planned: 300, target: null },
+      { email: "bo@example.com", paid: 0, planned: 0, target: 2000 },
+      { email: "old@example.com", paid: 70, planned: 0, target: null },
+    ]);
+  });
+});
+
+describe("personDetails", () => {
+  it("splits what one person paid by category and by card or cash", () => {
+    const details = personDetails(
+      [
+        expense({ amountJPY: 500, paymentMethod: "cash" }),
+        expense({ id: "e2", amountJPY: 200, category: "transport" }),
+        expense({ id: "e3", amountJPY: 900, status: "planned" }),
+        expense({ id: "e4", amountJPY: 40, paidBy: "bo@example.com" }),
+      ],
+      "ana@example.com",
+      ["ana@example.com"],
+    );
+    expect(details).toEqual({
+      paid: 700,
+      planned: 900,
+      byCard: 200,
+      byCash: 500,
+      count: 3,
+      categories: [
+        { category: "transport", paid: 200 },
+        { category: "food", paid: 500 },
+      ],
+    });
+  });
+});
+
+describe("filterExpenses", () => {
+  const rows = [
+    expense({ id: "a", amountJPY: 300, date: "2026-12-17" }),
+    expense({
+      id: "b",
+      amountJPY: 900,
+      date: "2026-12-16",
+      paidBy: "bo@example.com",
+      paymentMethod: "cash",
+    }),
+    expense({ id: "c", amountJPY: 100, date: "2026-12-18", status: "planned" }),
+  ];
+  const members = ["ana@example.com", "bo@example.com"];
+  const ids = (list: { id: string }[]) => list.map((e) => e.id);
+
+  it("sorts by date or amount", () => {
+    expect(ids(filterExpenses(rows, NO_FILTER, "newest", members))).toEqual([
+      "c",
+      "a",
+      "b",
+    ]);
+    expect(ids(filterExpenses(rows, NO_FILTER, "oldest", members))).toEqual([
+      "b",
+      "a",
+      "c",
+    ]);
+    expect(ids(filterExpenses(rows, NO_FILTER, "highest", members))).toEqual([
+      "b",
+      "a",
+      "c",
+    ]);
+    expect(ids(filterExpenses(rows, NO_FILTER, "lowest", members))).toEqual([
+      "c",
+      "a",
+      "b",
+    ]);
+  });
+
+  it("filters by person, payment and status together", () => {
+    const only = (over: Partial<typeof NO_FILTER>) =>
+      ids(filterExpenses(rows, { ...NO_FILTER, ...over }, "newest", members));
+    expect(only({ person: "bo@example.com" })).toEqual(["b"]);
+    expect(only({ method: "card" })).toEqual(["c", "a"]);
+    expect(only({ person: "ana@example.com", status: "paid" })).toEqual(["a"]);
   });
 });
 

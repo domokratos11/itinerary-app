@@ -1,5 +1,10 @@
 import type { Translate } from "./i18n";
-import type { ExpenseCategory, ExpenseRecord, Stay } from "./schemas";
+import type {
+  ExpenseCategory,
+  ExpenseRecord,
+  PaymentMethod,
+  Stay,
+} from "./schemas";
 import { nightStay } from "./trip";
 
 // The categories offered for a quick entry on the go, most used first.
@@ -36,6 +41,7 @@ export function quickExpense(input: {
   today: string;
   stays: Stay[];
   paidBy: string | null;
+  paymentMethod?: PaymentMethod;
   title: string;
   tr: Translate;
   now: Date;
@@ -57,6 +63,7 @@ export function quickExpense(input: {
     cityId: stay?.cityId ?? null,
     originalUSD: input.originalUSD ?? null,
     rateJPYPerUSD: input.rateJPYPerUSD ?? null,
+    paymentMethod: input.paymentMethod ?? "card",
     note: null,
     archived: false,
     updatedAt: input.now.toISOString(),

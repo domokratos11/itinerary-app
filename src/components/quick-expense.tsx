@@ -6,13 +6,17 @@ import { toast } from "sonner";
 
 import { AmountInput } from "@/components/amount-input";
 import { EditPanel, Field } from "@/components/edit-panel";
-import { ExpenseForm, type ExpensePrefill } from "@/components/expense-form";
+import {
+  ExpenseForm,
+  PaymentToggle,
+  type ExpensePrefill,
+} from "@/components/expense-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { entryFor, readAmount, type AmountEntry } from "@/domain/amount";
 import { QUICK_CATEGORIES, quickExpense } from "@/domain/quick-expense";
-import type { ExpenseCategory } from "@/domain/schemas";
+import type { ExpenseCategory, PaymentMethod } from "@/domain/schemas";
 import { EXPENSE_COLOR } from "@/domain/taxonomy";
 import { nightStay } from "@/domain/trip";
 import { useAuthStore } from "@/lib/auth-store";
@@ -23,6 +27,7 @@ import { todayInTokyo } from "@/lib/tokyo-date";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useCitiesById, useTrip } from "@/lib/trip-store";
 import { useUsdRate } from "@/lib/usd-rate";
+import { lastPaymentMethod, rememberPaymentMethod } from "@/lib/payment-method";
 import { cn } from "@/lib/utils";
 import { useTripId } from "@/lib/use-trip-id";
 import { useReadOnly } from "@/lib/viewer-store";
@@ -106,6 +111,7 @@ function QuickExpenseForm({
     entryFor(null, Math.round(useUsdRate.getState().rate * 100) / 100),
   );
   const [category, setCategory] = useState<ExpenseCategory>(lastCategory);
+  const [method, setMethod] = useState<PaymentMethod>(lastPaymentMethod);
   const [title, setTitle] = useState("");
   const money = readAmount(amount);
   const yen = money?.amountJPY ?? null;
@@ -121,6 +127,7 @@ function QuickExpenseForm({
       today: todayInTokyo(),
       stays: trip.stays,
       paidBy: me,
+      paymentMethod: method,
       title,
       tr: t,
       now: new Date(),
@@ -130,6 +137,7 @@ function QuickExpenseForm({
     } catch {
       // Only a convenience for next time.
     }
+    rememberPaymentMethod(method);
     saveRecord(
       tripId,
       "expenses",
@@ -205,6 +213,9 @@ function QuickExpenseForm({
           })}
         </ToggleGroup>
       </Field>
+      <Field label={t("budget.paidWith")} htmlFor="quick-method">
+        <PaymentToggle id="quick-method" value={method} onChange={setMethod} />
+      </Field>
       <Field label={t("quickExpense.what")} htmlFor="quick-title">
         <Input
           id="quick-title"
@@ -223,6 +234,7 @@ function QuickExpenseForm({
             title: title.trim() || t(`expenseCategory.${category}`),
             category,
             date,
+            paymentMethod: method,
             ...(money !== null && money),
           })
         }
