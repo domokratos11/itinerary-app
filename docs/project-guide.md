@@ -222,7 +222,7 @@ Shared chrome and gates:
 | `locale-root.tsx` | Remounts the app when the language changes. |
 | `service-worker-register.tsx` | Registers `sw.js` in production. |
 | `offline-banner.tsx` | Shows "offline" text (`useOnline`) and, when writes are waiting, the count from `useSyncStore`; edits still save on the device. |
-| `sync-status.tsx` | `SyncStatus`: icon button in the header, left of search, hidden on read-only links. Shows whether edits have reached the server (§17.1): cloud-check "All changes saved" (muted), cloud-upload "Saving N changes…" (pulsing), cloud-off "N changes waiting for a connection." (amber, offline with pending writes). Tooltip on hover or focus; a tap shows the same text in a toast, since tooltips do not open on tap. |
+| `sync-status.tsx` | `SyncStatus`: icon button in the header, left of search, hidden on read-only links. Shows whether edits have reached the server (§17.1): cloud-check "All changes saved" (muted), cloud-upload "Saving N changes…" (pulsing), cloud-off "N changes waiting for a connection." (`text-warning`, offline with pending writes). Tooltip on hover or focus; a tap shows the same text in a toast, since tooltips do not open on tap. |
 | `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Match phone / Light / Dark button. |
 | `search-palette.tsx` | The Ctrl+K / ⌘K search over days, hotels and places. |
 | `trip-switcher.tsx`, `new-trip.tsx` | Trip name menu; panel to create a trip (for permitted creators). |
@@ -750,6 +750,7 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 - **Browser chrome:** `THEME_COLOR` (`src/lib/theme-color.ts`) is the source. The root layout's `themeColor` and the manifest's `theme_color` and `background_color` use `THEME_COLOR.light`. `ThemeColor` in `theme-provider.tsx` calls `applyThemeColor` whenever the resolved theme changes, so the browser bar follows the chosen theme.
 - **Cities** have their own colour (`#rrggbb` in `cities` documents), used for dots in the sidebar and day list.
 - **Font:** IBM Plex Sans (`--font-sans`, text), Barlow Semi Condensed (`--font-display`, mapped to `--font-heading`, used by the `font-heading` class for headings, dates, times and amounts) and Geist Mono (`--font-mono`) via `next/font`.
+- **Shell:** the open section in the phone tab bar (`BottomNav`, on the card colour, tabs at least 56px tall) and the open section's header link on tablets are marked with the soft `--accent` tint and `text-primary`; on phones the icon also sits in a soft pill (`bg-accent`), and the label is semibold. The sidebar's active item uses the soft sidebar tint (`bg-sidebar-accent`, `text-sidebar-primary`, semibold) in both themes, not a solid fill. `--now` (`bg-now text-now-foreground`) marks today in the sidebar, as the "Today" chip beside today's day.
 
 ---
 

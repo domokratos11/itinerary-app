@@ -21,7 +21,7 @@ import { openTrip } from "@/lib/trip-id";
 import { useTripId } from "@/lib/use-trip-id";
 
 const NAME_STYLE =
-  "max-w-44 truncate font-heading text-base font-semibold tracking-tight";
+  "max-w-44 truncate font-heading text-lg font-semibold";
 
 // The trip name in the header. With other trips to go to, or permission to
 // create one, it opens a menu; otherwise it is a link home.

@@ -120,8 +120,12 @@ export function AppHeader() {
             <Tip key={path} label={t(hint)}>
               <Button
                 asChild
-                variant={active === path ? "secondary" : "ghost"}
+                variant="ghost"
                 size="sm"
+                className={cn(
+                  active === path &&
+                    "bg-accent font-semibold text-primary hover:bg-accent hover:text-primary",
+                )}
               >
                 <Link
                   href={pageHref(path, tripId)}
@@ -168,7 +172,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label={t("nav.sections")}
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <ul
         className={cn(
@@ -182,11 +186,20 @@ export function BottomNav() {
               href={pageHref(path, tripId)}
               aria-current={active === path ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-0.5 py-2 text-[11px] text-muted-foreground",
-                active === path && "font-medium text-primary",
+                "flex min-h-14 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 text-[11px] text-muted-foreground",
+                active === path && "font-semibold text-primary",
               )}
             >
-              <Icon className="size-5" />
+              {/* The pill behind the icon marks the open section, so it reads
+                  at a glance without relying on the text colour alone. */}
+              <span
+                className={cn(
+                  "flex h-7 w-11 items-center justify-center rounded-full",
+                  active === path && "bg-accent",
+                )}
+              >
+                <Icon className="size-5" />
+              </span>
               <span className="max-w-full truncate">{t(label)}</span>
             </Link>
           </li>

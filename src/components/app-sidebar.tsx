@@ -136,7 +136,7 @@ export function AppSidebar() {
                         {d.cityIds.map((id) => (
                           <span
                             key={id}
-                            className="size-2 rounded-full not-dark:group-data-active/menu-button:ring-1 not-dark:group-data-active/menu-button:ring-white/80"
+                            className="size-2 rounded-full"
                             style={{
                               backgroundColor:
                                 citiesById.get(id)?.color ?? "#64748b",
@@ -146,7 +146,7 @@ export function AppSidebar() {
                       </span>
                       <span className="flex-1 truncate">{label}</span>
                       {d.date === today && (
-                        <span className="rounded bg-primary px-1.5 text-[10px] font-medium text-primary-foreground uppercase group-data-[collapsible=icon]:hidden not-dark:group-data-active/menu-button:bg-background not-dark:group-data-active/menu-button:text-primary">
+                        <span className="rounded bg-now px-1.5 text-[11px] font-semibold text-now-foreground uppercase group-data-[collapsible=icon]:hidden">
                           {t("common.today")}
                         </span>
                       )}
