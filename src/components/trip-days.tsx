@@ -101,12 +101,10 @@ export function TripDays() {
     const first = days[0].date;
     const last = days[days.length - 1].date;
     const target = now < first ? first : now > last ? last : now;
-    document
-      .getElementById(`day-${target}`)
-      ?.scrollIntoView({
-        behavior: prefersReducedMotion() ? "auto" : "smooth",
-        block: "center",
-      });
+    document.getElementById(`day-${target}`)?.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "center",
+    });
   }
 
   function chooseView(value: string) {
@@ -213,7 +211,7 @@ export function TripDays() {
                         prefetch={false}
                         className={cn(
                           "flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50 hover:bg-muted/40",
-                          isToday && "border-primary ring-2 ring-primary/20",
+                          isToday && "border-now ring-2 ring-now/25",
                         )}
                       >
                         <span className="flex w-11 shrink-0 flex-col items-center rounded-lg bg-muted py-1 leading-none">
@@ -228,7 +226,7 @@ export function TripDays() {
                           <span className="text-sm font-medium">
                             {weekday}
                             {isToday && (
-                              <span className="ml-2 text-xs text-primary">
+                              <span className="ml-2 text-xs font-semibold text-now">
                                 {t("common.today")}
                               </span>
                             )}

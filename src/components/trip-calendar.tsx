@@ -144,14 +144,14 @@ export function TripCalendar({
                 className={cn(
                   "flex min-h-16 scroll-mt-24 flex-col gap-0.5 rounded-lg border bg-card p-1.5 pb-4 transition-colors hover:border-primary/50 hover:bg-muted/40 lg:min-h-28 lg:gap-1 lg:p-2 lg:pb-8",
                   shade,
-                  isToday && "border-primary ring-2 ring-primary/30",
+                  isToday && "border-now ring-2 ring-now/30",
                 )}
               >
                 <span className="flex items-baseline justify-between gap-1">
                   <span
                     className={cn(
                       "font-heading text-sm font-semibold tabular-nums lg:text-lg",
-                      isToday && "text-primary",
+                      isToday && "text-now",
                     )}
                   >
                     {cell.showMonth ? (

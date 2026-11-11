@@ -428,7 +428,7 @@ function DashboardContent() {
                     key: d.date,
                     value: d.paid,
                   }))}
-                  color="#2563eb"
+                  color="var(--primary)"
                   name={t("budget.spent")}
                   label={t("dashboard.spendPerDay")}
                   tick={dayTick}
@@ -500,19 +500,19 @@ function DashboardContent() {
                 key: "planned",
                 label: t("dashboard.statusPlanned"),
                 value: counts.planned,
-                color: "#2563eb",
+                color: "var(--primary)",
               },
               {
                 key: "done",
                 label: t("common.done"),
                 value: counts.done,
-                color: "#16a34a",
+                color: "var(--success)",
               },
               {
                 key: "skipped",
                 label: t("common.skipped"),
                 value: counts.skipped,
-                color: "#78716c",
+                color: "var(--muted-foreground)",
               },
             ]}
           />
