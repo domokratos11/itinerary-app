@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AppGate } from "@/components/app-gate";
 import { signInWithGoogle } from "@/lib/auth";
 import { useAuthStore } from "@/lib/auth-store";
+import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
 
 vi.mock("@/lib/auth", () => ({ signInWithGoogle: vi.fn(), signOut: vi.fn() }));
@@ -48,9 +49,11 @@ describe("AppGate", () => {
       tripsFailed: false,
       canCreateTrips: false,
       tripId: null,
+      tripChosen: false,
       access: "checking",
     });
     useTripStore.getState().reset();
+    usePlanStore.getState().reset();
     vi.mocked(signInWithGoogle).mockReset();
     vi.mocked(toast.error).mockReset();
   });
@@ -119,11 +122,33 @@ describe("AppGate", () => {
       status: "signed-in",
       user,
       trips: [trip("japan", "Japan"), trip("peru", null)],
+      tripChosen: true,
     });
     renderGate();
     expect(app()).toBeNull();
     expect(screen.getByRole("button", { name: "Japan" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "My trip" })).toBeInTheDocument();
+  });
+
+  it("keeps the splash while a trip is being chosen from the list", () => {
+    useAuthStore.setState({ status: "signed-in", user, trips: [trip("japan")] });
+    renderGate();
+    expect(app()).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("keeps the splash until the plan has arrived", () => {
+    useAuthStore.setState({
+      status: "signed-in",
+      user,
+      trips: [trip("trip-1")],
+      tripId: "trip-1",
+      tripChosen: true,
+      access: "member",
+    });
+    useTripStore.setState({ loaded: allLoaded });
+    renderGate();
+    expect(app()).toBeNull();
   });
 
   it("names the account that isn't a member", () => {
@@ -165,6 +190,7 @@ describe("AppGate", () => {
       access: "member",
     });
     useTripStore.setState({ loaded: allLoaded });
+    usePlanStore.getState().setItems([]);
     renderGate();
     expect(app()).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).toBeNull();
