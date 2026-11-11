@@ -70,7 +70,7 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **Tailwind CSS** | ^4 | Utility styling. Theme tokens are CSS variables in `globals.css`. | `src/app/globals.css`, class names in components |
 | **@tailwindcss/turbopack** | ^4 | Tailwind loader for Next's Turbopack build. | `next.config.ts` (turbopack rule for `*.css`) |
 | **tw-animate-css** | ^1.4.0 | Animation utilities used by shadcn components. | `globals.css` |
-| **Oxanium** and **Geist Mono** (via `next/font/google`) | — | App font and monospace font. Downloaded at build time and served from the site, so they work offline. Japanese falls back to system fonts. | `src/app/layout.tsx` |
+| **IBM Plex Sans**, **Barlow Semi Condensed** and **Geist Mono** (via `next/font/google`) | — | Text font (IBM Plex Sans), heading font for headings, dates, times and amounts (Barlow Semi Condensed, weights 500, 600, 700), and monospace font (Geist Mono). Downloaded at build time and served from the site, so they work offline. Japanese falls back to system fonts. | `src/app/layout.tsx` |
 
 ### 2.2 UI kit and interaction libraries
 
@@ -201,7 +201,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `not-found.tsx` | 404 page. Also `404.html` on Pages, where old day and city links are redirected (`old-link-redirect.tsx`). |
 | `manifest.ts` | `manifest.webmanifest` (installable app). |
 | `version.json/route.ts` | `version.json` with the deployed version. `force-static`, so no request is read. |
-| `globals.css` | Theme tokens, Tailwind import, dark variant, base styles, and the `thin-scrollbar` utility (replaces shadcn's `no-scrollbar`). |
+| `globals.css` | Theme tokens (hex, both themes), Tailwind import, dark variant, base styles, and the `thin-scrollbar` utility (replaces shadcn's `no-scrollbar`). |
 | `favicon.ico` | Browser icon. |
 | `days/page.test.tsx` | A test kept beside its page. |
 | `error.test.tsx` | Test for the crash screen in `error.tsx`, kept beside it. |
@@ -414,6 +414,7 @@ Maps and place helpers:
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
+| `theme-color.ts` | `THEME_COLOR` (`light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme)`, which sets `<meta name="theme-color">` so the browser bar follows the chosen theme. Tests in `theme-color.test.ts`. |
 | `order.ts` | Sort keys with fractional indexing. |
 | `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. `prefersReducedMotion()` is the plain check (not a hook) for motion started from code, such as scrolling to today; it reads the phone's "reduce motion" setting. |
 
@@ -739,16 +740,16 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 
 - **Library:** `next-themes`, in `src/components/theme-provider.tsx`. Attribute `class`, themes `light` and `dark`, default `light`, `enableSystem={false}`, `disableTransitionOnChange`. It sets `class="dark"` on `<html>` before the first paint, so `suppressHydrationWarning` is on `<html>`.
 - **Choices:** Light and Dark only, with no "Match phone" option. The button in the Account sheet switches between them (`theme-toggle.tsx`). On a device with no stored choice, or with the old stored `system` value, `PickFirstTheme` picks light or dark once from `prefers-color-scheme` and saves it. The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
-- **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, in OKLCH: `--background`, `--foreground`, `--primary` (teal, close to the theme colour), `--muted`, `--border`, `--sidebar-*`, `--chart-1..5`, and others. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`).
-- **Selected and highlighted controls:** selected toggles (`ui/toggle.tsx` with `aria-pressed`, and `ui/toggle-group.tsx` items with `data-state=on`) use a soft teal tint of `--primary`, not `bg-muted`. `--accent` (light and dark) is slightly teal-tinted, so hovered and highlighted menu items show colour.
+- **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, as hex values: light has a cool paper-white background (`#f4f6fa`) and indigo `--primary` (`#2b47a8`); dark has a deep indigo background (`#0d1220`) and `--primary` `#96aaff`. Other tokens: `--background`, `--foreground`, `--muted`, `--border`, `--sidebar-*`, `--chart-1..5` (an indigo scale), and others. `--now` with `--now-foreground` is kept for the present moment (today, the next stop). `--success` and `--warning` are for status. All of these exist in both themes. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`, `bg-now`, `text-now-foreground`, `text-success`, `text-warning`). `h1` and `h2` use the heading font through a base rule.
+- **Selected and highlighted controls:** selected toggles (`ui/toggle.tsx` with `aria-pressed`, and `ui/toggle-group.tsx` items with `data-state=on`) use a soft tint of `--primary`, not `bg-muted`. `--accent` (light and dark) is a soft indigo tint (`#e2e8fb` light, `#232e58` dark), so hovered and highlighted menu items show colour.
 - **Dark variant:** `@custom-variant dark (&:where(.dark, .dark *));` in `globals.css`, so `dark:` classes follow the `dark` class.
 - **Base colour:** `stone` in `components.json`.
 - **Category, priority and expense colours** (`src/domain/taxonomy.ts`): fixed hex colours per category (`lights`, `food`, `shopping`, `sight`, `daytrip`, `temple`), per priority (`must`, `want`, `maybe`) and per expense category. `darkStep` and `tint` produce the dark-mode variants.
 - **Map:** `trip-map.tsx` reads `resolvedTheme` and passes `colorScheme: "light" | "dark"` to the Maps service, so the map follows the app.
 - **Toasts:** `sonner` reads the theme through `useTheme`.
-- **Browser chrome:** `themeColor: "#0f766e"` in the root layout and manifest; background `#ffffff` in the manifest.
+- **Browser chrome:** `THEME_COLOR` (`src/lib/theme-color.ts`) is the source. The root layout's `themeColor` and the manifest's `theme_color` and `background_color` use `THEME_COLOR.light`. `ThemeColor` in `theme-provider.tsx` calls `applyThemeColor` whenever the resolved theme changes, so the browser bar follows the chosen theme.
 - **Cities** have their own colour (`#rrggbb` in `cities` documents), used for dots in the sidebar and day list.
-- **Font:** Oxanium (`--font-sans`) and Geist Mono (`--font-mono`) via `next/font`.
+- **Font:** IBM Plex Sans (`--font-sans`, text), Barlow Semi Condensed (`--font-display`, mapped to `--font-heading`, used by the `font-heading` class for headings, dates, times and amounts) and Geist Mono (`--font-mono`) via `next/font`.
 
 ---
 
@@ -1028,7 +1029,7 @@ Viewers of a share link make the same place-detail calls as members (photos and 
 | **Firebase Authentication** | Google sign-in popup (`prompt: select_account`) | `auth.ts` |
 | **Cloud Firestore** | All trip, plan, user and proposal data | `firestore-*.ts` |
 | **Firebase App Check** | Off (`appCheckSiteKey = null`); code ready for reCAPTCHA v3 | `firebase.ts`, README "Security setup" |
-| **Google Fonts** | Oxanium and Geist Mono, self-hosted at build | `layout.tsx` |
+| **Google Fonts** | IBM Plex Sans, Barlow Semi Condensed and Geist Mono, self-hosted at build | `layout.tsx` |
 | **Open-Meteo** (`api.open-meteo.com`, `archive-api.open-meteo.com`, `geocoding-api.open-meteo.com`) | Forecast, typical weather and city geocoding for the day views (§12.3). Free, no key, called from the browser. No Google data. | `open-meteo.ts`, `use-weather.ts` |
 | **Frankfurter** (`api.frankfurter.dev`, ECB reference rates) | Today's USD to JPY rate for entering and showing dollars (§12.5). One GET per session (`/v1/latest?base=USD&symbols=JPY`); no key; nothing else is sent. Falls back to the fixed `YEN_PER_USD` offline. | `usd-rate.ts` |
 | **GitHub Pages** | Hosting | `deploy.yml` |
@@ -1160,7 +1161,7 @@ Run this by hand on both phones before the trip:
 
 ### 17.3 Install
 
-- `manifest.ts`: name "Trip Planner", standalone display, teal theme colour, icons 192 and 512 px (`public/icon-*.png`), `start_url` and `scope` under the base path. Apple web-app meta in layout.
+- `manifest.ts`: name "Trip Planner", standalone display, theme colour and background `#f4f6fa` (`THEME_COLOR.light`), icons 192 and 512 px (`public/icon-*.png`), `start_url` and `scope` under the base path. Apple web-app meta in layout.
 - Icons are generated by `scripts/make-icons.cjs` as plain PNGs; replace the files with real artwork later, keeping the names.
 
 ---

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { BASE_PATH } from "@/lib/base-path";
+import { THEME_COLOR } from "@/lib/theme-color";
 
 export const dynamic = "force-static";
 
@@ -13,8 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: `${BASE_PATH}/`,
     scope: `${BASE_PATH}/`,
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#0f766e",
+    background_color: THEME_COLOR.light,
+    theme_color: THEME_COLOR.light,
     icons: [
       { src: `${BASE_PATH}/icon-192.png`, sizes: "192x192", type: "image/png" },
       { src: `${BASE_PATH}/icon-512.png`, sizes: "512x512", type: "image/png" },
