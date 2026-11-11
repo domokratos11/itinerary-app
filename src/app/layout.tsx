@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Geist_Mono, Oxanium } from "next/font/google";
+import {
+  Barlow_Semi_Condensed,
+  Geist_Mono,
+  IBM_Plex_Sans,
+} from "next/font/google";
 import { Suspense } from "react";
 
 import { AppHeader, BottomNav, VersionTag } from "@/components/app-header";
@@ -11,18 +15,37 @@ import { OfflineBanner } from "@/components/offline-banner";
 import { PlanSync } from "@/components/plan-sync";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { ThemeProvider } from "@/components/theme-provider";
+import { THEME_COLOR } from "@/lib/theme-color";
 import { VersionGate } from "@/components/version-gate";
 import { Toaster } from "@/components/ui/sonner";
 import { BASE_PATH } from "@/lib/base-path";
 import { LANG_BOOT_SCRIPT } from "@/lib/lang-boot";
 import { cn } from "@/lib/utils";
 
-// Oxanium has no Japanese glyphs, so Japanese text falls back to the
-// phone's own fonts. next/font serves the font from the site, so it works
-// offline.
-const oxanium = Oxanium({
+// Neither font has Japanese glyphs, so Japanese text falls back to the
+// phone's own fonts. next/font serves the fonts from the site, so they work
+// offline. (next/font wants its options written out, so the list is repeated.)
+
+// Text: open shapes that stay clear at small sizes.
+const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
+  fallback: [
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic",
+    "Noto Sans JP",
+    "system-ui",
+    "sans-serif",
+  ],
+});
+
+// Headings, dates, times and amounts (`font-heading`): narrow, like a
+// platform sign, so a full date or a six-figure amount fits a phone's width.
+const barlow = Barlow_Semi_Condensed({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
   fallback: [
     "Hiragino Sans",
     "Hiragino Kaku Gothic ProN",
@@ -66,7 +89,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#0f766e",
+  // The light page colour; ThemeColor (theme-provider) switches it for dark.
+  themeColor: THEME_COLOR.light,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -79,7 +103,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={cn(
         "h-full antialiased",
         "font-sans",
-        oxanium.variable,
+        plexSans.variable,
+        barlow.variable,
         geistMono.variable,
       )}
     >

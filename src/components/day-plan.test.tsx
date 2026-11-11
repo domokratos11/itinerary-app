@@ -193,6 +193,10 @@ describe("a stop in the day's plan", () => {
   it("goes back to planned when the same button is tapped again", () => {
     usePlanStore.setState({ items: [{ ...stop, status: "done" }] });
     dayPlan();
+    // A finished stop is closed; its buttons are one tap away.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show the actions for Ueno Zoo" }),
+    );
     const went = screen.getByRole("button", { name: "We went to Ueno Zoo" });
     expect(went).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(went);
@@ -201,6 +205,43 @@ describe("a stop in the day's plan", () => {
       { ...stop, status: "done" },
       { status: "planned" },
     );
+  });
+
+  it("opens the next stop by itself and keeps the others closed", () => {
+    usePlanStore.setState({
+      items: [
+        { ...stop, status: "done" },
+        { ...stop, id: "stop-castle", placeId: castle.id, order: "a1" },
+      ],
+    });
+    dayPlan();
+    const name = castle.name;
+    expect(
+      screen.getByRole("button", { name: `We went to ${name}` }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: `Hide the actions for ${name}` }),
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(
+      screen.queryByRole("button", { name: "We went to Ueno Zoo" }),
+    ).toBeNull();
+    expect(screen.getByText("Next stop")).toBeInTheDocument();
+  });
+
+  it("closes an open stop and opens it again", () => {
+    dayPlan();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Hide the actions for Ueno Zoo" }),
+    );
+    expect(
+      screen.queryByRole("button", { name: "We went to Ueno Zoo" }),
+    ).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show the actions for Ueno Zoo" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "We went to Ueno Zoo" }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -234,7 +275,9 @@ describe("hotels on the day's map", () => {
     movingDay();
     expect(screen.getByRole("figure")).toHaveTextContent("Ueno Zoo");
     expect(screen.getByRole("figure")).not.toHaveTextContent("Tokyo Inn");
-    expect(screen.getByRole("checkbox", { name: "Show hotel" })).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Show hotel" }),
+    ).not.toBeChecked();
   });
 
   it("shows both on a moving day, and either one alone", () => {
@@ -243,10 +286,14 @@ describe("hotels on the day's map", () => {
     expect(screen.getByRole("figure")).toHaveTextContent(
       "Tokyo Inn, Ueno Zoo, Kyoto Ryokan",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Night: Kyoto Ryokan" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Night: Kyoto Ryokan" }),
+    );
     expect(screen.getByRole("figure")).toHaveTextContent("Tokyo Inn, Ueno Zoo");
     expect(screen.getByRole("figure")).not.toHaveTextContent("Kyoto Ryokan");
     fireEvent.click(screen.getByRole("button", { name: "Morning: Tokyo Inn" }));
-    expect(screen.getByRole("checkbox", { name: "Show hotel" })).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "Show hotel" }),
+    ).not.toBeChecked();
   });
 });

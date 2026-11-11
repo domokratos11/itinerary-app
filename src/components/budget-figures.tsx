@@ -75,7 +75,7 @@ export function GaugeCenter({ summary }: { summary: BudgetSummary }) {
   const over = summary.over > 0;
   return (
     <>
-      <span className="text-xl font-semibold tabular-nums">
+      <span className="font-heading text-2xl font-semibold tabular-nums">
         <Yen yen={over ? summary.over : (summary.left ?? summary.spent)} />
       </span>
       <span className="text-xs text-muted-foreground">
@@ -100,8 +100,12 @@ export function Figure({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-lg font-semibold tabular-nums">{value}</span>
+      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {label}
+      </span>
+      <span className="font-heading text-xl font-semibold tabular-nums">
+        {value}
+      </span>
       {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
     </div>
   );

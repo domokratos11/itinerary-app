@@ -91,7 +91,7 @@ export function TodayCard() {
   const day = days.find((d) => d.date === phase.date);
 
   return (
-    <Card className="border-primary/40">
+    <Card className="ring-2 ring-now/40">
       <CardHeader>
         <CardTitle className="flex items-baseline justify-between gap-2">
           <span className="text-lg">
@@ -111,7 +111,9 @@ export function TodayCard() {
             <span className="text-xs tracking-wide text-muted-foreground uppercase">
               {t("home.nextStop")}
             </span>
-            <span className="text-lg font-medium">{place.name}</span>
+            <span className="font-heading text-2xl leading-tight font-semibold">
+              {place.name}
+            </span>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">

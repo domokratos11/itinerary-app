@@ -399,7 +399,7 @@ function PlaceRow({
             >
               <Badge
                 variant="outline"
-                className="border-transparent bg-[#16a34a] text-white"
+                className="border-transparent bg-success/15 text-success"
               >
                 <BadgeCheck />
                 {t("placeSettings.accepted")}

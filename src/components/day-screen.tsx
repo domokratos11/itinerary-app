@@ -26,7 +26,7 @@ export function DayScreen() {
   if (!day) {
     return (
       <div className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold">{t("day.notFound")}</h1>
+        <h1 className="text-3xl font-bold">{t("day.notFound")}</h1>
         <p className="text-sm text-muted-foreground">
           {date ? t("day.notATripDay", { date }) : t("day.noDate")}
         </p>

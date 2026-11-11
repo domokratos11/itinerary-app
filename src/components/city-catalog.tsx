@@ -216,7 +216,7 @@ export function CityCatalog({
     <>
       <header className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold">
+          <h1 className="min-w-0 flex-1 truncate text-3xl font-bold">
             {city.name}
           </h1>
           {!readOnly && (

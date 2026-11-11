@@ -47,7 +47,7 @@ export function SyncStatus() {
             ? "text-muted-foreground"
             : status === "saving"
               ? "text-primary"
-              : "text-amber-600 dark:text-amber-400"
+              : "text-warning"
         }
       >
         <Icon className={status === "saving" ? "animate-pulse" : undefined} />

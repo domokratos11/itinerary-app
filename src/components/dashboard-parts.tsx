@@ -22,8 +22,12 @@ export function Tile({
   return (
     <Card size="sm">
       <CardContent className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="text-2xl font-semibold tabular-nums">{value}</span>
+        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          {label}
+        </span>
+        <span className="font-heading text-2xl leading-tight font-semibold tabular-nums sm:text-3xl">
+          {value}
+        </span>
         {children}
       </CardContent>
     </Card>
@@ -42,7 +46,7 @@ export function Panel({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>

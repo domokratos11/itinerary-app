@@ -17,13 +17,6 @@ export const PRIORITY_COLOR: Record<Priority, string> = {
   maybe: "#f97316",
 };
 
-// Text that stays readable on a solid priority colour.
-export const PRIORITY_INK: Record<Priority, string> = {
-  must: "#ffffff",
-  want: "#1c1917",
-  maybe: "#1c1917",
-};
-
 // Spending categories, in a fixed order that keeps neighbouring slices apart
 // for colour-blind readers. Every chart also labels them, with an icon.
 export const EXPENSE_COLOR: Record<ExpenseCategory, string> = {

@@ -36,7 +36,7 @@ export function CityScreen() {
   if (!city || city.archived) {
     return (
       <div className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold">{t("cities.notFound")}</h1>
+        <h1 className="text-3xl font-bold">{t("cities.notFound")}</h1>
         <Link href={daysHref(tripId)} className="text-sm underline">
           {t("common.backToDays")}
         </Link>

@@ -211,6 +211,8 @@
     "skip": "Omitir",
     "skipName": "Omitir {name}",
     "openDetails": "Ver los detalles de {name}",
+    "showActions": "Mostrar las acciones de {name}",
+    "hideActions": "Ocultar las acciones de {name}",
     "removed": "Se quitó del plan",
     "fullDay": "Día completo",
     "fullDayDescription": "Cada tramo, a un toque.",

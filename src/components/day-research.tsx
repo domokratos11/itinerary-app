@@ -66,11 +66,9 @@ const LOAD_LABEL: Record<DayLoad, MessageKey> = {
 };
 
 const LOAD_STYLE: Record<DayLoad, string> = {
-  light:
-    "border-emerald-600/40 bg-emerald-600/10 text-emerald-800 dark:text-emerald-300",
-  medium:
-    "border-amber-500/50 bg-amber-500/15 text-amber-800 dark:text-amber-300",
-  heavy: "border-red-600/40 bg-red-600/10 text-red-800 dark:text-red-300",
+  light: "border-success/40 bg-success/10 text-success",
+  medium: "border-warning/50 bg-warning/15 text-warning",
+  heavy: "border-destructive/40 bg-destructive/10 text-destructive",
 };
 
 const WARNING_LABEL: Record<
@@ -293,7 +291,7 @@ export function DayResearchPanel({
                     {analysis.warnings.map((warning, i) => (
                       <li
                         key={i}
-                        className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2"
+                        className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2"
                       >
                         <span className="font-medium">
                           {t(WARNING_LABEL[warning.kind])}:

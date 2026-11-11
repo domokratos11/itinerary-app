@@ -70,7 +70,7 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **Tailwind CSS** | ^4 | Utility styling. Theme tokens are CSS variables in `globals.css`. | `src/app/globals.css`, class names in components |
 | **@tailwindcss/turbopack** | ^4 | Tailwind loader for Next's Turbopack build. | `next.config.ts` (turbopack rule for `*.css`) |
 | **tw-animate-css** | ^1.4.0 | Animation utilities used by shadcn components. | `globals.css` |
-| **Oxanium** and **Geist Mono** (via `next/font/google`) | — | App font and monospace font. Downloaded at build time and served from the site, so they work offline. Japanese falls back to system fonts. | `src/app/layout.tsx` |
+| **IBM Plex Sans**, **Barlow Semi Condensed** and **Geist Mono** (via `next/font/google`) | — | Text font (IBM Plex Sans), heading font for headings, dates, times and amounts (Barlow Semi Condensed, weights 500, 600, 700), and monospace font (Geist Mono). Downloaded at build time and served from the site, so they work offline. Japanese falls back to system fonts. | `src/app/layout.tsx` |
 
 ### 2.2 UI kit and interaction libraries
 
@@ -80,8 +80,7 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **radix-ui** (umbrella package) | ^1.8.1 | Accessible primitives under shadcn components (dialog, select, tabs, tooltip, dropdown, switch, etc.). | `src/components/ui/*` |
 | **class-variance-authority** | ^0.7.1 | Variant styles for buttons, badges and similar components. | `src/components/ui/button.tsx` and others |
 | **cn** (npm package) | ^0.5.0 | The `cn()` class-merging helper. Note: shadcn usually ships `clsx` + `tailwind-merge`; this repo uses the `cn` package instead. | `src/lib/utils.ts` re-exports it |
-| **lucide-react** | ^1.63.0 | Icons. Most of the app's own components use it (45 files). | many components |
-| **@phosphor-icons/react** | ^2.1.10 | Icons. Used only by the nine shadcn/ui components, which `components.json` sets to Phosphor. The app's own components use lucide, so the two icon sets are mixed. | `src/components/ui/` (carousel, checkbox, command, dialog, dropdown-menu, select, sheet, sidebar, sonner) |
+| **lucide-react** | ^1.63.0 | Icons. The only icon set in the app, including the shadcn/ui components (`components.json` sets `iconLibrary: "lucide"`). | many components, `src/components/ui/` |
 | **cmdk** | ^1.1.1 | The command menu behind the search palette (`Command`, `CommandDialog`). | `src/components/ui/command.tsx`, `search-palette.tsx` |
 | **vaul** | ^1.1.2 | Bottom drawers on phones (`Drawer`). | `src/components/ui/drawer.tsx`, `place-details.tsx`, `edit-panel.tsx`, `add-to-day.tsx` |
 | **sonner** | ^2.0.8 | Toast messages. Sits above the bottom tab bar on phones. | `src/components/ui/sonner.tsx`, root layout |
@@ -201,7 +200,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `not-found.tsx` | 404 page. Also `404.html` on Pages, where old day and city links are redirected (`old-link-redirect.tsx`). |
 | `manifest.ts` | `manifest.webmanifest` (installable app). |
 | `version.json/route.ts` | `version.json` with the deployed version. `force-static`, so no request is read. |
-| `globals.css` | Theme tokens, Tailwind import, dark variant, base styles, and the `thin-scrollbar` utility (replaces shadcn's `no-scrollbar`). |
+| `globals.css` | Theme tokens (hex, both themes), Tailwind import, dark variant, base styles, and the `thin-scrollbar` utility (replaces shadcn's `no-scrollbar`). |
 | `favicon.ico` | Browser icon. |
 | `days/page.test.tsx` | A test kept beside its page. |
 | `error.test.tsx` | Test for the crash screen in `error.tsx`, kept beside it. |
@@ -223,7 +222,7 @@ Shared chrome and gates:
 | `locale-root.tsx` | Remounts the app when the language changes. |
 | `service-worker-register.tsx` | Registers `sw.js` in production. |
 | `offline-banner.tsx` | Shows "offline" text (`useOnline`) and, when writes are waiting, the count from `useSyncStore`; edits still save on the device. |
-| `sync-status.tsx` | `SyncStatus`: icon button in the header, left of search, hidden on read-only links. Shows whether edits have reached the server (§17.1): cloud-check "All changes saved" (muted), cloud-upload "Saving N changes…" (pulsing), cloud-off "N changes waiting for a connection." (amber, offline with pending writes). Tooltip on hover or focus; a tap shows the same text in a toast, since tooltips do not open on tap. |
+| `sync-status.tsx` | `SyncStatus`: icon button in the header, left of search, hidden on read-only links. Shows whether edits have reached the server (§17.1): cloud-check "All changes saved" (muted), cloud-upload "Saving N changes…" (pulsing), cloud-off "N changes waiting for a connection." (`text-warning`, offline with pending writes). Tooltip on hover or focus; a tap shows the same text in a toast, since tooltips do not open on tap. |
 | `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Match phone / Light / Dark button. |
 | `search-palette.tsx` | The Ctrl+K / ⌘K search over days, hotels and places. |
 | `trip-switcher.tsx`, `new-trip.tsx` | Trip name menu; panel to create a trip (for permitted creators). |
@@ -245,7 +244,7 @@ Screens (one per page):
 | `trip-calendar.tsx` | `/days/` | `TripCalendar`: the Calendar view. Monday-first weeks in one continuous grid (December into January). Trip days link to `/day/?date=` (id `day-YYYY-MM-DD`); cells show the day number, stop count, a flight icon, a holiday dot and a today ring. Each hotel night is a city-coloured bar; hotel names show from `lg`. Days outside the trip are muted, not links. A day with research requested shows a search icon; one with a ready analysis shows a sparkles icon. Each trip day cell also shows the day's weather icon (`WeatherBadge`), with the high from `lg`. |
 | `day-screen.tsx` | `/day/` | Loads one day and renders `DayPlan`. |
 | `day-plan.tsx` | `/day/` | `DayPlan` (about 630 lines), with `DroppableList`, `PhoneWaiting` and the drag collision helpers. The day itself: flight cards at the top, stops, legs, costs, warnings, map (with the Show hotel control in `map-hotels.tsx`), waiting list, drag and drop. Stops and links are in the two files below, and the drag and stop actions in `use-day-plan-actions.ts` (§3.5). |
-| `day-plan-stop.tsx` | `/day/` | `SortableStop` (wide screens, drag grip), `StopCard` (status buttons, map link, move day, cost, remove; phones get up and down buttons) and the `StopOutcome` type. |
+| `day-plan-stop.tsx` | `/day/` | `SortableStop` (wide screens, drag grip), `StopCard` (a row on the day's line: the name and badges always show, and a chevron opens the actions: status buttons, map link, move day, cost, remove; phones get up and down buttons), `LINE_ITEM` (the class for each list item, which draws the rail) and the `StopOutcome` type. |
 | `day-plan-links.tsx` | `/day/` | `FullDay` (directions for the whole day), `HotelButtons` and `HotelButton` (directions to the hotel), `BookingsButton` (wide screens, side sheet) and `Reservations`. |
 | `day-research.tsx` | `/day/` | `DayResearchPanel`: under the flights. "Research this day" (optional message) asks for every place on the day; shows the request, the day analysis (starts collapsed to a header and a short preview; once opened: load badge, warnings, nearby ideas, answer, sources) and place updates to review or accept for the day. Hidden on read-only links. |
 | `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view on wide screens: the stops on the left at full height; on the right, the Waiting column and a compact "Move to another day" column above the map. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
@@ -284,7 +283,7 @@ Plan and place editing:
 | `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend), and `toolbar` (controls drawn top-left, kept in full screen). Every map has a full-screen button (Expand / Shrink): full screen grows the same map box to the whole screen, with safe-area padding and no second map load, locks page scroll, closes with Escape or the button, and refits the pins. |
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
 | `day-weather.tsx` | `DayWeatherStrip` (day page header: icon and name, high and low, chance of rain or snow, Forecast or dashed Typical tag, sunrise and sunset) and `WeatherBadge` (icon, plus the high from `lg`; used on the Today card and calendar cells). `WEATHER_ICON` maps kinds to icons. Data from `use-weather.ts`. |
-| `tag-badges.tsx` | Category and priority badges and options. |
+| `tag-badges.tsx` | Category and priority badges and options. Quiet: a neutral badge (`secondary` for category, `outline` for priority) with the icon in the category or priority colour; the badge is not filled with that colour. |
 | `charts.tsx` | The recharts charts only: `DonutChart`, `BudgetGauge`, `ColumnChart`, `StackedColumnChart`. Not imported by screens directly. |
 | `chart-parts.tsx` | Chart pieces drawn without recharts: `Series` type, `SeriesLegend`, `BarList` and an internal `ChartValue`. |
 | `charts-lazy.tsx` | What screens import. Wraps the four recharts charts with `next/dynamic` (`ssr: false`), each with a `Skeleton` of the chart's own size so nothing moves, and re-exports `BarList`, `SeriesLegend` and `Series`. Used by `dashboard-screen.tsx` and `budget-screen.tsx`. |
@@ -414,6 +413,7 @@ Maps and place helpers:
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
+| `theme-color.ts` | `THEME_COLOR` (`light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme)`, which sets `<meta name="theme-color">` so the browser bar follows the chosen theme. Tests in `theme-color.test.ts`. |
 | `order.ts` | Sort keys with fractional indexing. |
 | `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. `prefersReducedMotion()` is the plain check (not a hook) for motion started from code, such as scrolling to today; it reads the phone's "reduce motion" setting. |
 
@@ -716,7 +716,7 @@ The app is designed for a 390px phone first, then widened (CLAUDE.md rule 8). Br
 - The shadcn sidebar (`ui/sidebar.tsx`) uses `(max-width: 1023px)` to switch to an off-canvas sheet. The app has no trigger for that sheet, so below 1024px the sidebar is never shown; the day list is reached through the Days page.
 - Layout classes are Tailwind responsive prefixes (`md:`, `lg:`), used in about 30 component and page files. Page wrappers grow from `max-w-md` (phone) to `max-w-[100rem]` (desktop).
 - One-column grids must use `grid-cols-1`. An implicit grid track grows to its widest content and overflows the phone screen.
-- Buttons are larger on touch screens: the `pointer-coarse:` variants in `src/components/ui/button.tsx` set bigger heights and icon sizes.
+- Buttons are larger on touch screens: the `pointer-coarse:` variants in `src/components/ui/button.tsx` set the default size to 44px tall, `sm` to 40px and `lg` to 48px. The icon sizes are 44px (`icon`), 40px (`icon-sm`) and 48px (`icon-lg`). `xs` and `icon-xs` stay 32px.
 - Bottom padding: the body adds `pb-[calc(4rem+env(safe-area-inset-bottom))]` below `md`, so the tab bar does not cover content.
 - `viewportFit: "cover"` and safe-area insets are used so notched phones are handled.
 
@@ -739,16 +739,19 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 
 - **Library:** `next-themes`, in `src/components/theme-provider.tsx`. Attribute `class`, themes `light` and `dark`, default `light`, `enableSystem={false}`, `disableTransitionOnChange`. It sets `class="dark"` on `<html>` before the first paint, so `suppressHydrationWarning` is on `<html>`.
 - **Choices:** Light and Dark only, with no "Match phone" option. The button in the Account sheet switches between them (`theme-toggle.tsx`). On a device with no stored choice, or with the old stored `system` value, `PickFirstTheme` picks light or dark once from `prefers-color-scheme` and saves it. The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
-- **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, in OKLCH: `--background`, `--foreground`, `--primary` (teal, close to the theme colour), `--muted`, `--border`, `--sidebar-*`, `--chart-1..5`, and others. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`).
-- **Selected and highlighted controls:** selected toggles (`ui/toggle.tsx` with `aria-pressed`, and `ui/toggle-group.tsx` items with `data-state=on`) use a soft teal tint of `--primary`, not `bg-muted`. `--accent` (light and dark) is slightly teal-tinted, so hovered and highlighted menu items show colour.
+- **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, as hex values: light has a cool paper-white background (`#f4f6fa`) and indigo `--primary` (`#2b47a8`); dark has a deep indigo background (`#0d1220`) and `--primary` `#96aaff`. Other tokens: `--background`, `--foreground`, `--muted`, `--border`, `--sidebar-*`, `--chart-1..5` (an indigo scale), and others. `--now` with `--now-foreground` is kept for the present moment (today, the next stop). `--success` and `--warning` are for status. All of these exist in both themes. The Dashboard's charts take their colours from these tokens too: spend per day and "planned" stops use `--primary`, "done" stops `--success`, "skipped" stops `--muted-foreground`. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`, `bg-now`, `text-now-foreground`, `text-success`, `text-warning`). `h1` and `h2` use the heading font through a base rule.
+- **Status colours and page titles:** status colours always come from the tokens: `--warning` for warning states (planned expenses, due-soon to-dos, the cash warning, the early sunset, the medium day load and the day research warnings), `--success` for good states (the light day load, "Accepted" places, done to-dos) and `--destructive` for the heavy day load and late to-dos. No component uses fixed amber, emerald, red or hex colour classes. Every screen's `h1` is `text-3xl font-bold` in the heading font.
+- **Selected and highlighted controls:** selected toggles (`ui/toggle.tsx` with `aria-pressed`, and `ui/toggle-group.tsx` items with `data-state=on`) use a soft tint of `--primary`, not `bg-muted`. `--accent` (light and dark) is a soft indigo tint (`#e2e8fb` light, `#232e58` dark), so hovered and highlighted menu items show colour.
+- **Corners and cards:** `src/app/globals.css` redefines the radius scale in `@theme inline`, so `rounded-4xl` is 14px (sm 4px, md 6px, lg 8px, xl 10px, 2xl 11px, 3xl 12px, 4xl 14px, from `--radius` 0.625rem). Cards are flat: no shadow, a 1px ring in `--border`, 20px padding (16px for `size="sm"`). Badges use `rounded-md`, not pills.
 - **Dark variant:** `@custom-variant dark (&:where(.dark, .dark *));` in `globals.css`, so `dark:` classes follow the `dark` class.
 - **Base colour:** `stone` in `components.json`.
-- **Category, priority and expense colours** (`src/domain/taxonomy.ts`): fixed hex colours per category (`lights`, `food`, `shopping`, `sight`, `daytrip`, `temple`), per priority (`must`, `want`, `maybe`) and per expense category. `darkStep` and `tint` produce the dark-mode variants.
+- **Category, priority and expense colours** (`src/domain/taxonomy.ts`): fixed hex colours per category (`lights`, `food`, `shopping`, `sight`, `daytrip`, `temple`), per priority (`must`, `want`, `maybe`) and per expense category. `darkStep` and `tint` produce the dark-mode variants. Category and priority badges show these colours only on their icon, not as a fill (`tag-badges.tsx`).
 - **Map:** `trip-map.tsx` reads `resolvedTheme` and passes `colorScheme: "light" | "dark"` to the Maps service, so the map follows the app.
 - **Toasts:** `sonner` reads the theme through `useTheme`.
-- **Browser chrome:** `themeColor: "#0f766e"` in the root layout and manifest; background `#ffffff` in the manifest.
-- **Cities** have their own colour (`#rrggbb` in `cities` documents), used for dots in the sidebar and day list.
-- **Font:** Oxanium (`--font-sans`) and Geist Mono (`--font-mono`) via `next/font`.
+- **Browser chrome:** `THEME_COLOR` (`src/lib/theme-color.ts`) is the source. The root layout's `themeColor` and the manifest's `theme_color` and `background_color` use `THEME_COLOR.light`. `ThemeColor` in `theme-provider.tsx` calls `applyThemeColor` whenever the resolved theme changes, so the browser bar follows the chosen theme.
+- **Cities** have their own colour (`#rrggbb` in `cities` documents), used for dots in the sidebar and day list. On the Day page a city's colour is the line of its days: the header has a short band in that colour, and the stop rail uses the colour of the day's first city. `--now` marks the next stop.
+- **Font:** IBM Plex Sans (`--font-sans`, text), Barlow Semi Condensed (`--font-display`, mapped to `--font-heading`, used by the `font-heading` class for headings, dates, times and amounts) and Geist Mono (`--font-mono`) via `next/font`.
+- **Shell:** the open section in the phone tab bar (`BottomNav`, on the card colour, tabs at least 56px tall) and the open section's header link on tablets are marked with the soft `--accent` tint and `text-primary`; on phones the icon also sits in a soft pill (`bg-accent`), and the label is semibold. The sidebar's active item uses the soft sidebar tint (`bg-sidebar-accent`, `text-sidebar-primary`, semibold) in both themes, not a solid fill. `--now` (`bg-now text-now-foreground`) marks today in the sidebar, as the "Today" chip beside today's day. It also marks today in the calendar (the cell's border and a soft ring, date number in `text-now`), in the day list (today's row and its "Today" label), and on the Dashboard's Today card during the trip (ring, and the next stop's name in the heading font).
 
 ---
 
@@ -822,11 +825,15 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 
 ### 12.3 Day (`/day/?date=`)
 
-`day-plan.tsx` shows, for one date (the stop cards and links are in `day-plan-stop.tsx` and `day-plan-links.tsx`, and the drag and stop actions in `use-day-plan-actions.ts`; see §3.3 and §3.5):
+`day-plan.tsx` shows, for one date (the stop rows and links are in `day-plan-stop.tsx` and `day-plan-links.tsx`, and the drag and stop actions in `use-day-plan-actions.ts`; see §3.3 and §3.5):
 
 - **Flights** leaving or landing that day appear as cards at the top, with the times as on the ticket.
-- **Stops** in order: place, category and priority badges, and cost. Each stop has **Went** and **Skip** buttons, which set `status` to `done` or `skipped` through `updateItem`; tapping the active one sets it back to `planned`. The stop's name is a button with an info icon that opens `PlaceDetails`, the same as tapping its map pin.
-- **Legs** between stops (`dayLegs`): the hotel to the first stop, stop to stop, and the last stop back to the hotel. Each leg is keyed by the stop it arrives at (or `end`). Walking routes are used for legs up to 1.5 km (`WALK_LEG_MAX_KM`), fetched from the Maps SDK and kept in memory; straight-line distance is the fallback (`use-walking-legs.ts`). The legs from and back to the hotel are labelled "From {hotel}" and "Back to {hotel}" (`LegLine`'s `label`).
+- **Stops** on a line: each stop is a row on the day's line, with its number on a rail down the left of the list (`LINE_ITEM` in `day-plan-stop.tsx`). The rail is drawn in `--day-line`, which `day-plan.tsx` sets to the colour of the day's first city (`--primary` if none). The row shows the place name, its badges and cost. The name is a button with an info icon that opens `PlaceDetails`, the same as tapping its map pin.
+  - **Closed** (the default): the row shows only the line, so the day stays short. A chevron button (`aria-expanded`, labelled "Show the actions for {name}") opens it.
+  - **Opened:** the stop shows **Went** and **Skip** buttons, which set `status` to `done` or `skipped` through `updateItem` (tapping the active one sets it back to `planned`), the map link, move up and down (phones), move to another day, log a cost and remove. The chevron then reads "Hide the actions for {name}". Went and Skip use the default button size (44px on touch screens).
+  - **Next stop:** the first planned stop (`nextStop`) starts opened and carries a **Next stop** badge in the `--now` colour. Every other stop starts closed. Opening or closing a stop by hand wins over this default. When a stop is marked Went or Skip, the following planned stop becomes the next one and opens. A stop marked **Done** shows a badge in `--success`.
+  - **Read-only link:** there is no chevron. The stop always shows its map link and nothing else.
+- **Legs** between stops (`dayLegs`): the hotel to the first stop, stop to stop, and the last stop back to the hotel. Each leg is keyed by the stop it arrives at (or `end`). Walking routes are used for legs up to 1.5 km (`WALK_LEG_MAX_KM`), fetched from the Maps SDK and kept in memory; straight-line distance is the fallback (`use-walking-legs.ts`). The legs from and back to the hotel are labelled "From {hotel}" and "Back to {hotel}" (`LegLine`'s `label`). Legs sit on the rail between two stops (`LegLine`), and the list has no gaps between items, so the rail is continuous. This is the same on the phone list and the desktop stops column (`DroppableList`, `SortableStop`). Drag and drop is unchanged.
 - **Warnings:** `stopWarnings` flags a place on one of its closed dates; `holidayWarnings` flags a holiday or closure on that date for the place's category. These are the only warnings on a stop.
 - **Hotels** for the day (`hotelsForDay`): check-in and check-out. A hotel with saved coordinates gets the same walk time or distance as other legs, and, when **Show hotel** is on (see Map below), an "H" pin on the map, drawn larger than the stops (`emphasised`). A hotel with only a text location gets a directions link and no pin, walk time or distance; a note at the top of the day links to Settings > Stays (`hotelsOffMap` in `day-plan.tsx`).
 - **Waiting list**: places in the trip not yet on a day (`waitingPlaces`), listed through `applyWaitingView`.
@@ -839,14 +846,14 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Drag and drop**: stops within a day, between days, from the waiting list (`drop.ts`). Keyboard support.
 - **Bookings button**: lists reservations on the day (wide layout).
 - **Costs**: `costTotal` for the day.
-- **Weather and daylight** (`DayWeatherStrip`): in the header under the cost line, for the day's first city. Weather icon and name, high and low, chance of rain or snow, sunrise and sunset (sunset in amber when before 17:00). A "Forecast" tag for dates within 15 days, a dashed "Typical" tag (a tooltip explains: the same dates over the last three years) for later dates, and the sun only for past dates.
+- **Weather and daylight** (`DayWeatherStrip`): in the header under the cost line, for the day's first city. Weather icon and name, high and low, chance of rain or snow, sunrise and sunset (sunset in `--warning` when before 17:00). A "Forecast" tag for dates within 15 days, a dashed "Typical" tag (a tooltip explains: the same dates over the last three years) for later dates, and the sun only for past dates.
 - **Quick cost**: the "+ ¥" button in the button row logs an expense for that day's date (§12.5).
 
 **Shared view:** the day research panel is hidden. No drag and drop, Went and Skip, up and down buttons, move to another day, log cost, remove, or add from the waiting list. Tapping a waiting place opens its details (it does not add it). The other-days column becomes links to those days. The List, Map and Waiting views, the filters and directions stay. Costs are hidden (`Yen` and `CostLine` render nothing).
 
 ### 12.4 Cities (`/cities/`) and City (`/city/?id=`)
 
-- Cities list: each city in trip order with dates and how much is planned.
+- Cities list: each city in trip order with dates and how much is planned. Each city card is a plain card with a band across the top in the city's colour.
 - City page: the catalogue (§11.2) for one city, with place details, add place, cost lines, the Days filter and the map.
 
 **Shared view:** the city page has no edit name, Add place or archive. The filters and the map stay.
@@ -858,7 +865,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Expenses** (`expenses` collection): title, amount in whole yen (`amountJPY`, the figure every total counts), category, date, status (`planned` or `paid`), who paid, how it was paid (`paymentMethod`: `card` or `cash`), and optional links to a place, reservation or stay. `cityId` is the city the money was spent in; `stayId` keeps its meaning (the hotel's own bill).
 - **Payer:** every expense has a member as payer. The "Not assigned" option is gone. An older expense with no payer counts under the trip's first member (`payerOf`). The Dashboard's "Paid by each person" bars use the same rule.
 - **Payment method:** every way of logging an expense asks card or cash: the expense form, the quick cost entry, Log cost from a stop, stay or flight, and a booking's cost in Settings. The last choice is remembered on the device (`payment-method.ts`). Records saved before the field read as `card`.
-- **Filters and sort:** the expense list can be filtered by status, person, payment (card or cash) and category, and sorted by newest, oldest, highest amount or lowest amount (`filterExpenses`). Filter selects show an icon for every option, and planned expenses show an amber badge.
+- **Filters and sort:** the expense list can be filtered by status, person, payment (card or cash) and category, and sorted by newest, oldest, highest amount or lowest amount (`filterExpenses`). Filter selects show an icon for every option, and planned expenses show a `--warning` badge.
 - **Against each person:** replaces the old "Paid by each person" card. One row per member shows what they paid against their own target (`byMember` on the budget), with planned spending below. Tapping a row opens `PersonPanel`: paid, planned, by card, in cash, their cash on hand, paid by category, and their expenses (editable), plus a button to filter the list to that person.
 - **Cash** (`cash` collection, §23.21): the Cash card records withdrawals and handovers. Each member's cash on hand is withdrawn + received − handed over − paid in cash. The card shows the total withdrawn, the dollars the bank charged (typed by hand, never worked out from a rate), how many withdrawals still lack dollars, and who owes whom. Handovers net out per pair, so paying a person back is a handover the other way. Cash records never count in the budget totals.
 - **Quick cost** (`quick-expense.tsx`, on the Today card during the trip and on each day page): a big amount field (with the ¥/$ toggle, `AmountInput`) and a category tile grid (`quick-expense-category` remembers the last tile). The panel shows the day and city it will use. The city is that night's hotel. "More details" opens the full expense form with the same values. Save writes an activity entry; the toast's Undo archives the expense.
@@ -866,7 +873,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Estimates**: each place with a cost estimate counts for its category, unless an expense already covers that place, booking or stay (`estimateStops`).
 - **Totals** by category (`totalsByCategory`) and by payer (`totalsByPayer`), and per-day spending (`spendByDay`).
 - **Budget** on the trip document: total (yen), by category, number of travellers (the per-adult estimate is multiplied by travellers; `null` = number of members), and `byMember`, a spending target per member email (what that person may pay, whatever it was for). All are set in the Set budget form.
-- **Figures**: spent, planned, budget left, days remaining (`daysRemaining`). Totals stay in yen. Dollars are shown at today's rate from `usd-rate.ts` (the fixed `YEN_PER_USD` when offline).
+- **Figures**: spent, planned, budget left, days remaining (`daysRemaining`). Each has an uppercase label, and the figure is in the heading font (`budget-figures.tsx`). Expense amounts on each row are in the heading font too (`budget-parts.tsx`). Totals stay in yen. Dollars are shown at today's rate from `usd-rate.ts` (the fixed `YEN_PER_USD` when offline).
 - **Charts**: donut by category, bars by day, gauge of budget used.
 - **Hide amounts**: the eye button (`HideAmountsButton`) hides every amount on the Budget and Dashboard screens. Hidden amounts read as `HIDDEN_AMOUNT` (`¥****`), including chart legends and tooltips, and the dollar hint is gone. Charts still draw from the real numbers. Setting the budget and editing an expense are disabled while hidden. The choice is saved on the device (`hide-amounts.ts`).
 - **Display currency**: the dollar button beside the eye (`CurrencyButton`) shows amounts in dollars, with a yen hint, on Budget and Dashboard. The choice is saved on the device (`display-currency.ts`). It is display only: totals, the budget and storage stay in yen, and hidden amounts still win.
@@ -938,7 +945,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 
 - **Section:** "To-dos" (ListChecks icon) sits between Budget and Settings in `SECTIONS`. It is hidden on read-only links, as Budget and Settings are. The phone tab bar has six columns.
 - **Lists:** each list has a title, an optional description, a colour dot and a sort order. On wide screens (lg) the lists sit in a left column, each with its colour dot, a progress bar and the open count, plus "All lists". On phones the list is picked from a Select.
-- **To-dos:** each row has a checkbox to mark it done, a due badge (late in red, due within a week in amber), a priority, the assignee (a member) and a menu for status, edit and archive. Status changes go through `withStatus`, which keeps `completedAt`.
+- **To-dos:** each row has a checkbox to mark it done, a due badge (late in `--destructive`, due within a week in `--warning`), a priority, the assignee (a member) and a menu for status, edit and archive. Status changes go through `withStatus`, which keeps `completedAt`.
 - **Filter and sort:** filter by all, open or done; sort by manual order, due date or priority (`visibleTodos`). In manual order, up and down buttons move a to-do (`swapOrder`); new to-dos get the next key (`nextOrder`).
 - **Archive:** archiving a to-do sets `archived`. Archiving a list also archives its live to-dos (`archiveList`). Nothing is deleted in normal use; Clean up deletes archived to-dos and archived lists that no live to-do uses (§12.6).
 - **Dashboard:** the Watch out panel lists late or soon-due open to-dos first (§12.1).
@@ -1028,7 +1035,7 @@ Viewers of a share link make the same place-detail calls as members (photos and 
 | **Firebase Authentication** | Google sign-in popup (`prompt: select_account`) | `auth.ts` |
 | **Cloud Firestore** | All trip, plan, user and proposal data | `firestore-*.ts` |
 | **Firebase App Check** | Off (`appCheckSiteKey = null`); code ready for reCAPTCHA v3 | `firebase.ts`, README "Security setup" |
-| **Google Fonts** | Oxanium and Geist Mono, self-hosted at build | `layout.tsx` |
+| **Google Fonts** | IBM Plex Sans, Barlow Semi Condensed and Geist Mono, self-hosted at build | `layout.tsx` |
 | **Open-Meteo** (`api.open-meteo.com`, `archive-api.open-meteo.com`, `geocoding-api.open-meteo.com`) | Forecast, typical weather and city geocoding for the day views (§12.3). Free, no key, called from the browser. No Google data. | `open-meteo.ts`, `use-weather.ts` |
 | **Frankfurter** (`api.frankfurter.dev`, ECB reference rates) | Today's USD to JPY rate for entering and showing dollars (§12.5). One GET per session (`/v1/latest?base=USD&symbols=JPY`); no key; nothing else is sent. Falls back to the fixed `YEN_PER_USD` offline. | `usd-rate.ts` |
 | **GitHub Pages** | Hosting | `deploy.yml` |
@@ -1160,7 +1167,7 @@ Run this by hand on both phones before the trip:
 
 ### 17.3 Install
 
-- `manifest.ts`: name "Trip Planner", standalone display, teal theme colour, icons 192 and 512 px (`public/icon-*.png`), `start_url` and `scope` under the base path. Apple web-app meta in layout.
+- `manifest.ts`: name "Trip Planner", standalone display, theme colour and background `#f4f6fa` (`THEME_COLOR.light`), icons 192 and 512 px (`public/icon-*.png`), `start_url` and `scope` under the base path. Apple web-app meta in layout.
 - Icons are generated by `scripts/make-icons.cjs` as plain PNGs; replace the files with real artwork later, keeping the names.
 
 ---
@@ -1694,7 +1701,6 @@ Removed on 2026-11-01: the Feasibility plan, docs/remaining-work-plan.md, links/
 
 | Item | Status | What to do |
 |---|---|---|
-| `components.json` vs code | Declares `iconLibrary: phosphor`, but 45 files use lucide and 9 use Phosphor. | Pick one icon set. |
 | `cn` npm package | Used instead of the usual `clsx` and `tailwind-merge` pair. | Works; note it when adding shadcn components. |
 | Rules not in CI | `test:rules` and `lint` are not run by the deploy workflow. | Add to CI if wanted. |
 | `firestore.rules` not deployed by CI | Must be pasted into the Firebase console. | Keep in the release steps (README). |

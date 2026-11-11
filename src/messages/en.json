@@ -211,6 +211,8 @@
     "skip": "Skip",
     "skipName": "Skip {name}",
     "openDetails": "See the details of {name}",
+    "showActions": "Show the actions for {name}",
+    "hideActions": "Hide the actions for {name}",
     "removed": "Removed from the plan",
     "fullDay": "Full day",
     "fullDayDescription": "Every leg, one tap each.",

@@ -180,7 +180,7 @@ export function ExpenseRow({
         )}
       </span>
       <span className="flex flex-col items-end gap-1">
-        <span className="font-medium tabular-nums">
+        <span className="font-heading text-base font-semibold tabular-nums">
           <Yen yen={expense.amountJPY} />
         </span>
         {!hidden &&
@@ -196,7 +196,7 @@ export function ExpenseRow({
         {expense.status === "planned" && (
           <Badge
             variant="outline"
-            className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+            className="border-warning/40 bg-warning/10 text-warning"
           >
             {t("budget.planned")}
           </Badge>
