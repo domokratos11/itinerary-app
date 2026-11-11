@@ -38,7 +38,7 @@ export function OldLinkRedirect() {
 
   return (
     <div className="flex flex-col gap-3">
-      <h1 className="text-2xl font-semibold">{t("misc.pageNotFound")}</h1>
+      <h1 className="text-3xl font-bold">{t("misc.pageNotFound")}</h1>
       <Link href="/days/" className="text-sm underline">
         {t("common.backToDays")}
       </Link>

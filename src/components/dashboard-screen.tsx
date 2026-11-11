@@ -134,7 +134,7 @@ function DashboardContent() {
   if (days.length === 0 && trip.places.length === 0)
     return (
       <div className="flex flex-col items-start gap-3">
-        <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
+        <h1 className="text-3xl font-bold">{t("dashboard.title")}</h1>
         <Empty>{t("dashboard.empty")}</Empty>
         {!readOnly && (
           <Button asChild variant="outline">
@@ -253,7 +253,7 @@ function DashboardContent() {
   return (
     <div className="flex flex-col gap-4">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
+        <h1 className="text-3xl font-bold">{t("dashboard.title")}</h1>
         <div className="flex gap-2">
           <HideAmountsButton />
           <CurrencyButton />

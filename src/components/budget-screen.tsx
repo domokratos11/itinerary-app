@@ -139,7 +139,7 @@ function BudgetContent() {
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-semibold">{t("budget.title")}</h1>
+          <h1 className="text-3xl font-bold">{t("budget.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("budget.intro")}</p>
         </div>
         <div className="flex flex-wrap gap-2">

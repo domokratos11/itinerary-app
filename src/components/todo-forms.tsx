@@ -306,8 +306,8 @@ export const PRIORITY_TEXT: Record<TodoPriority, string> = {
 
 const STATUS_COLOR: Record<TodoStatus, string> = {
   todo: "bg-muted-foreground/50",
-  inProgress: "bg-amber-500",
-  done: "bg-primary",
+  inProgress: "bg-warning",
+  done: "bg-success",
 };
 
 export function StatusDot({ status }: { status: TodoStatus }) {

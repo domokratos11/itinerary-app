@@ -158,7 +158,7 @@ export function TodosScreen() {
     <div className="flex flex-col gap-4">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">{t("todos.title")}</h1>
+          <h1 className="text-3xl font-bold">{t("todos.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("todos.intro")}</p>
         </div>
         {canEdit && (
@@ -254,7 +254,9 @@ export function TodosScreen() {
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Progress
                     value={
-                      progress.total ? (progress.done / progress.total) * 100 : 0
+                      progress.total
+                        ? (progress.done / progress.total) * 100
+                        : 0
                     }
                     className="h-1.5 w-32"
                   />
@@ -301,7 +303,10 @@ export function TodosScreen() {
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
-              <Select value={sort} onValueChange={(v) => setSort(v as TodoSort)}>
+              <Select
+                value={sort}
+                onValueChange={(v) => setSort(v as TodoSort)}
+              >
                 <SelectTrigger
                   size="sm"
                   className="w-fit sm:ml-auto"
@@ -395,7 +400,7 @@ function DueSoonNote({
   ).length;
   if (count === 0) return null;
   return (
-    <span className="flex items-center gap-1 font-medium text-amber-700 dark:text-amber-300">
+    <span className="flex items-center gap-1 font-medium text-warning">
       <CalendarClock className="size-3.5" aria-hidden />
       {t("todos.dueSoonCount", { count })}
     </span>
@@ -487,7 +492,7 @@ function TodoRow({
           onClick={onEdit}
           aria-label={t("todos.editAria", { title: todo.title })}
           className={cn(
-            "rounded-sm text-left text-sm font-medium break-words underline-offset-4 enabled:hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+            "rounded-sm text-left text-sm font-medium break-words underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none enabled:hover:underline",
             done && "text-muted-foreground line-through",
           )}
         >
@@ -512,7 +517,7 @@ function TodoRow({
           {todo.status === "inProgress" && (
             <Badge
               variant="outline"
-              className="gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+              className="gap-1.5 border-warning/40 bg-warning/10 text-warning"
             >
               <StatusDot status={todo.status} />
               {t(STATUS_LABEL[todo.status])}
@@ -526,7 +531,7 @@ function TodoRow({
                 due === "overdue" &&
                   "border-destructive/40 bg-destructive/10 text-destructive",
                 due === "soon" &&
-                  "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+                  "border-warning/40 bg-warning/10 text-warning",
               )}
             >
               <CalendarClock aria-hidden />

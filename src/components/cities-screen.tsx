@@ -5,7 +5,6 @@ import { useMemo } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { tint } from "@/domain/taxonomy";
 import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { cityHref, pageHref } from "@/lib/links";
@@ -30,7 +29,7 @@ export function CitiesScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">{t("cities.title")}</h1>
+      <h1 className="text-3xl font-bold">{t("cities.title")}</h1>
       {trip.cities.length === 0 && (
         <p className="text-sm text-muted-foreground">
           {t("cities.none")}
@@ -56,23 +55,18 @@ export function CitiesScreen() {
           return (
             <li key={city.id}>
               <Link href={cityHref(city.id, tripId)} className="block h-full">
+                {/* The band is the city's line colour, as on its days. */}
                 <Card
                   size="sm"
-                  style={{
-                    backgroundColor: tint(city.color),
-                    borderLeft: `4px solid ${city.color}`,
-                  }}
-                  className="h-full transition-[filter] hover:brightness-95 dark:hover:brightness-110"
+                  className="h-full pt-0 transition-colors hover:bg-muted/40"
                 >
+                  <span
+                    aria-hidden
+                    className="h-1.5 w-full"
+                    style={{ backgroundColor: city.color }}
+                  />
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <span
-                        aria-hidden
-                        className="size-3 rounded-full"
-                        style={{ backgroundColor: city.color }}
-                      />
-                      {city.name}
-                    </CardTitle>
+                    <CardTitle>{city.name}</CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-2 text-sm">
                     {stays.map((s) => (

@@ -93,7 +93,7 @@ export function DayWeatherStrip({
             className={cn(
               "flex items-center gap-1 tabular-nums",
               sun.sunset < EARLY_SUNSET &&
-                "font-medium text-amber-700 dark:text-amber-400",
+                "font-medium text-warning",
             )}
           >
             <Sunset aria-hidden className="size-4" />

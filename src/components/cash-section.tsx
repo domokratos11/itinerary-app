@@ -173,7 +173,7 @@ export function CashSection({
             </span>
             {summary.missingUSD > 0 && (
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <TriangleAlert className="size-3.5 text-amber-500" />
+                <TriangleAlert className="size-3.5 text-warning" />
                 {t("cash.usdMissing", { count: summary.missingUSD })}
               </span>
             )}
