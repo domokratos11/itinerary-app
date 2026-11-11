@@ -103,3 +103,18 @@ describe("PlaceDetails show on map", () => {
     expect(screen.queryByRole("button", { name: "Show on map" })).toBeNull();
   });
 });
+
+describe("PlaceDetails actions", () => {
+  // One short word shows; the full wording stays the button's name.
+  it("labels each action with one word and keeps the full name", () => {
+    details({});
+    const maps = screen.getByRole("link", { name: "Open in Google Maps" });
+    expect(maps).toHaveTextContent(/^Maps$/);
+    expect(
+      screen.getByRole("button", { name: "Research this place" }),
+    ).toHaveTextContent(/^Research$/);
+    expect(screen.getByRole("button", { name: "Edit place" })).toHaveTextContent(
+      /^Edit$/,
+    );
+  });
+});
