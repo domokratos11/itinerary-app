@@ -344,7 +344,9 @@
     "offline": "No tienes conexión. El mapa vuelve con señal; la lista sigue funcionando.",
     "quota": "El mapa alcanzó su límite diario. Volverá mañana.",
     "failed": "El mapa no pudo cargarse. La lista sigue funcionando.",
-    "fit": "Ver todos los pines"
+    "fit": "Ver todos los pines",
+    "expand": "Mapa en pantalla completa",
+    "shrink": "Salir de pantalla completa"
   },
   "settings": {
     "title": "Ajustes del viaje",

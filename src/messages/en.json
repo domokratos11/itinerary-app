@@ -344,7 +344,9 @@
     "offline": "You're offline. The map comes back with signal; the list still works.",
     "quota": "The map reached its daily limit. It will be back tomorrow.",
     "failed": "The map couldn't load. The list still works.",
-    "fit": "Show all pins"
+    "fit": "Show all pins",
+    "expand": "Full screen map",
+    "shrink": "Close full screen"
   },
   "settings": {
     "title": "Trip settings",
