@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -95,7 +95,7 @@ import {
   HotelButtons,
   Reservations,
 } from "@/components/day-plan-links";
-import { SortableStop, StopCard } from "@/components/day-plan-stop";
+import { LINE_ITEM, SortableStop, StopCard } from "@/components/day-plan-stop";
 
 type Props = {
   date: string;
@@ -294,6 +294,9 @@ export function DayPlan(props: Props) {
     : [];
   const showPhoneMap = !wide && view === "map";
   const showPhoneList = !wide && view === "list";
+  // The day's line is drawn in its city's colour, as in the calendar.
+  const lineColor = citiesById.get(props.cityIds[0])?.color ?? "var(--primary)";
+  const lineStyle = { "--day-line": lineColor } as CSSProperties;
   const draggingName = dragging
     ? parseDragId(dragging)
       ? waiting.find((w) => w.dragId === dragging)?.place.name
@@ -309,8 +312,13 @@ export function DayPlan(props: Props) {
         >
           {t("common.backToDays")}
         </Link>
+        <span
+          aria-hidden
+          className="h-1.5 w-16 rounded-full"
+          style={{ backgroundColor: lineColor }}
+        />
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h1 className="text-2xl font-semibold">{props.label}</h1>
+          <h1 className="text-3xl font-bold">{props.label}</h1>
           {props.cityNames.map((name) => (
             <Badge key={name} variant="secondary">
               {name}
@@ -424,7 +432,7 @@ export function DayPlan(props: Props) {
                 items={rows.map((r) => r.item.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <DroppableList empty={rows.length === 0}>
+                <DroppableList empty={rows.length === 0} style={lineStyle}>
                   {rows.map((row, index) => (
                     <SortableStop
                       key={row.item.id}
@@ -439,10 +447,13 @@ export function DayPlan(props: Props) {
                       onMark={(status) => mark(row.item, status)}
                       onMoveDay={(d) => moveToDay(row.item, d)}
                       onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
+                      isNext={row.item.id === next?.id}
                       readOnly={readOnly}
                     />
                   ))}
-                  {rows.length > 0 && <li>{legLine("end")}</li>}
+                  {rows.length > 0 && (
+                    <li className={LINE_ITEM}>{legLine("end")}</li>
+                  )}
                 </DroppableList>
               </SortableContext>
             </DayColumn>
@@ -483,9 +494,9 @@ export function DayPlan(props: Props) {
         </DndContext>
       ) : (
         showPhoneList && (
-          <ol className="flex flex-col gap-3">
+          <ol className="flex flex-col" style={lineStyle}>
             {rows.map((row, index) => (
-              <li key={row.item.id} className="flex flex-col gap-3">
+              <li key={row.item.id} className={LINE_ITEM}>
                 {legLine(row.item.id)}
                 <StopCard
                   number={index + 1}
@@ -497,6 +508,7 @@ export function DayPlan(props: Props) {
                   onMark={(status) => mark(row.item, status)}
                   onMoveDay={(d) => moveToDay(row.item, d)}
                   onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
+                  isNext={row.item.id === next?.id}
                   readOnly={readOnly}
                   buttons={{
                     canUp: index > 0,
@@ -507,7 +519,7 @@ export function DayPlan(props: Props) {
                 />
               </li>
             ))}
-            {rows.length > 0 && <li>{legLine("end")}</li>}
+            {rows.length > 0 && <li className={LINE_ITEM}>{legLine("end")}</li>}
           </ol>
         )
       )}
@@ -589,17 +601,20 @@ const preferItems: CollisionDetection = (args) => {
 
 function DroppableList({
   empty,
+  style,
   children,
 }: {
   empty: boolean;
+  style: CSSProperties;
   children: ReactNode;
 }) {
   const { setNodeRef, isOver } = useListDrop();
   return (
     <ol
       ref={setNodeRef}
+      style={style}
       className={cn(
-        "flex min-h-full flex-col gap-3 rounded-xl",
+        "flex min-h-full flex-col rounded-xl",
         empty && "items-center justify-center border border-dashed p-6",
         isOver && "bg-primary/5 ring-2 ring-primary/30",
       )}
