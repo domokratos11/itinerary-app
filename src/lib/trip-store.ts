@@ -41,6 +41,8 @@ const notLoaded = {
   expenses: false,
   flights: false,
   cash: false,
+  todoLists: false,
+  todos: false,
 };
 
 // Fed by the Firestore listener in use-trip-sync. Firestore is the only

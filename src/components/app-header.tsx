@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Eye,
   LayoutDashboard,
+  ListChecks,
   MapPinned,
   Settings,
   Wallet,
@@ -57,6 +58,13 @@ export const SECTIONS = [
     match: ["/budget/"],
   },
   {
+    path: "/todos/",
+    label: "nav.todos",
+    hint: "nav.hintTodos",
+    icon: ListChecks,
+    match: ["/todos/"],
+  },
+  {
     path: "/settings/",
     label: "nav.settings",
     hint: "nav.hintSettings",
@@ -65,9 +73,11 @@ export const SECTIONS = [
   },
 ] as const;
 
-// What a read-only link may open: no money (Budget) and no Settings.
+// What a read-only link may open: no money (Budget), no to-dos and no
+// Settings.
 const VIEWER_SECTIONS = SECTIONS.filter(
-  (s) => s.path !== "/budget/" && s.path !== "/settings/",
+  (s) =>
+    s.path !== "/budget/" && s.path !== "/todos/" && s.path !== "/settings/",
 );
 
 export function useSections(): readonly (typeof SECTIONS)[number][] {
@@ -163,7 +173,7 @@ export function BottomNav() {
       <ul
         className={cn(
           "grid",
-          sections.length === SECTIONS.length ? "grid-cols-5" : "grid-cols-3",
+          sections.length === SECTIONS.length ? "grid-cols-6" : "grid-cols-3",
         )}
       >
         {sections.map(({ path, label, icon: Icon }) => (

@@ -47,6 +47,8 @@ describe("activeTrip", () => {
     const data: TripData = {
       flights: [],
       cash: [],
+      todoLists: [],
+      todos: [],
       cities: [
         { id: "osaka", name: "Osaka", color: "#000000", ...base },
         { id: "nagoya", name: "Nagoya", color: "#000000", ...base },

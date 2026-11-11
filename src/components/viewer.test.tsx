@@ -123,6 +123,8 @@ function asViewer() {
       expenses: true,
       flights: true,
       cash: true,
+      todoLists: true,
+      todos: true,
     },
     error: null,
   });

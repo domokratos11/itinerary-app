@@ -230,6 +230,34 @@ service cloud.firestore {
         && isRecord(d);
     }
 
+    // A to-do list, and one to-do on it.
+    function isTodoList(d) {
+      return d.keys().hasOnly(['id', 'title', 'description', 'color', 'order', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'title', 'description', 'color', 'order', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.title, 120) && d.title.size() > 0
+        && optionalString(d.description, 1000)
+        && d.color is string && d.color.matches('^#[0-9a-fA-F]{6}$')
+        && d.order is int
+        && isRecord(d);
+    }
+
+    function isTodo(d) {
+      return d.keys().hasOnly(['id', 'listId', 'title', 'description', 'dueDate', 'status', 'priority', 'assignee', 'order', 'completedAt', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'listId', 'title', 'description', 'dueDate', 'status', 'priority', 'assignee', 'order', 'completedAt', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.listId, 64) && d.listId.size() > 0
+        && shortString(d.title, 200) && d.title.size() > 0
+        && optionalString(d.description, 2000)
+        && (d.dueDate == null || (d.dueDate is string && d.dueDate.size() == 10))
+        && d.status in ['todo', 'inProgress', 'done']
+        && d.priority in ['low', 'normal', 'high']
+        && optionalString(d.assignee, 254)
+        && d.order is int
+        && optionalString(d.completedAt, 30)
+        && isRecord(d);
+    }
+
     function isBudget(v) {
       return v == null || (v is map
         && v.keys().hasOnly(['totalJPY', 'byCategory', 'travellers', 'byMember'])
@@ -411,6 +439,20 @@ service cloud.firestore {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isCash(request.resource.data) && request.resource.data.id == id;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
+      }
+
+      match /todoLists/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isTodoList(request.resource.data) && request.resource.data.id == id;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
+      }
+
+      match /todos/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isTodo(request.resource.data) && request.resource.data.id == id;
         allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 

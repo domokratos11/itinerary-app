@@ -11,6 +11,7 @@ import { BudgetScreen } from "@/components/budget-screen";
 import { DashboardScreen } from "@/components/dashboard-screen";
 import { SettingsScreen } from "@/components/settings-screen";
 import { TodayCard } from "@/components/today-card";
+import { TodosScreen } from "@/components/todos-screen";
 import { TripDays } from "@/components/trip-days";
 import { useAuthStore } from "@/lib/auth-store";
 import { setLocale } from "@/lib/i18n";
@@ -61,6 +62,7 @@ const SCREENS: [string, () => ReactNode, string, string][] = [
   ["day", () => <DayScreen />, "Full day", "Día completo"],
   ["dashboard", () => <DashboardScreen />, "Dashboard", "Panel"],
   ["budget", () => <BudgetScreen />, "Budget", "Presupuesto"],
+  ["todos", () => <TodosScreen />, "To-dos", "Pendientes"],
   ["settings", () => <SettingsScreen />, "Trip settings", "Ajustes del viaje"],
 ];
 
@@ -96,5 +98,51 @@ describe.each([
     render(<AppSidebarProvider>{ui()}</AppSidebarProvider>);
     expect(screen.getAllByText(row[column]).length).toBeGreaterThan(0);
     expect(console.error).not.toHaveBeenCalled();
+  });
+});
+
+describe("the dashboard's to-do warnings", () => {
+  beforeEach(() => {
+    vi.setSystemTime(new Date("2026-11-10T00:00:00.000Z"));
+    setLocale("en");
+    const todo = {
+      listId: "docs",
+      description: null,
+      status: "todo" as const,
+      priority: "normal" as const,
+      assignee: null,
+      order: 0,
+      completedAt: null,
+      archived: false,
+      updatedAt: "2026-11-01T00:00:00.000Z",
+    };
+    useTripStore.setState({
+      data: {
+        ...fixtureTrip,
+        places: [place],
+        todos: [
+          { ...todo, id: "a", title: "Renew passports", dueDate: "2026-11-05" },
+          { ...todo, id: "b", title: "Print JR pass", dueDate: "2026-11-14" },
+          { ...todo, id: "c", title: "Pack", dueDate: "2026-12-10" },
+        ],
+      },
+    });
+    useAuthStore.setState({
+      status: "signed-in",
+      tripId: "trip-1",
+      access: "member",
+      trips: [{ id: "trip-1", name: "Peru", members: ["ana@example.com"] }],
+    });
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it("lists late ones and those due within a week", () => {
+    render(<DashboardScreen />);
+    expect(
+      screen.getByRole("link", { name: /To-do late: Renew passports/ }),
+    ).toHaveAttribute("href", expect.stringMatching(/todos\/?\?list=docs/));
+    expect(screen.getByText(/To-do due .*: Print JR pass/)).toBeInTheDocument();
+    expect(screen.queryByText(/Pack/)).toBeNull();
   });
 });

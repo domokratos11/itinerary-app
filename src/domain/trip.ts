@@ -13,6 +13,8 @@ import type {
   ReservationRecord,
   Stay,
   StayRecord,
+  TodoListRecord,
+  TodoRecord,
 } from "./schemas";
 
 // The trip's structure: everything except the plan items. Lives in
@@ -26,6 +28,8 @@ export type TripData = {
   expenses: ExpenseRecord[];
   flights: FlightRecord[];
   cash: CashRecord[];
+  todoLists: TodoListRecord[];
+  todos: TodoRecord[];
 };
 
 export type TripCollection = keyof TripData;
@@ -38,6 +42,8 @@ export const TRIP_COLLECTIONS: TripCollection[] = [
   "expenses",
   "flights",
   "cash",
+  "todoLists",
+  "todos",
 ];
 
 export type TripRecordOf = {
@@ -53,6 +59,8 @@ export const EMPTY_TRIP: TripData = {
   expenses: [],
   flights: [],
   cash: [],
+  todoLists: [],
+  todos: [],
 };
 
 export function stayId(stay: Pick<Stay, "cityId" | "checkIn">): string {
@@ -103,6 +111,12 @@ export function activeTrip(data: TripData): TripData {
     cash: data.cash
       .filter((c) => !c.archived)
       .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
+    todoLists: data.todoLists
+      .filter((l) => !l.archived)
+      .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title)),
+    todos: data.todos
+      .filter((todo) => !todo.archived)
+      .sort((a, b) => a.order - b.order),
   };
 }
 

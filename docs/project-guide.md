@@ -41,7 +41,7 @@ This guide explains what the app is made of, where each part lives, how the part
 ## 1. The app in one page
 
 - **Who uses it:** a small group of people listed in a trip's `members` array. Only Google accounts with a verified email can get in.
-- **What it does:** shows the trip day by day (cities, hotels, stops, transport, costs), lets members plan each day, keeps a budget, stores reservations, flights and holidays, and keeps a change log with undo.
+- **What it does:** shows the trip day by day (cities, hotels, stops, transport, costs), lets members plan each day, keeps a budget, stores reservations, flights and holidays, keeps shared to-do lists, and keeps a change log with undo.
 - **Where the data is:** every trip record lives in Firestore under `trips/{tripId}`. Nothing about a trip is bundled with the code. An empty collection shows as empty.
 - **Where it runs:** the browser. There is no app server. Next.js builds static HTML, GitHub Pages serves it, and all data work happens in the browser through the Firebase SDK.
 - **Time:** "today" and all trip dates use `Asia/Tokyo`, never the phone's time zone (`src/lib/tokyo-date.ts`).
@@ -196,11 +196,12 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `cities/page.tsx` | `/cities/`: all cities in trip order. |
 | `city/page.tsx` | `/city/?id=<cityId>&place=<placeId>`: one city's places. |
 | `budget/page.tsx` | `/budget/`: spending and budget. |
+| `todos/page.tsx` | `/todos/`: shared to-do lists. `?list=<id>` opens one list. Server Component shell around `TodosScreen`. |
 | `settings/page.tsx` | `/settings/`: trip administration. |
 | `not-found.tsx` | 404 page. Also `404.html` on Pages, where old day and city links are redirected (`old-link-redirect.tsx`). |
 | `manifest.ts` | `manifest.webmanifest` (installable app). |
 | `version.json/route.ts` | `version.json` with the deployed version. `force-static`, so no request is read. |
-| `globals.css` | Theme tokens, Tailwind import, dark variant, base styles. |
+| `globals.css` | Theme tokens, Tailwind import, dark variant, base styles, and the `thin-scrollbar` utility (replaces shadcn's `no-scrollbar`). |
 | `favicon.ico` | Browser icon. |
 | `days/page.test.tsx` | A test kept beside its page. |
 | `error.test.tsx` | Test for the crash screen in `error.tsx`, kept beside it. |
@@ -213,10 +214,10 @@ Shared chrome and gates:
 
 | File | Role |
 |---|---|
-| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member` and the trip has loaded, or when a shared view is active. |
-| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the five sections) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
+| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. |
+| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the six sections, including To-dos) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
-| `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. |
+| `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
 | `plan-sync.tsx` | Mounted once. Renders `MemberSync` (auth, plan and trip listeners) for members, or `ViewerSync` (loads the shared copy, §12.8) when the tab is in viewer mode. |
 | `locale-root.tsx` | Remounts the app when the language changes. |
@@ -237,17 +238,18 @@ Screens (one per page):
 
 | File | Page | Role |
 |---|---|---|
-| `dashboard-screen.tsx` | `/` | `DashboardScreen` and `DashboardContent`: dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research. Imports the budget figures from `budget-figures.tsx`. |
+| `dashboard-screen.tsx` | `/` | `DashboardScreen` and `DashboardContent`: dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research, and open to-dos that are late or due soon (§12.9). Imports the budget figures from `budget-figures.tsx`. |
 | `dashboard-parts.tsx` | `/` | The pieces the dashboard is built from: `Tile`, `Panel`, `Hint`, `Empty` and `ClockTiles`. |
 | `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions, and the quick cost button (`QuickExpenseButton`); before it, a countdown. During the trip it also shows the day's weather (`WeatherBadge`). |
 | `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. `trip-days.tsx` holds the Calendar / List toggle (shadcn `ToggleGroup`, next to Today). |
 | `trip-calendar.tsx` | `/days/` | `TripCalendar`: the Calendar view. Monday-first weeks in one continuous grid (December into January). Trip days link to `/day/?date=` (id `day-YYYY-MM-DD`); cells show the day number, stop count, a flight icon, a holiday dot and a today ring. Each hotel night is a city-coloured bar; hotel names show from `lg`. Days outside the trip are muted, not links. A day with research requested shows a search icon; one with a ready analysis shows a sparkles icon. Each trip day cell also shows the day's weather icon (`WeatherBadge`), with the high from `lg`. |
 | `day-screen.tsx` | `/day/` | Loads one day and renders `DayPlan`. |
-| `day-plan.tsx` | `/day/` | `DayPlan` (about 630 lines), with `DroppableList`, `PhoneWaiting` and the drag collision helpers. The day itself: flight cards at the top, stops, legs, costs, warnings, map, waiting list, drag and drop. Stops and links are in the two files below, and the drag and stop actions in `use-day-plan-actions.ts` (§3.5). |
+| `day-plan.tsx` | `/day/` | `DayPlan` (about 630 lines), with `DroppableList`, `PhoneWaiting` and the drag collision helpers. The day itself: flight cards at the top, stops, legs, costs, warnings, map (with the Show hotel control in `map-hotels.tsx`), waiting list, drag and drop. Stops and links are in the two files below, and the drag and stop actions in `use-day-plan-actions.ts` (§3.5). |
 | `day-plan-stop.tsx` | `/day/` | `SortableStop` (wide screens, drag grip), `StopCard` (status buttons, map link, move day, cost, remove; phones get up and down buttons) and the `StopOutcome` type. |
 | `day-plan-links.tsx` | `/day/` | `FullDay` (directions for the whole day), `HotelButtons` and `HotelButton` (directions to the hotel), `BookingsButton` (wide screens, side sheet) and `Reservations`. |
 | `day-research.tsx` | `/day/` | `DayResearchPanel`: under the flights. "Research this day" (optional message) asks for every place on the day; shows the request, the day analysis (starts collapsed to a header and a short preview; once opened: load badge, warnings, nearby ideas, answer, sources) and place updates to review or accept for the day. Hidden on read-only links. |
-| `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view: the day, other days, waiting places. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
+| `day-side-panel.tsx` | `/day/` (wide) | The columns of the day view on wide screens: the stops on the left at full height; on the right, the Waiting column and a compact "Move to another day" column above the map. `WaitingControls` gives the waiting list its sort, filter, Clear and Show on map controls. Also drag IDs. |
+| `map-hotels.tsx` | `/day/` | `MapHotelsControl`: the **Show hotel** checkbox in the map toolbar, off by default. On a moving day with two different hotels, a multi-select picks the morning and night hotel. |
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, Days filter (per-day pins with a legend), add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
@@ -262,14 +264,16 @@ Screens (one per page):
 | `settings-share.tsx` | Settings tab | Read-only share links: create, copy, refresh, change expiry, close (§12.8). |
 | `settings-stays.tsx`, `settings-cities.tsx`, `settings-places.tsx`, `settings-flights.tsx`, `settings-reservations.tsx`, `settings-holidays.tsx`, `settings-trip.tsx` | Settings tabs | Admin editors for each collection. `settings-places.tsx` also holds the research requests and proposal review. |
 | `settings-backup.tsx` | Settings tab | Export the whole trip as JSON; import only into an empty trip. |
-| `settings-cleanup.tsx` | Settings tab | Lists retired records and deletes them for good. |
+| `settings-cleanup.tsx` | Settings tab | Lists retired records and deletes them for good, including archived to-dos and to-do lists that no live to-do uses. |
 | `settings-about.tsx` | Account sheet | Version and "start fresh" button. |
+| `todos-screen.tsx` | `/todos/` | `TodosScreen`: the list column (wide) or list Select (phone), the to-do rows, filters, sort and list progress (§12.9). |
+| `todo-forms.tsx` | `/todos/` | `ListForm` and `TodoForm`, both shown in `EditPanel`. |
 
 Plan and place editing:
 
 | File | Role |
 |---|---|
-| `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, and one two-column grid of equal outline buttons: Open in Google Maps, Show on map, Add to day, Log cost, Research, Edit and Archive. "Show on map" appears only when the place has coordinates (`onShowOnMap`). `AddToDay` takes `variant` and `className` for its button. |
+| `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, and a three-column grid of outline buttons, most with one short word (`place.short*` messages: Maps, Locate, Add, Cost, Research, Review or Requested, Edit). The full wording stays as each button's accessible name and tooltip. Buttons: Open in Google Maps, Show on map, Add to day, Log cost, Research, Edit and Archive. "Show on map" appears only when the place has coordinates (`onShowOnMap`). `AddToDay` takes `variant`, `className` and `compact` (the one-word button) for its button. |
 | `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. When no photo can show, the area says why: the device's daily photo limit is reached (it resets at midnight Tokyo time), Google did not answer, Maps is not set up or its key was refused, or the place has no photos. A photo that fails to load shows "This photo couldn't load" and logs a console warning. |
 | `place-editor.tsx` | Form for a place's fields. |
 | `edit-panel.tsx` | Dialog (wide) or drawer (phone) that wraps forms. |
@@ -277,7 +281,7 @@ Plan and place editing:
 | `place-suggestions.tsx` | The list of Google's suggestions, used by `add-place.tsx` and `settings-stays.tsx`. |
 | `add-to-day.tsx` | Choose day and position for a place. |
 | `proposal-review.tsx` | Compare old and new values for a research proposal, accept field by field. |
-| `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend). |
+| `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend), and `toolbar` (controls drawn top-left, kept in full screen). Every map has a full-screen button (Expand / Shrink): full screen grows the same map box to the whole screen, with safe-area padding and no second map load, locks page scroll, closes with Escape or the button, and refits the pins. |
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
 | `day-weather.tsx` | `DayWeatherStrip` (day page header: icon and name, high and low, chance of rain or snow, Forecast or dashed Typical tag, sunrise and sunset) and `WeatherBadge` (icon, plus the high from `lg`; used on the Today card and calendar cells). `WEATHER_ICON` maps kinds to icons. Data from `use-weather.ts`. |
 | `tag-badges.tsx` | Category and priority badges and options. |
@@ -297,9 +301,9 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 
 | File | Role |
 |---|---|
-| `schemas.ts` | The Zod schemas for every Firestore record and the enums (categories, priorities, statuses, expense categories, reservation types, payment methods, cash kinds). `CashRecordSchema` is the cash record; `ExpenseRecordSchema` has `paymentMethod` (default `card`); `BudgetSchema` has `byMember`. |
+| `schemas.ts` | The Zod schemas for every Firestore record and the enums (categories, priorities, statuses, expense categories, reservation types, payment methods, cash kinds). `CashRecordSchema` is the cash record; `ExpenseRecordSchema` has `paymentMethod` (default `card`); `BudgetSchema` has `byMember`. `TodoListRecordSchema` and `TodoRecordSchema` hold the to-do records (§23.22). |
 | `cash.ts` | `summarizeCash(cash, expenses, members)`: each member's cash on hand (withdrawn + received − handed over − paid in cash), the total withdrawn with dollars charged, and who owes whom (handovers net out per pair). Pure; never part of the budget totals. |
-| `trip.ts` | `TripData` type, `TRIP_COLLECTIONS` (the eight trip collections, `cash` last), `EMPTY_TRIP`, `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
+| `trip.ts` | `TripData` type, `TRIP_COLLECTIONS` (the ten trip collections: the eight record collections, plus `todoLists` and `todos`), `EMPTY_TRIP`, `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
 | `trip-repository.ts` | `TripRepository` interface and `TripAccess` / `TripSummary` types. |
 | `plan-repository.ts` | `PlanRepository` interface; `markRemoved`. |
 | `proposal-repository.ts` | `ProposalRepository` interface. |
@@ -326,6 +330,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `share.ts`, `share-repository.ts` | `share.ts`: `newShareId` and `parseShareId` (128-bit base64url IDs), `MAX_SHARE_DAYS` (30), `toSharedTrip` (builds the copy, §12.8). `share-repository.ts`: the `ShareRepository` interface. |
 | `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS`: sort and filter for the Day page's waiting list and its pins. |
 | `dashboard.ts` | Figures for the dashboard tiles. |
+| `todos.ts` | Pure to-do logic: due states (overdue, soon, later, none) in Japan time, `todosDueSoon`, list progress, filter and sort, order keys, status changes that keep `completedAt`, and list archiving. |
 | `weather.ts` | `WeatherKind`, `weatherKind(wmoCode)`, `typicalWeather(pastYears)`, `yearsBefore`, type `DayWeather`. Kinds are clear, partly, cloudy, fog, drizzle, rain, snow and storm. Typical weather is the average high and low, the % of years with at least 1 mm of rain, and the most common kind. |
 | `sun.ts` | `sunTimes(date, lat, lng)` → sunrise, sunset and daylight minutes in Tokyo time (NOAA solar equations, about a minute's accuracy). |
 | `proposals.ts` | Research proposals: new, open check, accept field by field, research result schema and cleaning. |
@@ -366,10 +371,10 @@ State and sync:
 
 | File | Role |
 |---|---|
-| `auth-store.ts` | Zustand: sign-in status, user, trips, access, canCreateTrips, trip ID. `useActiveTrip()`. |
+| `auth-store.ts` | Zustand: sign-in status, user, trips, access, canCreateTrips, trip ID. `useActiveTrip()`. The `tripChosen` flag is set by `setTripId` (also when it sets null) and reset by `setUser`. |
 | `use-auth-sync.ts` | Watches sign-in, loads the person's trips and profile, picks a trip, checks membership, remembers the trip. |
 | `trip-store.ts` | Zustand: trip collections, loaded flags, error. Hooks `useTrip`, `useTripDays`, `usePlacesById`, `useCitiesById`. |
-| `use-trip-sync.ts` | Subscribes to the eight trip collections (`TRIP_COLLECTIONS`, including `cash`) when access is `member`. |
+| `use-trip-sync.ts` | Subscribes to the ten trip collections (`TRIP_COLLECTIONS`, including `cash` and the two to-do collections) when access is `member`. |
 | `plan-store.ts` | Zustand: plan items, ready flag, error. |
 | `use-plan-sync.ts` | Subscribes to `items` for the trip. |
 | `use-day-research.ts` | Hook `useDayResearch(tripId)`: live day research. Listens only once access is `member`. |
@@ -500,6 +505,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `/itinerary-app/cities/` | `app/cities/page.tsx` | `?trip=` | Cities |
 | `/itinerary-app/city/` | `app/city/page.tsx` | `?id=<cityId>&place=<placeId>&trip=` | One city; `place` opens that place |
 | `/itinerary-app/budget/` | `app/budget/page.tsx` | `?trip=` | Budget |
+| `/itinerary-app/todos/` | `app/todos/page.tsx` | `?trip=`, optional `?list=<id>` | To-do lists (opens the named list) |
 | `/itinerary-app/settings/` | `app/settings/page.tsx` | `?trip=`, optional `?tab=<section>` | Settings (opens the named tab, default Stays) |
 | `/itinerary-app/404.html` | `app/not-found.tsx` | any | Not found; redirects old links |
 | `/itinerary-app/manifest.webmanifest` | `app/manifest.ts` | — | Install metadata |
@@ -557,6 +563,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `/cities/` | `CitiesScreen` | — |
 | `/budget/` | `BudgetScreen` → `BudgetContent` | `SummaryFigures`, `ExpenseRow`, `TargetRow`, `MemberTargetRow`, `BudgetForm`, `ExportExpensesButton` (`budget-parts.tsx`, `budget-figures.tsx`), `PersonPanel` (`budget-person.tsx`), `CashSection` (`cash-section.tsx`), `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
 | `/settings/` | `SettingsScreen` | one panel per tab (`Stays`, `Cities`, `Places`, `Flights`, `Reservations`, `Holidays`, `Trip`, `Share`, `Backup`, `Cleanup`); `EditPanel` in each; `ProposalReview` in Places; `NotOnSharedView` in viewer mode |
+| `/todos/` | `TodosScreen` | `ListForm` and `TodoForm` (`todo-forms.tsx`) in `EditPanel`; a list Select on phones; hidden in viewer mode |
 
 ### 6.3 Shared overlays
 
@@ -596,16 +603,16 @@ What happens on first load, in order:
 |---|---|
 | `loading` | Splash |
 | `signed-out` | "Sign in" screen with language choice and Google sign-in |
-| signed in, no trip chosen, trips still loading | Splash (or offline screen if offline) |
+| signed in, no trip chosen yet (trips still loading, or listed but none chosen yet) | Splash (or offline screen if offline) |
 | several trips, none chosen | Trip picker |
 | no trips | "No trips" screen (with "New trip" if allowed) |
 | `access = denied` | "Not on this trip" |
 | `access = missing` | "Trip not found" |
 | `access = checking` | Splash (or offline screen) |
-| `member`, trip collections not yet loaded | Splash |
+| `member`, a trip collection or the plan store not yet answered | Splash |
 | `member`, loaded | The app |
 
-7. **Listeners open only for `member`** (`PlanSync`): `usePlanSync(tripId)` subscribes to `items`, `useTripSync(tripId)` subscribes to the seven collections. Until then the rules would refuse them. In the same effect, `MemberSync` calls `watchStartupWrites()` and `requestPersistentStorage()` (§17.1) once the trip is live.
+7. **Listeners open only for `member`** (`PlanSync`): `usePlanSync(tripId)` subscribes to `items`, `useTripSync(tripId)` subscribes to the ten collections. Until then the rules would refuse them. In the same effect, `MemberSync` calls `watchStartupWrites()` and `requestPersistentStorage()` (§17.1) once the trip is live.
 8. **Remembering**: once a member is confirmed, the trip ID is saved in localStorage and in `users/{uid}.lastTripId`.
 
 **Viewer mode (`?share=`)** replaces steps 5, 7 and 8 for that tab:
@@ -622,7 +629,7 @@ What happens on first load, in order:
 ### 8.1 Reads
 
 ```
-Firestore (trips/{id}/cities|stays|reservations|places|holidays|expenses|flights|cash)
+Firestore (trips/{id}/cities|stays|reservations|places|holidays|expenses|flights|cash|todoLists|todos)
    └─ onSnapshot ─ FirestoreTripRepository.subscribe ─ zod parse (bad rows skipped)
         └─ useTripSync ─ tripStore.setCollection(name, rows)
              └─ hooks: useTrip() (archived hidden, sorted), useTripDays(), usePlacesById(), useCitiesById()
@@ -671,6 +678,7 @@ Nothing is deleted in normal use:
 |---|---|
 | Plan item | `status: "removed"` (restorable; shown in "Recently changed") |
 | Trip record (city, stay, place, reservation, holiday, expense, flight, cash record) | `archived: true` |
+| To-do list or to-do | `archived: true`. Archiving a list also archives its live to-dos (`archiveList`). |
 | Proposal | `status: "dismissed"` |
 | Day research | Cancel request sets `status: "archived"` (or goes back to the earlier analysis); Clean up deletes archived day research |
 | Activity entry | kept; deleted only by Clean up or by the rules' delete rule for members |
@@ -696,8 +704,8 @@ The app is designed for a 390px phone first, then widened (CLAUDE.md rule 8). Br
 
 | Width | Name in this app | What changes |
 |---|---|---|
-| below 768px | **phone** | Bottom tab bar (`BottomNav`, five sections). Drawers (vaul) for place details, edit and add-to-day. Day page shows one column at a time: list, map or waiting. Tapping a waiting place adds it (phones can't drag). Version tag hidden (it is under Account → About). |
-| 768px and up (`md`) | **tablet / small desktop** | Bottom tab bar hidden. Section links in the header. Dialogs and side sheets instead of drawers. Day page shows the three-column layout. Version tag in the corner. |
+| below 768px | **phone** | Bottom tab bar (`BottomNav`, six sections). Drawers (vaul) for place details, edit and add-to-day. Day page shows one column at a time: list, map or waiting. Tapping a waiting place adds it (phones can't drag). Version tag hidden (it is under Account → About). |
+| 768px and up (`md`) | **tablet / small desktop** | Bottom tab bar hidden. Section links in the header. Dialogs and side sheets instead of drawers. Day page shows two columns: stops on the left, and Waiting and the map on the right. Version tag in the corner. |
 | 1024px and up (`lg`) | **desktop** | Header section links hidden (sidebar takes over). Left sidebar with all sections and every trip day. Sidebar can collapse to icons (state kept in localStorage). |
 | 1280px and up | **wide** | City catalogue shows list and map side by side (`city-catalog.tsx`). |
 
@@ -732,6 +740,7 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 - **Library:** `next-themes`, in `src/components/theme-provider.tsx`. Attribute `class`, themes `light` and `dark`, default `light`, `enableSystem={false}`, `disableTransitionOnChange`. It sets `class="dark"` on `<html>` before the first paint, so `suppressHydrationWarning` is on `<html>`.
 - **Choices:** Light and Dark only, with no "Match phone" option. The button in the Account sheet switches between them (`theme-toggle.tsx`). On a device with no stored choice, or with the old stored `system` value, `PickFirstTheme` picks light or dark once from `prefers-color-scheme` and saves it. The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
 - **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, in OKLCH: `--background`, `--foreground`, `--primary` (teal, close to the theme colour), `--muted`, `--border`, `--sidebar-*`, `--chart-1..5`, and others. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`).
+- **Selected and highlighted controls:** selected toggles (`ui/toggle.tsx` with `aria-pressed`, and `ui/toggle-group.tsx` items with `data-state=on`) use a soft teal tint of `--primary`, not `bg-muted`. `--accent` (light and dark) is slightly teal-tinted, so hovered and highlighted menu items show colour.
 - **Dark variant:** `@custom-variant dark (&:where(.dark, .dark *));` in `globals.css`, so `dark:` classes follow the `dark` class.
 - **Base colour:** `stone` in `components.json`.
 - **Category, priority and expense colours** (`src/domain/taxonomy.ts`): fixed hex colours per category (`lights`, `food`, `shopping`, `sight`, `daytrip`, `temple`), per priority (`must`, `want`, `maybe`) and per expense category. `darkStep` and `tint` produce the dark-mode variants.
@@ -769,6 +778,8 @@ Matching is done by `cmdk`'s fuzzy filter on the `value` string of each item.
 | Priority | All, must, want, maybe | Select |
 | Unassigned only | yes/no | "Unassigned" = not used by any active plan item. Disabled while days are chosen. |
 
+The filter selects show an icon for every option, as on Budget (§12.5).
+
 Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordinates (`NEARBY_KM`).
 
 "Show on map" in place details (§3.3) closes the details, switches phones to the Map view, clears the filters if they hide the place, and focuses its pin.
@@ -799,7 +810,7 @@ Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordi
 
 ### 12.1 Dashboard (`/`)
 
-Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, next flight (`nextFlight`), route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts-lazy.tsx` (recharts via shadcn chart, loaded on first use).
+Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, next flight (`nextFlight`), route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts-lazy.tsx` (recharts via shadcn chart, loaded on first use). The Watch out panel lists open to-dos that are late or due within 7 days first (up to 4, then "N more"), each linking to `/todos/?list=<id>` (§12.9).
 
 **Shared view:** the budget tile, the Money section and cost per city are removed. The "Watch out" list has no research or Settings links.
 
@@ -817,13 +828,14 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Stops** in order: place, category and priority badges, and cost. Each stop has **Went** and **Skip** buttons, which set `status` to `done` or `skipped` through `updateItem`; tapping the active one sets it back to `planned`. The stop's name is a button with an info icon that opens `PlaceDetails`, the same as tapping its map pin.
 - **Legs** between stops (`dayLegs`): the hotel to the first stop, stop to stop, and the last stop back to the hotel. Each leg is keyed by the stop it arrives at (or `end`). Walking routes are used for legs up to 1.5 km (`WALK_LEG_MAX_KM`), fetched from the Maps SDK and kept in memory; straight-line distance is the fallback (`use-walking-legs.ts`). The legs from and back to the hotel are labelled "From {hotel}" and "Back to {hotel}" (`LegLine`'s `label`).
 - **Warnings:** `stopWarnings` flags a place on one of its closed dates; `holidayWarnings` flags a holiday or closure on that date for the place's category. These are the only warnings on a stop.
-- **Hotels** for the day (`hotelsForDay`): check-in and check-out. A hotel with saved coordinates gets the same walk time or distance as other legs, and an "H" pin on the map, drawn larger than the stops (`emphasised`). A hotel with only a text location gets a directions link and no pin, walk time or distance; a note at the top of the day links to Settings > Stays (`hotelsOffMap` in `day-plan.tsx`).
+- **Hotels** for the day (`hotelsForDay`): check-in and check-out. A hotel with saved coordinates gets the same walk time or distance as other legs, and, when **Show hotel** is on (see Map below), an "H" pin on the map, drawn larger than the stops (`emphasised`). A hotel with only a text location gets a directions link and no pin, walk time or distance; a note at the top of the day links to Settings > Stays (`hotelsOffMap` in `day-plan.tsx`).
 - **Waiting list**: places in the trip not yet on a day (`waitingPlaces`), listed through `applyWaitingView`.
   - **Sort and filter** menu: sort by priority (the default), name A to Z or Z to A; filter by priority and category. **Clear** appears when anything differs from the default and resets sorting and filters.
   - **Show on map** is off by default and resets when moving to another day, because `DayScreen` keys `DayPlan` by date. When on, the listed places get pins beside the numbered stops, coloured by category through `cityPins`, and they follow the filters. Clear does not turn the pins off. Tapping a pin opens the place's details. Places with no coordinates are counted in a note under the map.
   - On phones the map is its own tab, so turning it on switches to that tab, where the same controls appear to turn it off. Neither the view nor the button is saved.
+- **Layout:** on wide screens (md and up) the day has two columns: the stops on the left at full height; on the right, a row holding the Waiting column and a compact "Move to another day" column, with the map below it filling the rest. Phones keep the List, Map and Waiting tabs. Stop cards do not show Google photos; photos appear only in the place panel (§14.2).
 - **Day research** (`DayResearchPanel`, under the flights): "Research this day" with an optional message ("Anything specific to look into?"). Sending saves the day as `requested` and asks for research on every place on the day; places with an open proposal are skipped, and already researched places are not asked again. While requested: the date, the message, Change request, Cancel request (goes back to the earlier analysis if there was one, otherwise archives; Undo in the toast). When ready: a "Day analysis" card that starts collapsed, so the day's stops stay near the top on a phone. The header has the title (a button that opens and closes it, a bigger target than the chevron), the load badge (green, amber or red), a warnings count, "Research again" and a chevron. Collapsed, it shows the load reason (two lines), "N place updates to review" when research is waiting to be accepted, and a "Show the full analysis" link. Opened, it shows the reason, summary, warnings (buttons open the named places), nearby ideas (a trip place opens its details, others a Google Maps search link), the answer, sources and date. Both the title and the chevron carry `aria-expanded` and `aria-controls`. If the day's places have ready proposals, "N place updates to review" (Review opens Settings > Places) and "Accept all for this day" (confirm, `applyProposals`, Undo). "Research again" asks again and keeps the last analysis until a new one replaces it.
-- **Map** (`TripMap`): pins for the day's stops, lines between them. "Show all pins" frames them again. **Show on map** in place details is offered when the place has a pin on this map (a stop, or a Waiting place shown on the map); phones switch to the map tab.
+- **Map** (`TripMap`): pins for the day's stops, lines between them. The map toolbar has **Show hotel** (`MapHotelsControl`, `map-hotels.tsx`), off by default. When on, the hotels get their pins and lines. On a moving day with two different hotels (morning and night), a multi-select chooses which hotel to show. Hidden hotels also hide the map lines to and from them; the list's walking legs are unchanged. The map opens full screen (Expand / Shrink, §3.3). "Show all pins" frames them again. **Show on map** in place details is offered when the place has a pin on this map (a stop, or a Waiting place shown on the map); phones switch to the map tab.
 - **Drag and drop**: stops within a day, between days, from the waiting list (`drop.ts`). Keyboard support.
 - **Bookings button**: lists reservations on the day (wide layout).
 - **Costs**: `costTotal` for the day.
@@ -846,7 +858,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Expenses** (`expenses` collection): title, amount in whole yen (`amountJPY`, the figure every total counts), category, date, status (`planned` or `paid`), who paid, how it was paid (`paymentMethod`: `card` or `cash`), and optional links to a place, reservation or stay. `cityId` is the city the money was spent in; `stayId` keeps its meaning (the hotel's own bill).
 - **Payer:** every expense has a member as payer. The "Not assigned" option is gone. An older expense with no payer counts under the trip's first member (`payerOf`). The Dashboard's "Paid by each person" bars use the same rule.
 - **Payment method:** every way of logging an expense asks card or cash: the expense form, the quick cost entry, Log cost from a stop, stay or flight, and a booking's cost in Settings. The last choice is remembered on the device (`payment-method.ts`). Records saved before the field read as `card`.
-- **Filters and sort:** the expense list can be filtered by status, person, payment (card or cash) and category, and sorted by newest, oldest, highest amount or lowest amount (`filterExpenses`).
+- **Filters and sort:** the expense list can be filtered by status, person, payment (card or cash) and category, and sorted by newest, oldest, highest amount or lowest amount (`filterExpenses`). Filter selects show an icon for every option, and planned expenses show an amber badge.
 - **Against each person:** replaces the old "Paid by each person" card. One row per member shows what they paid against their own target (`byMember` on the budget), with planned spending below. Tapping a row opens `PersonPanel`: paid, planned, by card, in cash, their cash on hand, paid by category, and their expenses (editable), plus a button to filter the list to that person.
 - **Cash** (`cash` collection, §23.21): the Cash card records withdrawals and handovers. Each member's cash on hand is withdrawn + received − handed over − paid in cash. The card shows the total withdrawn, the dollars the bank charged (typed by hand, never worked out from a rate), how many withdrawals still lack dollars, and who owes whom. Handovers net out per pair, so paying a person back is a handover the other way. Cash records never count in the budget totals.
 - **Quick cost** (`quick-expense.tsx`, on the Today card during the trip and on each day page): a big amount field (with the ¥/$ toggle, `AmountInput`) and a category tile grid (`quick-expense-category` remembers the last tile). The panel shows the day and city it will use. The city is that night's hotel. "More details" opens the full expense form with the same values. Save writes an activity entry; the toast's Undo archives the expense.
@@ -879,7 +891,7 @@ Tabs (`settings-screen.tsx`):
 | Trip | trip name, members (email list, max 20), budget (total, by category, travellers, and per-member targets) |
 | Share | read-only share links: name, expiry, copy link, refresh, change expiry, close (§12.8). Members only. |
 | Backup | export the whole trip as JSON, including flights, cash records and day research; import only into a trip that has nothing saved. Older backups without flights still import. |
-| Clean up | the retired records (archived, including archived cash records, removed, dismissed, archived day research, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
+| Clean up | the retired records (archived, including archived cash records, removed, dismissed, archived day research, archived to-dos and to-do lists no live to-do uses, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
 
 Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, "start fresh" which runs `resetApp`), and sign-out.
 
@@ -906,7 +918,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 **What the copy holds** (`toSharedTrip` in `src/domain/share.ts`):
 
 - Cities, stays, reservations, places, holidays, flights and plan items, in the same record shapes as the trip. Archived records and removed stops are left out.
-- Not included: expenses, the budget, cash records, member emails and day research. `sharedTripData` gives the viewer an empty cash list.
+- Not included: expenses, the budget, cash records, to-dos, member emails and day research. `sharedTripData` gives the viewer an empty cash list and no to-dos.
 - Blanked: a place's cost estimate (null); a flight's confirmation number (null), cost (null, currency JPY) and note (null); the notes on stays and reservations (null).
 - Google coordinates older than 30 days are dropped (§14).
 
@@ -917,6 +929,21 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 - The copy loads once, and the app checks the expiry every minute. It re-reads the copy every 10 minutes, so a closed or expired link stops within that time. A closed, expired or unknown link shows "This link isn't open", with a button to leave and sign in.
 - Place details still fetch photos and hours from Google, under the same per-device daily limit as members (§14.2).
 - Auth never starts in viewer mode, and `getDb()` throws, so nothing can read or write the real trip from a link.
+
+---
+
+### 12.9 To-dos (`/todos/`)
+
+`todos-screen.tsx` and `todo-forms.tsx`, on the pure logic in `domain/todos.ts` (§13). The route `/todos/` takes an optional `?list=<id>` that opens that list.
+
+- **Section:** "To-dos" (ListChecks icon) sits between Budget and Settings in `SECTIONS`. It is hidden on read-only links, as Budget and Settings are. The phone tab bar has six columns.
+- **Lists:** each list has a title, an optional description, a colour dot and a sort order. On wide screens (lg) the lists sit in a left column, each with its colour dot, a progress bar and the open count, plus "All lists". On phones the list is picked from a Select.
+- **To-dos:** each row has a checkbox to mark it done, a due badge (late in red, due within a week in amber), a priority, the assignee (a member) and a menu for status, edit and archive. Status changes go through `withStatus`, which keeps `completedAt`.
+- **Filter and sort:** filter by all, open or done; sort by manual order, due date or priority (`visibleTodos`). In manual order, up and down buttons move a to-do (`swapOrder`); new to-dos get the next key (`nextOrder`).
+- **Archive:** archiving a to-do sets `archived`. Archiving a list also archives its live to-dos (`archiveList`). Nothing is deleted in normal use; Clean up deletes archived to-dos and archived lists that no live to-do uses (§12.6).
+- **Dashboard:** the Watch out panel lists late or soon-due open to-dos first (§12.1).
+- **Shared view:** the section is hidden, and viewers get no to-dos (§12.8).
+- **Data:** lists and to-dos are trip collections (§23.22). They sync through `TripRepository` into `useTripStore`, go into backups and are written with `saveRecord`.
 
 ---
 
@@ -938,6 +965,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor`, `dayFilterPins` | Pins per stop, straight lines when no route. `dayFilterPins` gives the City page's pins and day legend for the chosen days (a place on two days shows once, with the earlier day). |
 | `budget.ts` | `summarizeBudget`, `totalsByCategory`, `totalsByPayer`, `estimateStops`, `spendByDay`, `daysRemaining` | Expenses beat estimates for the same place; yen integers. |
 | `dashboard.ts` | many tile functions (see §12.1) | All figures from in-memory data. |
+| `todos.ts` | `dueState`, `todosDueSoon`, `listProgress`, `visibleTodos`, `nextOrder`, `swapOrder`, `withStatus`, `archiveList` | Due states in Japan time: overdue, soon (within 7 days), later, none. `archiveList` also archives the list's live to-dos. Nothing is deleted. |
 | `proposals.ts` | `newProposal`, `isOpenProposal`, `acceptProposal`, `changedFields`, `researchToAccept`, `cleanResearch`, `ResearchResultSchema` | Research never writes a place. Accepting copies chosen fields and their sources; status becomes `researched`. |
 | `place-edit.ts` | `applyPlaceEdit`, `validatePlaceForm`, `missingFields`, `needsResearch`, `parseMapsLink`, `matchesPlaceFilter`, `newDraftPlace` | Locked fields (hand-edited) are never changed by research. |
 | `trip-edit.ts` | `stayIssues`, `dayChanges` | When a stay moves, which stops lose their day. |
@@ -1025,7 +1053,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 | 1. Identity | Firebase Auth with Google; rules require `request.auth` and `email_verified == true` | `auth.ts`, `firestore.rules` `isSignedIn()` |
 | 2. Membership | The trip's `members` array (lowercase emails) must contain the caller's email | `isMember(tripId)` |
 | 3. Trip creation | Only emails in `config/access.tripCreators` can create trips; the creator must be in the new trip's members | `isTripCreator()`, `isNewTrip()` |
-| 4. Data shape | Every write must match a whitelist of fields and types, with size limits and enums | `isPlanItem`, `isCity`, `isStay`, `isReservation`, `isHoliday`, `isFlight`, `isPlace`, `isExpense`, `isCash`, `isProposal`, `isActivity`, `isBudget`, `isUserProfile`, `isNewTrip`, `isTripEdit` |
+| 4. Data shape | Every write must match a whitelist of fields and types, with size limits and enums | `isPlanItem`, `isCity`, `isStay`, `isReservation`, `isHoliday`, `isFlight`, `isPlace`, `isExpense`, `isCash`, `isTodoList`, `isTodo`, `isProposal`, `isActivity`, `isBudget`, `isUserProfile`, `isNewTrip`, `isTripEdit` |
 | 5. Document ID match | Every write checks that the document ID equals the record's `id` field | each `match` block |
 | 6. Deletes | Only retired records can be deleted (archived, removed, dismissed, applied); share links only once closed or expired; trips are never deleted; activity can be deleted by members | each `allow delete` |
 | 7. App gate | Nothing renders or listens before a member is confirmed | `AppGate`, `use-trip-sync`, `use-plan-sync`, `useAuthStore.access` |
@@ -1043,12 +1071,13 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
   - `create`: trip creators only, with one member (themselves) and a name of up to 100 characters.
   - `update`: members only, and only the fields `name`, `members` (1 to 20, must include the caller), `budget`, `updatedAt`.
   - `delete`: never.
-- **Trip subcollections** (`cities`, `stays`, `reservations`, `holidays`, `expenses`, `flights`, `cash`, `places`, `proposals`, `items`, `activity`): read and write for members, with the schema check on each write. Delete only if already retired.
+- **Trip subcollections** (`cities`, `stays`, `reservations`, `holidays`, `expenses`, `flights`, `cash`, `places`, `proposals`, `items`, `activity`, `todoLists`, `todos`): read and write for members, with the schema check on each write. Delete only if already retired.
 - **`expenses`:** `paymentMethod` is optional and must be `card` or `cash` (missing reads as `card`).
 - **`budget`** (on the trip document): `byMember` is optional, a map of at most 20 entries.
 - **`cash/{id}`:** members only. `isCash` checks the field whitelist and types. A handover needs a `to` different from `by`. Delete only when `archived` is true.
 - **`shares/{shareId}`:** `get` is allowed to anyone while the link is open (`revoked == false` and `request.time < expiresAt`), and to members of its trip. `list` is for members only, with a query on `tripId`. `create` and `update` are for members only, through `isShare`: at most 30 days ahead (plus 1 hour of clock drift), `tripId` and `createdAt` unchanged, and a revoked link cannot be reopened. `delete` is for members only, once the link is revoked or expired.
 - **`shares/{shareId}/{cities|stays|reservations|places|holidays|flights|items}/{id}`** (the copy): read while the link is open, or by members. Writes are for members only and must pass `isSharedCopy`: the existing field checks, with no amount, confirmation or booking note, plan items not `removed`, and no other collection name. This is the only data readable without sign-in.
+- **`todoLists/{id}` and `todos/{id}`:** members only, through `isTodoList` and `isTodo` (exact keys, enum values, length limits, `dueDate` as `YYYY-MM-DD` or null, `assignee` an email or null). Delete only when `archived` is true. Not copied to share links (`isSharedCopy` has no to-do collection).
 - **`items`:** a plan item may hold only `id`, `placeId`, `date`, `order`, `status` and `updatedAt`. The old stop fields (`startTime`, `durationMin`, `note`, `legNote`) are refused.
 - **`queue`** (legacy): members can read and delete, nothing else.
 - **`dayResearch/{date}`:** read, create and update for members, with `id` equal to the date and the `isDayResearch` shape (exact keys, status `requested`, `ready` or `archived`, request at most 1000 characters, analysis null or a map). Delete only when `status` is `archived`. Not copied to share links.
@@ -1087,6 +1116,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 | **Session** | Firebase keeps it in IndexedDB, so it survives reloads and works offline. |
 | **Trip list** | `watchMyTrips(email)`: `where("members", "array-contains", email)`. Needs no index (single-field). |
 | **Opening a trip** | From the link (`?trip=`), the remembered trip, the last trip, or the only trip. Opening another trip reloads the page. |
+| **Waiting for a trip** | While the trip list has answered with trips but none is chosen yet, the splash stays up (§7). |
 | **Membership check** | `watchAccess(tripId)` reads `trips/{id}`. Permission denied = not a member; missing = no such trip. |
 | **Remembering** | localStorage key `trip-id`, plus `users/{uid}.lastTripId`. |
 | **Members** | Trip settings add and remove emails (lowercase, at most 20). The list must always include the person saving it. |
@@ -1315,6 +1345,8 @@ trips/
     holidays/{id}              holidays and closures
     expenses/{id}              spending
     cash/{id}                  cash withdrawals and handovers (never in budget totals)
+    todoLists/{id}             to-do lists (§23.22)
+    todos/{id}                 to-dos (§23.22)
     flights/{id}               flights, as printed on the ticket
     places/{id}                places (catalogue)
     proposals/{id}             research proposals
@@ -1531,7 +1563,7 @@ Cross-collection links are **not enforced** by the rules or by the database. The
 | Signed-in person | `trips` where `members array-contains email` | Once per session, and on change | Single-field query. Works without a composite index. |
 | Signed-in person | `config/access` get | Once | Decides the "New trip" button. |
 | Member | `trips/{id}` get (live) | While trip is open | Membership check; live so removal is noticed. |
-| Member | eight collection listeners (`TRIP_COLLECTIONS`, including `cash`), full collections | While trip is open | No pagination; the whole trip is loaded. |
+| Member | ten collection listeners (`TRIP_COLLECTIONS`, including `cash` and the to-do collections), full collections | While trip is open | No pagination; the whole trip is loaded. |
 | Member | `items` listener | While trip is open | Plan. |
 | Member | `proposals` listener | While trip is open | Research notice and review. |
 | Member | `dayResearch` listener (`useDayResearch`) | While trip is open | Day research panel and calendar icons. |
@@ -1621,6 +1653,39 @@ Records cash that moves without being spent: a withdrawal from a bank, or a hand
 
 Cash is included in backups, and Clean up deletes archived cash records. It is never in read-only share links (§12.8).
 
+### 23.22 To-do lists and to-dos
+
+Two trip collections. They sync through `TripRepository` like the other trip records, go into backups, and are written with `saveRecord` (`trip-actions.ts`). Neither is in read-only share links (§12.8).
+
+**To-do lists:** `trips/{tripId}/todoLists/{id}`. Schema `TodoListRecordSchema`, rules `isTodoList`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Equals the document ID. |
+| `title` | string ≤ 120 | |
+| `description` | string ≤ 1000, or null | |
+| `color` | `#rrggbb` | Colour dot for the list. |
+| `order` | int | Sort position among the lists. |
+| `archived`, `updatedAt` | bool, ISO string | |
+
+**To-dos:** `trips/{tripId}/todos/{id}`. Schema `TodoRecordSchema`, rules `isTodo`.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Equals the document ID. |
+| `listId` | string | The list the to-do belongs to. |
+| `title` | string ≤ 200 | |
+| `description` | string ≤ 2000, or null | |
+| `dueDate` | `YYYY-MM-DD`, or null | Compared with today in Japan time (`dueState`). |
+| `status` | `todo`, `inProgress` or `done` | |
+| `priority` | `low`, `normal` or `high` | |
+| `assignee` | member email, or null | |
+| `order` | int | Manual order within the list. |
+| `completedAt` | ISO string, or null | Kept by `withStatus` (§13). |
+| `archived`, `updatedAt` | bool, ISO string | |
+
+Rules: members only, with fixed keys (the rules refuse any other field). Delete only when `archived` is true (§8.3). Clean up deletes archived to-dos and archived lists that no live to-do uses.
+
 ---
 
 ## 24. Known gaps and stale files
@@ -1669,4 +1734,5 @@ Removed on 2026-11-01: the Feasibility plan, docs/remaining-work-plan.md, links/
 | **Clean up** | The only place where records are deleted for good. |
 | **Haiku subagent** | A helper run on the Haiku model that writes doc updates (rule 16 in `CLAUDE.md`). |
 | **Share link** | A read-only link to a copy of the trip, opened with `?share=` and no sign-in (§12.8). |
+| **To-do** | A task in a to-do list (`trips/{id}/todos`, §23.22). Archived rather than deleted in normal use. |
 | **Viewer mode** | The app state for a share link: read-only, no sign-in, no access to the real trip (§7). |

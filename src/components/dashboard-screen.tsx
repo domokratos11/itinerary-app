@@ -7,6 +7,7 @@ import {
   CalendarClock,
   CalendarX,
   Flag,
+  ListChecks,
   Plane,
   Search,
   Ticket,
@@ -60,6 +61,7 @@ import {
   upcomingHolidays,
 } from "@/domain/dashboard";
 import { CATEGORY_COLOR, PRIORITY_COLOR } from "@/domain/taxonomy";
+import { dueState, todosDueSoon } from "@/domain/todos";
 import { formatDayLabel } from "@/lib/format-day";
 import { t } from "@/lib/i18n";
 import { cityHref, dayHref, pageHref } from "@/lib/links";
@@ -85,6 +87,7 @@ import {
 
 const noopSubscribe = () => () => {};
 const FALLBACK_COLOR = "#64748b";
+const TODOS_SHOWN = 4;
 
 // The first screen: where the trip stands, from what's already in it.
 export function DashboardScreen() {
@@ -169,7 +172,38 @@ function DashboardContent() {
   const cityName = (id: string) => citiesById.get(id)?.name ?? id;
   const usedCities = [...new Set(perDay.flatMap((d) => Object.keys(d.byCity)))];
 
+  // To-dos late or due within a week come first; the rest are summed up.
+  const dueTodos = readOnly ? [] : todosDueSoon(trip.todos, today);
+  const todoHref = (listId?: string) =>
+    pageHref("/todos/", tripId, listId ? { list: listId } : undefined);
   const watchOut = [
+    ...dueTodos.slice(0, TODOS_SHOWN).map((todo) => ({
+      key: `todo-${todo.id}`,
+      icon: ListChecks,
+      text:
+        dueState(todo, today) === "overdue"
+          ? t("dashboard.todoOverdue", {
+              title: todo.title,
+              day: formatDayLabel(todo.dueDate ?? today),
+            })
+          : t("dashboard.todoSoon", {
+              title: todo.title,
+              day: formatDayLabel(todo.dueDate ?? today),
+            }),
+      href: todoHref(todo.listId),
+    })),
+    ...(dueTodos.length > TODOS_SHOWN
+      ? [
+          {
+            key: "todos-more",
+            icon: ListChecks,
+            text: t("dashboard.todosMore", {
+              count: dueTodos.length - TODOS_SHOWN,
+            }),
+            href: todoHref(),
+          },
+        ]
+      : []),
     ...closed.map(({ item, place }) => ({
       key: `closed-${item.id}`,
       icon: CalendarX,
