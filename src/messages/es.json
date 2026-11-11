@@ -186,6 +186,10 @@
     "unpinned": "{unpinned} de estos {total} lugares aún no tienen marcador en el mapa."
   },
   "day": {
+    "showHotel": "Mostrar hotel",
+    "whichHotels": "Qué hoteles",
+    "hotelMorning": "Mañana: {name}",
+    "hotelNight": "Noche: {name}",
     "notFound": "Día no encontrado",
     "notATripDay": "{date} no es uno de los días del viaje.",
     "noDate": "No se indicó una fecha.",

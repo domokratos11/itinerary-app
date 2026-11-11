@@ -33,13 +33,18 @@ vi.mock("@/components/trip-map", () => ({
   TripMap: ({
     pins,
     note,
+    toolbar,
   }: {
     pins: { title: string }[];
     note: string | null;
+    toolbar?: React.ReactNode;
   }) => (
-    <div role="figure">
-      {pins.map((pin) => pin.title).join(", ")}|{note}
-    </div>
+    <>
+      <div role="figure">
+        {pins.map((pin) => pin.title).join(", ")}|{note}
+      </div>
+      {toolbar}
+    </>
   ),
 }));
 vi.mock("@/components/place-details", () => ({
@@ -196,5 +201,52 @@ describe("a stop in the day's plan", () => {
       { ...stop, status: "done" },
       { status: "planned" },
     );
+  });
+});
+
+describe("hotels on the day's map", () => {
+  const morning = { name: "Tokyo Inn", location: { lat: 35.68, lng: 139.76 } };
+  const night = { name: "Kyoto Ryokan", location: { lat: 35.0, lng: 135.77 } };
+
+  beforeEach(() => {
+    useTripStore.setState({ data: { ...fixtureTrip, places: [place] } });
+    usePlanStore.setState({ items: [stop] });
+    useAuthStore.setState({ tripId: "trip-1", access: "member" });
+  });
+
+  function movingDay() {
+    render(
+      <DayPlan
+        date={DATE}
+        label="Dec 18"
+        cityNames={["Tokyo", "Kyoto"]}
+        cityIds={["nagoya"]}
+        start={morning}
+        end={night}
+        reservations={[]}
+        flights={[]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "Map" }));
+  }
+
+  it("leaves them off until asked for", () => {
+    movingDay();
+    expect(screen.getByRole("figure")).toHaveTextContent("Ueno Zoo");
+    expect(screen.getByRole("figure")).not.toHaveTextContent("Tokyo Inn");
+    expect(screen.getByRole("checkbox", { name: "Show hotel" })).not.toBeChecked();
+  });
+
+  it("shows both on a moving day, and either one alone", () => {
+    movingDay();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show hotel" }));
+    expect(screen.getByRole("figure")).toHaveTextContent(
+      "Tokyo Inn, Ueno Zoo, Kyoto Ryokan",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Night: Kyoto Ryokan" }));
+    expect(screen.getByRole("figure")).toHaveTextContent("Tokyo Inn, Ueno Zoo");
+    expect(screen.getByRole("figure")).not.toHaveTextContent("Kyoto Ryokan");
+    fireEvent.click(screen.getByRole("button", { name: "Morning: Tokyo Inn" }));
+    expect(screen.getByRole("checkbox", { name: "Show hotel" })).not.toBeChecked();
   });
 });

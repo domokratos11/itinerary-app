@@ -186,6 +186,10 @@
     "unpinned": "{unpinned} of these {total} places have no map pin yet."
   },
   "day": {
+    "showHotel": "Show hotel",
+    "whichHotels": "Which hotels",
+    "hotelMorning": "Morning: {name}",
+    "hotelNight": "Night: {name}",
     "notFound": "Day not found",
     "notATripDay": "{date} isn't one of the trip's days.",
     "noDate": "No date given.",

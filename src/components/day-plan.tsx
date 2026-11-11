@@ -64,6 +64,11 @@ import { QuickExpenseButton } from "@/components/quick-expense";
 import { DayWeatherStrip } from "@/components/day-weather";
 import { useDaysWeather } from "@/lib/use-weather";
 import { TripMap, type MapFocus } from "@/components/trip-map";
+import {
+  MapHotelsControl,
+  NO_HOTELS,
+  type HotelsShown,
+} from "@/components/map-hotels";
 import { dayLegs } from "@/domain/legs";
 import { cityPins, dayMap, endpointPoint, placePoint } from "@/domain/map-pins";
 import { applyWaitingView, DEFAULT_WAITING_VIEW } from "@/domain/waiting-view";
@@ -123,6 +128,7 @@ export function DayPlan(props: Props) {
   ]);
   const [waitingView, setWaitingView] = useState(DEFAULT_WAITING_VIEW);
   const [waitingOnMap, setWaitingOnMap] = useState(false);
+  const [hotels, setHotels] = useState<HotelsShown>(NO_HOTELS);
   const wide = useMediaQuery("(min-width: 768px)");
   const stops = useMemo(
     () => itemsForDay(items, props.date),
@@ -194,11 +200,20 @@ export function DayPlan(props: Props) {
     r.place && !r.place.archived ? [r.place] : [],
   );
 
-  const map = dayMap(rows, props.start, props.end);
+  // Hotels are on the map only when asked for: a moving day's two hotels
+  // would otherwise stretch the map across both cities.
+  const map = dayMap(
+    rows,
+    hotels.start ? props.start : null,
+    hotels.end ? props.end : null,
+  );
   const legs = dayLegs(rows, props.start, props.end);
   const walking = useWalkingLegs(legs);
+  const hiddenLeg = (key: string) =>
+    (key === "end" && !hotels.end) ||
+    (key === rows[0]?.item.id && props.start !== null && !hotels.start);
   const mapLines = legs.flatMap((leg): MapLine[] => {
-    if (!leg.from || !leg.to) return [];
+    if (!leg.from || !leg.to || hiddenLeg(leg.key)) return [];
     const route = walking.get(leg.key);
     return [
       route && route.path.length > 1
@@ -253,6 +268,14 @@ export function DayPlan(props: Props) {
         // On phones the map is its own tab, so go and show them there.
         if (on && !wide) setView("map");
       }}
+    />
+  );
+  const mapToolbar = (
+    <MapHotelsControl
+      start={props.start}
+      end={props.end}
+      value={hotels}
+      onChange={setHotels}
     />
   );
   const openPlace = openPlaceId ? placesById.get(openPlaceId) : undefined;
@@ -380,6 +403,7 @@ export function DayPlan(props: Props) {
           focus={mapFocus}
           className="h-[65svh]"
           note={mapNote}
+          toolbar={mapToolbar}
         />
       )}
 
@@ -391,7 +415,10 @@ export function DayPlan(props: Props) {
           onDragCancel={() => setDragging(null)}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4">
+          {/* Two columns: the stops on the left, the full height, so there's
+              room to drag; on the right what's waiting, the other days (kept
+              small) and the map under them. */}
+          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)]">
             <DayColumn title={t("day.stopsColumn")}>
               <SortableContext
                 items={rows.map((r) => r.item.id)}
@@ -419,27 +446,32 @@ export function DayPlan(props: Props) {
                 </DroppableList>
               </SortableContext>
             </DayColumn>
-            <WaitingColumn
-              waiting={waiting}
-              total={allWaiting.length}
-              controls={waitingControls}
-              onOpen={readOnly ? setOpenPlaceId : undefined}
-            />
-            <OtherDaysColumn
-              otherDays={otherDays}
-              stopCounts={stopCounts}
-              readOnly={readOnly}
-            />
-          </div>
-          <div className="h-[38.7%] min-h-80 shrink-0">
-            <TripMap
-              pins={pins}
-              lines={mapLines}
-              onPinClick={setOpenPlaceId}
-              focus={mapFocus}
-              className="min-h-0 flex-1"
-              note={mapNote}
-            />
+            <div className="flex min-h-0 flex-col gap-4">
+              <div className="grid h-[42%] min-h-64 shrink-0 grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-4">
+                <WaitingColumn
+                  waiting={waiting}
+                  total={allWaiting.length}
+                  controls={waitingControls}
+                  onOpen={readOnly ? setOpenPlaceId : undefined}
+                />
+                <OtherDaysColumn
+                  otherDays={otherDays}
+                  stopCounts={stopCounts}
+                  readOnly={readOnly}
+                />
+              </div>
+              <div className="flex min-h-80 flex-1 flex-col">
+                <TripMap
+                  pins={pins}
+                  lines={mapLines}
+                  onPinClick={setOpenPlaceId}
+                  focus={mapFocus}
+                  className="min-h-0 flex-1"
+                  note={mapNote}
+                  toolbar={mapToolbar}
+                />
+              </div>
+            </div>
           </div>
           {/* The columns clip what's inside them, so what's being dragged
               follows the pointer above them. */}

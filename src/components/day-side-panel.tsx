@@ -313,13 +313,13 @@ export function OtherDaysColumn({
             ? t("share.otherDaysHint")
             : t("day.moveToAnotherHint")}
       </p>
-      <ul className="flex flex-col gap-1.5">
+      <ul className="flex flex-col gap-1">
         {otherDays.map((d) =>
           readOnly ? (
             <li key={d.date}>
               <Link
                 href={dayHref(d.date, null)}
-                className="flex items-center justify-between rounded-md border px-3 py-2 text-sm hover:bg-accent"
+                className="flex items-center justify-between gap-2 rounded-md border px-2 py-1 text-xs hover:bg-accent"
               >
                 {formatDayLabel(d.date)}
                 <Badge variant="outline">{stopCounts.get(d.date) ?? 0}</Badge>
@@ -368,7 +368,7 @@ function DayDrop({ date, stops }: { date: string; stops: number }) {
     <li
       ref={setNodeRef}
       className={cn(
-        "flex items-center justify-between rounded-md border border-dashed px-3 py-2 text-sm transition-colors",
+        "flex items-center justify-between gap-2 rounded-md border border-dashed px-2 py-1 text-xs transition-colors",
         isOver && "border-primary bg-primary/10",
       )}
     >
