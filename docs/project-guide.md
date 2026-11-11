@@ -80,8 +80,7 @@ Versions are the ones in `package.json`. "Where" says where the library is used 
 | **radix-ui** (umbrella package) | ^1.8.1 | Accessible primitives under shadcn components (dialog, select, tabs, tooltip, dropdown, switch, etc.). | `src/components/ui/*` |
 | **class-variance-authority** | ^0.7.1 | Variant styles for buttons, badges and similar components. | `src/components/ui/button.tsx` and others |
 | **cn** (npm package) | ^0.5.0 | The `cn()` class-merging helper. Note: shadcn usually ships `clsx` + `tailwind-merge`; this repo uses the `cn` package instead. | `src/lib/utils.ts` re-exports it |
-| **lucide-react** | ^1.63.0 | Icons. Most of the app's own components use it (45 files). | many components |
-| **@phosphor-icons/react** | ^2.1.10 | Icons. Used only by the nine shadcn/ui components, which `components.json` sets to Phosphor. The app's own components use lucide, so the two icon sets are mixed. | `src/components/ui/` (carousel, checkbox, command, dialog, dropdown-menu, select, sheet, sidebar, sonner) |
+| **lucide-react** | ^1.63.0 | Icons. The only icon set in the app, including the shadcn/ui components (`components.json` sets `iconLibrary: "lucide"`). | many components, `src/components/ui/` |
 | **cmdk** | ^1.1.1 | The command menu behind the search palette (`Command`, `CommandDialog`). | `src/components/ui/command.tsx`, `search-palette.tsx` |
 | **vaul** | ^1.1.2 | Bottom drawers on phones (`Drawer`). | `src/components/ui/drawer.tsx`, `place-details.tsx`, `edit-panel.tsx`, `add-to-day.tsx` |
 | **sonner** | ^2.0.8 | Toast messages. Sits above the bottom tab bar on phones. | `src/components/ui/sonner.tsx`, root layout |
@@ -284,7 +283,7 @@ Plan and place editing:
 | `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend), and `toolbar` (controls drawn top-left, kept in full screen). Every map has a full-screen button (Expand / Shrink): full screen grows the same map box to the whole screen, with safe-area padding and no second map load, locks page scroll, closes with Escape or the button, and refits the pins. |
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
 | `day-weather.tsx` | `DayWeatherStrip` (day page header: icon and name, high and low, chance of rain or snow, Forecast or dashed Typical tag, sunrise and sunset) and `WeatherBadge` (icon, plus the high from `lg`; used on the Today card and calendar cells). `WEATHER_ICON` maps kinds to icons. Data from `use-weather.ts`. |
-| `tag-badges.tsx` | Category and priority badges and options. |
+| `tag-badges.tsx` | Category and priority badges and options. Quiet: a neutral badge (`secondary` for category, `outline` for priority) with the icon in the category or priority colour; the badge is not filled with that colour. |
 | `charts.tsx` | The recharts charts only: `DonutChart`, `BudgetGauge`, `ColumnChart`, `StackedColumnChart`. Not imported by screens directly. |
 | `chart-parts.tsx` | Chart pieces drawn without recharts: `Series` type, `SeriesLegend`, `BarList` and an internal `ChartValue`. |
 | `charts-lazy.tsx` | What screens import. Wraps the four recharts charts with `next/dynamic` (`ssr: false`), each with a `Skeleton` of the chart's own size so nothing moves, and re-exports `BarList`, `SeriesLegend` and `Series`. Used by `dashboard-screen.tsx` and `budget-screen.tsx`. |
@@ -717,7 +716,7 @@ The app is designed for a 390px phone first, then widened (CLAUDE.md rule 8). Br
 - The shadcn sidebar (`ui/sidebar.tsx`) uses `(max-width: 1023px)` to switch to an off-canvas sheet. The app has no trigger for that sheet, so below 1024px the sidebar is never shown; the day list is reached through the Days page.
 - Layout classes are Tailwind responsive prefixes (`md:`, `lg:`), used in about 30 component and page files. Page wrappers grow from `max-w-md` (phone) to `max-w-[100rem]` (desktop).
 - One-column grids must use `grid-cols-1`. An implicit grid track grows to its widest content and overflows the phone screen.
-- Buttons are larger on touch screens: the `pointer-coarse:` variants in `src/components/ui/button.tsx` set bigger heights and icon sizes.
+- Buttons are larger on touch screens: the `pointer-coarse:` variants in `src/components/ui/button.tsx` set the default size to 44px tall, `sm` to 40px and `lg` to 48px. The icon sizes are 44px (`icon`), 40px (`icon-sm`) and 48px (`icon-lg`). `xs` and `icon-xs` stay 32px.
 - Bottom padding: the body adds `pb-[calc(4rem+env(safe-area-inset-bottom))]` below `md`, so the tab bar does not cover content.
 - `viewportFit: "cover"` and safe-area insets are used so notched phones are handled.
 
@@ -742,9 +741,10 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 - **Choices:** Light and Dark only, with no "Match phone" option. The button in the Account sheet switches between them (`theme-toggle.tsx`). On a device with no stored choice, or with the old stored `system` value, `PickFirstTheme` picks light or dark once from `prefers-color-scheme` and saves it. The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
 - **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, as hex values: light has a cool paper-white background (`#f4f6fa`) and indigo `--primary` (`#2b47a8`); dark has a deep indigo background (`#0d1220`) and `--primary` `#96aaff`. Other tokens: `--background`, `--foreground`, `--muted`, `--border`, `--sidebar-*`, `--chart-1..5` (an indigo scale), and others. `--now` with `--now-foreground` is kept for the present moment (today, the next stop). `--success` and `--warning` are for status. All of these exist in both themes. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`, `bg-now`, `text-now-foreground`, `text-success`, `text-warning`). `h1` and `h2` use the heading font through a base rule.
 - **Selected and highlighted controls:** selected toggles (`ui/toggle.tsx` with `aria-pressed`, and `ui/toggle-group.tsx` items with `data-state=on`) use a soft tint of `--primary`, not `bg-muted`. `--accent` (light and dark) is a soft indigo tint (`#e2e8fb` light, `#232e58` dark), so hovered and highlighted menu items show colour.
+- **Corners and cards:** `src/app/globals.css` redefines the radius scale in `@theme inline`, so `rounded-4xl` is 14px (sm 4px, md 6px, lg 8px, xl 10px, 2xl 11px, 3xl 12px, 4xl 14px, from `--radius` 0.625rem). Cards are flat: no shadow, a 1px ring in `--border`, 20px padding (16px for `size="sm"`). Badges use `rounded-md`, not pills.
 - **Dark variant:** `@custom-variant dark (&:where(.dark, .dark *));` in `globals.css`, so `dark:` classes follow the `dark` class.
 - **Base colour:** `stone` in `components.json`.
-- **Category, priority and expense colours** (`src/domain/taxonomy.ts`): fixed hex colours per category (`lights`, `food`, `shopping`, `sight`, `daytrip`, `temple`), per priority (`must`, `want`, `maybe`) and per expense category. `darkStep` and `tint` produce the dark-mode variants.
+- **Category, priority and expense colours** (`src/domain/taxonomy.ts`): fixed hex colours per category (`lights`, `food`, `shopping`, `sight`, `daytrip`, `temple`), per priority (`must`, `want`, `maybe`) and per expense category. `darkStep` and `tint` produce the dark-mode variants. Category and priority badges show these colours only on their icon, not as a fill (`tag-badges.tsx`).
 - **Map:** `trip-map.tsx` reads `resolvedTheme` and passes `colorScheme: "light" | "dark"` to the Maps service, so the map follows the app.
 - **Toasts:** `sonner` reads the theme through `useTheme`.
 - **Browser chrome:** `THEME_COLOR` (`src/lib/theme-color.ts`) is the source. The root layout's `themeColor` and the manifest's `theme_color` and `background_color` use `THEME_COLOR.light`. `ThemeColor` in `theme-provider.tsx` calls `applyThemeColor` whenever the resolved theme changes, so the browser bar follows the chosen theme.
@@ -1695,7 +1695,6 @@ Removed on 2026-11-01: the Feasibility plan, docs/remaining-work-plan.md, links/
 
 | Item | Status | What to do |
 |---|---|---|
-| `components.json` vs code | Declares `iconLibrary: phosphor`, but 45 files use lucide and 9 use Phosphor. | Pick one icon set. |
 | `cn` npm package | Used instead of the usual `clsx` and `tailwind-merge` pair. | Works; note it when adding shadcn components. |
 | Rules not in CI | `test:rules` and `lint` are not run by the deploy workflow. | Add to CI if wanted. |
 | `firestore.rules` not deployed by CI | Must be pasted into the Firebase console. | Keep in the release steps (README). |
