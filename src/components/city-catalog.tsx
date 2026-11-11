@@ -55,7 +55,7 @@ import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useReadOnly } from "@/lib/viewer-store";
-import { CalendarDays, Pencil, Plus, X } from "lucide-react";
+import { CalendarDays, ListFilter, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 type Props = {
@@ -303,14 +303,20 @@ export function CityCatalog({
               <SelectTrigger className="w-full min-w-44 sm:w-fit">
                 <SelectValue>
                   {filter.priority === "all" ? (
-                    t("cities.allPriorities")
+                    <span className="flex items-center gap-2">
+                      <ListFilter />
+                      {t("cities.allPriorities")}
+                    </span>
                   ) : (
                     <PriorityOption priority={filter.priority} />
                   )}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("cities.allPriorities")}</SelectItem>
+                <SelectItem value="all">
+                  <ListFilter />
+                  {t("cities.allPriorities")}
+                </SelectItem>
                 {PRIORITIES.map((p) => (
                   <SelectItem key={p} value={p}>
                     <PriorityOption priority={p} />
