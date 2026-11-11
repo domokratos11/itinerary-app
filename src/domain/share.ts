@@ -73,7 +73,7 @@ export function parseShareId(value: string | null | undefined): string | null {
   return SHARE_ID_PATTERN.test(value) ? value : null;
 }
 
-// What a viewer gets: the trip's structure and plan without expenses, cash,
+// What a viewer gets: the trip's structure and plan without to-dos, expenses, cash,
 // the budget or anything else about money.
 export type SharedTrip = {
   cities: CityRecord[];
@@ -140,5 +140,7 @@ export function sharedTripData(shared: SharedTrip, now: Date): TripData {
     expenses: [],
     flights: shared.flights,
     cash: [],
+    todoLists: [],
+    todos: [],
   };
 }

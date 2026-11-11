@@ -36,10 +36,13 @@ export function AddToDay({
   place,
   className = "w-full",
   variant = "default",
+  compact = false,
 }: {
   place: Place;
   className?: string;
   variant?: "default" | "outline";
+  // One short word on the button; the full wording stays its name.
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const wide = useMediaQuery("(min-width: 768px)");
@@ -100,10 +103,15 @@ export function AddToDay({
         <Button
           variant={variant}
           className={className}
+          aria-label={compact ? t("common.addToDay") : undefined}
           onClick={() => setOpen(true)}
         >
           <CalendarPlus />
-          {t("common.addToDay")}
+          {compact ? (
+            <span className="truncate">{t("place.shortAdd")}</span>
+          ) : (
+            t("common.addToDay")
+          )}
         </Button>
       </Tip>
       {wide ? (

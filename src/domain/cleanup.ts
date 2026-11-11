@@ -12,6 +12,7 @@ export const CLEANUP_KINDS = [
   "expenses",
   "flights",
   "cash",
+  "todos",
   "stops",
   "research",
 ] as const;
@@ -60,6 +61,23 @@ export function planCleanup(
     case "flights":
     case "cash":
       return archivedOnly(trip[kind], kind);
+    case "todos": {
+      // Archived to-dos, and archived lists once none of theirs is live.
+      const todos = trip.todos.filter((todo) => todo.archived);
+      const used = new Set(
+        trip.todos.filter((todo) => !todo.archived).map((todo) => todo.listId),
+      );
+      const archived = trip.todoLists.filter((l) => l.archived);
+      const lists = archived.filter((l) => !used.has(l.id));
+      return {
+        remove: {
+          todos: todos.map((todo) => todo.id),
+          todoLists: lists.map((l) => l.id),
+        },
+        count: todos.length + lists.length,
+        skipped: archived.length - lists.length,
+      };
+    }
     case "cities": {
       // A city stays while a live place or hotel still points at it.
       const used = new Set(

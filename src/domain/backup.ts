@@ -5,6 +5,8 @@ import type { Translate } from "./i18n";
 import { withoutGoogleCoordinates } from "./location";
 import {
   CashRecordSchema,
+  TodoListRecordSchema,
+  TodoRecordSchema,
   CityRecordSchema,
   ExpenseRecordSchema,
   FlightRecordSchema,
@@ -53,6 +55,8 @@ export const BackupSchema = z
     expenses: z.array(ExpenseRecordSchema).default([]),
     flights: z.array(FlightRecordSchema).default([]),
     cash: z.array(CashRecordSchema).default([]),
+    todoLists: z.array(TodoListRecordSchema).default([]),
+    todos: z.array(TodoRecordSchema).default([]),
     items: z.array(PlanItemSchema),
     proposals: z.array(ProposalSchema).default([]),
     dayResearch: z.array(DayResearchSchema).default([]),

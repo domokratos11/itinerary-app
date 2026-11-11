@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Target } from "lucide-react";
+import {
+  ArrowDownUp,
+  LayoutGrid,
+  Plus,
+  Target,
+  User,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { BudgetGauge, DonutChart } from "@/components/charts-lazy";
@@ -275,9 +283,13 @@ function BudgetContent() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("budget.allPeople")}</SelectItem>
+                <SelectItem value="all">
+                  <Users />
+                  {t("budget.allPeople")}
+                </SelectItem>
                 {people.map((email) => (
                   <SelectItem key={email} value={email}>
+                    <User />
                     {personLabel(email)}
                   </SelectItem>
                 ))}
@@ -296,7 +308,10 @@ function BudgetContent() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("budget.allMethods")}</SelectItem>
+                <SelectItem value="all">
+                  <Wallet />
+                  {t("budget.allMethods")}
+                </SelectItem>
                 {PAYMENT_METHODS.map((m) => {
                   const Icon = PAYMENT_ICON[m];
                   return (
@@ -324,7 +339,10 @@ function BudgetContent() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("budget.allCategories")}</SelectItem>
+                <SelectItem value="all">
+                  <LayoutGrid />
+                  {t("budget.allCategories")}
+                </SelectItem>
                 {EXPENSE_CATEGORIES.map((c) => (
                   <SelectItem key={c} value={c}>
                     <ExpenseCategoryOption category={c} />
@@ -345,6 +363,7 @@ function BudgetContent() {
               <SelectContent>
                 {EXPENSE_SORTS.map((s) => (
                   <SelectItem key={s} value={s}>
+                    <ArrowDownUp />
                     {t(`expenseSort.${s}`)}
                   </SelectItem>
                 ))}

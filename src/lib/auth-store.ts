@@ -16,6 +16,9 @@ type AuthState = {
   canCreateTrips: boolean;
   // The open trip, and whether the user is on its member list.
   tripId: string | null;
+  // Whether a trip has been chosen from the list yet, even if none was. Until
+  // then a missing tripId says nothing, so the gate keeps the splash.
+  tripChosen: boolean;
   access: TripAccess;
   setUser: (user: SignedInUser | null) => void;
   setTrips: (trips: TripSummary[]) => void;
@@ -33,6 +36,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
   tripsFailed: false,
   canCreateTrips: false,
   tripId: null,
+  tripChosen: false,
   access: "checking",
   setUser: (user) =>
     set({
@@ -42,12 +46,13 @@ export const useAuthStore = create<AuthState>()((set) => ({
       tripsFailed: false,
       canCreateTrips: false,
       tripId: null,
+      tripChosen: false,
       access: "checking",
     }),
   setTrips: (trips) => set({ trips, tripsFailed: false }),
   setTripsFailed: () => set({ tripsFailed: true }),
   setCanCreateTrips: (canCreateTrips) => set({ canCreateTrips }),
-  setTripId: (tripId) => set({ tripId }),
+  setTripId: (tripId) => set({ tripId, tripChosen: true }),
   setAccess: (access) => set({ access }),
 }));
 

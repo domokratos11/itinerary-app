@@ -329,6 +329,64 @@ describe("cash", () => {
   });
 });
 
+describe("to-dos", () => {
+  const list = {
+    id: "l1",
+    title: "Before we fly",
+    description: null,
+    color: "#0d9488",
+    order: 0,
+    archived: false,
+    updatedAt: NOW,
+  };
+  const todo = {
+    id: "t1",
+    listId: "l1",
+    title: "Renew passports",
+    description: null,
+    dueDate: "2026-12-01",
+    status: "todo",
+    priority: "high",
+    assignee: ANA,
+    order: 0,
+    completedAt: null,
+    archived: false,
+    updatedAt: NOW,
+  };
+
+  it("keeps lists for members, with only these fields", async () => {
+    const path = "trips/japan/todoLists/l1";
+    await assertSucceeds(setDoc(doc(as(ANA), path), list));
+    await assertFails(setDoc(doc(as(EVE), path), list));
+    await assertFails(setDoc(doc(as(ANA), path), { ...list, title: "" }));
+    await assertFails(setDoc(doc(as(ANA), path), { ...list, color: "teal" }));
+    await assertFails(setDoc(doc(as(ANA), path), { ...list, extra: 1 }));
+  });
+
+  it("keeps to-dos with a known status and priority", async () => {
+    const path = "trips/japan/todos/t1";
+    await assertSucceeds(setDoc(doc(as(ANA), path), todo));
+    await assertSucceeds(
+      setDoc(doc(as(ANA), path), {
+        ...todo,
+        status: "done",
+        completedAt: NOW,
+        dueDate: null,
+        assignee: null,
+      }),
+    );
+    await assertFails(setDoc(doc(as(EVE), path), todo));
+    await assertFails(setDoc(doc(as(ANA), path), { ...todo, status: "late" }));
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...todo, priority: "urgent" }),
+    );
+    await assertFails(setDoc(doc(as(ANA), path), { ...todo, order: 1.5 }));
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...todo, dueDate: "Dec 1" }),
+    );
+  });
+});
+
 describe("stops in the plan", () => {
   const stop = {
     id: "s1",
@@ -410,6 +468,8 @@ describe("clean up", () => {
     "expenses",
     "flights",
     "cash",
+    "todoLists",
+    "todos",
   ])("deletes only archived %s, only for members", async (name) => {
     const live = `trips/japan/${name}/live`;
     const retired = `trips/japan/${name}/retired`;

@@ -106,6 +106,8 @@ describe("importBackup", () => {
       flights: 0,
       cash: 0,
       expenses: 0,
+      todoLists: 0,
+      todos: 0,
     });
 
     let planned: unknown[] = [];

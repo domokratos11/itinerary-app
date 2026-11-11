@@ -29,6 +29,8 @@ import {
   PlaceRecordSchema,
   ReservationRecordSchema,
   StayRecordSchema,
+  TodoListRecordSchema,
+  TodoRecordSchema,
 } from "@/domain/schemas";
 import { getDb } from "@/lib/firebase";
 import { setDoc, updateDoc, writeBatch } from "@/lib/tracked-firestore";
@@ -42,6 +44,8 @@ const SCHEMAS: { [C in TripCollection]: z.ZodType<TripRecordOf[C]> } = {
   expenses: ExpenseRecordSchema,
   flights: FlightRecordSchema,
   cash: CashRecordSchema,
+  todoLists: TodoListRecordSchema,
+  todos: TodoRecordSchema,
 };
 
 const TripDocSchema = z.object({
@@ -51,7 +55,7 @@ const TripDocSchema = z.object({
 });
 
 // Reads and writes
-// trips/{tripId}/{cities,stays,reservations,places,holidays,expenses,flights,cash}/{id}.
+// trips/{tripId}/{cities,stays,reservations,places,holidays,expenses,flights,cash,todoLists,todos}/{id}.
 // Rows that fail their schema are skipped, so one bad write cannot break
 // the whole trip.
 export class FirestoreTripRepository implements TripRepository {

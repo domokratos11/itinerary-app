@@ -9,6 +9,7 @@ import {
   History,
   Inbox,
   Link2,
+  ListChecks,
   MapPin,
   Plane,
   Search,
@@ -60,6 +61,7 @@ const ICONS: Record<CleanupKind, LucideIcon> = {
   expenses: Wallet,
   flights: Plane,
   cash: Banknote,
+  todos: ListChecks,
   stops: Route,
   research: Search,
 };
@@ -83,6 +85,8 @@ async function removePlan(tripId: string, plan: CleanupPlan) {
     "holidays",
     "expenses",
     "flights",
+    "todos",
+    "todoLists",
     "cash",
     "cities",
   ];

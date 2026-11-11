@@ -194,7 +194,12 @@ export function ExpenseRow({
             </span>
           )}
         {expense.status === "planned" && (
-          <Badge variant="outline">{t("budget.planned")}</Badge>
+          <Badge
+            variant="outline"
+            className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+          >
+            {t("budget.planned")}
+          </Badge>
         )}
       </span>
       <Button

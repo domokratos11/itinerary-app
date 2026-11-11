@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import {
   Archive,
   ExternalLink,
+  Map as MapIcon,
   MapPin,
   Pencil,
   Search,
@@ -50,9 +51,9 @@ import { useReadOnly } from "@/lib/viewer-store";
 export type NearbyPlace = { id: string; name: string };
 
 // One look for every action in the details, so none stands out over another.
-// Long labels (Spanish ones especially) wrap instead of overflowing.
+// Each shows one short word; the full wording is its name and its hint.
 const ACTION =
-  "h-auto min-h-10 w-full justify-start py-2 text-left whitespace-normal";
+  "h-9 w-full min-w-0 justify-start gap-1.5 px-2.5 text-xs sm:text-sm";
 
 type Props = {
   place: PlaceRecord | null;
@@ -213,38 +214,63 @@ function PlaceBody({
       <PlaceLive key={place.id} place={place} />
 
       {/* Every action weighs the same: one style, one size, two columns. */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <Tip label={t("place.tipOpenInMaps")}>
           <Button variant="outline" className={ACTION} asChild>
-            <a href={mapsLink} target="_blank" rel="noopener noreferrer">
-              <ExternalLink />
-              {t("place.openInMaps")}
+            <a
+              href={mapsLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t("place.openInMaps")}
+            >
+              <MapIcon />
+              <span className="truncate">{t("place.shortMaps")}</span>
+              <ExternalLink className="ml-auto size-3! opacity-60" />
             </a>
           </Button>
         </Tip>
         {onShowOnMap && (
-          <Button variant="outline" className={ACTION} onClick={onShowOnMap}>
-            <MapPin />
-            {t("place.showOnMap")}
-          </Button>
+          <Tip label={t("place.showOnMap")}>
+            <Button
+              variant="outline"
+              className={ACTION}
+              aria-label={t("place.showOnMap")}
+              onClick={onShowOnMap}
+            >
+              <MapPin />
+              <span className="truncate">{t("place.shortLocate")}</span>
+            </Button>
+          </Tip>
         )}
         {!readOnly && (
-          <AddToDay place={place} variant="outline" className={ACTION} />
+          <AddToDay place={place} variant="outline" className={ACTION} compact />
         )}
         {onLogCost && (
           <Tip label={t("budget.tipLogCost")}>
-            <Button variant="outline" className={ACTION} onClick={onLogCost}>
+            <Button
+              variant="outline"
+              className={ACTION}
+              aria-label={t("budget.logCost")}
+              onClick={onLogCost}
+            >
               <Wallet />
-              {t("budget.logCost")}
+              <span className="truncate">{t("place.shortCost")}</span>
             </Button>
           </Tip>
         )}
         {!readOnly && <PlaceResearch place={place} />}
         {onEdit && (
-          <Button variant="outline" className={ACTION} onClick={onEdit}>
-            <Pencil />
-            {t("place.edit")}
-          </Button>
+          <Tip label={t("place.edit")}>
+            <Button
+              variant="outline"
+              className={ACTION}
+              aria-label={t("place.edit")}
+              onClick={onEdit}
+            >
+              <Pencil />
+              <span className="truncate">{t("place.shortEdit")}</span>
+            </Button>
+          </Tip>
         )}
         {onArchive && (
           <Button
@@ -255,7 +281,7 @@ function PlaceBody({
             onClick={onArchive}
           >
             <Archive />
-            {t("common.archive")}
+            <span className="truncate">{t("common.archive")}</span>
           </Button>
         )}
       </div>
@@ -377,9 +403,10 @@ function PlaceResearch({ place }: { place: PlaceRecord }) {
         <Link
           href={pageHref("/settings/", tripId, { tab: "places" })}
           title={t("place.researchReady")}
+          aria-label={t("place.reviewResearch")}
         >
           <Search />
-          {t("place.reviewResearch")}
+          <span className="truncate">{t("place.shortReview")}</span>
         </Link>
       </Button>
     );
@@ -388,9 +415,14 @@ function PlaceResearch({ place }: { place: PlaceRecord }) {
       // The span carries the hint: a disabled button shows none.
       <Tip label={t("place.researchPending")}>
         <span className="flex" tabIndex={0}>
-          <Button variant="outline" className={ACTION} disabled>
+          <Button
+            variant="outline"
+            className={ACTION}
+            aria-label={t("place.researchRequested")}
+            disabled
+          >
             <Search />
-            {t("place.researchRequested")}
+            <span className="truncate">{t("place.shortRequested")}</span>
           </Button>
         </span>
       </Tip>
@@ -400,6 +432,7 @@ function PlaceResearch({ place }: { place: PlaceRecord }) {
       <Button
         variant="outline"
         className={ACTION}
+        aria-label={t("place.research")}
         onClick={() =>
           requestResearch(tripId, [place], proposals).catch(() =>
             toast.error(t("common.refused")),
@@ -407,7 +440,7 @@ function PlaceResearch({ place }: { place: PlaceRecord }) {
         }
       >
         <Search />
-        {t("place.research")}
+        <span className="truncate">{t("place.shortResearch")}</span>
       </Button>
     </Tip>
   );

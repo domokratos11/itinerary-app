@@ -20,6 +20,7 @@ import { APP_VERSION } from "@/lib/app-reset";
 import { signInWithGoogle, signOut } from "@/lib/auth";
 import { useAuthStore } from "@/lib/auth-store";
 import { BASE_PATH } from "@/lib/base-path";
+import { usePlanStore } from "@/lib/plan-store";
 import { openMyTrips, openTrip } from "@/lib/trip-id";
 import { useTripStore } from "@/lib/trip-store";
 import { useOnline } from "@/lib/use-online";
@@ -35,9 +36,13 @@ export function AppGate({ children }: { children: ReactNode }) {
   const tripsFailed = useAuthStore((s) => s.tripsFailed);
   const tripId = useAuthStore((s) => s.tripId);
   const access = useAuthStore((s) => s.access);
-  const tripLoaded = useTripStore(
+  const tripChosen = useAuthStore((s) => s.tripChosen);
+  const tripArrived = useTripStore(
     (s) => Object.values(s.loaded).every(Boolean) || s.error !== null,
   );
+  // The plan too, so no screen flashes "no stops" before its items arrive.
+  const planArrived = usePlanStore((s) => s.ready || s.error !== null);
+  const tripLoaded = tripArrived && planArrived;
   const online = useOnline();
   const viewer = useViewerStore((s) => s.status);
 
@@ -63,7 +68,10 @@ export function AppGate({ children }: { children: ReactNode }) {
 
   const email = user?.email ?? t("gate.thisAccount");
   if (!tripId) {
-    if (trips === null && !tripsFailed)
+    // The list can answer before a trip is chosen from it; until then "No
+    // trips yet" or the picker would only flash by.
+    const choosing = trips !== null && trips.length > 0 && !tripChosen;
+    if ((trips === null && !tripsFailed) || choosing)
       return online ? <Splash /> : <OfflineScreen />;
     if (trips && trips.length > 1) return <TripPicker />;
     return <NoTrips email={email} />;

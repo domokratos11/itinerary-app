@@ -259,6 +259,36 @@ export const CashRecordSchema = z.object({
   ...recordFields,
 });
 
+// To-do lists for getting ready and keeping track: each list has its own
+// to-dos. Archiving a list archives its to-dos with it.
+export const TODO_STATUSES = ["todo", "inProgress", "done"] as const;
+export const TODO_PRIORITIES = ["low", "normal", "high"] as const;
+
+export const TodoListRecordSchema = z.object({
+  id: recordId,
+  title: z.string().min(1).max(120),
+  description: z.string().max(1000).nullable(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  order: z.number().int(),
+  ...recordFields,
+});
+
+// A due date is a trip-style date (Japan time); the assignee is a member's
+// email. `completedAt` is when it was last marked done.
+export const TodoRecordSchema = z.object({
+  id: recordId,
+  listId: recordId,
+  title: z.string().min(1).max(200),
+  description: z.string().max(2000).nullable(),
+  dueDate: isoDate.nullable(),
+  status: z.enum(TODO_STATUSES),
+  priority: z.enum(TODO_PRIORITIES),
+  assignee: z.string().min(1).max(254).nullable(),
+  order: z.number().int(),
+  completedAt: z.iso.datetime().nullable(),
+  ...recordFields,
+});
+
 // What the trip means to spend, kept on the trip document. Travellers
 // multiplies per-adult place estimates; null uses the member count.
 export const BudgetSchema = z.object({
@@ -284,6 +314,8 @@ export const TripDataSchema = z.object({
   expenses: z.array(ExpenseRecordSchema).default([]),
   flights: z.array(FlightRecordSchema).default([]),
   cash: z.array(CashRecordSchema).default([]),
+  todoLists: z.array(TodoListRecordSchema).default([]),
+  todos: z.array(TodoRecordSchema).default([]),
 });
 
 export const PROPOSAL_STATUSES = [
@@ -414,6 +446,10 @@ export type ExpenseStatus = (typeof EXPENSE_STATUSES)[number];
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 export type CashRecord = z.infer<typeof CashRecordSchema>;
 export type CashKind = (typeof CASH_KINDS)[number];
+export type TodoListRecord = z.infer<typeof TodoListRecordSchema>;
+export type TodoRecord = z.infer<typeof TodoRecordSchema>;
+export type TodoStatus = (typeof TODO_STATUSES)[number];
+export type TodoPriority = (typeof TODO_PRIORITIES)[number];
 export type Budget = z.infer<typeof BudgetSchema>;
 export type Proposal = z.infer<typeof ProposalSchema>;
 export type DayResearch = z.infer<typeof DayResearchSchema>;
