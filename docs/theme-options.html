@@ -85,22 +85,25 @@ body { margin: 0; background: var(--pg-bg); color: var(--pg-fg); font-family: va
 .tp-head { display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 14px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--background) 85%, transparent) }
 .tp-head .h { font-size: 18px }
 .tp-body { padding: 14px; display: flex; flex-direction: column; gap: 12px }
-.tp-card { background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.tp-card { background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
 .tp-today { background: var(--primary); color: var(--primary-foreground); border-color: transparent; flex-direction: row; align-items: center; justify-content: space-between }
 .tp-today .h { font-size: 26px; line-height: 1.1 }
 .tp-next { box-shadow: 0 0 0 2px color-mix(in srgb, var(--now) 40%, transparent) }
 .tp-lab { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-foreground) }
 .tp-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
-.tp-btn { font: inherit; font-size: 13px; font-weight: 500; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; cursor: default; white-space: nowrap }
+.tp-btn { font: inherit; font-size: 13px; font-weight: 500; height: 36px; padding: 0 12px; border-radius: 14px; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; cursor: default; white-space: nowrap }
 .tp-btn.sm { height: 30px; padding: 0 10px }
 .tp-btn.pri { background: var(--primary); color: var(--primary-foreground) }
 .tp-btn.sec { background: var(--secondary); color: var(--secondary-foreground) }
 .tp-btn.out { background: var(--background); color: var(--foreground); border-color: var(--border) }
 .tp-btn.gho { background: transparent; color: var(--foreground) }
-.tp-btn.gho.on { background: var(--accent); color: var(--accent-foreground) }
+.tp-btn.gho.on { background: var(--accent); color: var(--primary); font-weight: 600 }
+.tp-btn.gho.hov { background: var(--muted) }
+.tp-btn.tog { background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); border-color: color-mix(in srgb, var(--primary) 40%, transparent); border-radius: 12px }
+.tp-btn.togoff { border-color: var(--input); border-radius: 12px }
 .tp-btn.des { background: color-mix(in srgb, var(--destructive) 12%, transparent); color: var(--destructive) }
 .tp-btn.lnk { background: transparent; color: var(--primary); text-decoration: underline; text-underline-offset: 4px; padding: 0 }
-.tp-bdg { font-size: 12px; font-weight: 500; height: 22px; padding: 0 8px; border-radius: 6px; display: inline-flex; align-items: center; border: 1px solid transparent; white-space: nowrap }
+.tp-bdg { font-size: 12px; font-weight: 500; height: 20px; padding: 0 8px; border-radius: 6px; display: inline-flex; align-items: center; border: 1px solid transparent; white-space: nowrap }
 .tp-bdg.pri { background: var(--primary); color: var(--primary-foreground) }
 .tp-bdg.sec { background: var(--secondary); color: var(--secondary-foreground) }
 .tp-bdg.out { border-color: var(--border); color: var(--foreground) }
@@ -125,28 +128,28 @@ body { margin: 0; background: var(--pg-bg); color: var(--pg-fg); font-family: va
 .tp-tab span.ic { padding: 2px 14px; display: flex }
 /* board */
 .tp-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; padding: 14px }
-.tp-in { font: inherit; font-size: 13px; height: 36px; border-radius: 8px; border: 1px solid var(--input); background: transparent; color: var(--foreground); padding: 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0 }
+.tp-in { font: inherit; font-size: 13px; height: 36px; border-radius: 12px; border: 1px solid transparent; background: color-mix(in srgb, var(--input) 50%, transparent); color: var(--foreground); padding: 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0 }
 .tp-in.ph { color: var(--muted-foreground) }
-.tp-in.foc { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent) }
-.tp-chk { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--input); display: inline-flex; align-items: center; justify-content: center; flex: none }
+.tp-in.foc { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 30%, transparent) }
+.tp-chk { width: 16px; height: 16px; border-radius: 5px; border: 1px solid transparent; background: color-mix(in srgb, var(--input) 90%, transparent); display: inline-flex; align-items: center; justify-content: center; flex: none }
 .tp-chk.on { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground) }
 .tp-chk svg { width: 12px; height: 12px }
-.tp-sw { width: 34px; height: 20px; border-radius: 999px; background: var(--input); position: relative; flex: none }
+.tp-sw { width: 34px; height: 20px; border-radius: 999px; background: color-mix(in srgb, var(--input) 90%, transparent); position: relative; flex: none }
 .tp-sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--background) }
 .tp-sw.on { background: var(--primary) } .tp-sw.on::after { left: 16px }
-.tp-seg { display: inline-flex; background: var(--muted); border-radius: 8px; padding: 3px; gap: 2px }
-.tp-seg span { font-size: 13px; padding: 4px 12px; border-radius: 6px; color: var(--muted-foreground) }
-.tp-seg span.on { background: var(--background); color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / .12) }
-.tp-prog { height: 8px; border-radius: 999px; background: var(--muted); overflow: hidden }
+.tp-seg { display: inline-flex; background: var(--muted); border-radius: 999px; padding: 4px; gap: 2px }
+.tp-seg span { font-size: 13px; padding: 4px 12px; border-radius: 999px; font-weight: 500; color: color-mix(in srgb, var(--foreground) 60%, transparent) }
+.tp-seg span.on { background: var(--background); color: var(--foreground); }
+.tp-prog { height: 12px; border-radius: 999px; background: var(--muted); overflow: hidden }
 .tp-prog i { display: block; height: 100%; background: var(--primary) }
 .tp-bars { display: flex; flex-direction: column; gap: 6px; font-size: 12px }
 .tp-bars div { display: grid; grid-template-columns: 74px 1fr 56px; gap: 8px; align-items: center }
 .tp-bars i { height: 12px; border-radius: 3px; display: block }
 .tp-bars b { font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; font-family: var(--pg-head); font-size: 14px }
-.tp-pop { background: var(--popover); color: var(--popover-foreground); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 8px 24px rgb(0 0 0 / .18) }
+.tp-pop { background: var(--popover); color: var(--popover-foreground); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 8px 20px rgb(0 0 0 / .12) }
 .tp-toast { background: var(--popover); color: var(--popover-foreground); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; display: flex; gap: 8px; align-items: center; box-shadow: 0 4px 12px rgb(0 0 0 / .14) }
 .tp-toast svg { width: 16px; height: 16px; color: var(--success); flex: none }
-.tp-skel { height: 12px; border-radius: 6px; background: var(--muted) }
+.tp-skel { height: 12px; border-radius: 12px; background: var(--muted) }
 .tp-side { background: var(--sidebar); color: var(--sidebar-foreground); border: 1px solid var(--sidebar-border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 2px }
 .tp-side span { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; font-size: 13px }
 .tp-side span.on { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); font-weight: 500 }
@@ -167,7 +170,7 @@ body { margin: 0; background: var(--pg-bg); color: var(--pg-fg); font-family: va
   <header class="pg-sec">
     <span class="pg-eyebrow">Itinerary app · colour exploration · 11 Nov 2026</span>
     <h1>Three light and three dark themes to choose from</h1>
-    <p class="pg-sub">Six new palettes, grouped as three families that each have a day and a night side, shown next to the theme the app uses today (Sen). Every preview is drawn with the app's real token names, fonts, corner sizes and component shapes, so what you see is what a swap of values in <code>globals.css</code> would give. Nothing in the app has been changed.</p>
+    <p class="pg-sub">Six new palettes, grouped as three families that each have a day and a night side, shown next to the theme the app uses today (Sen). Every preview is drawn with the app's real token names and fonts, and the controls copy the shapes of the app's own components (filled fields, pill tabs, 14px corners), so what you see is close to what a swap of values in <code>globals.css</code> would give. It is a hand-drawn copy, not the app itself, and it packs every colour onto one screen, so it looks busier than any single screen of the app. Nothing in the app has been changed.</p>
     <div class="pg-facts">
       <div><b>What stays the same</b>The light and dark switch, the layout, fonts, corner radius and every component.</div>
       <div><b>What a theme changes</b>Only the 30 or so colour values behind the tokens: surfaces, text, primary, the "now" marker and the status colours.</div>
@@ -340,12 +343,12 @@ function board(id) {
   const cats = [["Lodging", 100, "¥412k"], ["Food", 62, "¥255k"], ["Transport", 44, "¥181k"], ["Activities", 30, "¥124k"], ["Shopping", 18, "¥74k"]];
   return '<div class="tp" style="' + vars(id) + '"><div class="tp-board">' +
     '<div class="tp-card"><span class="tp-lab">Buttons</span><div class="tp-row"><span class="tp-btn pri">Add stop</span><span class="tp-btn sec">Secondary</span><span class="tp-btn out">Outline</span></div>' +
-      '<div class="tp-row"><span class="tp-btn gho on">Ghost, hovered</span><span class="tp-btn des">Remove</span><span class="tp-btn lnk">Open in Maps</span></div></div>' +
+      '<div class="tp-row"><span class="tp-btn gho hov">Ghost, hovered</span><span class="tp-btn des">Remove</span><span class="tp-btn lnk">Open in Maps</span></div></div>' +
     '<div class="tp-card"><span class="tp-lab">Badges and status</span><div class="tp-row"><span class="tp-bdg pri">Primary</span><span class="tp-bdg sec">Day 3</span><span class="tp-bdg out">Temple</span><span class="tp-bdg dash">Draft</span></div>' +
       '<div class="tp-row"><span class="tp-bdg now">Now</span><span class="tp-bdg ok">Paid</span><span class="tp-bdg warn">Needs booking</span><span class="tp-bdg bad">Cancelled</span></div></div>' +
     '<div class="tp-card"><span class="tp-lab">Form controls</span><div class="tp-in ph">Search places</div><div class="tp-in foc">Ramen near Shinjuku</div><div class="tp-in">Tokyo<span class="mut">' + IC.chev + '</span></div>' +
       '<div class="tp-row"><span class="tp-chk on">' + IC.check + '</span>Booked<span class="tp-chk" style="margin-left:10px"></span>Paid<span class="tp-sw on" style="margin-left:auto"></span><span class="tp-sw"></span></div></div>' +
-    '<div class="tp-card"><span class="tp-lab">Tabs and toggles</span><div><span class="tp-seg"><span class="on">Plan</span><span>Map</span><span>Research</span></span></div>' +
+    '<div class="tp-card"><span class="tp-lab">Tabs, toggles, active nav</span><div><span class="tp-seg"><span class="on">Plan</span><span>Map</span><span>Research</span></span></div><div class="tp-row"><span class="tp-btn sm tog">Food, pressed</span><span class="tp-btn sm togoff">Temples</span><span class="tp-btn sm gho on">Days, open</span></div>' +
       '<span class="tp-lab" style="margin-top:4px">Budget used</span><div class="tp-row" style="justify-content:space-between"><span class="h" style="font-size:22px">¥1,046,000</span><span class="mut" style="font-size:13px">62% of ¥1.7M</span></div><div class="tp-prog"><i style="width:62%"></i></div></div>' +
     '<div class="tp-card"><span class="tp-lab">Budget chart, chart-1 to chart-5</span><div class="tp-bars">' + cats.map((c, i) =>
       '<div><span class="mut">' + c[0] + '</span><i style="width:' + c[1] + '%;background:' + t.chart[4 - i] + '"></i><b>' + c[2] + '</b></div>').join("") + '</div></div>' +
