@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Itinerary Theme Options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a quiet neutral page; every colour inside a preview comes from that theme's own tokens.
+   Overview of the four families first, then one theme at full size, then its tokens and contrast. */
+:root {
+  --pg-bg: #f5f6f8; --pg-fg: #171a21; --pg-sub: #5b6270; --pg-line: #dcdfe6; --pg-panel: #ffffff;
+  --pg-accent: #2b47a8; --pg-ok: #1c7a4c; --pg-bad: #b5302a;
+  --pg-text: "IBM Plex Sans", system-ui, "Segoe UI", sans-serif;
+  --pg-head: "Barlow Semi Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --pg-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --pg-bg: #0f1116; --pg-fg: #e8eaf0; --pg-sub: #9aa1b0; --pg-line: #2a2e39; --pg-panel: #171a22;
+  --pg-accent: #96aaff; --pg-ok: #62d093; --pg-bad: #ff8a80; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --pg-bg: #0f1116; --pg-fg: #e8eaf0; --pg-sub: #9aa1b0; --pg-line: #2a2e39; --pg-panel: #171a22;
+  --pg-accent: #96aaff; --pg-ok: #62d093; --pg-bad: #ff8a80; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { margin: 0; background: var(--pg-bg); color: var(--pg-fg); font-family: var(--pg-text); font-size: 15px; line-height: 1.55 }
+.pg-wrap { max-width: 1180px; margin: 0 auto; padding-block: 36px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 44px }
+.pg-wrap h1, .pg-wrap h2, .pg-wrap h3 { font-family: var(--pg-head); font-weight: 600; margin: 0; text-wrap: balance; line-height: 1.15 }
+.pg-wrap h1 { font-size: 40px }
+.pg-wrap h2 { font-size: 26px }
+.pg-wrap h3 { font-size: 19px }
+.pg-wrap p { margin: 0; max-width: 68ch }
+.pg-sub { color: var(--pg-sub) }
+.pg-sec { display: flex; flex-direction: column; gap: 16px }
+.pg-eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--pg-sub); font-weight: 500 }
+.pg-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 28px; border-top: 1px solid var(--pg-line); padding-top: 16px }
+.pg-facts div { font-size: 14px; color: var(--pg-sub) }
+.pg-facts b { color: var(--pg-fg); font-weight: 600; display: block }
+
+/* overview */
+.pg-fam { display: grid; grid-template-columns: 220px 1fr 1fr; gap: 16px; align-items: start; border-top: 1px solid var(--pg-line); padding-top: 18px }
+.pg-fam-info { display: flex; flex-direction: column; gap: 6px; min-width: 0 }
+.pg-fam-info p { font-size: 14px }
+.pg-tag { align-self: flex-start; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--pg-line); border-radius: 4px; padding: 1px 6px; color: var(--pg-sub) }
+.pg-pick { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; min-width: 0; border-radius: 12px }
+.pg-pick:focus-visible { outline: 2px solid var(--pg-accent); outline-offset: 4px }
+.pg-pick-label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--pg-sub) }
+.pg-pick-label b { color: var(--pg-fg); font-weight: 600 }
+.pg-pick[aria-pressed="true"] .tp { outline: 2px solid var(--pg-accent); outline-offset: 3px }
+@media (max-width: 860px) { .pg-fam { grid-template-columns: 1fr 1fr } .pg-fam-info { grid-column: 1 / -1 } }
+@media (max-width: 520px) { .pg-fam { grid-template-columns: 1fr } .pg-wrap h1 { font-size: 32px } }
+
+/* picker */
+.pg-bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--pg-bg); padding-block: 10px; border-bottom: 1px solid var(--pg-line); display: flex; flex-wrap: wrap; gap: 6px }
+.pg-chip { font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--pg-line); background: var(--pg-panel); color: var(--pg-fg) }
+.pg-chip i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid var(--pg-line) }
+.pg-chip[aria-pressed="true"] { border-color: var(--pg-accent); box-shadow: inset 0 0 0 1px var(--pg-accent); font-weight: 600 }
+.pg-chip:focus-visible { outline: 2px solid var(--pg-accent); outline-offset: 2px }
+.pg-detail { display: grid; grid-template-columns: minmax(0, 390px) minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 900px) { .pg-detail { grid-template-columns: minmax(0, 1fr) } }
+.pg-cap { font-size: 12px; color: var(--pg-sub); margin-bottom: 6px }
+
+/* tables */
+.pg-scroll { overflow-x: auto; border: 1px solid var(--pg-line); border-radius: 10px; background: var(--pg-panel) }
+.pg-table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 520px }
+.pg-table th { text-align: left; font-weight: 500; color: var(--pg-sub); font-size: 12px; letter-spacing: .04em; text-transform: uppercase }
+.pg-table th, .pg-table td { padding: 8px 12px; border-bottom: 1px solid var(--pg-line); vertical-align: middle }
+.pg-table tr:last-child td { border-bottom: 0 }
+.pg-table code { font-family: var(--pg-mono); font-size: 12px }
+.pg-sw { display: inline-block; width: 34px; height: 20px; border-radius: 4px; border: 1px solid var(--pg-line); vertical-align: middle }
+.pg-num { font-variant-numeric: tabular-nums; text-align: right }
+.pg-pass { color: var(--pg-ok); font-weight: 600 } .pg-fail { color: var(--pg-bad); font-weight: 600 }
+.pg-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; align-items: start }
+.pg-two > div { min-width: 0; display: flex; flex-direction: column; gap: 10px }
+.pg-matrix td.pg-cell { text-align: center; padding: 6px }
+.pg-matrix .pg-sw { width: 100%; min-width: 44px; height: 26px }
+
+/* ---------- theme preview: the app's own token names ---------- */
+.tp { background: var(--background); color: var(--foreground); font-family: var(--pg-text); font-size: 14px; line-height: 1.45;
+  border-radius: 12px; border: 1px solid var(--border); overflow: hidden; min-width: 0 }
+.tp * { border-color: var(--border) }
+.tp .h { font-family: var(--pg-head); font-weight: 600 }
+.tp .mut { color: var(--muted-foreground) }
+.tp-head { display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 14px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--background) 85%, transparent) }
+.tp-head .h { font-size: 18px }
+.tp-body { padding: 14px; display: flex; flex-direction: column; gap: 12px }
+.tp-card { background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.tp-today { background: var(--primary); color: var(--primary-foreground); border-color: transparent; flex-direction: row; align-items: center; justify-content: space-between }
+.tp-today .h { font-size: 26px; line-height: 1.1 }
+.tp-next { box-shadow: 0 0 0 2px color-mix(in srgb, var(--now) 40%, transparent) }
+.tp-lab { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-foreground) }
+.tp-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.tp-btn { font: inherit; font-size: 13px; font-weight: 500; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; cursor: default; white-space: nowrap }
+.tp-btn.sm { height: 30px; padding: 0 10px }
+.tp-btn.pri { background: var(--primary); color: var(--primary-foreground) }
+.tp-btn.sec { background: var(--secondary); color: var(--secondary-foreground) }
+.tp-btn.out { background: var(--background); color: var(--foreground); border-color: var(--border) }
+.tp-btn.gho { background: transparent; color: var(--foreground) }
+.tp-btn.gho.on { background: var(--accent); color: var(--accent-foreground) }
+.tp-btn.des { background: color-mix(in srgb, var(--destructive) 12%, transparent); color: var(--destructive) }
+.tp-btn.lnk { background: transparent; color: var(--primary); text-decoration: underline; text-underline-offset: 4px; padding: 0 }
+.tp-bdg { font-size: 12px; font-weight: 500; height: 22px; padding: 0 8px; border-radius: 6px; display: inline-flex; align-items: center; border: 1px solid transparent; white-space: nowrap }
+.tp-bdg.pri { background: var(--primary); color: var(--primary-foreground) }
+.tp-bdg.sec { background: var(--secondary); color: var(--secondary-foreground) }
+.tp-bdg.out { border-color: var(--border); color: var(--foreground) }
+.tp-bdg.dash { border-style: dashed; border-color: var(--border); color: var(--muted-foreground) }
+.tp-bdg.now { background: var(--now); color: var(--now-foreground) }
+.tp-bdg.ok { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success) }
+.tp-bdg.warn { background: color-mix(in srgb, var(--warning) 14%, transparent); color: var(--warning) }
+.tp-bdg.bad { background: color-mix(in srgb, var(--destructive) 12%, transparent); color: var(--destructive) }
+/* day line */
+.tp-line { list-style: none; margin: 0; padding: 0 0 0 36px; position: relative; display: flex; flex-direction: column; gap: 10px }
+.tp-line::before { content: ""; position: absolute; left: 13px; top: 6px; bottom: 6px; width: 2px; background: var(--city) }
+.tp-line li { position: relative }
+.tp-dot { position: absolute; left: -36px; top: 8px; width: 28px; height: 28px; border-radius: 50%; background: var(--city); color: #fff; font-family: var(--pg-head); font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--background) }
+.tp-leg { font-size: 12px; color: var(--muted-foreground); padding: 0 2px }
+.tp-stop-t { font-size: 15px; font-weight: 500 }
+/* tab bar */
+.tp-tabs { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--border); background: color-mix(in srgb, var(--card) 95%, transparent); padding: 6px 4px }
+.tp-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted-foreground); min-width: 0 }
+.tp-tab svg { width: 20px; height: 20px }
+.tp-tab.on { color: var(--primary); font-weight: 600 }
+.tp-tab.on span.ic { background: var(--accent); border-radius: 999px; padding: 2px 14px; display: flex }
+.tp-tab span.ic { padding: 2px 14px; display: flex }
+/* board */
+.tp-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; padding: 14px }
+.tp-in { font: inherit; font-size: 13px; height: 36px; border-radius: 8px; border: 1px solid var(--input); background: transparent; color: var(--foreground); padding: 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0 }
+.tp-in.ph { color: var(--muted-foreground) }
+.tp-in.foc { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent) }
+.tp-chk { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--input); display: inline-flex; align-items: center; justify-content: center; flex: none }
+.tp-chk.on { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground) }
+.tp-chk svg { width: 12px; height: 12px }
+.tp-sw { width: 34px; height: 20px; border-radius: 999px; background: var(--input); position: relative; flex: none }
+.tp-sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--background) }
+.tp-sw.on { background: var(--primary) } .tp-sw.on::after { left: 16px }
+.tp-seg { display: inline-flex; background: var(--muted); border-radius: 8px; padding: 3px; gap: 2px }
+.tp-seg span { font-size: 13px; padding: 4px 12px; border-radius: 6px; color: var(--muted-foreground) }
+.tp-seg span.on { background: var(--background); color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / .12) }
+.tp-prog { height: 8px; border-radius: 999px; background: var(--muted); overflow: hidden }
+.tp-prog i { display: block; height: 100%; background: var(--primary) }
+.tp-bars { display: flex; flex-direction: column; gap: 6px; font-size: 12px }
+.tp-bars div { display: grid; grid-template-columns: 74px 1fr 56px; gap: 8px; align-items: center }
+.tp-bars i { height: 12px; border-radius: 3px; display: block }
+.tp-bars b { font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; font-family: var(--pg-head); font-size: 14px }
+.tp-pop { background: var(--popover); color: var(--popover-foreground); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 8px 24px rgb(0 0 0 / .18) }
+.tp-toast { background: var(--popover); color: var(--popover-foreground); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; display: flex; gap: 8px; align-items: center; box-shadow: 0 4px 12px rgb(0 0 0 / .14) }
+.tp-toast svg { width: 16px; height: 16px; color: var(--success); flex: none }
+.tp-skel { height: 12px; border-radius: 6px; background: var(--muted) }
+.tp-side { background: var(--sidebar); color: var(--sidebar-foreground); border: 1px solid var(--sidebar-border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 2px }
+.tp-side span { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; font-size: 13px }
+.tp-side span.on { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); font-weight: 500 }
+.tp-side span.today { color: var(--now); font-weight: 600 }
+.tp-side svg { width: 16px; height: 16px }
+.tp-band { height: 6px; border-radius: 3px; display: grid; grid-template-columns: 9fr 6fr 5fr; gap: 2px; overflow: hidden }
+.tp-band i { display: block }
+/* mini */
+.tp.mini .tp-head { height: 40px } .tp.mini .tp-head .h { font-size: 15px }
+.tp.mini .tp-body { padding: 10px; gap: 8px }
+.tp.mini .tp-card { padding: 10px; gap: 6px }
+.tp.mini .tp-today .h { font-size: 20px }
+.tp-dots { display: flex; gap: 4px }
+.tp-dots i { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border); display: block }
+</style>
+
+<div class="pg-wrap">
+  <header class="pg-sec">
+    <span class="pg-eyebrow">Itinerary app · colour exploration · 11 Nov 2026</span>
+    <h1>Three light and three dark themes to choose from</h1>
+    <p class="pg-sub">Six new palettes, grouped as three families that each have a day and a night side, shown next to the theme the app uses today (Sen). Every preview is drawn with the app's real token names, fonts, corner sizes and component shapes, so what you see is what a swap of values in <code>globals.css</code> would give. Nothing in the app has been changed.</p>
+    <div class="pg-facts">
+      <div><b>What stays the same</b>The light and dark switch, the layout, fonts, corner radius and every component.</div>
+      <div><b>What a theme changes</b>Only the 30 or so colour values behind the tokens: surfaces, text, primary, the "now" marker and the status colours.</div>
+      <div><b>City colours</b>Each city's line colour comes from the trip's own data, so the samples (Tokyo, Kyoto, Osaka) are the same in every theme.</div>
+      <div><b>Mixing is allowed</b>A light theme from one family can be paired with a dark theme from another.</div>
+    </div>
+  </header>
+
+  <section class="pg-sec" id="overview">
+    <h2>The four families at a glance</h2>
+    <p class="pg-sub">Select any preview to open it at full size below.</p>
+    <div id="pg-families"></div>
+  </section>
+
+  <section class="pg-sec" id="detail">
+    <h2>One theme at full size</h2>
+    <div class="pg-bar" id="pg-bar" role="group" aria-label="Theme"></div>
+    <div>
+      <h3 id="pg-name"></h3>
+      <p class="pg-sub" id="pg-desc"></p>
+    </div>
+    <div class="pg-detail">
+      <div><div class="pg-cap">Phone, 390px: header, today, next stop, the day line, tab bar</div><div id="pg-phone"></div></div>
+      <div><div class="pg-cap">Components: buttons, badges, form controls, budget, overlays, sidebar</div><div id="pg-board"></div></div>
+    </div>
+  </section>
+
+  <section class="pg-sec">
+    <h2>Tokens and contrast for this theme</h2>
+    <p class="pg-sub">Contrast is the WCAG ratio between the two colours. Body text needs 4.5 or more; large text and icons need 3.</p>
+    <div class="pg-two">
+      <div><h3>Token values</h3><div class="pg-scroll"><table class="pg-table" id="pg-tokens"></table></div></div>
+      <div><h3>Contrast checks</h3><div class="pg-scroll"><table class="pg-table" id="pg-contrast"></table></div></div>
+    </div>
+  </section>
+
+  <section class="pg-sec">
+    <h2>All eight side by side, token by token</h2>
+    <div class="pg-scroll"><table class="pg-table pg-matrix" id="pg-matrix"></table></div>
+  </section>
+
+  <section class="pg-sec">
+    <h2>What to weigh when choosing</h2>
+    <div class="pg-facts">
+      <div><b>Primary against the city lines</b>Sen's indigo sits close to a blue city line. Kumo and Sumi have no hue of their own, so the city colours carry all the colour.</div>
+      <div><b>"Now" against "delete"</b>In Sen, Kumo and Matsu the "now" orange is near the destructive red. Ume and Yoi move "now" to teal, which cannot be mistaken for an error.</div>
+      <div><b>Green families and "success"</b>Matsu and Mori use a green primary, so "paid" and "booked" are shifted to a yellower green to stay distinct.</div>
+      <div><b>Cost of a swap</b>Values only, in two blocks of <code>globals.css</code>. The status colours, charts and sidebar all read the same tokens.</div>
+    </div>
+  </section>
+</div>
+
+<script>
+const THEMES = {
+  "sen-day": { fam: "sen", mode: "light", name: "Sen, day", note: "Current",
+    background: "#f4f6fa", foreground: "#171d33", card: "#ffffff", popover: "#ffffff", primary: "#2b47a8", "primary-foreground": "#ffffff",
+    secondary: "#eaeef5", "muted-foreground": "#586078", accent: "#e2e8fb", destructive: "#b5302a", border: "#d7dde9", input: "#c9d1e0", ring: "#7f93d6",
+    now: "#c53d1e", "now-foreground": "#ffffff", success: "#1c7a4c", warning: "#8a5600", chart: ["#b9c6f5", "#8ea2ec", "#5f7ad9", "#2b47a8", "#1e3380"] },
+  "sen-night": { fam: "sen", mode: "dark", name: "Sen, night", note: "Current",
+    background: "#0d1220", foreground: "#e9ecf6", card: "#151b2e", popover: "#1a2138", primary: "#96aaff", "primary-foreground": "#0d1220",
+    secondary: "#1e2640", "muted-foreground": "#9ca5be", accent: "#232e58", destructive: "#ff8a80", border: "#2b3452", input: "#36406a", ring: "#6f82d0",
+    now: "#ff8f66", "now-foreground": "#200d05", success: "#62d093", warning: "#f0bb52", chart: ["#c3ceff", "#96aaff", "#6f86ea", "#4c63c9", "#3447a0"] },
+  "kumo": { fam: "ink", mode: "light", name: "Kumo (cloud)", note: "New",
+    background: "#f3f4f6", foreground: "#15181c", card: "#ffffff", popover: "#ffffff", primary: "#1d2228", "primary-foreground": "#ffffff",
+    secondary: "#e8eaed", "muted-foreground": "#5a616b", accent: "#e1e4e8", destructive: "#b3261e", border: "#d6d9de", input: "#c6cad1", ring: "#8b929c",
+    now: "#c8401c", "now-foreground": "#ffffff", success: "#1b7a4a", warning: "#8a5600", chart: ["#cfd3d9", "#a4abb5", "#77808c", "#4a525d", "#1d2228"] },
+  "sumi": { fam: "ink", mode: "dark", name: "Sumi (ink)", note: "New",
+    background: "#101214", foreground: "#eceef0", card: "#181b1e", popover: "#1e2226", primary: "#eceef0", "primary-foreground": "#101214",
+    secondary: "#23272c", "muted-foreground": "#a0a7b0", accent: "#2b3036", destructive: "#ff8a80", border: "#2e3338", input: "#3b4148", ring: "#7b838d",
+    now: "#ff8f66", "now-foreground": "#200d05", success: "#62d093", warning: "#f0bb52", chart: ["#eceef0", "#b9bfc7", "#8a929c", "#5f6771", "#3f464e"] },
+  "matsu": { fam: "pine", mode: "light", name: "Matsu (pine)", note: "New",
+    background: "#f4f3ee", foreground: "#1c211d", card: "#ffffff", popover: "#ffffff", primary: "#1f5f4b", "primary-foreground": "#ffffff",
+    secondary: "#e9e8e0", "muted-foreground": "#5c635c", accent: "#dcebe3", destructive: "#b3302a", border: "#d9d8cd", input: "#c9c8bb", ring: "#6fa08e",
+    now: "#c4411f", "now-foreground": "#ffffff", success: "#4a7a14", warning: "#8a5600", chart: ["#c5dfd3", "#93c4b0", "#5fa28a", "#1f5f4b", "#143f32"] },
+  "mori": { fam: "pine", mode: "dark", name: "Mori (forest)", note: "New",
+    background: "#0d1412", foreground: "#e6efe9", card: "#141d1a", popover: "#1a2521", primary: "#86d6b4", "primary-foreground": "#0d1412",
+    secondary: "#1d2925", "muted-foreground": "#9aaba3", accent: "#1f3a31", destructive: "#ff8a80", border: "#2a3832", input: "#364840", ring: "#5fa48a",
+    now: "#ff9166", "now-foreground": "#200d05", success: "#b3d866", warning: "#f0bb52", chart: ["#c4eedc", "#86d6b4", "#5bb391", "#3d8b6e", "#2a6650"] },
+  "ume": { fam: "plum", mode: "light", name: "Ume (plum)", note: "New",
+    background: "#f7f3f5", foreground: "#251a22", card: "#ffffff", popover: "#ffffff", primary: "#8c2f5e", "primary-foreground": "#ffffff",
+    secondary: "#efe7ec", "muted-foreground": "#6a5a65", accent: "#f6dfea", destructive: "#b3261e", border: "#e0d5db", input: "#d1c3cb", ring: "#c088a6",
+    now: "#0f7a80", "now-foreground": "#ffffff", success: "#1c7a4c", warning: "#8a5600", chart: ["#f0c9dc", "#dd9bbd", "#c2679a", "#8c2f5e", "#641f43"] },
+  "yoi": { fam: "plum", mode: "dark", name: "Yoi (dusk)", note: "New",
+    background: "#151017", foreground: "#f1e9ef", card: "#1e1720", popover: "#251d28", primary: "#eaa3cb", "primary-foreground": "#1c0f18",
+    secondary: "#2a202c", "muted-foreground": "#b0a0ac", accent: "#40243a", destructive: "#ff8a80", border: "#382c3a", input: "#483a4a", ring: "#b877a0",
+    now: "#5fd3d0", "now-foreground": "#04201f", success: "#9bd46a", warning: "#f0bb52", chart: ["#f8d3e6", "#eaa3cb", "#cf78aa", "#a45584", "#7a3c61"] }
+};
+const FAMILIES = [
+  { id: "sen", name: "Sen", tag: "Current", text: "Cool paper white and indigo by day, deep indigo by night. The baseline everything else is compared with.", light: "sen-day", dark: "sen-night" },
+  { id: "ink", name: "Kumo and Sumi", tag: "New · neutral", text: "No hue of its own: ink on cloud grey, and off-white on charcoal. The city lines and the orange \"now\" marker are the only colour on screen.", light: "kumo", dark: "sumi" },
+  { id: "pine", name: "Matsu and Mori", tag: "New · green", text: "Pine green on warm paper, and mint on a forest-black ground. Calmer and warmer than Sen, and well apart from blue and purple city lines.", light: "matsu", dark: "mori" },
+  { id: "plum", name: "Ume and Yoi", tag: "New · plum", text: "Plum on a faintly rose white, and soft pink on dusk purple. \"Now\" becomes teal, so it never reads as an error.", light: "ume", dark: "yoi" }
+];
+const DESC = {
+  "sen-day": "The light theme in the app today.",
+  "sen-night": "The dark theme in the app today.",
+  "kumo": "A cool grey ground with near-black buttons. The strongest contrast of the light options, and the most restrained.",
+  "sumi": "Charcoal with off-white buttons. Reads like a night-mode map: neutral surfaces, colour only where it means something.",
+  "matsu": "Warm paper with a deep pine primary. Success moves to a yellower green so it stays apart from the buttons.",
+  "mori": "Green-black surfaces with a mint primary. Softer on the eyes at night than a blue-tinted dark.",
+  "ume": "A rose-tinted white with a plum primary and a teal marker for the present moment.",
+  "yoi": "Dusk purple with a soft pink primary and a bright teal marker for the present moment."
+};
+const CITY = { tokyo: "#3b6fd4", kyoto: "#9a4fb5", osaka: "#1f8a70" };
+const ORDER = Object.keys(THEMES);
+
+function full(t) {
+  return Object.assign({}, t, { muted: t.secondary, "secondary-foreground": t.foreground, "card-foreground": t.foreground,
+    "popover-foreground": t.foreground, "accent-foreground": t.foreground, sidebar: t.card, "sidebar-foreground": t.foreground,
+    "sidebar-accent": t.accent, "sidebar-accent-foreground": t.foreground, "sidebar-border": t.border });
+}
+function vars(id) {
+  const t = full(THEMES[id]); let s = "";
+  for (const k in t) if (typeof t[k] === "string" && t[k][0] === "#") s += "--" + k + ":" + t[k] + ";";
+  t.chart.forEach((c, i) => s += "--chart-" + (i + 1) + ":" + c + ";");
+  return s + "--city:" + CITY.tokyo + ";color-scheme:" + t.mode;
+}
+function lum(hex) {
+  const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function ratio(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+
+const IC = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+  map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.500c0 5.300 7 11.500 7 11.500z"/><circle cx="12" cy="9.500" r="2.500"/></svg>',
+  yen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l6 8 6-8M12 12v8M7 12h10M7 16h10"/></svg>',
+  cog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.900 4.900 7 7M17 17l2.100 2.100M4.900 19.100 7 17M17 7l2.100-2.100"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.500 10 17.500 19 7"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>'
+};
+
+function mini(id) {
+  const t = THEMES[id];
+  return '<div class="tp mini" style="' + vars(id) + '">' +
+    '<div class="tp-head"><span class="h">Japan 2026</span><span class="tp-bdg sec">Day 3</span></div>' +
+    '<div class="tp-body">' +
+      '<div class="tp-card tp-today"><div><div class="h">Thu, Dec 17</div><div style="font-size:12px;opacity:.9">Tokyo</div></div><span class="tp-bdg now">Today</span></div>' +
+      '<div class="tp-card"><div class="tp-stop-t">Senso-ji temple</div><div class="tp-row"><span class="tp-bdg now">Next</span><span class="tp-bdg ok">Booked</span><span class="tp-bdg out">Temple</span></div></div>' +
+      '<div class="tp-row"><span class="tp-btn sm pri">Add stop</span><span class="tp-btn sm out">Map</span>' +
+      '<span class="tp-dots" style="margin-left:auto">' + [t.background, t.card, t.primary, t.accent, t.now].map(c => '<i style="background:' + c + '"></i>').join("") + '</span></div>' +
+    '</div></div>';
+}
+
+function phone(id) {
+  return '<div class="tp" style="' + vars(id) + '">' +
+    '<div class="tp-head"><span class="h">Japan 2026</span><span class="tp-bdg sec">Day 3 of 29</span><span style="margin-left:auto" class="tp-btn sm gho">' + IC.cog.replace("<svg", '<svg width="18" height="18"') + '</span></div>' +
+    '<div class="tp-body">' +
+      '<div class="tp-card tp-today"><div><div class="h">Thu, Dec 17</div><div style="font-size:13px;opacity:.9">Tokyo · 4 stops planned</div></div><span class="tp-bdg now">Today</span></div>' +
+      '<div class="tp-card tp-next"><div class="tp-row" style="justify-content:space-between"><span class="h" style="font-size:18px">Next stop</span><span class="mut" style="font-size:13px">in 25 min</span></div>' +
+        '<span class="tp-lab">11:30 · Asakusa</span><span class="h" style="font-size:22px;line-height:1.15">Senso-ji temple</span>' +
+        '<div class="tp-row"><span class="tp-btn sm pri">Directions</span><span class="tp-btn sm out">Details</span><span class="tp-btn sm sec" style="margin-left:auto">Add expense</span></div></div>' +
+      '<div class="tp-band"><i style="background:' + CITY.tokyo + '"></i><i style="background:' + CITY.kyoto + '"></i><i style="background:' + CITY.osaka + '"></i></div>' +
+      '<ol class="tp-line">' +
+        '<li><span class="tp-dot">1</span><div class="tp-card"><div class="tp-stop-t" style="text-decoration:line-through;color:var(--muted-foreground)">Tsukiji outer market</div><div class="tp-row"><span class="tp-bdg sec">09:00</span><span class="tp-bdg ok">Done</span></div></div></li>' +
+        '<li class="tp-leg">18 min by train · Ginza line</li>' +
+        '<li><span class="tp-dot">2</span><div class="tp-card"><div class="tp-row" style="justify-content:space-between;flex-wrap:nowrap"><span class="tp-stop-t">Senso-ji temple</span><span class="mut">' + IC.chev + '</span></div><div class="tp-row"><span class="tp-bdg now">Next</span><span class="tp-bdg sec">11:30</span><span class="tp-bdg out">Temple</span></div></div></li>' +
+        '<li class="tp-leg">12 min on foot</li>' +
+        '<li><span class="tp-dot">3</span><div class="tp-card"><div class="tp-stop-t">Kappabashi kitchen street</div><div class="tp-row"><span class="tp-bdg warn">Needs booking</span><span class="tp-bdg dash">Not researched</span></div></div></li>' +
+      '</ol>' +
+    '</div>' +
+    '<nav class="tp-tabs">' + [["home", "Home", 0], ["cal", "Days", 1], ["map", "Map", 0], ["yen", "Budget", 0], ["cog", "Settings", 0]]
+      .map(x => '<span class="tp-tab' + (x[2] ? " on" : "") + '"><span class="ic">' + IC[x[0]] + '</span>' + x[1] + '</span>').join("") + '</nav>' +
+  '</div>';
+}
+
+function board(id) {
+  const t = THEMES[id];
+  const cats = [["Lodging", 100, "¥412k"], ["Food", 62, "¥255k"], ["Transport", 44, "¥181k"], ["Activities", 30, "¥124k"], ["Shopping", 18, "¥74k"]];
+  return '<div class="tp" style="' + vars(id) + '"><div class="tp-board">' +
+    '<div class="tp-card"><span class="tp-lab">Buttons</span><div class="tp-row"><span class="tp-btn pri">Add stop</span><span class="tp-btn sec">Secondary</span><span class="tp-btn out">Outline</span></div>' +
+      '<div class="tp-row"><span class="tp-btn gho on">Ghost, hovered</span><span class="tp-btn des">Remove</span><span class="tp-btn lnk">Open in Maps</span></div></div>' +
+    '<div class="tp-card"><span class="tp-lab">Badges and status</span><div class="tp-row"><span class="tp-bdg pri">Primary</span><span class="tp-bdg sec">Day 3</span><span class="tp-bdg out">Temple</span><span class="tp-bdg dash">Draft</span></div>' +
+      '<div class="tp-row"><span class="tp-bdg now">Now</span><span class="tp-bdg ok">Paid</span><span class="tp-bdg warn">Needs booking</span><span class="tp-bdg bad">Cancelled</span></div></div>' +
+    '<div class="tp-card"><span class="tp-lab">Form controls</span><div class="tp-in ph">Search places</div><div class="tp-in foc">Ramen near Shinjuku</div><div class="tp-in">Tokyo<span class="mut">' + IC.chev + '</span></div>' +
+      '<div class="tp-row"><span class="tp-chk on">' + IC.check + '</span>Booked<span class="tp-chk" style="margin-left:10px"></span>Paid<span class="tp-sw on" style="margin-left:auto"></span><span class="tp-sw"></span></div></div>' +
+    '<div class="tp-card"><span class="tp-lab">Tabs and toggles</span><div><span class="tp-seg"><span class="on">Plan</span><span>Map</span><span>Research</span></span></div>' +
+      '<span class="tp-lab" style="margin-top:4px">Budget used</span><div class="tp-row" style="justify-content:space-between"><span class="h" style="font-size:22px">¥1,046,000</span><span class="mut" style="font-size:13px">62% of ¥1.7M</span></div><div class="tp-prog"><i style="width:62%"></i></div></div>' +
+    '<div class="tp-card"><span class="tp-lab">Budget chart, chart-1 to chart-5</span><div class="tp-bars">' + cats.map((c, i) =>
+      '<div><span class="mut">' + c[0] + '</span><i style="width:' + c[1] + '%;background:' + t.chart[4 - i] + '"></i><b>' + c[2] + '</b></div>').join("") + '</div></div>' +
+    '<div class="tp-card" style="background:transparent;border-style:dashed"><span class="tp-lab">Dialog and toast (popover surface)</span><div class="tp-pop"><span class="h" style="font-size:17px">Remove this stop?</span><span class="mut" style="font-size:13px">It stays in the place list and can be added back.</span><div class="tp-row" style="justify-content:flex-end"><span class="tp-btn sm out">Cancel</span><span class="tp-btn sm des">Remove</span></div></div>' +
+      '<div class="tp-toast">' + IC.check + 'Stop added to Thu, Dec 17</div></div>' +
+    '<div class="tp-card"><span class="tp-lab">Sidebar (desktop)</span><div class="tp-side"><span>' + IC.home + 'Dashboard</span><span class="on">' + IC.cal + 'Wed, Dec 16 · Tokyo</span><span class="today">' + IC.cal + 'Thu, Dec 17 · Today</span><span>' + IC.yen + 'Budget</span></div></div>' +
+    '<div class="tp-card"><span class="tp-lab">Loading and muted text</span><div class="tp-skel" style="width:70%"></div><div class="tp-skel" style="width:95%"></div><div class="tp-skel" style="width:50%"></div>' +
+      '<span class="mut" style="font-size:13px">Muted text on a card: opening hours, notes and hints use this colour.</span><span style="font-size:13px">Body text on a card for comparison.</span></div>' +
+  '</div></div>';
+}
+
+const TOKENS = [["background", "Page ground"], ["foreground", "Text"], ["card", "Cards, sidebar"], ["popover", "Menus, dialogs, toasts"], ["primary", "Main buttons, links, active tab"],
+  ["primary-foreground", "Text on primary"], ["secondary", "Quiet fills, muted areas"], ["muted-foreground", "Secondary text"], ["accent", "Hover and selected rows"],
+  ["border", "Lines"], ["input", "Field outlines"], ["ring", "Focus ring"], ["now", "Today, next stop"], ["now-foreground", "Text on now"],
+  ["success", "Paid, booked, done"], ["warning", "Needs attention"], ["destructive", "Remove, errors"]];
+const PAIRS = [["foreground", "background", "Text on the page", 4.5], ["foreground", "card", "Text on a card", 4.5], ["muted-foreground", "card", "Secondary text on a card", 4.5],
+  ["muted-foreground", "background", "Secondary text on the page", 4.5], ["primary-foreground", "primary", "Label on a main button", 4.5], ["primary", "card", "Link on a card", 4.5],
+  ["now-foreground", "now", "Label on a now badge", 4.5], ["now", "card", "Now colour as text", 4.5], ["success", "card", "Success text", 4.5], ["warning", "card", "Warning text", 4.5],
+  ["destructive", "card", "Destructive text", 4.5], ["input", "card", "Field outline", 3], ["border", "background", "Card edge (decorative)", 0]];
+
+function render(id) {
+  if (!THEMES[id]) id = "sen-day";
+  const t = full(THEMES[id]);
+  document.getElementById("pg-name").textContent = t.name + " · " + (t.mode === "light" ? "light" : "dark") + " · " + t.note.toLowerCase();
+  document.getElementById("pg-desc").textContent = DESC[id];
+  document.getElementById("pg-phone").innerHTML = phone(id);
+  document.getElementById("pg-board").innerHTML = board(id);
+  document.getElementById("pg-tokens").innerHTML = "<tr><th>Token</th><th>Colour</th><th>Value</th><th>Used for</th></tr>" +
+    TOKENS.map(k => '<tr><td><code>--' + k[0] + '</code></td><td><span class="pg-sw" style="background:' + t[k[0]] + '"></span></td><td><code>' + t[k[0]] + '</code></td><td>' + k[1] + '</td></tr>').join("") +
+    '<tr><td><code>--chart-1…5</code></td><td colspan="2">' + t.chart.map(c => '<span class="pg-sw" style="background:' + c + ';width:22px"></span>').join(" ") + '</td><td>Budget charts</td></tr>';
+  document.getElementById("pg-contrast").innerHTML = "<tr><th>Pair</th><th>Sample</th><th class='pg-num'>Ratio</th><th>Needs</th></tr>" +
+    PAIRS.map(p => { const r = ratio(t[p[0]], t[p[1]]);
+      const verdict = p[3] ? (r >= p[3] ? '<span class="pg-pass">Pass</span> ≥ ' + p[3] : '<span class="pg-fail">Below</span> ' + p[3]) : "No minimum";
+      return '<tr><td>' + p[2] + '</td><td><span class="pg-sw" style="background:' + t[p[1]] + ';color:' + t[p[0]] + ';width:auto;height:auto;padding:1px 8px;font-weight:600">Aa</span></td><td class="pg-num">' + r.toFixed(1) + '</td><td>' + verdict + '</td></tr>'; }).join("");
+  document.querySelectorAll("[data-theme-id]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeId === id ? "true" : "false"));
+}
+
+document.getElementById("pg-families").innerHTML = FAMILIES.map(f =>
+  '<div class="pg-fam"><div class="pg-fam-info"><span class="pg-tag">' + f.tag + '</span><h3>' + f.name + '</h3><p class="pg-sub">' + f.text + '</p></div>' +
+  [f.light, f.dark].map(id => '<button class="pg-pick" type="button" data-theme-id="' + id + '" aria-pressed="false"><span class="pg-pick-label"><b>' + THEMES[id].name + '</b><span>' + (THEMES[id].mode === "light" ? "Light" : "Dark") + '</span></span>' + mini(id) + '</button>').join("") + '</div>').join("");
+document.getElementById("pg-bar").innerHTML = ORDER.map(id =>
+  '<button class="pg-chip" type="button" id="chip-' + id + '" data-theme-id="' + id + '" aria-pressed="false"><i style="background:linear-gradient(135deg,' + THEMES[id].background + ' 50%,' + THEMES[id].primary + ' 50%)"></i>' + THEMES[id].name + '</button>').join("");
+document.getElementById("pg-matrix").innerHTML = "<tr><th>Token</th>" + ORDER.map(id => "<th>" + THEMES[id].name + "</th>").join("") + "</tr>" +
+  TOKENS.map(k => "<tr><td><code>--" + k[0] + "</code></td>" + ORDER.map(id => '<td class="pg-cell"><span class="pg-sw" title="' + full(THEMES[id])[k[0]] + '" style="background:' + full(THEMES[id])[k[0]] + '"></span></td>').join("") + "</tr>").join("");
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-theme-id]"); if (!b) return;
+  const id = b.dataset.themeId; render(id);
+  try { history.replaceState(null, "", "#" + id) } catch (_) {}
+  if (b.classList.contains("pg-pick")) document.getElementById("detail").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+});
+window.addEventListener("hashchange", () => render(location.hash.slice(1)));
+render(location.hash.slice(1) || "sen-day");
+</script>
