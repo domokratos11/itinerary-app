@@ -1,8 +1,8 @@
 // The page background of each theme, as in globals.css (--background). The
 // browser paints its own bar in this colour, so it has to follow the theme.
 export const THEME_COLOR = {
-  light: "#f4f6fa",
-  dark: "#0d1220",
+  light: "#f4f3ee",
+  dark: "#0d1412",
 } as const;
 
 // Points <meta name="theme-color"> at the given theme, adding the tag if the
