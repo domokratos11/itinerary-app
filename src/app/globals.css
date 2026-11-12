@@ -7,44 +7,45 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* Sen (V2): cool paper white and indigo. A city's own colour is its line;
-     --now is kept for the present moment (today, the next stop). */
+  /* Matsu (pine): pine green on warm paper. A city's own colour is its line;
+     --now is kept for the present moment (today, the next stop). --success is
+     a yellower green so "paid" and "booked" stay apart from the buttons. */
   --radius: 0.625rem;
-  --background: #f4f6fa;
-  --foreground: #171d33;
+  --background: #f4f3ee;
+  --foreground: #1c211d;
   --card: #ffffff;
-  --card-foreground: #171d33;
+  --card-foreground: #1c211d;
   --popover: #ffffff;
-  --popover-foreground: #171d33;
-  --primary: #2b47a8;
+  --popover-foreground: #1c211d;
+  --primary: #1f5f4b;
   --primary-foreground: #ffffff;
-  --secondary: #eaeef5;
-  --secondary-foreground: #171d33;
-  --muted: #eaeef5;
-  --muted-foreground: #586078;
-  --accent: #e2e8fb;
-  --accent-foreground: #171d33;
-  --destructive: #b5302a;
-  --border: #d7dde9;
-  --input: #c9d1e0;
-  --ring: #7f93d6;
-  --now: #c53d1e;
+  --secondary: #e9e8e0;
+  --secondary-foreground: #1c211d;
+  --muted: #e9e8e0;
+  --muted-foreground: #5c635c;
+  --accent: #dcebe3;
+  --accent-foreground: #1c211d;
+  --destructive: #b3302a;
+  --border: #d9d8cd;
+  --input: #c9c8bb;
+  --ring: #6fa08e;
+  --now: #c4411f;
   --now-foreground: #ffffff;
-  --success: #1c7a4c;
+  --success: #4a7a14;
   --warning: #8a5600;
-  --chart-1: #b9c6f5;
-  --chart-2: #8ea2ec;
-  --chart-3: #5f7ad9;
-  --chart-4: #2b47a8;
-  --chart-5: #1e3380;
+  --chart-1: #c5dfd3;
+  --chart-2: #93c4b0;
+  --chart-3: #5fa28a;
+  --chart-4: #1f5f4b;
+  --chart-5: #143f32;
   --sidebar: #ffffff;
-  --sidebar-foreground: #171d33;
-  --sidebar-primary: #2b47a8;
+  --sidebar-foreground: #1c211d;
+  --sidebar-primary: #1f5f4b;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e2e8fb;
-  --sidebar-accent-foreground: #171d33;
-  --sidebar-border: #d7dde9;
-  --sidebar-ring: #7f93d6;
+  --sidebar-accent: #dcebe3;
+  --sidebar-accent-foreground: #1c211d;
+  --sidebar-border: #d9d8cd;
+  --sidebar-ring: #6fa08e;
 }
 
 @theme inline {
@@ -146,42 +147,42 @@
 }
 
 .dark {
-  /* Sen (V2), night: deep indigo, with softened accents. */
-  --background: #0d1220;
-  --foreground: #e9ecf6;
-  --card: #151b2e;
-  --card-foreground: #e9ecf6;
-  --popover: #1a2138;
-  --popover-foreground: #e9ecf6;
-  --primary: #96aaff;
-  --primary-foreground: #0d1220;
-  --secondary: #1e2640;
-  --secondary-foreground: #e9ecf6;
-  --muted: #1e2640;
-  --muted-foreground: #9ca5be;
-  --accent: #232e58;
-  --accent-foreground: #e9ecf6;
+  /* Mori (forest), night: mint on a green-black ground. */
+  --background: #0d1412;
+  --foreground: #e6efe9;
+  --card: #141d1a;
+  --card-foreground: #e6efe9;
+  --popover: #1a2521;
+  --popover-foreground: #e6efe9;
+  --primary: #86d6b4;
+  --primary-foreground: #0d1412;
+  --secondary: #1d2925;
+  --secondary-foreground: #e6efe9;
+  --muted: #1d2925;
+  --muted-foreground: #9aaba3;
+  --accent: #1f3a31;
+  --accent-foreground: #e6efe9;
   --destructive: #ff8a80;
-  --border: #2b3452;
-  --input: #36406a;
-  --ring: #6f82d0;
-  --now: #ff8f66;
+  --border: #2a3832;
+  --input: #364840;
+  --ring: #5fa48a;
+  --now: #ff9166;
   --now-foreground: #200d05;
-  --success: #62d093;
+  --success: #b3d866;
   --warning: #f0bb52;
-  --chart-1: #c3ceff;
-  --chart-2: #96aaff;
-  --chart-3: #6f86ea;
-  --chart-4: #4c63c9;
-  --chart-5: #3447a0;
-  --sidebar: #151b2e;
-  --sidebar-foreground: #e9ecf6;
-  --sidebar-primary: #96aaff;
-  --sidebar-primary-foreground: #0d1220;
-  --sidebar-accent: #232e58;
-  --sidebar-accent-foreground: #e9ecf6;
-  --sidebar-border: #2b3452;
-  --sidebar-ring: #6f82d0;
+  --chart-1: #c4eedc;
+  --chart-2: #86d6b4;
+  --chart-3: #5bb391;
+  --chart-4: #3d8b6e;
+  --chart-5: #2a6650;
+  --sidebar: #141d1a;
+  --sidebar-foreground: #e6efe9;
+  --sidebar-primary: #86d6b4;
+  --sidebar-primary-foreground: #0d1412;
+  --sidebar-accent: #1f3a31;
+  --sidebar-accent-foreground: #e6efe9;
+  --sidebar-border: #2a3832;
+  --sidebar-ring: #5fa48a;
 }
 
 /* A slim scrollbar that still shows there is more, such as the sidebar's
