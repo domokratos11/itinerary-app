@@ -171,3 +171,18 @@ describe("newDraftPlace", () => {
     expect(made.locationFetchedAt).toBeNull();
   });
 });
+
+describe("categoryFromGoogleType", () => {
+  it("guesses food, temples, shopping and falls back to sight", async () => {
+    const { categoryFromGoogleType } = await import("./place-edit");
+    expect(categoryFromGoogleType("ramen_restaurant")).toBe("food");
+    expect(categoryFromGoogleType("cafe")).toBe("food");
+    expect(categoryFromGoogleType("bakery")).toBe("food");
+    expect(categoryFromGoogleType("shinto_shrine")).toBe("temple");
+    expect(categoryFromGoogleType("buddhist_temple")).toBe("temple");
+    expect(categoryFromGoogleType("book_store")).toBe("shopping");
+    expect(categoryFromGoogleType("shopping_mall")).toBe("shopping");
+    expect(categoryFromGoogleType("museum")).toBe("sight");
+    expect(categoryFromGoogleType(null)).toBe("sight");
+  });
+});

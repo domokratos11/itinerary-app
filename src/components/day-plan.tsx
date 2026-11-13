@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  Fragment,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import {
   DndContext,
   DragOverlay,
@@ -96,6 +102,8 @@ import {
   Reservations,
 } from "@/components/day-plan-links";
 import { LINE_ITEM, SortableStop, StopCard } from "@/components/day-plan-stop";
+import { GapRow } from "@/components/day-plan-gap";
+import { QuickAddSheet } from "@/components/quick-add-sheet";
 
 type Props = {
   date: string;
@@ -122,6 +130,8 @@ export function DayPlan(props: Props) {
   const [view, setView] = useState<"list" | "map" | "waiting">("list");
   const [adding, setAdding] = useState<Waiting | null>(null);
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
+  // The gap in the day's line whose + was tapped: 0 is before the first stop.
+  const [quickAddAt, setQuickAddAt] = useState<number | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
   const outlook = useDaysWeather([
     { date: props.date, city: props.cityNames[0] ?? null },
@@ -179,6 +189,17 @@ export function DayPlan(props: Props) {
         counts.set(i.date, (counts.get(i.date) ?? 0) + 1);
     return counts;
   }, [items]);
+
+  // One gap before, between and after the stops: N stops, N + 1 gaps.
+  const gap = (at: number) =>
+    tripId ? (
+      <GapRow
+        key={`gap-${at}`}
+        onAdd={() => setQuickAddAt(at)}
+        hidden={dragging !== null}
+        rail={rows.length > 0}
+      />
+    ) : null;
 
   const next = nextStop(stops);
   const holiday = trip.holidays.find((h) => h.date === props.date);
@@ -433,24 +454,29 @@ export function DayPlan(props: Props) {
                 strategy={verticalListSortingStrategy}
               >
                 <DroppableList empty={rows.length === 0} style={lineStyle}>
+                  {gap(0)}
                   {rows.map((row, index) => (
-                    <SortableStop
-                      key={row.item.id}
-                      id={row.item.id}
-                      number={index + 1}
-                      item={row.item}
-                      place={row.place}
-                      leg={legLine(row.item.id)}
-                      dayOptions={dayOptionsFor(row.place?.cityId)}
-                      currentDate={props.date}
-                      onRemove={() => remove(row.item)}
-                      onMark={(status) => mark(row.item, status)}
-                      onMoveDay={(d) => moveToDay(row.item, d)}
-                      onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
-                      isNext={row.item.id === next?.id}
-                      readOnly={readOnly}
-                    />
+                    <Fragment key={row.item.id}>
+                      <SortableStop
+                        key={row.item.id}
+                        id={row.item.id}
+                        number={index + 1}
+                        item={row.item}
+                        place={row.place}
+                        leg={legLine(row.item.id)}
+                        dayOptions={dayOptionsFor(row.place?.cityId)}
+                        currentDate={props.date}
+                        onRemove={() => remove(row.item)}
+                        onMark={(status) => mark(row.item, status)}
+                        onMoveDay={(d) => moveToDay(row.item, d)}
+                        onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
+                        isNext={row.item.id === next?.id}
+                        readOnly={readOnly}
+                      />
+                      {index < rows.length - 1 && gap(index + 1)}
+                    </Fragment>
                   ))}
+                  {rows.length > 0 && gap(rows.length)}
                   {rows.length > 0 && (
                     <li className={LINE_ITEM}>{legLine("end")}</li>
                   )}
@@ -495,30 +521,35 @@ export function DayPlan(props: Props) {
       ) : (
         showPhoneList && (
           <ol className="flex flex-col" style={lineStyle}>
+            {gap(0)}
             {rows.map((row, index) => (
-              <li key={row.item.id} className={LINE_ITEM}>
-                {legLine(row.item.id)}
-                <StopCard
-                  number={index + 1}
-                  item={row.item}
-                  place={row.place}
-                  dayOptions={dayOptionsFor(row.place?.cityId)}
-                  currentDate={props.date}
-                  onRemove={() => remove(row.item)}
-                  onMark={(status) => mark(row.item, status)}
-                  onMoveDay={(d) => moveToDay(row.item, d)}
-                  onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
-                  isNext={row.item.id === next?.id}
-                  readOnly={readOnly}
-                  buttons={{
-                    canUp: index > 0,
-                    canDown: index < rows.length - 1,
-                    onUp: () => stepBy(row.item, -1),
-                    onDown: () => stepBy(row.item, 1),
-                  }}
-                />
-              </li>
+              <Fragment key={row.item.id}>
+                <li className={LINE_ITEM}>
+                  {legLine(row.item.id)}
+                  <StopCard
+                    number={index + 1}
+                    item={row.item}
+                    place={row.place}
+                    dayOptions={dayOptionsFor(row.place?.cityId)}
+                    currentDate={props.date}
+                    onRemove={() => remove(row.item)}
+                    onMark={(status) => mark(row.item, status)}
+                    onMoveDay={(d) => moveToDay(row.item, d)}
+                    onOpenPlace={() => setOpenPlaceId(row.item.placeId)}
+                    isNext={row.item.id === next?.id}
+                    readOnly={readOnly}
+                    buttons={{
+                      canUp: index > 0,
+                      canDown: index < rows.length - 1,
+                      onUp: () => stepBy(row.item, -1),
+                      onDown: () => stepBy(row.item, 1),
+                    }}
+                  />
+                </li>
+                {index < rows.length - 1 && gap(index + 1)}
+              </Fragment>
             ))}
+            {rows.length > 0 && gap(rows.length)}
             {rows.length > 0 && <li className={LINE_ITEM}>{legLine("end")}</li>}
           </ol>
         )
@@ -568,6 +599,17 @@ export function DayPlan(props: Props) {
         </AlertDialogContent>
       </AlertDialog>
 
+      {tripId && (
+        <QuickAddSheet
+          tripId={tripId}
+          date={props.date}
+          index={quickAddAt ?? 0}
+          dayItems={stops}
+          cityIds={props.cityIds}
+          open={quickAddAt !== null}
+          onOpenChange={(open) => !open && setQuickAddAt(null)}
+        />
+      )}
       {showPhoneList && <Reservations reservations={props.reservations} />}
       <PlaceDetails
         place={openPlace ?? null}

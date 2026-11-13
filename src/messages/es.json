@@ -1079,5 +1079,33 @@
     "openCount": "{count, plural, one {# abierto} other {# abiertos}}",
     "dueSoonCount": "{count, plural, one {# vence esta semana} other {# vencen esta semana}}",
     "chooseList": "Elige una lista"
+  },
+  "quickAdd": {
+    "addHere": "Añadir un lugar aquí",
+    "title": "Añadir un lugar aquí",
+    "description": "Elige un negocio cerca de ti, o uno que espera en esta ciudad.",
+    "nearbyHeading": "Cerca de ti",
+    "loading": "Buscando lugares cerca de ti…",
+    "empty": "No se encontraron lugares cerca de ti.",
+    "noMatches": "Nada cerca de ti coincide con eso.",
+    "filterPlaceholder": "Filtrar lugares cercanos",
+    "filterLabel": "Filtrar lugares cercanos",
+    "refresh": "Actualizar",
+    "denied": "La ubicación está bloqueada, así que no se pueden listar lugares cercanos. Busca por nombre, o permite la ubicación para este sitio en los ajustes del navegador.",
+    "unavailable": "Tu ubicación no está disponible ahora. Busca por nombre.",
+    "timeout": "Encontrar tu ubicación tardó demasiado. Inténtalo de nuevo o busca por nombre.",
+    "unsupported": "Este dispositivo no puede compartir su ubicación. Busca por nombre.",
+    "notConfigured": "Google Maps no está configurado, así que no se pueden listar lugares cercanos.",
+    "offline": "Estás sin conexión, así que no se pueden listar lugares cercanos.",
+    "failed": "Google no respondió. Inténtalo de nuevo o busca por nombre.",
+    "searchLabel": "Buscar por nombre",
+    "searchPlaceholder": "Escribe el nombre de un lugar",
+    "waitingHeading": "En espera en esta ciudad",
+    "waitingEmpty": "No hay nada en espera para esta ciudad.",
+    "hereNow": "Estoy aquí ahora",
+    "hereNowHint": "Marca la parada como hecha.",
+    "back": "Atrás",
+    "save": "Añadir parada",
+    "addedPlace": "Se añadió {name} como parada nueva"
   }
 }

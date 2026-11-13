@@ -344,3 +344,27 @@ export function newDraftPlace(
     updatedAt: now.toISOString(),
   };
 }
+
+// A guess at the category from Google's primary type. The person can change it.
+export function categoryFromGoogleType(type: string | null): Category {
+  if (!type) return "sight";
+  if (
+    type.endsWith("_restaurant") ||
+    /^(restaurant|cafe|coffee_shop|bar|pub|bakery|food_court|ice_cream_shop|meal_takeaway|meal_delivery|diner|dessert_shop|confectionery|tea_house|fast_food_restaurant|wine_bar|sandwich_shop|donut_shop)$/.test(
+      type,
+    )
+  )
+    return "food";
+  if (
+    /^(buddhist_temple|shinto_shrine|place_of_worship|hindu_temple|church|mosque|synagogue)$/.test(
+      type,
+    )
+  )
+    return "temple";
+  if (
+    type.endsWith("_store") ||
+    /^(shopping_mall|market|department_store|supermarket)$/.test(type)
+  )
+    return "shopping";
+  return "sight";
+}

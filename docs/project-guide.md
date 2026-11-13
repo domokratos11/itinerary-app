@@ -274,12 +274,14 @@ Plan and place editing:
 | File | Role |
 |---|---|
 | `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, and a three-column grid of outline buttons, most with one short word (`place.short*` messages: Maps, Locate, Add, Cost, Research, Review or Requested, Edit). The full wording stays as each button's accessible name and tooltip. Buttons: Open in Google Maps, Show on map, Add to day, Log cost, Research, Edit and Archive. "Show on map" appears only when the place has coordinates (`onShowOnMap`). `AddToDay` takes `variant`, `className` and `compact` (the one-word button) for its button. |
-| `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. When no photo can show, the area says why: the device's daily photo limit is reached (it resets at midnight Tokyo time), Google did not answer, Maps is not set up or its key was refused, or the place has no photos. A photo that fails to load shows "This photo couldn't load" and logs a console warning. |
+| `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. `GoogleAttribution` (the Google logo, or the name as text until the logo file is in `public/`) is exported and reused by `quick-add-sheet.tsx`. When no photo can show, the area says why: the device's daily photo limit is reached (it resets at midnight Tokyo time), Google did not answer, Maps is not set up or its key was refused, or the place has no photos. A photo that fails to load shows "This photo couldn't load" and logs a console warning. |
 | `place-editor.tsx` | Form for a place's fields. |
 | `edit-panel.tsx` | Dialog (wide) or drawer (phone) that wraps forms. |
 | `add-place.tsx` | Add a place by name (Google suggestions) or by pasted Maps link. |
 | `place-suggestions.tsx` | The list of Google's suggestions, used by `add-place.tsx` and `settings-stays.tsx`. |
 | `add-to-day.tsx` | Choose day and position for a place. |
+| `day-plan-gap.tsx` | `GapRow`: the round + in each gap of the Day line, on the rail. There is one gap before the first stop, one between each pair of stops and one after the last (N stops give N + 1 gaps); an empty day shows one. Each opens the quick add sheet for its gap: `DayPlan` passes the gap's index (inserted with `addPlaceAt`), `hidden` while a stop is dragged (the row stays in the layout, so nothing jumps) and `rail` when the day has stops. 44px target on phones; from `lg` the + is muted until hovered or focused. Not rendered on read-only links. |
+| `quick-add-sheet.tsx` | `QuickAddSheet`: adds a place from where the phone is, at one gap of the day. A Drawer below `md`, a Dialog from `md`. Step 1 asks for the device location (`currentPosition()`, §3.5) and lists businesses within 500 m from `MapsService.nearbyPlaces` (name, Google type, distance, an in-memory filter and the Google logo). If the location or Maps is unavailable, it falls back to name search. Places waiting for the city are listed too (`waitingHeading`). Step 2 is the confirm step: name, city (only when the day has two cities), category prefilled with `categoryFromGoogleType`, and "I'm here now", on when the date is today in Tokyo, which marks the stop done. Save builds a draft with `newDraftPlace` (Google source, place ID, coordinates with `locationFetchedAt`, priority `want`) and then calls `addPlaceAt`. Undo removes the stop and archives the place. Nearby results stay in memory. |
 | `proposal-review.tsx` | Compare old and new values for a research proposal, accept field by field. |
 | `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. Pin colours are `var(--…)` tokens, resolved to real colours by `lib/css-color.ts` before drawing; the map redraws when the pins, lines, colour family or light/dark mode change. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend), and `toolbar` (controls drawn top-left, kept in full screen). Every map has a full-screen button (Expand / Shrink): full screen grows the same map box to the whole screen, with safe-area padding and no second map load, locks page scroll, closes with Escape or the button, and refits the pins. |
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
@@ -319,7 +321,8 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `location.ts` | Google coordinate expiry (30 days) and refresh (after 20 days); match radii for the place matcher. |
 | `live-hours.ts` | Parses Google's opening hours text (English) into periods; "open now". |
 | `map-pins.ts` | Map pins, colours and straight lines for the trip map. `dayFilterPins(dates, items, places)` returns `{placeIds, pins, legend}` for the City page's day filter, colouring pins per day (`DAY_COLORS`, in date order). Stop, finished and hotel pins are `var(--pin-…)` tokens (§10). |
-| `maps-service.ts` | `MapsService` interface and map types. `MapView` has `fit()` (frame all current pins again) and `focus(id)` (pan to that pin, zoom 16, bring it to the front and scale it up until the next update). |
+| `maps-service.ts` | `MapsService` interface and map types. `NearbyPlace` (`placeId`, `name`, `primaryType`, `location`, `distanceM`) is what `nearbyPlaces(center, radiusM)` returns, held in memory only. `MapView` has `fit()` (frame all current pins again) and `focus(id)` (pan to that pin, zoom 16, bring it to the front and scale it up until the next update). |
+| `nearby.ts` | `distanceMeters(a, b)` (whole metres), `formatDistance` ("120 m" under a kilometre, then "1.4 km") and `typeLabel` (Google's type as words: "ramen_restaurant" becomes "Ramen restaurant"). Used by the quick add sheet. |
 | `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting (`formatYen`, `formatUsd`, `formatUsdAt`, `usdToYen`, `parseUsd`, `parseRate`), and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. `payerOf` gives an expense's payer: its `paidBy`, or the trip's first member when there is none. `totalsByMember` gives each member's paid and planned against their `byMember` target. `personDetails` gives one member's figures for `PersonPanel`. `filterExpenses` applies the status, person, payment and category filters and the sort. |
 | `amount.ts` | `AmountEntry` (currency `JPY` or `USD`, amount text, rate text), `readAmount` (turns an entry into `amountJPY`, `originalUSD` and `rateJPYPerUSD`) and `entryFor` (reopens a saved amount). Totals count the whole-yen `amountJPY`. |
 | `booking-cost.ts` | `bookingLabel`, `linkedExpense` (the first live expense linked to a reservation) and `bookingExpense`. Used for a reservation's cost (§12.6). |
@@ -334,7 +337,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `weather.ts` | `WeatherKind`, `weatherKind(wmoCode)`, `typicalWeather(pastYears)`, `yearsBefore`, type `DayWeather`. Kinds are clear, partly, cloudy, fog, drizzle, rain, snow and storm. Typical weather is the average high and low, the % of years with at least 1 mm of rain, and the most common kind. |
 | `sun.ts` | `sunTimes(date, lat, lng)` → sunrise, sunset and daylight minutes in Tokyo time (NOAA solar equations, about a minute's accuracy). |
 | `proposals.ts` | Research proposals: new, open check, accept field by field, research result schema and cleaning. |
-| `place-edit.ts` | Place form: fields, validation, changes, filters (`PLACE_FILTERS`), Maps link parsing, draft places. |
+| `place-edit.ts` | Place form: fields, validation, changes, filters (`PLACE_FILTERS`), Maps link parsing, draft places. `categoryFromGoogleType(type)` guesses a category from Google's primary type (food, temple, shopping, otherwise sight); the person can change it. |
 | `trip-edit.ts` | Stay issues and day changes when stays move. |
 | `taxonomy.ts` | Colours for categories, priorities and expenses, as `var(--…)` tokens (§10); `tint()` mixes a colour into `var(--card)`. |
 | `version.ts` | `versionFromDescribe`: turns `git describe` output into a version number. |
@@ -402,12 +405,13 @@ Maps and place helpers:
 |---|---|
 | `maps.config.ts` | Maps browser key and Map ID. Public values; restricted in Google Cloud. |
 | `maps-service-instance.ts` | The one `MapsService` instance. |
-| `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. Remembers the last pins drawn, so `fit()` can frame them again. |
+| `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. Remembers the last pins drawn, so `fit()` can frame them again. `nearbyPlaces(center, radiusM)` runs `Place.searchNearby` (fields `id`, `displayName`, `primaryType`, `location`; at most 20; ranked by distance; English, region `jp`) and returns results in memory only. |
 | `use-walking-legs.ts` | Walking routes for a day's short legs, kept in memory. |
 | `use-place-suggestions.ts` | The debounced search behind `PlaceSuggestions` (add a place and the hotel form). |
 | `tap-limit.ts` | Per-device daily limit on paid Google calls (photos and live details, 30 each per day). |
 | `place-live-cache.ts` | Keeps live details and photo lists in memory for 30 minutes per place (`LIVE_CACHE_MS`). Never stored, so a reload empties it; failed calls are not kept; only real Google calls count toward the limit. |
 | `catalog-filter.ts` | Filters the city catalogue (category, priority, unassigned) and finds nearby places (1 km). |
+| `device-location.ts` | `currentPosition()`: the phone's position with high accuracy, a 10 s timeout and a 60 s `maximumAge`. Rejects with a `LocationError` whose `reason` is `denied`, `unavailable`, `timeout` or `unsupported`. The position is used for one search and never stored, in the stores or in Firestore. |
 | `geo.ts` | Straight-line distance. |
 | `tokyo-date.ts` | Date helpers in Tokyo time. |
 | `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). |
@@ -445,8 +449,8 @@ Version and update:
 
 | Area | Files |
 |---|---|
-| All tracked files | 355 |
-| `src/domain` (non-test modules) | 39 |
+| All tracked files | 384 |
+| `src/domain` (non-test modules) | 40 |
 | `src/components` (top-level, not `ui`) | 76 |
 | `src/lib` | 97 (including tests) |
 | `src/components/ui` | 27 |
@@ -863,8 +867,9 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Costs**: `costTotal` for the day.
 - **Weather and daylight** (`DayWeatherStrip`): in the header under the cost line, for the day's first city. Weather icon and name, high and low, chance of rain or snow, sunrise and sunset (sunset in `--warning` when before 17:00). A "Forecast" tag for dates within 15 days, a dashed "Typical" tag (a tooltip explains: the same dates over the last three years) for later dates, and the sun only for past dates.
 - **Quick cost**: the "+ ¥" button in the button row logs an expense for that day's date (§12.5).
+- **Add a place from here**: the round + in each gap of the stop line (before the first stop, between stops, after the last, and on an empty day) opens the quick add sheet for that gap (`QuickAddSheet`, §3.3). Businesses within 500 m of the phone are listed (name, type, distance, and the Google logo); the person can filter them, search by name, or pick a place waiting for the city. The confirm step sets the name, the city (asked only when the day has two cities), the category and "I'm here now" (on for today in Tokyo, which marks the stop done). Saving creates the place in the day's city and inserts it at that gap. Undo removes the stop and archives the place. Hidden on read-only links.
 
-**Shared view:** the day research panel is hidden. No drag and drop, Went and Skip, up and down buttons, move to another day, log cost, remove, or add from the waiting list. Tapping a waiting place opens its details (it does not add it). The other-days column becomes links to those days. The List, Map and Waiting views, the filters and directions stay. Costs are hidden (`Yen` and `CostLine` render nothing).
+**Shared view:** the day research panel is hidden. No drag and drop, Went and Skip, up and down buttons, move to another day, log cost, remove, or add from the waiting list or the + in the gaps. Tapping a waiting place opens its details (it does not add it). The other-days column becomes links to those days. The List, Map and Waiting views, the filters and directions stay. Costs are hidden (`Yen` and `CostLine` render nothing).
 
 ### 12.4 Cities (`/cities/`) and City (`/city/?id=`)
 
@@ -985,6 +990,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `location.ts` | `coordinatesExpired`, `dueForRefresh`, `withoutGoogleCoordinates`, `doubtfulMatch`, `medianPoint` | Google coordinates expire after 30 days and are due for refresh from day 20. `doubtfulMatch` flags a match more than 2 km from coordinates already saved, or far from the city centre (30 km; 200 km for day trips). Flagged matches are reported for a person to confirm. |
 | `live-hours.ts` | `parseGoogleHours`, `openNowFrom`, `hoursDifference` | Reads Google's English opening-hours text into periods, and works out whether a place is open now. |
 | `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor`, `dayFilterPins` | Pins per stop, straight lines when no route. `dayFilterPins` gives the City page's pins and day legend for the chosen days (a place on two days shows once, with the earlier day). |
+| `nearby.ts` | `distanceMeters`, `formatDistance`, `typeLabel` | Straight-line distance in metres, shown as metres under 1 km and kilometres above; Google's type text made readable. Google's own words stay in English (rule 13). |
 | `budget.ts` | `summarizeBudget`, `totalsByCategory`, `totalsByPayer`, `estimateStops`, `spendByDay`, `daysRemaining` | Expenses beat estimates for the same place; yen integers. |
 | `dashboard.ts` | many tile functions (see §12.1) | All figures from in-memory data. |
 | `todos.ts` | `dueState`, `todosDueSoon`, `listProgress`, `visibleTodos`, `nextOrder`, `swapOrder`, `withStatus`, `archiveList` | Due states in Japan time: overdue, soon (within 7 days), later, none. `archiveList` also archives the list's live to-dos. Nothing is deleted. |
@@ -1014,7 +1020,7 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 
 - Screens reach Google only through `MapsService` (`src/domain/maps-service.ts`). The implementation is `GoogleMapsService`. The SDK is one script tag, added on first use.
 - **Stored:** Google place IDs (indefinitely) and Google coordinates (at most 30 days; `maps:refresh` renews them). Our own notes can be stored.
-- **In memory only:** hours, ratings, photos, route times and distances. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
+- **In memory only:** hours, ratings, photos, route times and distances, and nearby search results. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
 - **Share copies** (§12.8) keep place IDs and Google coordinates as the trip does. Coordinates older than 30 days are dropped from the copy. `npm run maps:refresh` brings the copies' coordinates in line with the trip (renewed or deleted), so a copy never keeps them past 30 days. Copies hold no hours, ratings or photos.
 - Google data appears only on a Google map or next to the Google logo. Never on another map provider.
 - Weather and daylight are not Google data. City coordinates come from Open-Meteo's geocoding by the city's name, never from the Maps SDK or stored Google coordinates. Nothing is written to Firestore. Results stay in memory, with the `weather:*` localStorage cache described in §3.5.
@@ -1032,6 +1038,12 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 | `Place.fetchFields` (`photos`, `regularOpeningHours`, and the live-detail fields listed in `google-maps-service.ts`) | Photos and live details, loaded when a place opens | `TAP_LIMITS` 30 per device per day each for `live` and `photo` (`tap-limit.ts`) |
 
 Waiting-list pins on the Day page (`cityPins`) use only stored coordinates and make no calls.
+
+The quick add sheet (§12.3) makes two calls. `navigator.geolocation` gives the phone's position, which is used only as the centre of the search below; it is never stored. The position reaches Google only as that search's centre. The search is:
+
+| Call | Used for | Cost guard |
+|---|---|---|
+| `Place.searchNearby` (`id`, `displayName`, `primaryType`, `location`; at most 20, ranked by distance; `en`, region `jp`) | Businesses within 500 m for the quick add sheet, searched when its list loads and again on Refresh | One call per list load; results in memory only |
 
 Viewers of a share link make the same place-detail calls as members (photos and live details), under the same per-device daily limit.
 
