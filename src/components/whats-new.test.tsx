@@ -31,7 +31,8 @@ describe.each([
     );
     expect(await screen.findByText("What's new")).toBeInTheDocument();
     expect(
-      screen.getByText(/Version 1\.2\.3 · Nov 12, 2026/),
+      // A deployed entry keeps its own version, whatever is running.
+      screen.getByText(/Version 1\.0\.17 · Nov 12, 2026/),
     ).toBeInTheDocument();
     expect(
       screen.getByText("Tap the version to see what's new."),
