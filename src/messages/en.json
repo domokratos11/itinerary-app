@@ -1107,5 +1107,18 @@
     "back": "Back",
     "save": "Add stop",
     "addedPlace": "Added {name} as a new stop"
+  },
+  "changelog": {
+    "title": "What's new",
+    "description": "A short summary of what changed in each version.",
+    "open": "Open what's new",
+    "entryHeading": "Version {version} · {date}",
+    "empty": "Nothing to show yet.",
+    "d20261112": {
+      "palette": "Pick a colour theme (Sen, Ink, Pine or Plum) in the Account sheet.",
+      "colours": "Chart, badge and map colours now follow the theme.",
+      "quickAdd": "Tap + between stops to add a place near you to the day.",
+      "changelog": "Tap the version to see what's new."
+    }
   }
 }

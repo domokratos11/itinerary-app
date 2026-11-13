@@ -214,7 +214,7 @@ Shared chrome and gates:
 | File | Role |
 |---|---|
 | `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. |
-| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the six sections, including To-dos) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
+| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections, including To-dos) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
@@ -265,7 +265,8 @@ Screens (one per page):
 | `settings-stays.tsx`, `settings-cities.tsx`, `settings-places.tsx`, `settings-flights.tsx`, `settings-reservations.tsx`, `settings-holidays.tsx`, `settings-trip.tsx` | Settings tabs | Admin editors for each collection. `settings-places.tsx` also holds the research requests and proposal review. |
 | `settings-backup.tsx` | Settings tab | Export the whole trip as JSON; import only into an empty trip. |
 | `settings-cleanup.tsx` | Settings tab | Lists retired records and deletes them for good, including archived to-dos and to-do lists that no live to-do uses. |
-| `settings-about.tsx` | Account sheet | Version and "start fresh" button. |
+| `settings-about.tsx` | Account sheet | Version (a `WhatsNewButton`, §18.4) and "start fresh" button. |
+| `whats-new.tsx` | Desktop corner, Account sheet | `WhatsNewButton` turns the version text into a button (in `VersionTag` on wide screens, in `settings-about.tsx` on phones). `WhatsNewPanel` is a Drawer on phones and a Dialog from `md`, listing "Version X · date" with the bullets of `CHANGELOG`. Tests in `whats-new.test.tsx`. |
 | `todos-screen.tsx` | `/todos/` | `TodosScreen`: the list column (wide) or list Select (phone), the to-do rows, filters, sort and list progress (§12.9). |
 | `todo-forms.tsx` | `/todos/` | `ListForm` and `TodoForm`, both shown in `EditPanel`. |
 
@@ -341,6 +342,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `trip-edit.ts` | Stay issues and day changes when stays move. |
 | `taxonomy.ts` | Colours for categories, priorities and expenses, as `var(--…)` tokens (§10); `tint()` mixes a colour into `var(--card)`. |
 | `version.ts` | `versionFromDescribe`: turns `git describe` output into a version number. |
+| `changelog.ts` | `ChangelogEntry` (`version`: a string, or null for work not deployed yet; `date`; `items`: `MessageKey[]`), `CHANGELOG` (newest first) and `changelogForDisplay(entries, appVersion)`, which labels a null entry with the running version. Starts on 2026-11-12; older versions have no entries. Tests in `changelog.test.ts`. |
 | `i18n.ts` | `MessageKey` (every text key, from `en.json`), `MessageValues`, `Translate`. |
 | `test-place.ts`, `src/test/fixture-trip.ts` | Helpers and the made-up sample trip for tests. |
 
@@ -414,7 +416,7 @@ Maps and place helpers:
 | `device-location.ts` | `currentPosition()`: the phone's position with high accuracy, a 10 s timeout and a 60 s `maximumAge`. Rejects with a `LocationError` whose `reason` is `denied`, `unavailable`, `timeout` or `unsupported`. The position is used for one search and never stored, in the stores or in Firestore. |
 | `geo.ts` | Straight-line distance. |
 | `tokyo-date.ts` | Date helpers in Tokyo time. |
-| `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). |
+| `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). `formatFullDate` gives a date with its year ("Nov 12, 2026") in the current language, for What's new. |
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
@@ -920,7 +922,7 @@ Tabs (`settings-screen.tsx`):
 | Backup | export the whole trip as JSON, including flights, cash records and day research; import only into a trip that has nothing saved. Older backups without flights still import. |
 | Clean up | the retired records (archived, including archived cash records, removed, dismissed, archived day research, archived to-dos and to-do lists no live to-do uses, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
 
-Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, "start fresh" which runs `resetApp`), and sign-out.
+Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, which opens What's new, and "start fresh" which runs `resetApp`), and sign-out.
 
 **Offline copy (Settings → About, `settings-about.tsx`):** the About section shows "Offline copy: kept on this device." when the browser has agreed to keep the offline copy (§17.1), or "Offline copy: the browser may clear it…" with an "Ask to keep it" link button. The button calls `requestPersistentStorage()`; if the browser still refuses, a toast suggests adding the app to the home screen. The line is hidden when the browser has no storage API. Texts are the `about.storage*` keys.
 
@@ -1223,6 +1225,12 @@ Run this by hand on both phones before the trip:
 ### 18.3 Manual reset
 
 Account sheet → About → "start fresh" runs the same reset.
+
+### 18.4 What's new
+
+- Tapping the version (the desktop corner, or About in the Account sheet) opens a list of changes per version, newest first. The bullets are keys in the `changelog` group of `en.json` and `es.json`, grouped by date (`changelog.d20261112.*`).
+- `src/domain/changelog.ts` holds the list. An entry with `version: null` is work not deployed yet; the app shows it under the running version. Older versions have no entries.
+- Commits that change what the owner sees add bullets to the top null entry. "Deploy solution" (CLAUDE.md rules 14 and 15) stamps that entry with the version the merge will produce.
 
 ---
 

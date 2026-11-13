@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { EditPanel } from "@/components/edit-panel";
 import { Button } from "@/components/ui/button";
+import { WhatsNewButton } from "@/components/whats-new";
 import { t } from "@/lib/i18n";
 import { APP_VERSION, resetApp } from "@/lib/app-reset";
 import {
@@ -34,7 +35,9 @@ export function AboutSettings() {
     <section className="flex w-full flex-col gap-2">
       <h3 className="text-sm font-medium">{t("about.title")}</h3>
       <p className="text-sm text-muted-foreground">
-        {t("common.version", { version: APP_VERSION })}
+        <WhatsNewButton>
+          {t("common.version", { version: APP_VERSION })}
+        </WhatsNewButton>
       </p>
       <OfflineCopyStatus />
       <div className="flex flex-wrap gap-2">

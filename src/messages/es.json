@@ -1107,5 +1107,18 @@
     "back": "Atrás",
     "save": "Añadir parada",
     "addedPlace": "Se añadió {name} como parada nueva"
+  },
+  "changelog": {
+    "title": "Novedades",
+    "description": "Un resumen breve de lo que cambió en cada versión.",
+    "open": "Abrir las novedades",
+    "entryHeading": "Versión {version} · {date}",
+    "empty": "Aún no hay nada que mostrar.",
+    "d20261112": {
+      "palette": "Elige un tema de color (Sen, Tinta, Pino o Ciruela) en la hoja de cuenta.",
+      "colours": "Los colores de gráficos, etiquetas y mapas siguen ahora el tema.",
+      "quickAdd": "Toca + entre paradas para añadir al día un lugar cercano.",
+      "changelog": "Toca la versión para ver las novedades."
+    }
   }
 }
