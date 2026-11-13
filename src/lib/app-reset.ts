@@ -10,6 +10,7 @@ export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
 const KEPT_KEYS = [
   "locale",
   "theme",
+  "palette",
   "device-name",
   "sidebar-open",
   "hide-amounts",

@@ -46,7 +46,7 @@ function messageFor(error: unknown): string {
 // Required beside Google's data when no Google map is showing. Google allows
 // the name in text only where a logo doesn't fit, so text is just the fallback
 // until the logo file is in public/.
-function GoogleAttribution() {
+export function GoogleAttribution() {
   const [noLogo, setNoLogo] = useState(false);
   if (noLogo)
     return (

@@ -200,7 +200,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `not-found.tsx` | 404 page. Also `404.html` on Pages, where old day and city links are redirected (`old-link-redirect.tsx`). |
 | `manifest.ts` | `manifest.webmanifest` (installable app). |
 | `version.json/route.ts` | `version.json` with the deployed version. `force-static`, so no request is read. |
-| `globals.css` | Theme tokens (hex, both themes), Tailwind import, dark variant, base styles, and the `thin-scrollbar` utility (replaces shadcn's `no-scrollbar`). |
+| `globals.css` | Theme tokens (hex): eight blocks, one per colour family and mode (Sen, Ink, Pine and Plum, each light and dark), each with the same token names, including the category, priority, spending and map-pin colours (§10). Tailwind import, dark variant, base styles, and the `thin-scrollbar` utility (replaces shadcn's `no-scrollbar`). |
 | `favicon.ico` | Browser icon. |
 | `days/page.test.tsx` | A test kept beside its page. |
 | `error.test.tsx` | Test for the crash screen in `error.tsx`, kept beside it. |
@@ -214,8 +214,8 @@ Shared chrome and gates:
 | File | Role |
 |---|---|
 | `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. |
-| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the six sections, including To-dos) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
-| `viewer.tsx` | `ViewerSheet` (side sheet: language, theme, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
+| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections, including To-dos) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
+| `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
 | `plan-sync.tsx` | Mounted once. Renders `MemberSync` (auth, plan and trip listeners) for members, or `ViewerSync` (loads the shared copy, §12.8) when the tab is in viewer mode. |
@@ -223,10 +223,11 @@ Shared chrome and gates:
 | `service-worker-register.tsx` | Registers `sw.js` in production. |
 | `offline-banner.tsx` | Shows "offline" text (`useOnline`) and, when writes are waiting, the count from `useSyncStore`; edits still save on the device. |
 | `sync-status.tsx` | `SyncStatus`: icon button in the header, left of search, hidden on read-only links. Shows whether edits have reached the server (§17.1): cloud-check "All changes saved" (muted), cloud-upload "Saving N changes…" (pulsing), cloud-off "N changes waiting for a connection." (`text-warning`, offline with pending writes). Tooltip on hover or focus; a tap shows the same text in a toast, since tooltips do not open on tap. |
-| `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Match phone / Light / Dark button. |
+| `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Light / Dark button. `theme-provider.tsx` also puts the saved colour family on the page (`PickPalette`) and re-applies the browser bar colour (`ThemeColor`). |
+| `palette-picker.tsx` | Colour family picker (Sen, Ink, Pine, Plum): shadcn ToggleGroup, two per row on phones and one row from `lg`. Sits under the Light / Dark toggle in the Account sheet and the viewer sheet. |
 | `search-palette.tsx` | The Ctrl+K / ⌘K search over days, hotels and places. |
 | `trip-switcher.tsx`, `new-trip.tsx` | Trip name menu; panel to create a trip (for permitted creators). |
-| `account-sheet.tsx` | Account side sheet: signed-in email, theme, language, About, sign-out. |
+| `account-sheet.tsx` | Account side sheet: signed-in email, theme (Light / Dark and colour family), language, About, sign-out. |
 | `activity-sheet.tsx` | Change log sheet with undo. |
 | `language-select.tsx` | Language picker. |
 | `trip-name.tsx`, `trip-dates.tsx`, `trip-plan-status.tsx` | Small trip header pieces. |
@@ -264,7 +265,8 @@ Screens (one per page):
 | `settings-stays.tsx`, `settings-cities.tsx`, `settings-places.tsx`, `settings-flights.tsx`, `settings-reservations.tsx`, `settings-holidays.tsx`, `settings-trip.tsx` | Settings tabs | Admin editors for each collection. `settings-places.tsx` also holds the research requests and proposal review. |
 | `settings-backup.tsx` | Settings tab | Export the whole trip as JSON; import only into an empty trip. |
 | `settings-cleanup.tsx` | Settings tab | Lists retired records and deletes them for good, including archived to-dos and to-do lists that no live to-do uses. |
-| `settings-about.tsx` | Account sheet | Version and "start fresh" button. |
+| `settings-about.tsx` | Account sheet | Version (a `WhatsNewButton`, §18.4) and "start fresh" button. |
+| `whats-new.tsx` | Desktop corner, Account sheet | `WhatsNewButton` turns the version text into a button (in `VersionTag` on wide screens, in `settings-about.tsx` on phones). `WhatsNewPanel` is a Drawer on phones and a Dialog from `md`, listing "Version X · date" with the bullets of `CHANGELOG`. Tests in `whats-new.test.tsx`. |
 | `todos-screen.tsx` | `/todos/` | `TodosScreen`: the list column (wide) or list Select (phone), the to-do rows, filters, sort and list progress (§12.9). |
 | `todo-forms.tsx` | `/todos/` | `ListForm` and `TodoForm`, both shown in `EditPanel`. |
 
@@ -273,18 +275,20 @@ Plan and place editing:
 | File | Role |
 |---|---|
 | `place-details.tsx` | Place sheet (wide) or drawer (phone): photo gallery at the top, notes, live details, and a three-column grid of outline buttons, most with one short word (`place.short*` messages: Maps, Locate, Add, Cost, Research, Review or Requested, Edit). The full wording stays as each button's accessible name and tooltip. Buttons: Open in Google Maps, Show on map, Add to day, Log cost, Research, Edit and Archive. "Show on map" appears only when the place has coordinates (`onShowOnMap`). `AddToDay` takes `variant`, `className` and `compact` (the one-word button) for its button. |
-| `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. When no photo can show, the area says why: the device's daily photo limit is reached (it resets at midnight Tokyo time), Google did not answer, Maps is not set up or its key was refused, or the place has no photos. A photo that fails to load shows "This photo couldn't load" and logs a console warning. |
+| `place-live.tsx` | `PlaceLive` (rating and today's hours) and `PlacePhotos` (photo gallery). No buttons: each loads by itself when a place opens. `GoogleAttribution` (the Google logo, or the name as text until the logo file is in `public/`) is exported and reused by `quick-add-sheet.tsx`. When no photo can show, the area says why: the device's daily photo limit is reached (it resets at midnight Tokyo time), Google did not answer, Maps is not set up or its key was refused, or the place has no photos. A photo that fails to load shows "This photo couldn't load" and logs a console warning. |
 | `place-editor.tsx` | Form for a place's fields. |
 | `edit-panel.tsx` | Dialog (wide) or drawer (phone) that wraps forms. |
 | `add-place.tsx` | Add a place by name (Google suggestions) or by pasted Maps link. |
 | `place-suggestions.tsx` | The list of Google's suggestions, used by `add-place.tsx` and `settings-stays.tsx`. |
 | `add-to-day.tsx` | Choose day and position for a place. |
+| `day-plan-gap.tsx` | `GapRow`: the round + in each gap of the Day line, on the rail. There is one gap before the first stop, one between each pair of stops and one after the last (N stops give N + 1 gaps); an empty day shows one. Each opens the quick add sheet for its gap: `DayPlan` passes the gap's index (inserted with `addPlaceAt`), `hidden` while a stop is dragged (the row stays in the layout, so nothing jumps) and `rail` when the day has stops. 44px target on phones; from `lg` the + is muted until hovered or focused. Not rendered on read-only links. |
+| `quick-add-sheet.tsx` | `QuickAddSheet`: adds a place from where the phone is, at one gap of the day. A Drawer below `md`, a Dialog from `md`. Step 1 asks for the device location (`currentPosition()`, §3.5) and lists businesses within 500 m from `MapsService.nearbyPlaces` (name, Google type, distance, an in-memory filter and the Google logo). If the location or Maps is unavailable, it falls back to name search. Places waiting for the city are listed too (`waitingHeading`). Step 2 is the confirm step: name, city (only when the day has two cities), category prefilled with `categoryFromGoogleType`, and "I'm here now", on when the date is today in Tokyo, which marks the stop done. Save builds a draft with `newDraftPlace` (Google source, place ID, coordinates with `locationFetchedAt`, priority `want`) and then calls `addPlaceAt`. Undo removes the stop and archives the place. Nearby results stay in memory. |
 | `proposal-review.tsx` | Compare old and new values for a research proposal, accept field by field. |
-| `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend), and `toolbar` (controls drawn top-left, kept in full screen). Every map has a full-screen button (Expand / Shrink): full screen grows the same map box to the whole screen, with safe-area padding and no second map load, locks page scroll, closes with Escape or the button, and refits the pins. |
+| `trip-map.tsx` | Google map through `MapsService`: pins, routes, theme-aware. Pin colours are `var(--…)` tokens, resolved to real colours by `lib/css-color.ts` before drawing; the map redraws when the pins, lines, colour family or light/dark mode change. "Show all pins" icon button (Maximize, top-right, once the map is ready with pins) calls `fit()`. Props: `focus?: MapFocus \| null` (`{id}`, a new object per request, applied after redraws and once a new map is ready) and `overlay` (drawn bottom-left, used for a legend), and `toolbar` (controls drawn top-left, kept in full screen). Every map has a full-screen button (Expand / Shrink): full screen grows the same map box to the whole screen, with safe-area padding and no second map load, locks page scroll, closes with Escape or the button, and refits the pins. |
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
 | `day-weather.tsx` | `DayWeatherStrip` (day page header: icon and name, high and low, chance of rain or snow, Forecast or dashed Typical tag, sunrise and sunset) and `WeatherBadge` (icon, plus the high from `lg`; used on the Today card and calendar cells). `WEATHER_ICON` maps kinds to icons. Data from `use-weather.ts`. |
 | `tag-badges.tsx` | Category and priority badges and options. Quiet: a neutral badge (`secondary` for category, `outline` for priority) with the icon in the category or priority colour; the badge is not filled with that colour. |
-| `charts.tsx` | The recharts charts only: `DonutChart`, `BudgetGauge`, `ColumnChart`, `StackedColumnChart`. Not imported by screens directly. |
+| `charts.tsx` | The recharts charts only: `DonutChart`, `BudgetGauge`, `ColumnChart`, `StackedColumnChart`. Not imported by screens directly. `configFor()` gives each series one colour for light and dark (§10). |
 | `chart-parts.tsx` | Chart pieces drawn without recharts: `Series` type, `SeriesLegend`, `BarList` and an internal `ChartValue`. |
 | `charts-lazy.tsx` | What screens import. Wraps the four recharts charts with `next/dynamic` (`ssr: false`), each with a `Skeleton` of the chart's own size so nothing moves, and re-exports `BarList`, `SeriesLegend` and `Series`. Used by `dashboard-screen.tsx` and `budget-screen.tsx`. |
 
@@ -317,8 +321,9 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `drop.ts` | Drop rules for drag and drop (which target, which order key). |
 | `location.ts` | Google coordinate expiry (30 days) and refresh (after 20 days); match radii for the place matcher. |
 | `live-hours.ts` | Parses Google's opening hours text (English) into periods; "open now". |
-| `map-pins.ts` | Map pins, colours and straight lines for the trip map. `dayFilterPins(dates, items, places)` returns `{placeIds, pins, legend}` for the City page's day filter, colouring pins per day (`DAY_COLORS`, in date order). |
-| `maps-service.ts` | `MapsService` interface and map types. `MapView` has `fit()` (frame all current pins again) and `focus(id)` (pan to that pin, zoom 16, bring it to the front and scale it up until the next update). |
+| `map-pins.ts` | Map pins, colours and straight lines for the trip map. `dayFilterPins(dates, items, places)` returns `{placeIds, pins, legend}` for the City page's day filter, colouring pins per day (`DAY_COLORS`, in date order). Stop, finished and hotel pins are `var(--pin-…)` tokens (§10). |
+| `maps-service.ts` | `MapsService` interface and map types. `NearbyPlace` (`placeId`, `name`, `primaryType`, `location`, `distanceM`) is what `nearbyPlaces(center, radiusM)` returns, held in memory only. `MapView` has `fit()` (frame all current pins again) and `focus(id)` (pan to that pin, zoom 16, bring it to the front and scale it up until the next update). |
+| `nearby.ts` | `distanceMeters(a, b)` (whole metres), `formatDistance` ("120 m" under a kilometre, then "1.4 km") and `typeLabel` (Google's type as words: "ramen_restaurant" becomes "Ramen restaurant"). Used by the quick add sheet. |
 | `budget.ts` | Budget summary, totals by category and by payer, per-day spending, estimates from places, yen and USD formatting (`formatYen`, `formatUsd`, `formatUsdAt`, `usdToYen`, `parseUsd`, `parseRate`), and the masked amount `HIDDEN_AMOUNT` used while amounts are hidden. `payerOf` gives an expense's payer: its `paidBy`, or the trip's first member when there is none. `totalsByMember` gives each member's paid and planned against their `byMember` target. `personDetails` gives one member's figures for `PersonPanel`. `filterExpenses` applies the status, person, payment and category filters and the sort. |
 | `amount.ts` | `AmountEntry` (currency `JPY` or `USD`, amount text, rate text), `readAmount` (turns an entry into `amountJPY`, `originalUSD` and `rateJPYPerUSD`) and `entryFor` (reopens a saved amount). Totals count the whole-yen `amountJPY`. |
 | `booking-cost.ts` | `bookingLabel`, `linkedExpense` (the first live expense linked to a reservation) and `bookingExpense`. Used for a reservation's cost (§12.6). |
@@ -333,10 +338,11 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `weather.ts` | `WeatherKind`, `weatherKind(wmoCode)`, `typicalWeather(pastYears)`, `yearsBefore`, type `DayWeather`. Kinds are clear, partly, cloudy, fog, drizzle, rain, snow and storm. Typical weather is the average high and low, the % of years with at least 1 mm of rain, and the most common kind. |
 | `sun.ts` | `sunTimes(date, lat, lng)` → sunrise, sunset and daylight minutes in Tokyo time (NOAA solar equations, about a minute's accuracy). |
 | `proposals.ts` | Research proposals: new, open check, accept field by field, research result schema and cleaning. |
-| `place-edit.ts` | Place form: fields, validation, changes, filters (`PLACE_FILTERS`), Maps link parsing, draft places. |
+| `place-edit.ts` | Place form: fields, validation, changes, filters (`PLACE_FILTERS`), Maps link parsing, draft places. `categoryFromGoogleType(type)` guesses a category from Google's primary type (food, temple, shopping, otherwise sight); the person can change it. |
 | `trip-edit.ts` | Stay issues and day changes when stays move. |
-| `taxonomy.ts` | Colours for categories, priorities and expenses; dark-mode colour steps. |
+| `taxonomy.ts` | Colours for categories, priorities and expenses, as `var(--…)` tokens (§10); `tint()` mixes a colour into `var(--card)`. |
 | `version.ts` | `versionFromDescribe`: turns `git describe` output into a version number. |
+| `changelog.ts` | `ChangelogEntry` (`version`: a string, or null for work not deployed yet; `date`; `items`: `MessageKey[]`), `CHANGELOG` (newest first) and `changelogForDisplay(entries, appVersion)`, which labels a null entry with the running version. Starts on 2026-11-12; older versions have no entries. Tests in `changelog.test.ts`. |
 | `i18n.ts` | `MessageKey` (every text key, from `en.json`), `MessageValues`, `Translate`. |
 | `test-place.ts`, `src/test/fixture-trip.ts` | Helpers and the made-up sample trip for tests. |
 
@@ -401,19 +407,22 @@ Maps and place helpers:
 |---|---|
 | `maps.config.ts` | Maps browser key and Map ID. Public values; restricted in Google Cloud. |
 | `maps-service-instance.ts` | The one `MapsService` instance. |
-| `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. Remembers the last pins drawn, so `fit()` can frame them again. |
+| `google-maps-service.ts` | Implements `MapsService` with the Maps JS SDK. Loads the script once. Remembers the last pins drawn, so `fit()` can frame them again. `nearbyPlaces(center, radiusM)` runs `Place.searchNearby` (fields `id`, `displayName`, `primaryType`, `location`; at most 20; ranked by distance; English, region `jp`) and returns results in memory only. |
 | `use-walking-legs.ts` | Walking routes for a day's short legs, kept in memory. |
 | `use-place-suggestions.ts` | The debounced search behind `PlaceSuggestions` (add a place and the hotel form). |
 | `tap-limit.ts` | Per-device daily limit on paid Google calls (photos and live details, 30 each per day). |
 | `place-live-cache.ts` | Keeps live details and photo lists in memory for 30 minutes per place (`LIVE_CACHE_MS`). Never stored, so a reload empties it; failed calls are not kept; only real Google calls count toward the limit. |
 | `catalog-filter.ts` | Filters the city catalogue (category, priority, unassigned) and finds nearby places (1 km). |
+| `device-location.ts` | `currentPosition()`: the phone's position with high accuracy, a 10 s timeout and a 60 s `maximumAge`. Rejects with a `LocationError` whose `reason` is `denied`, `unavailable`, `timeout` or `unsupported`. The position is used for one search and never stored, in the stores or in Firestore. |
 | `geo.ts` | Straight-line distance. |
 | `tokyo-date.ts` | Date helpers in Tokyo time. |
-| `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). |
+| `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). `formatFullDate` gives a date with its year ("Nov 12, 2026") in the current language, for What's new. |
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
-| `theme-color.ts` | `THEME_COLOR` (`light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme)`, which sets `<meta name="theme-color">` so the browser bar follows the chosen theme. Tests in `theme-color.test.ts`. |
+| `theme-color.ts` | `THEME_COLOR` (Sen: `light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme, palette)`, which picks the page background for the family and mode and sets `<meta name="theme-color">` so the browser bar follows the choice. Tests in `theme-color.test.ts`. |
+| `palette.ts` | Colour families: `PALETTES` (`sen`, `ink`, `pine`, `plum`), `getPalette`, `setPalette`, `applyPalette` and `usePalette` (a small Zustand store). Saved per device under localStorage key `palette`. Sen sets no attribute; the others set `data-palette` on `<html>`. Tests in `palette.test.ts`. |
+| `css-color.ts` | `resolveCssColor(value)` follows a `var(--x)` token (up to five hops) to the colour the page shows now; `resolvePinColors(pins)` does it for every pin. Google Maps draws pins itself and cannot read CSS variables, so this runs at draw time. Tests in `css-color.test.ts`. |
 | `order.ts` | Sort keys with fractional indexing. |
 | `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. `prefersReducedMotion()` is the plain check (not a hook) for motion started from code, such as scrolling to today; it reads the phone's "reduce motion" setting. |
 
@@ -428,7 +437,7 @@ Version and update:
 
 | File | Role |
 |---|---|
-| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category`, `payment-method`), cache clearing, reload. |
+| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `palette`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category`, `payment-method`), cache clearing, reload. |
 | `version-check.ts` | Compares the running version with `version.json` and decides whether to reset. |
 
 ### 3.6 `src/messages`, `src/test`, `scripts`
@@ -442,8 +451,8 @@ Version and update:
 
 | Area | Files |
 |---|---|
-| All tracked files | 355 |
-| `src/domain` (non-test modules) | 39 |
+| All tracked files | 384 |
+| `src/domain` (non-test modules) | 40 |
 | `src/components` (top-level, not `ui`) | 76 |
 | `src/lib` | 97 (including tests) |
 | `src/components/ui` | 27 |
@@ -738,17 +747,29 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 ## 10. Theme
 
 - **Library:** `next-themes`, in `src/components/theme-provider.tsx`. Attribute `class`, themes `light` and `dark`, default `light`, `enableSystem={false}`, `disableTransitionOnChange`. It sets `class="dark"` on `<html>` before the first paint, so `suppressHydrationWarning` is on `<html>`.
+- **Colour families:** four families, Sen (default), Ink, Pine and Plum, each with a light and a dark mode. Light and Dark are the mode (next-themes). The family is a separate choice, made in the Account sheet and the viewer sheet with `palette-picker.tsx`. The Ink, Pine and Plum colours come from `docs/theme-options.html`; in the app they are named Ink (Kumo light, Sumi dark), Pine (Matsu light, Mori dark) and Plum (Ume light, Yoi dark). Switching families needs no code change or deploy.
+- **Palette storage:** `src/lib/palette.ts` (`PALETTES`, `getPalette`, `setPalette`, `applyPalette`, `usePalette`) saves the family per device in localStorage under `palette`. Sen sets no attribute. The others set `data-palette` on `<html>`. In `globals.css` each has a `:root[data-palette="ink|pine|plum"]` block and a `:root[data-palette=…].dark` block, and every token Sen defines is in each. The `.dark` block has the higher specificity, so it wins over the light block and the plain `.dark` rule. `palette` is in the kept-keys list, so it survives a version reset like `theme`.
 - **Choices:** Light and Dark only, with no "Match phone" option. The button in the Account sheet switches between them (`theme-toggle.tsx`). On a device with no stored choice, or with the old stored `system` value, `PickFirstTheme` picks light or dark once from `prefers-color-scheme` and saves it. The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
-- **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, as hex values: light has a cool paper-white background (`#f4f6fa`) and indigo `--primary` (`#2b47a8`); dark has a deep indigo background (`#0d1220`) and `--primary` `#96aaff`. Other tokens: `--background`, `--foreground`, `--muted`, `--border`, `--sidebar-*`, `--chart-1..5` (an indigo scale), and others. `--now` with `--now-foreground` is kept for the present moment (today, the next stop). `--success` and `--warning` are for status. All of these exist in both themes. The Dashboard's charts take their colours from these tokens too: spend per day and "planned" stops use `--primary`, "done" stops `--success`, "skipped" stops `--muted-foreground`. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`, `bg-now`, `text-now-foreground`, `text-success`, `text-warning`). `h1` and `h2` use the heading font through a base rule.
+- **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, as hex values: light has a cool paper-white background (`#f4f6fa`) and indigo `--primary` (`#2b47a8`); dark has a deep indigo background (`#0d1220`) and `--primary` `#96aaff`. Other tokens: `--background`, `--foreground`, `--muted`, `--border`, `--sidebar-*`, `--chart-1..5` (an indigo scale, not used by any component), and others. `--now` with `--now-foreground` is kept for the present moment (today, the next stop). `--success` and `--warning` are for status. All of these exist in both themes. The Dashboard's charts take their colours from these tokens too: spend per day and "planned" stops use `--primary`, "done" stops `--success`, "skipped" stops `--muted-foreground`. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`, `bg-now`, `text-now-foreground`, `text-success`, `text-warning`). `h1` and `h2` use the heading font through a base rule.
 - **Status colours and page titles:** status colours always come from the tokens: `--warning` for warning states (planned expenses, due-soon to-dos, the cash warning, the early sunset, the medium day load and the day research warnings), `--success` for good states (the light day load, "Accepted" places, done to-dos) and `--destructive` for the heavy day load and late to-dos. No component uses fixed amber, emerald, red or hex colour classes. Every screen's `h1` is `text-3xl font-bold` in the heading font.
 - **Selected and highlighted controls:** selected toggles (`ui/toggle.tsx` with `aria-pressed`, and `ui/toggle-group.tsx` items with `data-state=on`) use a soft tint of `--primary`, not `bg-muted`. `--accent` (light and dark) is a soft indigo tint (`#e2e8fb` light, `#232e58` dark), so hovered and highlighted menu items show colour.
 - **Corners and cards:** `src/app/globals.css` redefines the radius scale in `@theme inline`, so `rounded-4xl` is 14px (sm 4px, md 6px, lg 8px, xl 10px, 2xl 11px, 3xl 12px, 4xl 14px, from `--radius` 0.625rem). Cards are flat: no shadow, a 1px ring in `--border`, 20px padding (16px for `size="sm"`). Badges use `rounded-md`, not pills.
 - **Dark variant:** `@custom-variant dark (&:where(.dark, .dark *));` in `globals.css`, so `dark:` classes follow the `dark` class.
 - **Base colour:** `stone` in `components.json`.
-- **Category, priority and expense colours** (`src/domain/taxonomy.ts`): fixed hex colours per category (`lights`, `food`, `shopping`, `sight`, `daytrip`, `temple`), per priority (`must`, `want`, `maybe`) and per expense category. `darkStep` and `tint` produce the dark-mode variants. Category and priority badges show these colours only on their icon, not as a fill (`tag-badges.tsx`).
+- **Category, priority, spending and pin colours** (`src/app/globals.css`, `src/domain/taxonomy.ts`, `src/domain/map-pins.ts`): each of the eight palette × mode blocks (Sen, Ink, Pine and Plum, each light and dark) defines the same token names:
+  - `--cat-lights`, `--cat-food`, `--cat-shopping`, `--cat-sight`, `--cat-daytrip`, `--cat-temple` for the categories;
+  - `--prio-must`, `--prio-want`, `--prio-maybe` for the priorities;
+  - `--exp-*` for the spending categories. `food`, `souvenirs`, `attractions`, `clothes` and `temples` alias the `--cat-*` tokens; `flight`, `booking`, `transport` and `other` have their own;
+  - `--pin-stop`, `--pin-finished`, `--pin-hotel` for map pins.
+
+  Each hue is the same in every family, so a category keeps its meaning; lightness and chroma are tuned per family and mode. The colours were checked with the dataviz validator: at least 3:1 against `--card`. Where two colours sit close, the icon and label carry the meaning, not the colour alone.
+- **Taxonomy as tokens:** `CATEGORY_COLOR`, `PRIORITY_COLOR` and `EXPENSE_COLOR` in `taxonomy.ts` are `var(--…)` strings, so badges, filters, charts and pins follow the active theme without code changes. `DARK_STEP` and `darkStep()` are gone. `tint(color, percent)` mixes a colour into `var(--card)` with `color-mix`. `map-pins.ts` uses `var(--pin-…)` for the stop, finished and hotel pins. Category and priority badges show these colours only on their icon, not as a fill (`tag-badges.tsx`). `palette-tokens.test.ts` checks that every block defines each token the taxonomy and pins use.
+- **Charts:** `configFor()` in `charts.tsx` gives each series one colour, used in light and dark. The Dashboard's fallback colour is `var(--muted-foreground)`. City colours are the owner's data (`color` on the city) and are used as stored. `--chart-1..5` is still unused.
+- **Google Maps pins:** Google draws pins itself and cannot read CSS variables, so `src/lib/css-color.ts` turns each `var(--x)` into the real colour the page shows (`resolveCssColor`, `resolvePinColors`). `TripMap` redraws when pins, lines, the colour family or light/dark mode change.
+- **Theme options page:** `docs/theme-options.html` shows each theme's category and priority colours (swatches, and one matrix row per token), with the other tokens.
 - **Map:** `trip-map.tsx` reads `resolvedTheme` and passes `colorScheme: "light" | "dark"` to the Maps service, so the map follows the app.
 - **Toasts:** `sonner` reads the theme through `useTheme`.
-- **Browser chrome:** `THEME_COLOR` (`src/lib/theme-color.ts`) is the source. The root layout's `themeColor` and the manifest's `theme_color` and `background_color` use `THEME_COLOR.light`. `ThemeColor` in `theme-provider.tsx` calls `applyThemeColor` whenever the resolved theme changes, so the browser bar follows the chosen theme.
+- **Browser chrome:** `THEME_COLOR` (`src/lib/theme-color.ts`) is the source. The root layout's `themeColor` and the manifest's `theme_color` and `background_color` use `THEME_COLOR.light` (Sen). `ThemeColor` in `theme-provider.tsx` calls `applyThemeColor(theme, palette)` whenever the resolved theme or the palette changes, so the browser bar follows the chosen theme and family.
 - **Cities** have their own colour (`#rrggbb` in `cities` documents), used for dots in the sidebar and day list. On the Day page a city's colour is the line of its days: the header has a short band in that colour, and the stop rail uses the colour of the day's first city. `--now` marks the next stop.
 - **Font:** IBM Plex Sans (`--font-sans`, text), Barlow Semi Condensed (`--font-display`, mapped to `--font-heading`, used by the `font-heading` class for headings, dates, times and amounts) and Geist Mono (`--font-mono`) via `next/font`.
 - **Shell:** the open section in the phone tab bar (`BottomNav`, on the card colour, tabs at least 56px tall) and the open section's header link on tablets are marked with the soft `--accent` tint and `text-primary`; on phones the icon also sits in a soft pill (`bg-accent`), and the label is semibold. The sidebar's active item uses the soft sidebar tint (`bg-sidebar-accent`, `text-sidebar-primary`, semibold) in both themes, not a solid fill. `--now` (`bg-now text-now-foreground`) marks today in the sidebar, as the "Today" chip beside today's day. It also marks today in the calendar (the cell's border and a soft ring, date number in `text-now`), in the day list (today's row and its "Today" label), and on the Dashboard's Today card during the trip (ring, and the next stop's name in the heading font).
@@ -848,8 +869,9 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 - **Costs**: `costTotal` for the day.
 - **Weather and daylight** (`DayWeatherStrip`): in the header under the cost line, for the day's first city. Weather icon and name, high and low, chance of rain or snow, sunrise and sunset (sunset in `--warning` when before 17:00). A "Forecast" tag for dates within 15 days, a dashed "Typical" tag (a tooltip explains: the same dates over the last three years) for later dates, and the sun only for past dates.
 - **Quick cost**: the "+ ¥" button in the button row logs an expense for that day's date (§12.5).
+- **Add a place from here**: the round + in each gap of the stop line (before the first stop, between stops, after the last, and on an empty day) opens the quick add sheet for that gap (`QuickAddSheet`, §3.3). Businesses within 500 m of the phone are listed (name, type, distance, and the Google logo); the person can filter them, search by name, or pick a place waiting for the city. The confirm step sets the name, the city (asked only when the day has two cities), the category and "I'm here now" (on for today in Tokyo, which marks the stop done). Saving creates the place in the day's city and inserts it at that gap. Undo removes the stop and archives the place. Hidden on read-only links.
 
-**Shared view:** the day research panel is hidden. No drag and drop, Went and Skip, up and down buttons, move to another day, log cost, remove, or add from the waiting list. Tapping a waiting place opens its details (it does not add it). The other-days column becomes links to those days. The List, Map and Waiting views, the filters and directions stay. Costs are hidden (`Yen` and `CostLine` render nothing).
+**Shared view:** the day research panel is hidden. No drag and drop, Went and Skip, up and down buttons, move to another day, log cost, remove, or add from the waiting list or the + in the gaps. Tapping a waiting place opens its details (it does not add it). The other-days column becomes links to those days. The List, Map and Waiting views, the filters and directions stay. Costs are hidden (`Yen` and `CostLine` render nothing).
 
 ### 12.4 Cities (`/cities/`) and City (`/city/?id=`)
 
@@ -900,7 +922,7 @@ Tabs (`settings-screen.tsx`):
 | Backup | export the whole trip as JSON, including flights, cash records and day research; import only into a trip that has nothing saved. Older backups without flights still import. |
 | Clean up | the retired records (archived, including archived cash records, removed, dismissed, archived day research, archived to-dos and to-do lists no live to-do uses, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
 
-Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, "start fresh" which runs `resetApp`), and sign-out.
+Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, which opens What's new, and "start fresh" which runs `resetApp`), and sign-out.
 
 **Offline copy (Settings → About, `settings-about.tsx`):** the About section shows "Offline copy: kept on this device." when the browser has agreed to keep the offline copy (§17.1), or "Offline copy: the browser may clear it…" with an "Ask to keep it" link button. The button calls `requestPersistentStorage()`; if the browser still refuses, a toast suggests adding the app to the home screen. The line is hidden when the browser has no storage API. Texts are the `about.storage*` keys.
 
@@ -970,6 +992,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `location.ts` | `coordinatesExpired`, `dueForRefresh`, `withoutGoogleCoordinates`, `doubtfulMatch`, `medianPoint` | Google coordinates expire after 30 days and are due for refresh from day 20. `doubtfulMatch` flags a match more than 2 km from coordinates already saved, or far from the city centre (30 km; 200 km for day trips). Flagged matches are reported for a person to confirm. |
 | `live-hours.ts` | `parseGoogleHours`, `openNowFrom`, `hoursDifference` | Reads Google's English opening-hours text into periods, and works out whether a place is open now. |
 | `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor`, `dayFilterPins` | Pins per stop, straight lines when no route. `dayFilterPins` gives the City page's pins and day legend for the chosen days (a place on two days shows once, with the earlier day). |
+| `nearby.ts` | `distanceMeters`, `formatDistance`, `typeLabel` | Straight-line distance in metres, shown as metres under 1 km and kilometres above; Google's type text made readable. Google's own words stay in English (rule 13). |
 | `budget.ts` | `summarizeBudget`, `totalsByCategory`, `totalsByPayer`, `estimateStops`, `spendByDay`, `daysRemaining` | Expenses beat estimates for the same place; yen integers. |
 | `dashboard.ts` | many tile functions (see §12.1) | All figures from in-memory data. |
 | `todos.ts` | `dueState`, `todosDueSoon`, `listProgress`, `visibleTodos`, `nextOrder`, `swapOrder`, `withStatus`, `archiveList` | Due states in Japan time: overdue, soon (within 7 days), later, none. `archiveList` also archives the list's live to-dos. Nothing is deleted. |
@@ -999,7 +1022,7 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 
 - Screens reach Google only through `MapsService` (`src/domain/maps-service.ts`). The implementation is `GoogleMapsService`. The SDK is one script tag, added on first use.
 - **Stored:** Google place IDs (indefinitely) and Google coordinates (at most 30 days; `maps:refresh` renews them). Our own notes can be stored.
-- **In memory only:** hours, ratings, photos, route times and distances. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
+- **In memory only:** hours, ratings, photos, route times and distances, and nearby search results. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
 - **Share copies** (§12.8) keep place IDs and Google coordinates as the trip does. Coordinates older than 30 days are dropped from the copy. `npm run maps:refresh` brings the copies' coordinates in line with the trip (renewed or deleted), so a copy never keeps them past 30 days. Copies hold no hours, ratings or photos.
 - Google data appears only on a Google map or next to the Google logo. Never on another map provider.
 - Weather and daylight are not Google data. City coordinates come from Open-Meteo's geocoding by the city's name, never from the Maps SDK or stored Google coordinates. Nothing is written to Firestore. Results stay in memory, with the `weather:*` localStorage cache described in §3.5.
@@ -1017,6 +1040,12 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 | `Place.fetchFields` (`photos`, `regularOpeningHours`, and the live-detail fields listed in `google-maps-service.ts`) | Photos and live details, loaded when a place opens | `TAP_LIMITS` 30 per device per day each for `live` and `photo` (`tap-limit.ts`) |
 
 Waiting-list pins on the Day page (`cityPins`) use only stored coordinates and make no calls.
+
+The quick add sheet (§12.3) makes two calls. `navigator.geolocation` gives the phone's position, which is used only as the centre of the search below; it is never stored. The position reaches Google only as that search's centre. The search is:
+
+| Call | Used for | Cost guard |
+|---|---|---|
+| `Place.searchNearby` (`id`, `displayName`, `primaryType`, `location`; at most 20, ranked by distance; `en`, region `jp`) | Businesses within 500 m for the quick add sheet, searched when its list loads and again on Refresh | One call per list load; results in memory only |
 
 Viewers of a share link make the same place-detail calls as members (photos and live details), under the same per-device daily limit.
 
@@ -1187,7 +1216,7 @@ Run this by hand on both phones before the trip:
 2. The app fetches `version.json` (never cached by the service worker) on start and whenever the tab becomes visible.
 3. If the deployed version differs from `APP_VERSION`, `resetApp(deployed)` runs once per tab (`triedVersion` in sessionStorage, so a stale page cannot cause a loop):
    - signs out, with up to 5 seconds to upload pending edits (`clearSession`);
-   - clears localStorage except `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category` and `payment-method`;
+   - clears localStorage except `locale`, `theme`, `palette`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category` and `payment-method`;
    - clears sessionStorage and all Cache Storage entries, and unregisters service workers;
    - reloads `…/?v=<version>` (the `v` is removed after load).
 4. Storage stamped with another version is reset on start (`storageIsStale`).
@@ -1196,6 +1225,12 @@ Run this by hand on both phones before the trip:
 ### 18.3 Manual reset
 
 Account sheet → About → "start fresh" runs the same reset.
+
+### 18.4 What's new
+
+- Tapping the version (the desktop corner, or About in the Account sheet) opens a list of changes per version, newest first. The bullets are keys in the `changelog` group of `en.json` and `es.json`, grouped by date (`changelog.d20261112.*`).
+- `src/domain/changelog.ts` holds the list. An entry with `version: null` is work not deployed yet; the app shows it under the running version. Older versions have no entries.
+- Commits that change what the owner sees add bullets to the top null entry. "Deploy solution" (CLAUDE.md rules 14 and 15) stamps that entry with the version the merge will produce.
 
 ---
 

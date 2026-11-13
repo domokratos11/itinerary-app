@@ -19,6 +19,7 @@ import { SyncStatus } from "@/components/sync-status";
 import { Tip } from "@/components/tip";
 import { TripSwitcher } from "@/components/trip-switcher";
 import { ViewerSheet } from "@/components/viewer";
+import { WhatsNewButton } from "@/components/whats-new";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { APP_VERSION } from "@/lib/app-reset";
@@ -160,7 +161,9 @@ export function AppHeader() {
 export function VersionTag() {
   return (
     <p className="pointer-events-none fixed right-2 bottom-1 z-30 hidden rounded bg-background/80 px-1.5 text-[11px] text-muted-foreground md:block">
-      {t("common.version", { version: APP_VERSION })}
+      <WhatsNewButton className="pointer-events-auto">
+        {t("common.version", { version: APP_VERSION })}
+      </WhatsNewButton>
     </p>
   );
 }

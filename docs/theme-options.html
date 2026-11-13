@@ -258,6 +258,21 @@ const THEMES = {
     secondary: "#2a202c", "muted-foreground": "#b0a0ac", accent: "#40243a", destructive: "#ff8a80", border: "#382c3a", input: "#483a4a", ring: "#b877a0",
     now: "#5fd3d0", "now-foreground": "#04201f", success: "#9bd46a", warning: "#f0bb52", chart: ["#f8d3e6", "#eaa3cb", "#cf78aa", "#a45584", "#7a3c61"] }
 };
+// Category and priority colours of each theme (--cat-* and --prio-* in globals.css): the same hues everywhere, tuned in lightness and chroma per theme.
+const COLOURS = {
+  "sen-day": { cat: { lights: "#a746f9", food: "#815400", shopping: "#e24995", sight: "#195a9d", daytrip: "#008371", temple: "#d0003b" }, prio: { must: "#2e9e52", want: "#b58c00", maybe: "#bd5b00" } },
+  "sen-night": { cat: { lights: "#977fd5", food: "#c2740c", shopping: "#e554a9", sight: "#426dea", daytrip: "#00928d", temple: "#c24a55" }, prio: { must: "#25984d", want: "#b68e00", maybe: "#c3610d" } },
+  "kumo": { cat: { lights: "#a567c8", food: "#7c4200", shopping: "#d06481", sight: "#3f56a1", daytrip: "#009797", temple: "#b13544" }, prio: { must: "#429c5a", want: "#b08e21", maybe: "#b56124" } },
+  "sumi": { cat: { lights: "#8f5db5", food: "#a46313", shopping: "#d365a8", sight: "#4f90db", daytrip: "#00938c", temple: "#e56852" }, prio: { must: "#3b9555", want: "#b18f23", maybe: "#bb672c" } },
+  "matsu": { cat: { lights: "#9675d6", food: "#815400", shopping: "#9b2773", sight: "#2750b1", daytrip: "#009f90", temple: "#df5c4e" }, prio: { must: "#399d57", want: "#b28d00", maybe: "#b95e17" } },
+  "mori": { cat: { lights: "#9456b9", food: "#ad5f00", shopping: "#d660a8", sight: "#6488dc", daytrip: "#009382", temple: "#e96350" }, prio: { must: "#319751", want: "#b48f05", maybe: "#bf6420" } },
+  "ume": { cat: { lights: "#9e72ce", food: "#843a00", shopping: "#e14e89", sight: "#2761d4", daytrip: "#009189", temple: "#bb2b41" }, prio: { must: "#399d57", want: "#b28d00", maybe: "#b95e17" } },
+  "yoi": { cat: { lights: "#8e53c3", food: "#a97000", shopping: "#e458a1", sight: "#458ff4", daytrip: "#009487", temple: "#bc4752" }, prio: { must: "#319751", want: "#b48f05", maybe: "#bf6420" } }
+};
+for (const id in COLOURS) Object.assign(THEMES[id], COLOURS[id]);
+const CAT_NAMES = { lights: "Lights", food: "Food", shopping: "Shopping", sight: "Sight", daytrip: "Day trip", temple: "Temple" };
+const PRIO_NAMES = { must: "Must", want: "Want", maybe: "Maybe" };
+function swatches(t, group, names) { return Object.keys(names).map(k => '<span class="pg-sw" title="' + names[k] + ' ' + t[group][k] + '" style="background:' + t[group][k] + ';width:22px"></span>').join(" "); }
 const FAMILIES = [
   { id: "sen", name: "Sen", tag: "Current", text: "Cool paper white and indigo by day, deep indigo by night. The baseline everything else is compared with.", light: "sen-day", dark: "sen-night" },
   { id: "ink", name: "Kumo and Sumi", tag: "New · neutral", text: "No hue of its own: ink on cloud grey, and off-white on charcoal. The city lines and the orange \"now\" marker are the only colour on screen.", light: "kumo", dark: "sumi" },
@@ -378,7 +393,9 @@ function render(id) {
   document.getElementById("pg-board").innerHTML = board(id);
   document.getElementById("pg-tokens").innerHTML = "<tr><th>Token</th><th>Colour</th><th>Value</th><th>Used for</th></tr>" +
     TOKENS.map(k => '<tr><td><code>--' + k[0] + '</code></td><td><span class="pg-sw" style="background:' + t[k[0]] + '"></span></td><td><code>' + t[k[0]] + '</code></td><td>' + k[1] + '</td></tr>').join("") +
-    '<tr><td><code>--chart-1…5</code></td><td colspan="2">' + t.chart.map(c => '<span class="pg-sw" style="background:' + c + ';width:22px"></span>').join(" ") + '</td><td>Budget charts</td></tr>';
+    '<tr><td><code>--chart-1…5</code></td><td colspan="2">' + t.chart.map(c => '<span class="pg-sw" style="background:' + c + ';width:22px"></span>').join(" ") + '</td><td>Budget charts</td></tr>' +
+    '<tr><td>Categories</td><td colspan="2">' + swatches(t, "cat", CAT_NAMES) + '</td><td>Tags, charts and map pins: Lights, Food, Shopping, Sight, Day trip, Temple</td></tr>' +
+    '<tr><td>Priorities</td><td colspan="2">' + swatches(t, "prio", PRIO_NAMES) + '</td><td>Must, Want, Maybe</td></tr>';
   document.getElementById("pg-contrast").innerHTML = "<tr><th>Pair</th><th>Sample</th><th class='pg-num'>Ratio</th><th>Needs</th></tr>" +
     PAIRS.map(p => { const r = ratio(t[p[0]], t[p[1]]);
       const verdict = p[3] ? (r >= p[3] ? '<span class="pg-pass">Pass</span> ≥ ' + p[3] : '<span class="pg-fail">Below</span> ' + p[3]) : "No minimum";
@@ -392,7 +409,8 @@ document.getElementById("pg-families").innerHTML = FAMILIES.map(f =>
 document.getElementById("pg-bar").innerHTML = ORDER.map(id =>
   '<button class="pg-chip" type="button" id="chip-' + id + '" data-theme-id="' + id + '" aria-pressed="false"><i style="background:linear-gradient(135deg,' + THEMES[id].background + ' 50%,' + THEMES[id].primary + ' 50%)"></i>' + THEMES[id].name + '</button>').join("");
 document.getElementById("pg-matrix").innerHTML = "<tr><th>Token</th>" + ORDER.map(id => "<th>" + THEMES[id].name + "</th>").join("") + "</tr>" +
-  TOKENS.map(k => "<tr><td><code>--" + k[0] + "</code></td>" + ORDER.map(id => '<td class="pg-cell"><span class="pg-sw" title="' + full(THEMES[id])[k[0]] + '" style="background:' + full(THEMES[id])[k[0]] + '"></span></td>').join("") + "</tr>").join("");
+  TOKENS.map(k => "<tr><td><code>--" + k[0] + "</code></td>" + ORDER.map(id => '<td class="pg-cell"><span class="pg-sw" title="' + full(THEMES[id])[k[0]] + '" style="background:' + full(THEMES[id])[k[0]] + '"></span></td>').join("") + "</tr>").join("") +
+  [["cat", CAT_NAMES, "cat"], ["prio", PRIO_NAMES, "prio"]].map(g => Object.keys(g[1]).map(k => "<tr><td><code>--" + g[2] + "-" + (k === "daytrip" ? "daytrip" : k) + "</code></td>" + ORDER.map(id => '<td class="pg-cell"><span class="pg-sw" title="' + g[1][k] + " " + THEMES[id][g[0]][k] + '" style="background:' + THEMES[id][g[0]][k] + '"></span></td>').join("") + "</tr>").join("")).join("");
 
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-theme-id]"); if (!b) return;

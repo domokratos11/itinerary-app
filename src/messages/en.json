@@ -608,7 +608,12 @@
     "light": "Light",
     "dark": "Dark",
     "theme": "Theme",
-    "aria": "Theme: {current}. Switch to {next}"
+    "aria": "Theme: {current}. Switch to {next}",
+    "palette": "Colour theme",
+    "paletteSen": "Sen",
+    "paletteInk": "Ink",
+    "palettePine": "Pine",
+    "palettePlum": "Plum"
   },
   "misc": {
     "pageNotFound": "Page not found",
@@ -1074,5 +1079,46 @@
     "openCount": "{count, plural, one {# open} other {# open}}",
     "dueSoonCount": "{count, plural, one {# due this week} other {# due this week}}",
     "chooseList": "Choose a list"
+  },
+  "quickAdd": {
+    "addHere": "Add a place here",
+    "title": "Add a place here",
+    "description": "Pick a business near you, or one that's waiting for this city.",
+    "nearbyHeading": "Near you",
+    "loading": "Finding places near you…",
+    "empty": "No places found near you.",
+    "noMatches": "Nothing near you matches that.",
+    "filterPlaceholder": "Filter nearby places",
+    "filterLabel": "Filter nearby places",
+    "refresh": "Refresh",
+    "denied": "Location is blocked, so nearby places can't be listed. Search by name instead, or allow location for this site in your browser settings.",
+    "unavailable": "Your location isn't available right now. Search by name instead.",
+    "timeout": "Finding your location took too long. Try again or search by name.",
+    "unsupported": "This device can't share its location. Search by name instead.",
+    "notConfigured": "Google Maps isn't set up, so nearby places can't be listed.",
+    "offline": "You're offline, so nearby places can't be listed.",
+    "failed": "Google didn't answer. Try again or search by name.",
+    "searchLabel": "Search by name",
+    "searchPlaceholder": "Type a place name",
+    "waitingHeading": "Waiting in this city",
+    "waitingEmpty": "Nothing is waiting for this city.",
+    "hereNow": "I'm here now",
+    "hereNowHint": "Marks the stop as done.",
+    "back": "Back",
+    "save": "Add stop",
+    "addedPlace": "Added {name} as a new stop"
+  },
+  "changelog": {
+    "title": "What's new",
+    "description": "A short summary of what changed in each version.",
+    "open": "Open what's new",
+    "entryHeading": "Version {version} · {date}",
+    "empty": "Nothing to show yet.",
+    "d20261112": {
+      "palette": "Pick a colour theme (Sen, Ink, Pine or Plum) in the Account sheet.",
+      "colours": "Chart, badge and map colours now follow the theme.",
+      "quickAdd": "Tap + between stops to add a place near you to the day.",
+      "changelog": "Tap the version to see what's new."
+    }
   }
 }

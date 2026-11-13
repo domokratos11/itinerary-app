@@ -83,6 +83,17 @@ export type PlaceSuggestion = {
   detail: string | null;
 };
 
+// A business near the phone. Held in memory for the sheet that shows it:
+// only the chosen place's ID and coordinates are ever saved (rule 4).
+export type NearbyPlace = {
+  placeId: string;
+  name: string;
+  // Google's own type, such as "ramen_restaurant", or null.
+  primaryType: string | null;
+  location: LatLng;
+  distanceM: number;
+};
+
 export interface MapsService {
   isConfigured(): boolean;
   createMap(container: HTMLElement, options: MapOptions): Promise<MapView>;
@@ -93,4 +104,6 @@ export interface MapsService {
   suggestPlaces(input: string): Promise<PlaceSuggestion[]>;
   // Coordinates for a chosen suggestion, which also ends its billing session.
   locatePlace(placeId: string): Promise<LatLng & { placeId: string }>;
+  // Businesses around a point, nearest first. Never stored.
+  nearbyPlaces(center: LatLng, radiusM: number): Promise<NearbyPlace[]>;
 }

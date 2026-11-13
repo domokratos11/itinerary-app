@@ -86,7 +86,7 @@ import {
 } from "@/components/dashboard-parts";
 
 const noopSubscribe = () => () => {};
-const FALLBACK_COLOR = "#64748b";
+const FALLBACK_COLOR = "var(--muted-foreground)";
 const TODOS_SHOWN = 4;
 
 // The first screen: where the trip stands, from what's already in it.

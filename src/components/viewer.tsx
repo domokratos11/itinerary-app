@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Eye, LogOut } from "lucide-react";
 
 import { LanguageSelect } from "@/components/language-select";
+import { PalettePicker } from "@/components/palette-picker";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -55,6 +56,10 @@ export function ViewerSheet() {
             <div className="flex flex-col items-start gap-1.5">
               <span className="text-sm font-medium">{t("theme.theme")}</span>
               <ThemeToggle />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium">{t("theme.palette")}</span>
+              <PalettePicker />
             </div>
           </div>
           <Separator />

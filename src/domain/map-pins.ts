@@ -5,14 +5,16 @@ import { itemsForDay } from "./plan";
 import { CATEGORY_COLOR } from "./taxonomy";
 import type { Endpoint } from "./trip";
 
-const STOP_COLOR = "#2563eb";
-const FINISHED_COLOR = "#6b7280";
+// Colours are theme tokens (globals.css); the map resolves them to real
+// colours before drawing (lib/css-color).
+const STOP_COLOR = "var(--pin-stop)";
+const FINISHED_COLOR = "var(--pin-finished)";
 
 // A stop's pin colour, also used for its number on the card.
 export function stopColor(status: PlanItem["status"]): string {
   return status === "planned" ? STOP_COLOR : FINISHED_COLOR;
 }
-const HOTEL_COLOR = "#111827";
+const HOTEL_COLOR = "var(--pin-hotel)";
 
 export function placePoint(place: {
   lat: number | null;

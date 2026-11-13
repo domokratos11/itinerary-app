@@ -7,10 +7,12 @@ import {
   type MapPin,
   type MapsService,
   type MapView,
+  type NearbyPlace,
   type PlacePhoto,
   type PlaceSuggestion,
   type WalkingLeg,
 } from "@/domain/maps-service";
+import { distanceMeters } from "@/domain/nearby";
 import type { LatLng } from "@/lib/geo";
 import { mapsConfig } from "@/lib/maps.config";
 
@@ -351,6 +353,39 @@ export class GoogleMapsService implements MapsService {
         lat: place.location.lat(),
         lng: place.location.lng(),
       };
+    });
+  }
+
+  nearbyPlaces(center: LatLng, radiusM: number): Promise<NearbyPlace[]> {
+    return guarded(async () => {
+      const { Place, SearchNearbyRankPreference } =
+        (await google.maps.importLibrary(
+          "places",
+        )) as google.maps.PlacesLibrary;
+      const { places } = await Place.searchNearby({
+        fields: ["id", "displayName", "primaryType", "location"],
+        locationRestriction: { center, radius: radiusM },
+        maxResultCount: 20,
+        rankPreference: SearchNearbyRankPreference.DISTANCE,
+        language: "en",
+        region: "jp",
+      });
+      return places.flatMap((place) => {
+        if (!place.location) return [];
+        const location = {
+          lat: place.location.lat(),
+          lng: place.location.lng(),
+        };
+        return [
+          {
+            placeId: place.id,
+            name: place.displayName ?? "",
+            primaryType: place.primaryType ?? null,
+            location,
+            distanceM: distanceMeters(center, location),
+          },
+        ];
+      });
     });
   }
 

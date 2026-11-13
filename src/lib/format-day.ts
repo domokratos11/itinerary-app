@@ -22,3 +22,13 @@ export function formatTokyoDateTime(iso: string): string {
     timeZoneName: "short",
   });
 }
+
+// A YYYY-MM-DD date with its year, such as "Nov 12, 2026".
+export function formatFullDate(date: string): string {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString(intlLocale(), {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
