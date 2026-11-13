@@ -3,6 +3,7 @@
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { useEffect } from "react";
 
+import { applyPalette, usePalette } from "@/lib/palette";
 import { applyThemeColor } from "@/lib/theme-color";
 
 // Sets a `dark` class on <html>. Styles in globals.css key off that class.
@@ -17,6 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       enableSystem={false}
       disableTransitionOnChange
     >
+      <PickPalette />
       <PickFirstTheme />
       <ThemeColor />
       {children}
@@ -27,9 +29,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 // Keeps the browser's own bar in the page colour of the chosen theme.
 function ThemeColor() {
   const { resolvedTheme } = useTheme();
+  const palette = usePalette();
   useEffect(() => {
-    applyThemeColor(resolvedTheme);
-  }, [resolvedTheme]);
+    applyThemeColor(resolvedTheme, palette);
+  }, [resolvedTheme, palette]);
+  return null;
+}
+
+// Puts the colour family saved on this device on the page.
+function PickPalette() {
+  useEffect(() => {
+    applyPalette();
+  }, []);
   return null;
 }
 

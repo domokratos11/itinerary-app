@@ -200,7 +200,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `not-found.tsx` | 404 page. Also `404.html` on Pages, where old day and city links are redirected (`old-link-redirect.tsx`). |
 | `manifest.ts` | `manifest.webmanifest` (installable app). |
 | `version.json/route.ts` | `version.json` with the deployed version. `force-static`, so no request is read. |
-| `globals.css` | Theme tokens (hex, both themes), Tailwind import, dark variant, base styles, and the `thin-scrollbar` utility (replaces shadcn's `no-scrollbar`). |
+| `globals.css` | Theme tokens (hex, both themes, and the `data-palette` blocks for Ink, Pine and Plum), Tailwind import, dark variant, base styles, and the `thin-scrollbar` utility (replaces shadcn's `no-scrollbar`). |
 | `favicon.ico` | Browser icon. |
 | `days/page.test.tsx` | A test kept beside its page. |
 | `error.test.tsx` | Test for the crash screen in `error.tsx`, kept beside it. |
@@ -215,7 +215,7 @@ Shared chrome and gates:
 |---|---|
 | `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. |
 | `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text), `SECTIONS` (the six sections, including To-dos) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
-| `viewer.tsx` | `ViewerSheet` (side sheet: language, theme, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
+| `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
 | `plan-sync.tsx` | Mounted once. Renders `MemberSync` (auth, plan and trip listeners) for members, or `ViewerSync` (loads the shared copy, §12.8) when the tab is in viewer mode. |
@@ -223,10 +223,11 @@ Shared chrome and gates:
 | `service-worker-register.tsx` | Registers `sw.js` in production. |
 | `offline-banner.tsx` | Shows "offline" text (`useOnline`) and, when writes are waiting, the count from `useSyncStore`; edits still save on the device. |
 | `sync-status.tsx` | `SyncStatus`: icon button in the header, left of search, hidden on read-only links. Shows whether edits have reached the server (§17.1): cloud-check "All changes saved" (muted), cloud-upload "Saving N changes…" (pulsing), cloud-off "N changes waiting for a connection." (`text-warning`, offline with pending writes). Tooltip on hover or focus; a tap shows the same text in a toast, since tooltips do not open on tap. |
-| `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Match phone / Light / Dark button. |
+| `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Light / Dark button. `theme-provider.tsx` also puts the saved colour family on the page (`PickPalette`) and re-applies the browser bar colour (`ThemeColor`). |
+| `palette-picker.tsx` | Colour family picker (Sen, Ink, Pine, Plum): shadcn ToggleGroup, two per row on phones and one row from `lg`. Sits under the Light / Dark toggle in the Account sheet and the viewer sheet. |
 | `search-palette.tsx` | The Ctrl+K / ⌘K search over days, hotels and places. |
 | `trip-switcher.tsx`, `new-trip.tsx` | Trip name menu; panel to create a trip (for permitted creators). |
-| `account-sheet.tsx` | Account side sheet: signed-in email, theme, language, About, sign-out. |
+| `account-sheet.tsx` | Account side sheet: signed-in email, theme (Light / Dark and colour family), language, About, sign-out. |
 | `activity-sheet.tsx` | Change log sheet with undo. |
 | `language-select.tsx` | Language picker. |
 | `trip-name.tsx`, `trip-dates.tsx`, `trip-plan-status.tsx` | Small trip header pieces. |
@@ -413,7 +414,8 @@ Maps and place helpers:
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
-| `theme-color.ts` | `THEME_COLOR` (`light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme)`, which sets `<meta name="theme-color">` so the browser bar follows the chosen theme. Tests in `theme-color.test.ts`. |
+| `theme-color.ts` | `THEME_COLOR` (Sen: `light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme, palette)`, which picks the page background for the family and mode and sets `<meta name="theme-color">` so the browser bar follows the choice. Tests in `theme-color.test.ts`. |
+| `palette.ts` | Colour families: `PALETTES` (`sen`, `ink`, `pine`, `plum`), `getPalette`, `setPalette`, `applyPalette` and `usePalette` (a small Zustand store). Saved per device under localStorage key `palette`. Sen sets no attribute; the others set `data-palette` on `<html>`. Tests in `palette.test.ts`. |
 | `order.ts` | Sort keys with fractional indexing. |
 | `use-media-query.ts`, `use-online.ts` | Responsive and connectivity hooks. `prefersReducedMotion()` is the plain check (not a hook) for motion started from code, such as scrolling to today; it reads the phone's "reduce motion" setting. |
 
@@ -428,7 +430,7 @@ Version and update:
 
 | File | Role |
 |---|---|
-| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category`, `payment-method`), cache clearing, reload. |
+| `app-reset.ts` | `APP_VERSION`, the storage reset (keeps `locale`, `theme`, `palette`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category`, `payment-method`), cache clearing, reload. |
 | `version-check.ts` | Compares the running version with `version.json` and decides whether to reset. |
 
 ### 3.6 `src/messages`, `src/test`, `scripts`
@@ -738,6 +740,8 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 ## 10. Theme
 
 - **Library:** `next-themes`, in `src/components/theme-provider.tsx`. Attribute `class`, themes `light` and `dark`, default `light`, `enableSystem={false}`, `disableTransitionOnChange`. It sets `class="dark"` on `<html>` before the first paint, so `suppressHydrationWarning` is on `<html>`.
+- **Colour families:** four families, Sen (default), Ink, Pine and Plum, each with a light and a dark mode. Light and Dark are the mode (next-themes). The family is a separate choice, made in the Account sheet and the viewer sheet with `palette-picker.tsx`. The Ink, Pine and Plum colours come from `docs/theme-options.html`; in the app they are named Ink (Kumo light, Sumi dark), Pine (Matsu light, Mori dark) and Plum (Ume light, Yoi dark). Switching families needs no code change or deploy.
+- **Palette storage:** `src/lib/palette.ts` (`PALETTES`, `getPalette`, `setPalette`, `applyPalette`, `usePalette`) saves the family per device in localStorage under `palette`. Sen sets no attribute. The others set `data-palette` on `<html>`. In `globals.css` each has a `:root[data-palette="ink|pine|plum"]` block and a `:root[data-palette=…].dark` block, and every token Sen defines is in each. The `.dark` block has the higher specificity, so it wins over the light block and the plain `.dark` rule. `palette` is in the kept-keys list, so it survives a version reset like `theme`.
 - **Choices:** Light and Dark only, with no "Match phone" option. The button in the Account sheet switches between them (`theme-toggle.tsx`). On a device with no stored choice, or with the old stored `system` value, `PickFirstTheme` picks light or dark once from `prefers-color-scheme` and saves it. The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
 - **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, as hex values: light has a cool paper-white background (`#f4f6fa`) and indigo `--primary` (`#2b47a8`); dark has a deep indigo background (`#0d1220`) and `--primary` `#96aaff`. Other tokens: `--background`, `--foreground`, `--muted`, `--border`, `--sidebar-*`, `--chart-1..5` (an indigo scale), and others. `--now` with `--now-foreground` is kept for the present moment (today, the next stop). `--success` and `--warning` are for status. All of these exist in both themes. The Dashboard's charts take their colours from these tokens too: spend per day and "planned" stops use `--primary`, "done" stops `--success`, "skipped" stops `--muted-foreground`. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`, `bg-now`, `text-now-foreground`, `text-success`, `text-warning`). `h1` and `h2` use the heading font through a base rule.
 - **Status colours and page titles:** status colours always come from the tokens: `--warning` for warning states (planned expenses, due-soon to-dos, the cash warning, the early sunset, the medium day load and the day research warnings), `--success` for good states (the light day load, "Accepted" places, done to-dos) and `--destructive` for the heavy day load and late to-dos. No component uses fixed amber, emerald, red or hex colour classes. Every screen's `h1` is `text-3xl font-bold` in the heading font.
@@ -748,7 +752,7 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 - **Category, priority and expense colours** (`src/domain/taxonomy.ts`): fixed hex colours per category (`lights`, `food`, `shopping`, `sight`, `daytrip`, `temple`), per priority (`must`, `want`, `maybe`) and per expense category. `darkStep` and `tint` produce the dark-mode variants. Category and priority badges show these colours only on their icon, not as a fill (`tag-badges.tsx`).
 - **Map:** `trip-map.tsx` reads `resolvedTheme` and passes `colorScheme: "light" | "dark"` to the Maps service, so the map follows the app.
 - **Toasts:** `sonner` reads the theme through `useTheme`.
-- **Browser chrome:** `THEME_COLOR` (`src/lib/theme-color.ts`) is the source. The root layout's `themeColor` and the manifest's `theme_color` and `background_color` use `THEME_COLOR.light`. `ThemeColor` in `theme-provider.tsx` calls `applyThemeColor` whenever the resolved theme changes, so the browser bar follows the chosen theme.
+- **Browser chrome:** `THEME_COLOR` (`src/lib/theme-color.ts`) is the source. The root layout's `themeColor` and the manifest's `theme_color` and `background_color` use `THEME_COLOR.light` (Sen). `ThemeColor` in `theme-provider.tsx` calls `applyThemeColor(theme, palette)` whenever the resolved theme or the palette changes, so the browser bar follows the chosen theme and family.
 - **Cities** have their own colour (`#rrggbb` in `cities` documents), used for dots in the sidebar and day list. On the Day page a city's colour is the line of its days: the header has a short band in that colour, and the stop rail uses the colour of the day's first city. `--now` marks the next stop.
 - **Font:** IBM Plex Sans (`--font-sans`, text), Barlow Semi Condensed (`--font-display`, mapped to `--font-heading`, used by the `font-heading` class for headings, dates, times and amounts) and Geist Mono (`--font-mono`) via `next/font`.
 - **Shell:** the open section in the phone tab bar (`BottomNav`, on the card colour, tabs at least 56px tall) and the open section's header link on tablets are marked with the soft `--accent` tint and `text-primary`; on phones the icon also sits in a soft pill (`bg-accent`), and the label is semibold. The sidebar's active item uses the soft sidebar tint (`bg-sidebar-accent`, `text-sidebar-primary`, semibold) in both themes, not a solid fill. `--now` (`bg-now text-now-foreground`) marks today in the sidebar, as the "Today" chip beside today's day. It also marks today in the calendar (the cell's border and a soft ring, date number in `text-now`), in the day list (today's row and its "Today" label), and on the Dashboard's Today card during the trip (ring, and the next stop's name in the heading font).
@@ -1187,7 +1191,7 @@ Run this by hand on both phones before the trip:
 2. The app fetches `version.json` (never cached by the service worker) on start and whenever the tab becomes visible.
 3. If the deployed version differs from `APP_VERSION`, `resetApp(deployed)` runs once per tab (`triedVersion` in sessionStorage, so a stale page cannot cause a loop):
    - signs out, with up to 5 seconds to upload pending edits (`clearSession`);
-   - clears localStorage except `locale`, `theme`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category` and `payment-method`;
+   - clears localStorage except `locale`, `theme`, `palette`, `device-name`, `sidebar-open`, `hide-amounts`, `display-currency`, `days-view`, `quick-expense-category` and `payment-method`;
    - clears sessionStorage and all Cache Storage entries, and unregisters service workers;
    - reloads `…/?v=<version>` (the `v` is removed after load).
 4. Storage stamped with another version is reset on start (`storageIsStale`).

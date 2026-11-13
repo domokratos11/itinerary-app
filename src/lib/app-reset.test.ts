@@ -23,6 +23,7 @@ describe("resetApp", () => {
     localStorage.setItem("maps-taps", "{}");
     localStorage.setItem("locale", "es");
     localStorage.setItem("theme", "dark");
+    localStorage.setItem("palette", "plum");
     localStorage.setItem("device-name", "Ana's phone");
     localStorage.setItem("hide-amounts", "true");
     sessionStorage.setItem("anything", "x");
@@ -37,6 +38,7 @@ describe("resetApp", () => {
     expect(sessionStorage.getItem("anything")).toBeNull();
     expect(localStorage.getItem("locale")).toBe("es");
     expect(localStorage.getItem("theme")).toBe("dark");
+    expect(localStorage.getItem("palette")).toBe("plum");
     expect(localStorage.getItem("device-name")).toBe("Ana's phone");
     expect(localStorage.getItem("hide-amounts")).toBe("true");
     expect(storedVersion()).toBe("1.0.1");

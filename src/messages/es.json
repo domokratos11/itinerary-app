@@ -608,7 +608,12 @@
     "light": "Claro",
     "dark": "Oscuro",
     "theme": "Tema",
-    "aria": "Tema: {current}. Cambiar a {next}"
+    "aria": "Tema: {current}. Cambiar a {next}",
+    "palette": "Tema de color",
+    "paletteSen": "Sen",
+    "paletteInk": "Tinta",
+    "palettePine": "Pino",
+    "palettePlum": "Ciruela"
   },
   "misc": {
     "pageNotFound": "Página no encontrada",

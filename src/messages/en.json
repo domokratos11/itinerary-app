@@ -608,7 +608,12 @@
     "light": "Light",
     "dark": "Dark",
     "theme": "Theme",
-    "aria": "Theme: {current}. Switch to {next}"
+    "aria": "Theme: {current}. Switch to {next}",
+    "palette": "Colour theme",
+    "paletteSen": "Sen",
+    "paletteInk": "Ink",
+    "palettePine": "Pine",
+    "palettePlum": "Plum"
   },
   "misc": {
     "pageNotFound": "Page not found",

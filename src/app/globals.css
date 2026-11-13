@@ -184,6 +184,239 @@
   --sidebar-ring: #6f82d0;
 }
 
+/* Other colour palettes, chosen per device (lib/palette.ts sets
+   data-palette on <html>; Sen has no attribute). Each family is a light block
+   and a dark one; the dark block has the higher specificity, so it beats both
+   the light block and the plain .dark one. Values match docs/theme-options.html. */
+:root[data-palette="ink"] {
+  --background: #f3f4f6;
+  --foreground: #15181c;
+  --card: #ffffff;
+  --card-foreground: #15181c;
+  --popover: #ffffff;
+  --popover-foreground: #15181c;
+  --primary: #1d2228;
+  --primary-foreground: #ffffff;
+  --secondary: #e8eaed;
+  --secondary-foreground: #15181c;
+  --muted: #e8eaed;
+  --muted-foreground: #5a616b;
+  --accent: #e1e4e8;
+  --accent-foreground: #15181c;
+  --destructive: #b3261e;
+  --border: #d6d9de;
+  --input: #c6cad1;
+  --ring: #8b929c;
+  --now: #c8401c;
+  --now-foreground: #ffffff;
+  --success: #1b7a4a;
+  --warning: #8a5600;
+  --chart-1: #cfd3d9;
+  --chart-2: #a4abb5;
+  --chart-3: #77808c;
+  --chart-4: #4a525d;
+  --chart-5: #1d2228;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #15181c;
+  --sidebar-primary: #1d2228;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e1e4e8;
+  --sidebar-accent-foreground: #15181c;
+  --sidebar-border: #d6d9de;
+  --sidebar-ring: #8b929c;
+}
+
+:root[data-palette="ink"].dark {
+  --background: #101214;
+  --foreground: #eceef0;
+  --card: #181b1e;
+  --card-foreground: #eceef0;
+  --popover: #1e2226;
+  --popover-foreground: #eceef0;
+  --primary: #eceef0;
+  --primary-foreground: #101214;
+  --secondary: #23272c;
+  --secondary-foreground: #eceef0;
+  --muted: #23272c;
+  --muted-foreground: #a0a7b0;
+  --accent: #2b3036;
+  --accent-foreground: #eceef0;
+  --destructive: #ff8a80;
+  --border: #2e3338;
+  --input: #3b4148;
+  --ring: #7b838d;
+  --now: #ff8f66;
+  --now-foreground: #200d05;
+  --success: #62d093;
+  --warning: #f0bb52;
+  --chart-1: #eceef0;
+  --chart-2: #b9bfc7;
+  --chart-3: #8a929c;
+  --chart-4: #5f6771;
+  --chart-5: #3f464e;
+  --sidebar: #181b1e;
+  --sidebar-foreground: #eceef0;
+  --sidebar-primary: #eceef0;
+  --sidebar-primary-foreground: #101214;
+  --sidebar-accent: #2b3036;
+  --sidebar-accent-foreground: #eceef0;
+  --sidebar-border: #2e3338;
+  --sidebar-ring: #7b838d;
+}
+
+:root[data-palette="pine"] {
+  --background: #f4f3ee;
+  --foreground: #1c211d;
+  --card: #ffffff;
+  --card-foreground: #1c211d;
+  --popover: #ffffff;
+  --popover-foreground: #1c211d;
+  --primary: #1f5f4b;
+  --primary-foreground: #ffffff;
+  --secondary: #e9e8e0;
+  --secondary-foreground: #1c211d;
+  --muted: #e9e8e0;
+  --muted-foreground: #5c635c;
+  --accent: #dcebe3;
+  --accent-foreground: #1c211d;
+  --destructive: #b3302a;
+  --border: #d9d8cd;
+  --input: #c9c8bb;
+  --ring: #6fa08e;
+  --now: #c4411f;
+  --now-foreground: #ffffff;
+  --success: #4a7a14;
+  --warning: #8a5600;
+  --chart-1: #c5dfd3;
+  --chart-2: #93c4b0;
+  --chart-3: #5fa28a;
+  --chart-4: #1f5f4b;
+  --chart-5: #143f32;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c211d;
+  --sidebar-primary: #1f5f4b;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #dcebe3;
+  --sidebar-accent-foreground: #1c211d;
+  --sidebar-border: #d9d8cd;
+  --sidebar-ring: #6fa08e;
+}
+
+:root[data-palette="pine"].dark {
+  --background: #0d1412;
+  --foreground: #e6efe9;
+  --card: #141d1a;
+  --card-foreground: #e6efe9;
+  --popover: #1a2521;
+  --popover-foreground: #e6efe9;
+  --primary: #86d6b4;
+  --primary-foreground: #0d1412;
+  --secondary: #1d2925;
+  --secondary-foreground: #e6efe9;
+  --muted: #1d2925;
+  --muted-foreground: #9aaba3;
+  --accent: #1f3a31;
+  --accent-foreground: #e6efe9;
+  --destructive: #ff8a80;
+  --border: #2a3832;
+  --input: #364840;
+  --ring: #5fa48a;
+  --now: #ff9166;
+  --now-foreground: #200d05;
+  --success: #b3d866;
+  --warning: #f0bb52;
+  --chart-1: #c4eedc;
+  --chart-2: #86d6b4;
+  --chart-3: #5bb391;
+  --chart-4: #3d8b6e;
+  --chart-5: #2a6650;
+  --sidebar: #141d1a;
+  --sidebar-foreground: #e6efe9;
+  --sidebar-primary: #86d6b4;
+  --sidebar-primary-foreground: #0d1412;
+  --sidebar-accent: #1f3a31;
+  --sidebar-accent-foreground: #e6efe9;
+  --sidebar-border: #2a3832;
+  --sidebar-ring: #5fa48a;
+}
+
+:root[data-palette="plum"] {
+  --background: #f7f3f5;
+  --foreground: #251a22;
+  --card: #ffffff;
+  --card-foreground: #251a22;
+  --popover: #ffffff;
+  --popover-foreground: #251a22;
+  --primary: #8c2f5e;
+  --primary-foreground: #ffffff;
+  --secondary: #efe7ec;
+  --secondary-foreground: #251a22;
+  --muted: #efe7ec;
+  --muted-foreground: #6a5a65;
+  --accent: #f6dfea;
+  --accent-foreground: #251a22;
+  --destructive: #b3261e;
+  --border: #e0d5db;
+  --input: #d1c3cb;
+  --ring: #c088a6;
+  --now: #0f7a80;
+  --now-foreground: #ffffff;
+  --success: #1c7a4c;
+  --warning: #8a5600;
+  --chart-1: #f0c9dc;
+  --chart-2: #dd9bbd;
+  --chart-3: #c2679a;
+  --chart-4: #8c2f5e;
+  --chart-5: #641f43;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #251a22;
+  --sidebar-primary: #8c2f5e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f6dfea;
+  --sidebar-accent-foreground: #251a22;
+  --sidebar-border: #e0d5db;
+  --sidebar-ring: #c088a6;
+}
+
+:root[data-palette="plum"].dark {
+  --background: #151017;
+  --foreground: #f1e9ef;
+  --card: #1e1720;
+  --card-foreground: #f1e9ef;
+  --popover: #251d28;
+  --popover-foreground: #f1e9ef;
+  --primary: #eaa3cb;
+  --primary-foreground: #1c0f18;
+  --secondary: #2a202c;
+  --secondary-foreground: #f1e9ef;
+  --muted: #2a202c;
+  --muted-foreground: #b0a0ac;
+  --accent: #40243a;
+  --accent-foreground: #f1e9ef;
+  --destructive: #ff8a80;
+  --border: #382c3a;
+  --input: #483a4a;
+  --ring: #b877a0;
+  --now: #5fd3d0;
+  --now-foreground: #04201f;
+  --success: #9bd46a;
+  --warning: #f0bb52;
+  --chart-1: #f8d3e6;
+  --chart-2: #eaa3cb;
+  --chart-3: #cf78aa;
+  --chart-4: #a45584;
+  --chart-5: #7a3c61;
+  --sidebar: #1e1720;
+  --sidebar-foreground: #f1e9ef;
+  --sidebar-primary: #eaa3cb;
+  --sidebar-primary-foreground: #1c0f18;
+  --sidebar-accent: #40243a;
+  --sidebar-accent-foreground: #f1e9ef;
+  --sidebar-border: #382c3a;
+  --sidebar-ring: #b877a0;
+}
+
+
 /* A slim scrollbar that still shows there is more, such as the sidebar's
    days when the window is short. */
 @utility thin-scrollbar {
