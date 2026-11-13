@@ -45,6 +45,28 @@
   --sidebar-accent-foreground: #171d33;
   --sidebar-border: #d7dde9;
   --sidebar-ring: #7f93d6;
+  /* Category, priority, spending and map-pin colours: same hues in every family, lightness and chroma tuned to this one (checked with the dataviz validator). */
+  --cat-lights: #a746f9;
+  --cat-food: #815400;
+  --cat-shopping: #e24995;
+  --cat-sight: #195a9d;
+  --cat-daytrip: #008371;
+  --cat-temple: #d0003b;
+  --prio-must: #2e9e52;
+  --prio-want: #b58c00;
+  --prio-maybe: #bd5b00;
+  --exp-flight: #0290c0;
+  --exp-booking: #8057d7;
+  --exp-transport: #46960c;
+  --exp-food: var(--cat-food);
+  --exp-souvenirs: var(--cat-shopping);
+  --exp-attractions: var(--cat-sight);
+  --exp-clothes: var(--cat-daytrip);
+  --exp-temples: var(--cat-temple);
+  --exp-other: #6e7279;
+  --pin-stop: var(--cat-sight);
+  --pin-finished: #6c727e;
+  --pin-hotel: #131a29;
 }
 
 @theme inline {
@@ -182,6 +204,28 @@
   --sidebar-accent-foreground: #e9ecf6;
   --sidebar-border: #2b3452;
   --sidebar-ring: #6f82d0;
+  /* Category, priority, spending and map-pin colours: same hues in every family, lightness and chroma tuned to this one (checked with the dataviz validator). */
+  --cat-lights: #977fd5;
+  --cat-food: #c2740c;
+  --cat-shopping: #e554a9;
+  --cat-sight: #426dea;
+  --cat-daytrip: #00928d;
+  --cat-temple: #c24a55;
+  --prio-must: #25984d;
+  --prio-want: #b68e00;
+  --prio-maybe: #c3610d;
+  --exp-flight: #00859a;
+  --exp-booking: #7d69fc;
+  --exp-transport: #669555;
+  --exp-food: var(--cat-food);
+  --exp-souvenirs: var(--cat-shopping);
+  --exp-attractions: var(--cat-sight);
+  --exp-clothes: var(--cat-daytrip);
+  --exp-temples: var(--cat-temple);
+  --exp-other: #82868e;
+  --pin-stop: var(--cat-sight);
+  --pin-finished: #6e7581;
+  --pin-hotel: #3a4253;
 }
 
 /* Other colour palettes, chosen per device (lib/palette.ts sets
@@ -224,6 +268,28 @@
   --sidebar-accent-foreground: #15181c;
   --sidebar-border: #d6d9de;
   --sidebar-ring: #8b929c;
+  /* Category, priority, spending and map-pin colours: same hues in every family, lightness and chroma tuned to this one (checked with the dataviz validator). */
+  --cat-lights: #a567c8;
+  --cat-food: #7c4200;
+  --cat-shopping: #d06481;
+  --cat-sight: #3f56a1;
+  --cat-daytrip: #009797;
+  --cat-temple: #b13544;
+  --prio-must: #429c5a;
+  --prio-want: #b08e21;
+  --prio-maybe: #b56124;
+  --exp-flight: #0097b1;
+  --exp-booking: #8262c4;
+  --exp-transport: #648a00;
+  --exp-food: var(--cat-food);
+  --exp-souvenirs: var(--cat-shopping);
+  --exp-attractions: var(--cat-sight);
+  --exp-clothes: var(--cat-daytrip);
+  --exp-temples: var(--cat-temple);
+  --exp-other: #6c7278;
+  --pin-stop: var(--cat-sight);
+  --pin-finished: #69737d;
+  --pin-hotel: #101c28;
 }
 
 :root[data-palette="ink"].dark {
@@ -262,6 +328,28 @@
   --sidebar-accent-foreground: #eceef0;
   --sidebar-border: #2e3338;
   --sidebar-ring: #7b838d;
+  /* Category, priority, spending and map-pin colours: same hues in every family, lightness and chroma tuned to this one (checked with the dataviz validator). */
+  --cat-lights: #8f5db5;
+  --cat-food: #a46313;
+  --cat-shopping: #d365a8;
+  --cat-sight: #4f90db;
+  --cat-daytrip: #00938c;
+  --cat-temple: #e56852;
+  --prio-must: #3b9555;
+  --prio-want: #b18f23;
+  --prio-maybe: #bb672c;
+  --exp-flight: #279ec7;
+  --exp-booking: #8368ca;
+  --exp-transport: #69a12b;
+  --exp-food: var(--cat-food);
+  --exp-souvenirs: var(--cat-shopping);
+  --exp-attractions: var(--cat-sight);
+  --exp-clothes: var(--cat-daytrip);
+  --exp-temples: var(--cat-temple);
+  --exp-other: #81878d;
+  --pin-stop: var(--cat-sight);
+  --pin-finished: #6c7680;
+  --pin-hotel: #364452;
 }
 
 :root[data-palette="pine"] {
@@ -300,6 +388,28 @@
   --sidebar-accent-foreground: #1c211d;
   --sidebar-border: #d9d8cd;
   --sidebar-ring: #6fa08e;
+  /* Category, priority, spending and map-pin colours: same hues in every family, lightness and chroma tuned to this one (checked with the dataviz validator). */
+  --cat-lights: #9675d6;
+  --cat-food: #815400;
+  --cat-shopping: #9b2773;
+  --cat-sight: #2750b1;
+  --cat-daytrip: #009f90;
+  --cat-temple: #df5c4e;
+  --prio-must: #399d57;
+  --prio-want: #b28d00;
+  --prio-maybe: #b95e17;
+  --exp-flight: #2892bb;
+  --exp-booking: #5d479f;
+  --exp-transport: #579c24;
+  --exp-food: var(--cat-food);
+  --exp-souvenirs: var(--cat-shopping);
+  --exp-attractions: var(--cat-sight);
+  --exp-clothes: var(--cat-daytrip);
+  --exp-temples: var(--cat-temple);
+  --exp-other: #6c746f;
+  --pin-stop: var(--cat-sight);
+  --pin-finished: #68756e;
+  --pin-hotel: #0d1f16;
 }
 
 :root[data-palette="pine"].dark {
@@ -338,6 +448,28 @@
   --sidebar-accent-foreground: #e6efe9;
   --sidebar-border: #2a3832;
   --sidebar-ring: #5fa48a;
+  /* Category, priority, spending and map-pin colours: same hues in every family, lightness and chroma tuned to this one (checked with the dataviz validator). */
+  --cat-lights: #9456b9;
+  --cat-food: #ad5f00;
+  --cat-shopping: #d660a8;
+  --cat-sight: #6488dc;
+  --cat-daytrip: #009382;
+  --cat-temple: #e96350;
+  --prio-must: #319751;
+  --prio-want: #b48f05;
+  --prio-maybe: #bf6420;
+  --exp-flight: #0697ad;
+  --exp-booking: #9b70df;
+  --exp-transport: #67a114;
+  --exp-food: var(--cat-food);
+  --exp-souvenirs: var(--cat-shopping);
+  --exp-attractions: var(--cat-sight);
+  --exp-clothes: var(--cat-daytrip);
+  --exp-temples: var(--cat-temple);
+  --exp-other: #808884;
+  --pin-stop: var(--cat-sight);
+  --pin-finished: #6b7870;
+  --pin-hotel: #35473d;
 }
 
 :root[data-palette="plum"] {
@@ -376,6 +508,28 @@
   --sidebar-accent-foreground: #251a22;
   --sidebar-border: #e0d5db;
   --sidebar-ring: #c088a6;
+  /* Category, priority, spending and map-pin colours: same hues in every family, lightness and chroma tuned to this one (checked with the dataviz validator). */
+  --cat-lights: #9e72ce;
+  --cat-food: #843a00;
+  --cat-shopping: #e14e89;
+  --cat-sight: #2761d4;
+  --cat-daytrip: #009189;
+  --cat-temple: #bb2b41;
+  --prio-must: #399d57;
+  --prio-want: #b28d00;
+  --prio-maybe: #b95e17;
+  --exp-flight: #007ea3;
+  --exp-booking: #735acc;
+  --exp-transport: #4c8400;
+  --exp-food: var(--cat-food);
+  --exp-souvenirs: var(--cat-shopping);
+  --exp-attractions: var(--cat-sight);
+  --exp-clothes: var(--cat-daytrip);
+  --exp-temples: var(--cat-temple);
+  --exp-other: #776f74;
+  --pin-stop: var(--cat-sight);
+  --pin-finished: #7a6d75;
+  --pin-hotel: #24151f;
 }
 
 :root[data-palette="plum"].dark {
@@ -414,6 +568,28 @@
   --sidebar-accent-foreground: #f1e9ef;
   --sidebar-border: #382c3a;
   --sidebar-ring: #b877a0;
+  /* Category, priority, spending and map-pin colours: same hues in every family, lightness and chroma tuned to this one (checked with the dataviz validator). */
+  --cat-lights: #8e53c3;
+  --cat-food: #a97000;
+  --cat-shopping: #e458a1;
+  --cat-sight: #458ff4;
+  --cat-daytrip: #009487;
+  --cat-temple: #bc4752;
+  --prio-must: #319751;
+  --prio-want: #b48f05;
+  --prio-maybe: #bf6420;
+  --exp-flight: #0095ad;
+  --exp-booking: #8666d2;
+  --exp-transport: #6aa900;
+  --exp-food: var(--cat-food);
+  --exp-souvenirs: var(--cat-shopping);
+  --exp-attractions: var(--cat-sight);
+  --exp-clothes: var(--cat-daytrip);
+  --exp-temples: var(--cat-temple);
+  --exp-other: #8b8388;
+  --pin-stop: var(--cat-sight);
+  --pin-finished: #7d7078;
+  --pin-hotel: #4e3c47;
 }
 
 

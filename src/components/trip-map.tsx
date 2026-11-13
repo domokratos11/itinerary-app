@@ -13,8 +13,10 @@ import {
   type MapView,
 } from "@/domain/maps-service";
 import type { MessageKey } from "@/domain/i18n";
+import { resolvePinColors } from "@/lib/css-color";
 import { t } from "@/lib/i18n";
 import { mapsService } from "@/lib/maps-service-instance";
+import { usePalette } from "@/lib/palette";
 import { useOnline } from "@/lib/use-online";
 import { cn } from "@/lib/utils";
 
@@ -66,6 +68,7 @@ export function TripMap({
   const [ready, setReady] = useState(false);
   const online = useOnline();
   const { resolvedTheme } = useTheme();
+  const palette = usePalette();
   const scheme = resolvedTheme === "dark" ? "dark" : "light";
   const [failure, setFailure] = useState<MapsErrorKind | null>(null);
   const configured = mapsService.isConfigured();
@@ -75,10 +78,15 @@ export function TripMap({
   });
 
   // Pins are rebuilt on every render of the screen; redraw only when they
-  // actually differ, so the map doesn't flicker.
-  const drawn = JSON.stringify([pins, lines]);
+  // actually differ, so the map doesn't flicker. Pin colours are theme tokens
+  // that Google can't read, so they are resolved to real colours when drawn;
+  // a new colour family or light/dark mode redraws them.
+  const drawn = JSON.stringify([pins, lines, palette, scheme]);
   useEffect(() => {
-    view.current?.update(latest.current.pins, latest.current.lines);
+    view.current?.update(
+      resolvePinColors(latest.current.pins),
+      latest.current.lines,
+    );
   }, [drawn]);
 
   // After the redraw above, and again once a new map is ready (a phone
@@ -107,7 +115,7 @@ export function TripMap({
         created = map;
         view.current = map;
         setFailure(null);
-        map.update(latest.current.pins, latest.current.lines);
+        map.update(resolvePinColors(latest.current.pins), latest.current.lines);
         setReady(true);
       })
       .catch((error: unknown) => {
@@ -176,7 +184,8 @@ export function TripMap({
           <div
             className={cn(
               "absolute top-2 right-2 flex flex-col gap-2",
-              expanded && "top-[calc(0.75rem+env(safe-area-inset-top))] right-3",
+              expanded &&
+                "top-[calc(0.75rem+env(safe-area-inset-top))] right-3",
             )}
           >
             <Button

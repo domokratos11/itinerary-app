@@ -25,14 +25,13 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { SeriesLegend, type Series } from "@/components/chart-parts";
-import { darkStep } from "@/domain/taxonomy";
 
 function configFor(series: Pick<Series, "key" | "label" | "color">[]) {
   const config: ChartConfig = {};
   for (const s of series)
     config[s.key] = {
       label: s.label,
-      theme: { light: s.color, dark: darkStep(s.color) },
+      color: s.color,
     };
   return config;
 }
@@ -193,7 +192,7 @@ export function ColumnChart({
       config={{
         value: {
           label: name,
-          theme: { light: color, dark: darkStep(color) },
+          color,
         },
       }}
       role="img"
