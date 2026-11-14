@@ -8,6 +8,7 @@ import {
   Pencil,
   Plus,
   Search,
+  SearchX,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,9 +40,12 @@ import {
   hasPin,
   matchesPlaceFilter,
   missingFields,
+  notFoundFields,
   PLACE_FILTERS,
   type PlaceFilter,
+  type ResearchField,
 } from "@/domain/place-edit";
+import type { MessageKey } from "@/domain/i18n";
 import {
   placeFacts,
   researchToAccept,
@@ -57,6 +61,15 @@ import {
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useTrip } from "@/lib/trip-store";
 import { useProposals } from "@/lib/use-proposals";
+
+const FIELD_LABEL: Record<ResearchField, MessageKey> = {
+  description: "common.about",
+  costEstimateJPY: "common.cost",
+  durationMin: "common.timeNeeded",
+  openingHours: "common.openingHours",
+  websiteUrl: "common.website",
+  nearestStation: "common.nearestStation",
+};
 
 // Settings → Places: every place by city, with filters for what's missing.
 export function PlacesSettings({ tripId }: { tripId: string }) {
@@ -375,6 +388,7 @@ function PlaceRow({
   onArchive: () => void;
 }) {
   const missing = missingFields(place);
+  const notFound = notFoundFields(place);
   const facts = placeFacts(place, t).join(" · ");
   // Newer research waiting says more than an older acceptance.
   const showAccepted = accepted && !canReview && !requested;
@@ -426,18 +440,23 @@ function PlaceRow({
           {!hasPin(place) && (
             <Badge variant="outline">{t("placeSettings.noPin")}</Badge>
           )}
-          {showAccepted
-            ? missing.length > 0 && (
+          {/* What accepted research didn't find isn't missing: asking again
+              wouldn't fill it, so it gets one quiet note instead. */}
+          {notFound.length > 0
+            ? !requested &&
+              !canReview && (
                 <Tip
-                  label={missing
-                    .map((field) => t(`missingField.${field}`))
-                    .join(", ")}
+                  label={t("placeSettings.notFoundTip", {
+                    fields: notFound
+                      .map((field) => t(FIELD_LABEL[field]).toLowerCase())
+                      .join(", "),
+                  })}
                 >
-                  <Badge
-                    variant="outline"
-                    className="border-dashed text-muted-foreground"
-                  >
-                    {t("placeSettings.missingCount", { count: missing.length })}
+                  <Badge variant="outline" className="text-muted-foreground">
+                    <SearchX />
+                    {t("placeSettings.notFoundCount", {
+                      count: notFound.length,
+                    })}
                   </Badge>
                 </Tip>
               )

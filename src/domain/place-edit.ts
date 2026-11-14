@@ -184,8 +184,8 @@ export function validatePlaceForm(
 }
 
 // The information a place should have. "Needs research" comes from what is
-// actually empty, not from the stored status, which marks every catalog place
-// researched even when it holds nothing.
+// actually empty, not from the stored status alone, which marks every catalog
+// place researched even when it holds nothing.
 export const RESEARCH_FIELDS = [
   "description",
   "costEstimateJPY",
@@ -201,8 +201,23 @@ export function missingFields(place: PlaceRecord): ResearchField[] {
   return RESEARCH_FIELDS.filter((field) => place[field] === null);
 }
 
+// True once research on the place was accepted: it leaves sources or a
+// checked date, which a catalog place marked researched by default lacks.
+export function wasResearched(place: PlaceRecord): boolean {
+  return (
+    place.status === "researched" &&
+    (place.verifiedAt !== null || place.sources.length > 0)
+  );
+}
+
+// What research looked for and didn't find. Asking again won't fill these,
+// so they're shown as not found rather than as missing.
+export function notFoundFields(place: PlaceRecord): ResearchField[] {
+  return wasResearched(place) ? missingFields(place) : [];
+}
+
 export function needsResearch(place: PlaceRecord): boolean {
-  return missingFields(place).length > 0;
+  return !wasResearched(place) && missingFields(place).length > 0;
 }
 
 export function hasPin(place: Pick<Place, "lat" | "lng">): boolean {

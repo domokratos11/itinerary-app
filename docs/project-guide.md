@@ -828,8 +828,10 @@ Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordi
 | `missing-cost` | have no cost estimate |
 | `missing-hours` | have no opening hours |
 | `no-pin` | have no coordinates |
-| `needs-research` | are still drafts |
+| `needs-research` | have empty fields and no accepted research (see `wasResearched`) |
 | `review` | have a research proposal waiting |
+
+A place counts as researched (`wasResearched`) when its status is `researched` and it has sources or a `verifiedAt` date, which accepted research leaves. Its empty fields are then not found (`notFoundFields`): Settings → Places shows one "N not found" badge with the fields in its hint instead of a badge per missing field, place details show "Not found by research" instead of "Not researched yet", and the place no longer counts on the Dashboard or for `research:pull --all-missing`. Pressing Research on the place still asks again.
 
 ### 11.4 Other search-like features
 
@@ -1017,7 +1019,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `dashboard.ts` | many tile functions (see §12.1) | All figures from in-memory data. |
 | `todos.ts` | `dueState`, `todosDueSoon`, `listProgress`, `visibleTodos`, `nextOrder`, `swapOrder`, `withStatus`, `archiveList` | Due states in Japan time: overdue, soon (within 7 days), later, none. `archiveList` also archives the list's live to-dos. Nothing is deleted. |
 | `proposals.ts` | `newProposal`, `isOpenProposal`, `acceptProposal`, `changedFields`, `researchToAccept`, `cleanResearch`, `ResearchResultSchema` | Research never writes a place. Accepting copies chosen fields and their sources; status becomes `researched`. |
-| `place-edit.ts` | `applyPlaceEdit`, `validatePlaceForm`, `missingFields`, `needsResearch`, `parseMapsLink`, `matchesPlaceFilter`, `newDraftPlace` | Locked fields (hand-edited) are never changed by research. |
+| `place-edit.ts` | `applyPlaceEdit`, `validatePlaceForm`, `missingFields`, `needsResearch`, `wasResearched`, `notFoundFields`, `parseMapsLink`, `matchesPlaceFilter`, `newDraftPlace` | Locked fields (hand-edited) are never changed by research. |
 | `trip-edit.ts` | `stayIssues`, `dayChanges` | When a stay moves, which stops lose their day. |
 | `flights.ts` | `flightsOnDay`, `flightsOutsideDays`, `nextFlight`, `flightRoute`, `flightCostLabel`, `flightCostInYen`, `flightToForm`, `flightFromForm` | Dates and times stay local to each airport, as on the ticket, and are never converted. A flight's yen cost is its USD amount × `YEN_PER_USD`, rounded. Flights outside the days are those leaving on a date no stay covers. |
 | `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS` | Sort (priority first, then name) and filters for the waiting list and its pins. The view is not saved. |
@@ -1340,7 +1342,7 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `places:reset` | `scripts/places-reset.ts` | Shows what clearing all places would change; `-- --apply` does it | Yes, with `--apply` |
 | `items:clean` | `scripts/items-clean.ts` | Shows which plan items hold the old stop fields (`startTime`, `durationMin`, `note`, `legNote`); `-- --apply` removes them | Yes, with `--apply` |
 | `flights:push` | `scripts/flights-push.ts` | Saves flights from a file in the git-ignored `research/` folder (`-- research/<file>.json`); a flight with the same ID is replaced. Shows what would change unless `-- --apply` is added | Yes, with `--apply` |
-| `research:pull` | `scripts/research-pull.ts` | Exports place and day research requests for a research run (`research/days-<date>.json` for days); creates missing proposals for the day's stops; archives requests for days no stay covers. Each day entry includes `sunrise` and `sunset` for the day's first city | Yes (proposals, archived requests) |
+| `research:pull` | `scripts/research-pull.ts` | Exports place and day research requests for a research run (`research/days-<date>.json` for days); creates missing proposals for the day's stops; archives requests for days no stay covers. Each day entry includes `sunrise` and `sunset` for the day's first city; `--all-missing` skips places whose research was already accepted | Yes (proposals, archived requests) |
 | `research:push` | `scripts/research-push.ts` | Writes research as proposals for review, and day analyses onto their day; never changes a place | Yes (proposals and day research) |
 | `maps:check` | `scripts/maps-check.ts` | Checks Google keys and test train routes; `-- --embed` serves the Maps Embed test | No |
 | `maps:match` | `scripts/maps-match.ts` | Saves place IDs and coordinates; reports doubtful matches | Yes |

@@ -6,7 +6,10 @@ import {
   formToChanges,
   matchesPlaceFilter,
   missingFields,
+  needsResearch,
   newDraftPlace,
+  notFoundFields,
+  wasResearched,
   placeToForm,
   validatePlaceForm,
 } from "./place-edit";
@@ -115,6 +118,22 @@ describe("completeness", () => {
     };
     expect(missingFields(empty)).toHaveLength(6);
     expect(matchesPlaceFilter(empty, "needs-research", new Set())).toBe(true);
+    expect(notFoundFields(empty)).toEqual([]);
+  });
+
+  it("calls what accepted research left empty not found", () => {
+    const researched = {
+      ...place,
+      verifiedAt: "2026-11-12",
+      sources: [{ field: "openingHours", url: "https://example.com/" }],
+    };
+    expect(wasResearched(researched)).toBe(true);
+    expect(needsResearch(researched)).toBe(false);
+    expect(notFoundFields(researched)).toContain("costEstimateJPY");
+    expect(matchesPlaceFilter(researched, "needs-research", new Set())).toBe(
+      false,
+    );
+    expect(wasResearched({ ...researched, status: "draft" })).toBe(false);
   });
 
   it("filters by what's missing and what's waiting for review", () => {

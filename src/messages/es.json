@@ -27,6 +27,7 @@
     "list": "Lista",
     "map": "Mapa",
     "notResearched": "Sin investigar todavía",
+    "notFound": "La investigación no lo encontró",
     "today": "Hoy",
     "minutes": "{minutes} min",
     "minutesWalk": "{minutes} min a pie",
@@ -451,7 +452,8 @@
     "accepted": "Investigado y aceptado",
     "acceptedOn": "Investigación revisada y aceptada. Datos verificados por última vez el {date}.",
     "acceptedTip": "Investigación revisada y aceptada.",
-    "missingCount": "Faltan {count}",
+    "notFoundCount": "{count} sin encontrar",
+    "notFoundTip": "La investigación buscó pero no encontró nada para: {fields}. Edita el lugar para agregarlos a mano.",
     "acceptAll": "Aceptar todo ({count})",
     "acceptCount": "Aceptar investigación ({count})",
     "tipAcceptAll": "Acepta toda la investigación terminada, en todas las ciudades",
@@ -1143,6 +1145,7 @@
     "d20261114": {
       "phrasebook": "La guía de frases en japonés está en la app, en Varios junto a los pendientes. Usa los colores y el tema claro u oscuro de la app, y abre sin señal.",
       "misc": "Los pendientes pasaron a la nueva sección Varios.",
+      "researchNotFound": "Lo que la investigación aceptada no pudo encontrar ahora aparece como no encontrado en vez de faltante, y esos lugares ya no cuentan como pendientes de investigar.",
       "budgetCharts": "El Presupuesto muestra el objetivo de cada categoría frente a su gasto, cuánto suman los objetivos junto al presupuesto y lo que costó cada día del viaje por categoría."
     }
   },

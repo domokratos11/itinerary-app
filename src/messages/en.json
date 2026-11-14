@@ -27,6 +27,7 @@
     "list": "List",
     "map": "Map",
     "notResearched": "Not researched yet",
+    "notFound": "Not found by research",
     "today": "Today",
     "minutes": "{minutes} min",
     "minutesWalk": "{minutes} min walk",
@@ -451,7 +452,8 @@
     "accepted": "Researched and accepted",
     "acceptedOn": "Research reviewed and accepted. Facts last checked {date}.",
     "acceptedTip": "Research reviewed and accepted.",
-    "missingCount": "{count} missing",
+    "notFoundCount": "{count} not found",
+    "notFoundTip": "Research looked but found nothing for: {fields}. Edit the place to add them by hand.",
     "acceptAll": "Accept all ({count})",
     "acceptCount": "Accept research ({count})",
     "tipAcceptAll": "Accept all finished research, in every city",
@@ -1143,6 +1145,7 @@
     "d20261114": {
       "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos. It uses the app colours and light or dark theme, and opens without signal.",
       "misc": "To-dos moved to the new Miscellaneous section.",
+      "researchNotFound": "What accepted research couldn't find now shows as not found instead of missing, and those places no longer count as needing research.",
       "budgetCharts": "The Budget shows each category's target against its spending, how the targets add up next to the budget, and what each trip day cost by category."
     }
   },
