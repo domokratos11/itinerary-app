@@ -51,6 +51,11 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 | `npm run preview`                                     | Serve `out/` like GitHub Pages, at `http://localhost:4173/itinerary-app/`                      |
 | `npm run lint` / `npm run format`                     | ESLint / Prettier                                                                              |
 | `npm run typecheck`                                   | Route types (`next typegen`), then a TypeScript check of the whole project (`tsc --noEmit`)    |
+| `npm run phrasebook:import [-- <file>]`               | Copy the phrasebook into `public/phrasebook/index.html` (see below)                            |
+
+## Updating the phrasebook
+
+The Japanese phrasebook (`/phrasebook/`, under Miscellaneous) is one self-contained HTML file made outside this repo. It is a build input: never hand-edit `public/phrasebook/index.html`. To update it, drop the new `japanese_guide.html` in `../phrasebook-src/`, run `npm run phrasebook:import`, commit, and push (deploy). The import adds only marked `trip-planner` blocks (the link back to the app, the manifest, the theme colour, the service worker) and fails if the guide's template no longer has the anchors it needs. The service worker precaches it for offline use; `maximumFileSizeToCacheInBytes` in `workbox-config.cjs` must stay above its size.
 
 ## Layout
 

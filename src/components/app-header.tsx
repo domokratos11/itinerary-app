@@ -6,6 +6,8 @@ import {
   CalendarDays,
   Eye,
   LayoutDashboard,
+  Languages,
+  LayoutGrid,
   ListChecks,
   MapPinned,
   Settings,
@@ -59,11 +61,11 @@ export const SECTIONS = [
     match: ["/budget/"],
   },
   {
-    path: "/todos/",
-    label: "nav.todos",
-    hint: "nav.hintTodos",
-    icon: ListChecks,
-    match: ["/todos/"],
+    path: "/misc/",
+    label: "nav.misc",
+    hint: "nav.hintMisc",
+    icon: LayoutGrid,
+    match: ["/misc/", "/todos/"],
   },
   {
     path: "/settings/",
@@ -74,15 +76,42 @@ export const SECTIONS = [
   },
 ] as const;
 
-// What a read-only link may open: no money (Budget), no to-dos and no
-// Settings.
+// What a read-only link may open: no money (Budget) and no Settings. It keeps
+// Miscellaneous, where it sees only the phrasebook (MISC_ITEMS).
 const VIEWER_SECTIONS = SECTIONS.filter(
-  (s) =>
-    s.path !== "/budget/" && s.path !== "/todos/" && s.path !== "/settings/",
+  (s) => s.path !== "/budget/" && s.path !== "/settings/",
 );
 
 export function useSections(): readonly (typeof SECTIONS)[number][] {
   return useReadOnly() ? VIEWER_SECTIONS : SECTIONS;
+}
+
+// The entries under Miscellaneous. The phrasebook is a static page copied in
+// by scripts/phrasebook-import.ts, not a Next route, so it is opened with a
+// plain link (`staticPath`, under BASE_PATH): client-side navigation to it
+// would 404.
+export const MISC_ITEMS = [
+  {
+    key: "todos",
+    path: "/todos/",
+    label: "nav.todos",
+    hint: "nav.hintTodos",
+    icon: ListChecks,
+    viewer: false,
+  },
+  {
+    key: "phrasebook",
+    staticPath: "/phrasebook/",
+    label: "nav.phrasebook",
+    hint: "nav.hintPhrasebook",
+    icon: Languages,
+    viewer: true,
+  },
+] as const;
+
+export function useMiscItems(): readonly (typeof MISC_ITEMS)[number][] {
+  const readOnly = useReadOnly();
+  return readOnly ? MISC_ITEMS.filter((i) => i.viewer) : MISC_ITEMS;
 }
 
 export function useSection(): string {
@@ -180,7 +209,7 @@ export function BottomNav() {
       <ul
         className={cn(
           "grid",
-          sections.length === SECTIONS.length ? "grid-cols-6" : "grid-cols-3",
+          sections.length === SECTIONS.length ? "grid-cols-6" : "grid-cols-4",
         )}
       >
         {sections.map(({ path, label, icon: Icon }) => (

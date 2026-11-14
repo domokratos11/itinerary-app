@@ -167,7 +167,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `scripts/` | Node scripts for data, research and Maps work. Run with `tsx`. |
 | `tests/rules/` | Firestore security rules tests (emulator). |
 | `docs/` | Operational docs: Maps setup and plan, research run guide, and this guide. |
-| `public/` | Static files copied as-is: icons, `.nojekyll` (so GitHub Pages serves `_next/`), Google Maps logo. |
+| `public/` | Static files copied as-is: icons, `.nojekyll` (so GitHub Pages serves `_next/`), Google Maps logo, and `phrasebook/` (the generated Japanese phrasebook page, §17.4). |
 | `.github/workflows/deploy.yml` | Build and deploy to GitHub Pages on each push to `main`. |
 | `firebase.json` | Firestore rules file and emulator ports (Firestore on 8181, UI off, single project mode). |
 | `firestore.rules` | The security rules. Pasted into the Firebase console by hand; the deploy does not publish them. |
@@ -196,6 +196,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `city/page.tsx` | `/city/?id=<cityId>&place=<placeId>`: one city's places. |
 | `budget/page.tsx` | `/budget/`: spending and budget. |
 | `todos/page.tsx` | `/todos/`: shared to-do lists. `?list=<id>` opens one list. Server Component shell around `TodosScreen`. |
+| `misc/page.tsx` | `/misc/`: the Miscellaneous hub, one card per entry (To-dos, Phrasebook, §12.10). Server Component shell around `MiscScreen`. |
 | `settings/page.tsx` | `/settings/`: trip administration. |
 | `not-found.tsx` | 404 page. Also `404.html` on Pages, where old day and city links are redirected (`old-link-redirect.tsx`). |
 | `manifest.ts` | `manifest.webmanifest` (installable app). |
@@ -214,9 +215,9 @@ Shared chrome and gates:
 | File | Role |
 |---|---|
 | `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. |
-| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections, including To-dos) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
+| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections; Miscellaneous at `/misc/` in place of To-dos), `MISC_ITEMS` and `useMiscItems()` (the Miscellaneous entries: To-dos at `/todos/`, a plain link to Phrasebook at `/phrasebook/` under `BASE_PATH`, §12.10) and `useSections()`, which gives viewers only Dashboard, Days, Cities and Miscellaneous (Miscellaneous shows only Phrasebook). |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
-| `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
+| `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. The Miscellaneous item opens `MiscSubMenu` (shadcn `SidebarMenuSub`) with both entries; it is hidden when the sidebar is collapsed to icons. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
 | `plan-sync.tsx` | Mounted once. Renders `MemberSync` (auth, plan and trip listeners) for members, or `ViewerSync` (loads the shared copy, §12.8) when the tab is in viewer mode. |
 | `locale-root.tsx` | Remounts the app when the language changes. |
@@ -269,6 +270,7 @@ Screens (one per page):
 | `whats-new.tsx` | Desktop corner, Account sheet | `WhatsNewButton` turns the version text into a button (in `VersionTag` on wide screens, in `settings-about.tsx` on phones). `WhatsNewPanel` is a Drawer on phones and a Dialog from `md`, listing "Version X · date" with the bullets of `CHANGELOG`. Tests in `whats-new.test.tsx`. |
 | `todos-screen.tsx` | `/todos/` | `TodosScreen`: the list column (wide) or list Select (phone), the to-do rows, filters, sort and list progress (§12.9). |
 | `todo-forms.tsx` | `/todos/` | `ListForm` and `TodoForm`, both shown in `EditPanel`. |
+| `misc-screen.tsx` | `/misc/` | `MiscScreen`: one card per Miscellaneous entry (§12.10). |
 
 Plan and place editing:
 
@@ -419,7 +421,7 @@ Maps and place helpers:
 | `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). `formatFullDate` gives a date with its year ("Nov 12, 2026") in the current language, for What's new. |
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
-| `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
+| `base-path.ts` | `BASE_PATH` (from `NEXT_PUBLIC_BASE_PATH`) for URLs the browser fetches directly. `SITE_BASE_PATH` (`/itinerary-app`) is the same path as a constant, read by `next.config.ts` and the phrasebook import (§4.1). |
 | `theme-color.ts` | `THEME_COLOR` (Sen: `light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme, palette)`, which picks the page background for the family and mode and sets `<meta name="theme-color">` so the browser bar follows the choice. Tests in `theme-color.test.ts`. |
 | `palette.ts` | Colour families: `PALETTES` (`sen`, `ink`, `pine`, `plum`), `getPalette`, `setPalette`, `applyPalette` and `usePalette` (a small Zustand store). Saved per device under localStorage key `palette`. Sen sets no attribute; the others set `data-palette` on `<html>`. Tests in `palette.test.ts`. |
 | `css-color.ts` | `resolveCssColor(value)` follows a `var(--x)` token (up to five hops) to the colour the page shows now; `resolvePinColors(pins)` does it for every pin. Google Maps draws pins itself and cannot read CSS variables, so this runs at draw time. Tests in `css-color.test.ts`. |
@@ -476,7 +478,7 @@ Settings that matter (`next.config.ts`):
 | Setting | Value | Why |
 |---|---|---|
 | `output` | `"export"` | Static HTML only. |
-| `basePath` | `/itinerary-app` | GitHub Pages sub-path. Must match the repo name. |
+| `basePath` | `/itinerary-app` | GitHub Pages sub-path. Must match the repo name. Set from `SITE_BASE_PATH` in `src/lib/base-path.ts`. |
 | `trailingSlash` | `true` | Pages look for `folder/index.html`. Links end in `/`. |
 | `images.unoptimized` | `true` | No image server exists. |
 | `env.NEXT_PUBLIC_BASE_PATH` | the base path | Client code (service worker, manifest) reads it. |
@@ -515,6 +517,8 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `/itinerary-app/city/` | `app/city/page.tsx` | `?id=<cityId>&place=<placeId>&trip=` | One city; `place` opens that place |
 | `/itinerary-app/budget/` | `app/budget/page.tsx` | `?trip=` | Budget |
 | `/itinerary-app/todos/` | `app/todos/page.tsx` | `?trip=`, optional `?list=<id>` | To-do lists (opens the named list) |
+| `/itinerary-app/misc/` | `app/misc/page.tsx` | `?trip=` | Miscellaneous: To-dos and Phrasebook (§12.10) |
+| `/itinerary-app/phrasebook/` | `public/phrasebook/index.html` (static, not a Next route) | — | Japanese phrasebook. Outside sign-in and holds no trip data (§17.4) |
 | `/itinerary-app/settings/` | `app/settings/page.tsx` | `?trip=`, optional `?tab=<section>` | Settings (opens the named tab, default Stays) |
 | `/itinerary-app/404.html` | `app/not-found.tsx` | any | Not found; redirects old links |
 | `/itinerary-app/manifest.webmanifest` | `app/manifest.ts` | — | Install metadata |
@@ -573,6 +577,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `/budget/` | `BudgetScreen` → `BudgetContent` | `SummaryFigures`, `ExpenseRow`, `TargetRow`, `MemberTargetRow`, `BudgetForm`, `ExportExpensesButton` (`budget-parts.tsx`, `budget-figures.tsx`), `PersonPanel` (`budget-person.tsx`), `CashSection` (`cash-section.tsx`), `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
 | `/settings/` | `SettingsScreen` | one panel per tab (`Stays`, `Cities`, `Places`, `Flights`, `Reservations`, `Holidays`, `Trip`, `Share`, `Backup`, `Cleanup`); `EditPanel` in each; `ProposalReview` in Places; `NotOnSharedView` in viewer mode |
 | `/todos/` | `TodosScreen` | `ListForm` and `TodoForm` (`todo-forms.tsx`) in `EditPanel`; a list Select on phones; hidden in viewer mode |
+| `/misc/` | `MiscScreen` | one card per entry from `MISC_ITEMS` (§12.10); viewers see only the Phrasebook card |
 
 ### 6.3 Shared overlays
 
@@ -953,7 +958,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 
 **For viewers** (no sign-in, `?share=` in the link):
 
-- The app shows Dashboard, Days and Cities only. `/budget/` and `/settings/` show `NotOnSharedView`. Each screen's changes are listed in §12.1 to §12.6.
+- The app shows Dashboard, Days, Cities and Miscellaneous. Miscellaneous shows only the Phrasebook (no To-dos), and the phone tab bar has four columns. `/budget/` and `/settings/` show `NotOnSharedView`. Each screen's changes are listed in §12.1 to §12.6.
 - The header shows the trip name, a "Read-only" badge, search and the viewer sheet (language, theme, and "Leave shared view", stored only on the device) in place of Activity and Account.
 - The copy loads once, and the app checks the expiry every minute. It re-reads the copy every 10 minutes, so a closed or expired link stops within that time. A closed, expired or unknown link shows "This link isn't open", with a button to leave and sign in.
 - Place details still fetch photos and hours from Google, under the same per-device daily limit as members (§14.2).
@@ -965,7 +970,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 
 `todos-screen.tsx` and `todo-forms.tsx`, on the pure logic in `domain/todos.ts` (§13). The route `/todos/` takes an optional `?list=<id>` that opens that list.
 
-- **Section:** "To-dos" (ListChecks icon) sits between Budget and Settings in `SECTIONS`. It is hidden on read-only links, as Budget and Settings are. The phone tab bar has six columns.
+- **Entry:** To-dos is no longer a top-level section. It is one of the two entries under Miscellaneous (`/misc/`, §12.10), which sits between Budget and Settings in `SECTIONS`. To-dos is hidden on read-only links, as Budget and Settings are. The phone tab bar has six columns for members.
 - **Lists:** each list has a title, an optional description, a colour dot and a sort order. On wide screens (lg) the lists sit in a left column, each with its colour dot, a progress bar and the open count, plus "All lists". On phones the list is picked from a Select.
 - **To-dos:** each row has a checkbox to mark it done, a due badge (late in `--destructive`, due within a week in `--warning`), a priority, the assignee (a member) and a menu for status, edit and archive. Status changes go through `withStatus`, which keeps `completedAt`.
 - **Filter and sort:** filter by all, open or done; sort by manual order, due date or priority (`visibleTodos`). In manual order, up and down buttons move a to-do (`swapOrder`); new to-dos get the next key (`nextOrder`).
@@ -973,6 +978,16 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 - **Dashboard:** the Watch out panel lists late or soon-due open to-dos first (§12.1).
 - **Shared view:** the section is hidden, and viewers get no to-dos (§12.8).
 - **Data:** lists and to-dos are trip collections (§23.22). They sync through `TripRepository` into `useTripStore`, go into backups and are written with `saveRecord`.
+
+### 12.10 Miscellaneous (`/misc/`)
+
+`misc-screen.tsx` on the route `src/app/misc/page.tsx`. It shows one card per entry in `MISC_ITEMS` (`app-header.tsx`).
+
+- **Section:** "Miscellaneous" (LayoutGrid icon, `nav.misc`) replaces To-dos in `SECTIONS`. It is highlighted on `/misc/` and on `/todos/`.
+- **To-dos** (`/todos/`): the shared to-do lists (§12.9). A Next link.
+- **Phrasebook** (`/phrasebook/`): a static page, not a Next route, so it is a plain `<a href>` under `BASE_PATH`. It is generated and works outside sign-in (§17.4).
+- **Viewers:** read-only links keep Miscellaneous but see only the Phrasebook (§12.8).
+- **Desktop:** the sidebar's Miscellaneous item opens both entries as a sub-menu (`MiscSubMenu`, §3.3).
 
 ---
 
@@ -1190,6 +1205,7 @@ Run this by hand on both phones before the trip:
 - Precaches `**/*.{html,js,css,json,png,svg,ico,webmanifest,txt,woff2}` in `out/`. Excludes `version.json`.
 - `ignoreURLParametersMatching: [/.*/]`: query strings (`?trip=`, `?date=`) are ignored, so each page matches its one precached file.
 - The recharts chunk is precached even though charts load on first use, so the charts still open offline (§2.2).
+- `maximumFileSizeToCacheInBytes` is 5 MiB in `workbox-config.cjs`, so the phrasebook page (about 1.1 MB, and growing, §17.4) is precached too.
 - `skipWaiting` and `clientsClaim`: a new worker takes over at once. `cleanupOutdatedCaches` removes old files.
 - Registered only in production (`service-worker-register.tsx`), at `${BASE_PATH}/sw.js`.
 - The `.txt` files (Next's route data) are cached so a page and its data come from the same build.
@@ -1198,6 +1214,13 @@ Run this by hand on both phones before the trip:
 
 - `manifest.ts`: name "Trip Planner", standalone display, theme colour and background `#f4f6fa` (`THEME_COLOR.light`), icons 192 and 512 px (`public/icon-*.png`), `start_url` and `scope` under the base path. Apple web-app meta in layout.
 - Icons are generated by `scripts/make-icons.cjs` as plain PNGs; replace the files with real artwork later, keeping the names.
+
+### 17.4 Phrasebook (static page)
+
+- `/phrasebook/` is the file `public/phrasebook/index.html`, not a Next route. `scripts/phrasebook-import.ts` (`npm run phrasebook:import [-- <file>]`, default input `../phrasebook-src/japanese_guide.html`, outside the repo) generates it (§21). The build does not run the script.
+- The script injects blocks marked `<!-- trip-planner:start/end -->`: the manifest link, theme-colour metas, a "← Trip Planner" link back to the app root, the app's CSS and the service worker registration. It is idempotent and fails if an anchor is missing.
+- It sits outside `AppGate`, so it needs no sign-in, and holds no trip data. Prettier and ESLint ignore it.
+- It is precached with the rest of the app, so it works offline (§17.2).
 
 ---
 
@@ -1315,13 +1338,14 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `maps:check` | `scripts/maps-check.ts` | Checks Google keys and test train routes; `-- --embed` serves the Maps Embed test | No |
 | `maps:match` | `scripts/maps-match.ts` | Saves place IDs and coordinates; reports doubtful matches | Yes |
 | `maps:refresh` | `scripts/maps-refresh.ts` | Renews coordinates before 30 days; `--all` refreshes all | Yes |
+| `phrasebook:import` | `scripts/phrasebook-import.ts` | Generates `public/phrasebook/index.html` from the source page (`-- <file>` to choose another; default `../phrasebook-src/japanese_guide.html`). Injects the marked blocks (§17.4); idempotent | No |
 
 Shared helpers:
 
 - `scripts/admin-db.ts`: Admin SDK Firestore with application default credentials, for `projectId` `itinerary-f990b`.
 - `scripts/maps-api.ts`: Places API (New) REST helper, using the script key.
 
-Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts`, `scripts/research-pull.test.ts`, `scripts/validate.test.ts`.
+Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts`, `scripts/research-pull.test.ts`, `scripts/validate.test.ts`, `scripts/phrasebook-import.test.ts`.
 
 ---
 

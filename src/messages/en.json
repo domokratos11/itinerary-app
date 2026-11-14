@@ -79,7 +79,11 @@
     "hintCities": "The places to visit in each city",
     "hintBudget": "What's been spent and what's left, shared by everyone",
     "hintTodos": "Lists of what to get ready and check before and during the trip",
-    "hintSettings": "Hotels, cities, places, bookings, members and backups"
+    "hintSettings": "Hotels, cities, places, bookings, members and backups",
+    "misc": "Miscellaneous",
+    "phrasebook": "Phrasebook",
+    "hintMisc": "The to-do lists and the Japanese phrasebook",
+    "hintPhrasebook": "Japanese phrases by situation, with audio and practice; works offline"
   },
   "category": {
     "lights": "Lights",
@@ -1119,6 +1123,13 @@
       "colours": "Chart, badge and map colours now follow the theme.",
       "quickAdd": "Tap + between stops to add a place near you to the day.",
       "changelog": "Tap the version to see what's new."
+    },
+    "d20261114": {
+      "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos, and opens without signal.",
+      "misc": "To-dos moved to the new Miscellaneous section."
     }
+  },
+  "miscPage": {
+    "title": "Miscellaneous"
   }
 }

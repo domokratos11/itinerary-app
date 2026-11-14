@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
-import { useSection, useSections } from "@/components/app-header";
+import { useMiscItems, useSection, useSections } from "@/components/app-header";
 import { Tip } from "@/components/tip";
 import {
   Sidebar,
@@ -17,10 +17,14 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { BASE_PATH } from "@/lib/base-path";
 import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { dayHref, pageHref } from "@/lib/links";
@@ -105,6 +109,7 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuButton>
                   </Tip>
+                  {href === "/misc/" && <MiscSubMenu />}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -165,6 +170,48 @@ export function AppSidebar() {
         <CollapseButton />
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+// The entries of Miscellaneous, under it. They hide with the labels when the
+// sidebar is a rail of icons; the Misc icon still opens their page.
+function MiscSubMenu() {
+  const tripId = useTripId();
+  const path = usePathname();
+  const items = useMiscItems();
+  return (
+    <SidebarMenuSub>
+      {items.map((item) => {
+        const Icon = item.icon;
+        const content = (
+          <>
+            <Icon />
+            <span>{t(item.label)}</span>
+          </>
+        );
+        if ("staticPath" in item)
+          return (
+            <SidebarMenuSubItem key={item.key}>
+              <SidebarMenuSubButton href={`${BASE_PATH}${item.staticPath}`}>
+                {content}
+              </SidebarMenuSubButton>
+            </SidebarMenuSubItem>
+          );
+        const active = path === item.path || `${path}/` === item.path;
+        return (
+          <SidebarMenuSubItem key={item.key}>
+            <SidebarMenuSubButton asChild isActive={active}>
+              <Link
+                href={pageHref(item.path, tripId)}
+                aria-current={active ? "page" : undefined}
+              >
+                {content}
+              </Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        );
+      })}
+    </SidebarMenuSub>
   );
 }
 

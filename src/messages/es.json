@@ -79,7 +79,11 @@
     "hintCities": "Los lugares por visitar en cada ciudad",
     "hintBudget": "Lo gastado y lo que queda, compartido entre todos",
     "hintTodos": "Listas de lo que hay que preparar y revisar antes y durante el viaje",
-    "hintSettings": "Hoteles, ciudades, lugares, reservaciones, miembros y respaldos"
+    "hintSettings": "Hoteles, ciudades, lugares, reservaciones, miembros y respaldos",
+    "misc": "Varios",
+    "phrasebook": "Guía de frases",
+    "hintMisc": "Las listas de pendientes y la guía de frases en japonés",
+    "hintPhrasebook": "Frases en japonés por situación, con audio y práctica; funciona sin conexión"
   },
   "category": {
     "lights": "Iluminaciones",
@@ -1119,6 +1123,13 @@
       "colours": "Los colores de gráficos, etiquetas y mapas siguen ahora el tema.",
       "quickAdd": "Toca + entre paradas para añadir al día un lugar cercano.",
       "changelog": "Toca la versión para ver las novedades."
+    },
+    "d20261114": {
+      "phrasebook": "La guía de frases en japonés está en la app, en Varios junto a los pendientes, y abre sin señal.",
+      "misc": "Los pendientes pasaron a la nueva sección Varios."
     }
+  },
+  "miscPage": {
+    "title": "Varios"
   }
 }

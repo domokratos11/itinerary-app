@@ -30,3 +30,26 @@ describe("AppSidebar", () => {
     localStorage.removeItem("sidebar-open");
   });
 });
+
+describe("AppSidebar Miscellaneous", () => {
+  it("lists the to-dos and the phrasebook under Miscellaneous", () => {
+    const { getByRole } = render(
+      <AppSidebarProvider>
+        <AppSidebar />
+      </AppSidebarProvider>,
+    );
+    expect(getByRole("link", { name: "Miscellaneous" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/misc\/?$/),
+    );
+    expect(getByRole("link", { name: "To-dos" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/todos\/?$/),
+    );
+    // A plain link to the static page, not a Next route.
+    expect(getByRole("link", { name: "Phrasebook" })).toHaveAttribute(
+      "href",
+      "/phrasebook/",
+    );
+  });
+});
