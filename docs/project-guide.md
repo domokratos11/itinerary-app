@@ -167,7 +167,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `scripts/` | Node scripts for data, research and Maps work. Run with `tsx`. |
 | `tests/rules/` | Firestore security rules tests (emulator). |
 | `docs/` | Operational docs: Maps setup and plan, research run guide, and this guide. |
-| `public/` | Static files copied as-is: icons, `.nojekyll` (so GitHub Pages serves `_next/`), Google Maps logo. |
+| `public/` | Static files copied as-is: icons, `.nojekyll` (so GitHub Pages serves `_next/`), Google Maps logo, and `phrasebook-guide/` (the generated Japanese phrasebook guide, §17.4; Prettier and ESLint ignore it). |
 | `.github/workflows/deploy.yml` | Build and deploy to GitHub Pages on each push to `main`. |
 | `firebase.json` | Firestore rules file and emulator ports (Firestore on 8181, UI off, single project mode). |
 | `firestore.rules` | The security rules. Pasted into the Firebase console by hand; the deploy does not publish them. |
@@ -196,6 +196,8 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `city/page.tsx` | `/city/?id=<cityId>&place=<placeId>`: one city's places. |
 | `budget/page.tsx` | `/budget/`: spending and budget. |
 | `todos/page.tsx` | `/todos/`: shared to-do lists. `?list=<id>` opens one list. Server Component shell around `TodosScreen`. |
+| `misc/page.tsx` | `/misc/`: the Miscellaneous hub, one card per entry (To-dos, Phrasebook, §12.10). Server Component shell around `MiscScreen`. |
+| `phrasebook/page.tsx` | `/phrasebook/`: the Japanese phrasebook inside the app shell. Server Component shell around `PhrasebookScreen` (§12.10, §17.4). |
 | `settings/page.tsx` | `/settings/`: trip administration. |
 | `not-found.tsx` | 404 page. Also `404.html` on Pages, where old day and city links are redirected (`old-link-redirect.tsx`). |
 | `manifest.ts` | `manifest.webmanifest` (installable app). |
@@ -213,10 +215,10 @@ Shared chrome and gates:
 
 | File | Role |
 |---|---|
-| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. |
-| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections, including To-dos) and `useSections()`, which gives viewers only Dashboard, Days and Cities. |
+| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. The offline screen has a button to the static phrasebook (`gate.offlinePhrasebook`, linking to `/phrasebook-guide/`), so the phrasebook opens even when the app cannot. |
+| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections; Miscellaneous at `/misc/` in place of To-dos), `MISC_ITEMS` and `useMiscItems()` (the Miscellaneous entries: To-dos at `/todos/`, both are ordinary Next links, each with a `path`: To-dos at `/todos/` and Phrasebook at `/phrasebook/`, §12.10) and `useSections()`, which gives viewers only Dashboard, Days, Cities and Miscellaneous (Miscellaneous shows only Phrasebook). |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
-| `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
+| `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. The Miscellaneous item opens `MiscSubMenu` (shadcn `SidebarMenuSub`) with both entries; it is hidden when the sidebar is collapsed to icons. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
 | `plan-sync.tsx` | Mounted once. Renders `MemberSync` (auth, plan and trip listeners) for members, or `ViewerSync` (loads the shared copy, §12.8) when the tab is in viewer mode. |
 | `locale-root.tsx` | Remounts the app when the language changes. |
@@ -253,9 +255,10 @@ Screens (one per page):
 | `city-screen.tsx` | `/city/` | Loads one city and renders `CityCatalog`. |
 | `city-catalog.tsx` | `/city/` | Place catalogue: list or map, filters, Days filter (per-day pins with a legend), add place, cost and details. |
 | `cities-screen.tsx` | `/cities/` | Cities, dates, and how much of each is planned. |
-| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | `BudgetScreen` and `BudgetContent`: expenses (with filters and sort), the "Against each person" card, the Cash card, totals by category, charts, gauge. The expense form asks for the payment method (card or cash) and the payer, which is always a member. `ExportExpensesButton` (in `budget-parts.tsx`, header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`), the currency button (`CurrencyButton`) and `MoneyScope` (hidden, currency and rate). `Yen` and `useYenValues` show dollars when USD is chosen. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
+| `budget-screen.tsx`, `expense-form.tsx`, `yen.tsx`, `cost-line.tsx`, `leg-line.tsx` | `/budget/` | `BudgetScreen` and `BudgetContent`: expenses (with filters and sort), the "Against each person" card, the Cash card, totals by category, charts, gauge, and the two cards from `budget-charts.tsx` (`TargetsVsSpentCard` and `DailySpendCard`). The expense form asks for the payment method (card or cash) and the payer, which is always a member. `ExportExpensesButton` (in `budget-parts.tsx`, header, shown when there are expenses) downloads the CSV. `yen.tsx` formats amounts and holds the hide-amounts eye button (`HideAmountsButton`), the currency button (`CurrencyButton`) and `MoneyScope` (hidden, currency and rate). `Yen` and `useYenValues` show dollars when USD is chosen. The expense form puts a new expense in the city of that night (`nightStay`) unless the prefill gives one; editing keeps the expense's own `cityId`. |
 | `budget-figures.tsx` | `/budget/` and `/` | `useBudgetFigures`, `categorySeries`, `spentPercent`, `GaugeCenter`, `Figure` and `SummaryFigures`. The Dashboard imports these from here, not from the Budget screen. |
 | `budget-parts.tsx` | `/budget/` | `TargetRow`, `MemberTargetRow` (one row per member: paid against their target, planned below), `ExpenseRow` (shows the payer and card or cash), `BudgetForm` (total, categories, travellers, per-person targets) and `ExportExpensesButton`. |
+| `budget-charts.tsx` | `/budget/` | `TargetsVsSpentCard` ("Targets against spending"): a `TargetsChart` with each category's target as a pale bar behind a thin bar of what was paid, red when over its target; categories without a target still show their spending; then a `BarList` of all targets added up, the overall budget and the total spent, plus a line saying how far the targets are above or below the budget and how much was spent in categories without a target. Targets stay independent of the overall budget. `DailySpendCard` ("Spent each trip day"): a `StackedColumnChart` of what was paid on each trip day stacked by category, with flights and bookings left out, a `SeriesLegend` of each category's total, and a note of day-to-day money paid outside the trip's days. |
 | `budget-person.tsx` | `/budget/` | `PersonPanel`: one member's details. A side Sheet from 768px, a bottom Drawer on phones. Shows paid, planned, paid by card, paid in cash, their cash on hand, paid by category and their expenses (editable), with a button to filter the list to that person. |
 | `cash-section.tsx` | `/budget/` | `CashSection`: the Cash card. Lists withdrawals and handovers, with add, edit and archive. Shows each member's cash on hand, the total withdrawn with dollars charged (and how many withdrawals still lack dollars), and who owes whom. |
 | `quick-expense.tsx` | `/` (Today card) and `/day/` | `QuickExpenseButton({date?})`: a large "+ ¥" button (aria "Log a cost"), shown during the trip on today's date and in the day page's button row. Opens an `EditPanel` with a big numeric amount field (`AmountInput`, with the ¥/$ toggle), a card or cash choice (the last one used is preselected), a 4-column grid of category tiles (the last one used is preselected), an optional "What" line and "More details", which opens the full `ExpenseForm` with the same values. Save writes through `saveRecord`; the toast offers Undo. Hidden on read-only links. |
@@ -269,6 +272,8 @@ Screens (one per page):
 | `whats-new.tsx` | Desktop corner, Account sheet | `WhatsNewButton` turns the version text into a button (in `VersionTag` on wide screens, in `settings-about.tsx` on phones). `WhatsNewPanel` is a Drawer on phones and a Dialog from `md`, listing "Version X · date" with the bullets of `CHANGELOG`. Tests in `whats-new.test.tsx`. |
 | `todos-screen.tsx` | `/todos/` | `TodosScreen`: the list column (wide) or list Select (phone), the to-do rows, filters, sort and list progress (§12.9). |
 | `todo-forms.tsx` | `/todos/` | `ListForm` and `TodoForm`, both shown in `EditPanel`. |
+| `misc-screen.tsx` | `/misc/` | `MiscScreen`: one card per Miscellaneous entry (§12.10). |
+| `phrasebook-screen.tsx` | `/phrasebook/` | `PhrasebookScreen`: the static guide in an iframe (`title` from `phrasebook.frameTitle`) between the header and the phone tab bar, sized with `h-[calc(100svh-3.5rem-4rem-env(safe-area-inset-bottom))]` on phones and `md:h-[calc(100svh-3.5rem)]` from `md`. Tests in `phrasebook-screen.test.tsx` (§12.10). |
 
 Plan and place editing:
 
@@ -288,9 +293,9 @@ Plan and place editing:
 | `flight-card.tsx` | `FlightCard`: one flight as printed on the ticket, with its route, dates and times (each in its airport's local time), confirmation and note. Used on the Days and Day pages and in Settings → Flights. |
 | `day-weather.tsx` | `DayWeatherStrip` (day page header: icon and name, high and low, chance of rain or snow, Forecast or dashed Typical tag, sunrise and sunset) and `WeatherBadge` (icon, plus the high from `lg`; used on the Today card and calendar cells). `WEATHER_ICON` maps kinds to icons. Data from `use-weather.ts`. |
 | `tag-badges.tsx` | Category and priority badges and options. Quiet: a neutral badge (`secondary` for category, `outline` for priority) with the icon in the category or priority colour; the badge is not filled with that colour. |
-| `charts.tsx` | The recharts charts only: `DonutChart`, `BudgetGauge`, `ColumnChart`, `StackedColumnChart`. Not imported by screens directly. `configFor()` gives each series one colour for light and dark (§10). |
+| `charts.tsx` | The recharts charts only: `DonutChart`, `BudgetGauge`, `ColumnChart`, `StackedColumnChart`, `TargetsChart` (horizontal bars, `layout="vertical"`, value axis hidden so no amount shows on an axis). `StackedColumnChart` takes optional `format` and `hint`, used in its tooltip so hidden amounts stay hidden (the Dashboard's stops chart passes none). Not imported by screens directly. `configFor()` gives each series one colour for light and dark (§10). |
 | `chart-parts.tsx` | Chart pieces drawn without recharts: `Series` type, `SeriesLegend`, `BarList` and an internal `ChartValue`. |
-| `charts-lazy.tsx` | What screens import. Wraps the four recharts charts with `next/dynamic` (`ssr: false`), each with a `Skeleton` of the chart's own size so nothing moves, and re-exports `BarList`, `SeriesLegend` and `Series`. Used by `dashboard-screen.tsx` and `budget-screen.tsx`. |
+| `charts-lazy.tsx` | What screens import. Wraps the five recharts charts (adds `TargetsChart`) with `next/dynamic` (`ssr: false`), each with a `Skeleton` of the chart's own size so nothing moves, and re-exports `BarList`, `SeriesLegend`, `Series` and the `TargetBar` type. Used by `dashboard-screen.tsx` and `budget-screen.tsx`. |
 
 Base components:
 
@@ -419,7 +424,8 @@ Maps and place helpers:
 | `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). `formatFullDate` gives a date with its year ("Nov 12, 2026") in the current language, for What's new. |
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
-| `base-path.ts` | `BASE_PATH` for URLs the browser fetches directly. |
+| `base-path.ts` | `BASE_PATH` (from `NEXT_PUBLIC_BASE_PATH`) for URLs the browser fetches directly. `SITE_BASE_PATH` (`/itinerary-app`) is the same path as a constant, read by `next.config.ts` and the phrasebook import (§4.1). |
+| `phrasebook.ts` | `PHRASEBOOK_GUIDE_PATH`: the URL of the generated static guide (`/phrasebook-guide/`, under the base path). Shared by `PhrasebookScreen`, the offline screen's button and the import script (§17.4). |
 | `theme-color.ts` | `THEME_COLOR` (Sen: `light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme, palette)`, which picks the page background for the family and mode and sets `<meta name="theme-color">` so the browser bar follows the choice. Tests in `theme-color.test.ts`. |
 | `palette.ts` | Colour families: `PALETTES` (`sen`, `ink`, `pine`, `plum`), `getPalette`, `setPalette`, `applyPalette` and `usePalette` (a small Zustand store). Saved per device under localStorage key `palette`. Sen sets no attribute; the others set `data-palette` on `<html>`. Tests in `palette.test.ts`. |
 | `css-color.ts` | `resolveCssColor(value)` follows a `var(--x)` token (up to five hops) to the colour the page shows now; `resolvePinColors(pins)` does it for every pin. Google Maps draws pins itself and cannot read CSS variables, so this runs at draw time. Tests in `css-color.test.ts`. |
@@ -476,7 +482,7 @@ Settings that matter (`next.config.ts`):
 | Setting | Value | Why |
 |---|---|---|
 | `output` | `"export"` | Static HTML only. |
-| `basePath` | `/itinerary-app` | GitHub Pages sub-path. Must match the repo name. |
+| `basePath` | `/itinerary-app` | GitHub Pages sub-path. Must match the repo name. Set from `SITE_BASE_PATH` in `src/lib/base-path.ts`. |
 | `trailingSlash` | `true` | Pages look for `folder/index.html`. Links end in `/`. |
 | `images.unoptimized` | `true` | No image server exists. |
 | `env.NEXT_PUBLIC_BASE_PATH` | the base path | Client code (service worker, manifest) reads it. |
@@ -515,6 +521,9 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `/itinerary-app/city/` | `app/city/page.tsx` | `?id=<cityId>&place=<placeId>&trip=` | One city; `place` opens that place |
 | `/itinerary-app/budget/` | `app/budget/page.tsx` | `?trip=` | Budget |
 | `/itinerary-app/todos/` | `app/todos/page.tsx` | `?trip=`, optional `?list=<id>` | To-do lists (opens the named list) |
+| `/itinerary-app/misc/` | `app/misc/page.tsx` | `?trip=` | Miscellaneous: To-dos and Phrasebook (§12.10) |
+| `/itinerary-app/phrasebook/` | `app/phrasebook/page.tsx` | `?trip=` | Japanese phrasebook, shown in an iframe inside the app shell (§12.10). Behind sign-in like every app page |
+| `/itinerary-app/phrasebook-guide/` | `public/phrasebook-guide/index.html` (static, not a Next route) | — | The guide itself. Outside sign-in and holds no trip data (§17.4) |
 | `/itinerary-app/settings/` | `app/settings/page.tsx` | `?trip=`, optional `?tab=<section>` | Settings (opens the named tab, default Stays) |
 | `/itinerary-app/404.html` | `app/not-found.tsx` | any | Not found; redirects old links |
 | `/itinerary-app/manifest.webmanifest` | `app/manifest.ts` | — | Install metadata |
@@ -570,9 +579,10 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `/day/` | `DayScreen` → `DayPlan` | `SortableStop`, `StopCard` (`day-plan-stop.tsx`), `FullDay`, `HotelButtons`, `BookingsButton`, `Reservations` (`day-plan-links.tsx`), `FlightCard`, `DayResearchPanel`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
 | `/cities/` | `CitiesScreen` | — |
-| `/budget/` | `BudgetScreen` → `BudgetContent` | `SummaryFigures`, `ExpenseRow`, `TargetRow`, `MemberTargetRow`, `BudgetForm`, `ExportExpensesButton` (`budget-parts.tsx`, `budget-figures.tsx`), `PersonPanel` (`budget-person.tsx`), `CashSection` (`cash-section.tsx`), `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
+| `/budget/` | `BudgetScreen` → `BudgetContent` | `SummaryFigures`, `ExpenseRow`, `TargetRow`, `MemberTargetRow`, `BudgetForm`, `ExportExpensesButton` (`budget-parts.tsx`, `budget-figures.tsx`), `PersonPanel` (`budget-person.tsx`), `CashSection` (`cash-section.tsx`), `TargetsVsSpentCard`, `DailySpendCard` (`budget-charts.tsx`), `TargetsChart`, `StackedColumnChart`, `SeriesLegend`, `ExpenseForm`, `EditPanel`, `BudgetGauge`, `DonutChart`, `BarList`, `Yen`, `HideAmountsButton` |
 | `/settings/` | `SettingsScreen` | one panel per tab (`Stays`, `Cities`, `Places`, `Flights`, `Reservations`, `Holidays`, `Trip`, `Share`, `Backup`, `Cleanup`); `EditPanel` in each; `ProposalReview` in Places; `NotOnSharedView` in viewer mode |
 | `/todos/` | `TodosScreen` | `ListForm` and `TodoForm` (`todo-forms.tsx`) in `EditPanel`; a list Select on phones; hidden in viewer mode |
+| `/misc/` | `MiscScreen` | one card per entry from `MISC_ITEMS` (§12.10); viewers see only the Phrasebook card |
 
 ### 6.3 Shared overlays
 
@@ -750,7 +760,7 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 - **Colour families:** four families, Sen (default), Ink, Pine and Plum, each with a light and a dark mode. Light and Dark are the mode (next-themes). The family is a separate choice, made in the Account sheet and the viewer sheet with `palette-picker.tsx`. The Ink, Pine and Plum colours come from `docs/theme-options.html`; in the app they are named Ink (Kumo light, Sumi dark), Pine (Matsu light, Mori dark) and Plum (Ume light, Yoi dark). Switching families needs no code change or deploy.
 - **Palette storage:** `src/lib/palette.ts` (`PALETTES`, `getPalette`, `setPalette`, `applyPalette`, `usePalette`) saves the family per device in localStorage under `palette`. Sen sets no attribute. The others set `data-palette` on `<html>`. In `globals.css` each has a `:root[data-palette="ink|pine|plum"]` block and a `:root[data-palette=…].dark` block, and every token Sen defines is in each. The `.dark` block has the higher specificity, so it wins over the light block and the plain `.dark` rule. `palette` is in the kept-keys list, so it survives a version reset like `theme`.
 - **Choices:** Light and Dark only, with no "Match phone" option. The button in the Account sheet switches between them (`theme-toggle.tsx`). On a device with no stored choice, or with the old stored `system` value, `PickFirstTheme` picks light or dark once from `prefers-color-scheme` and saves it. The choice is stored by next-themes under `theme` in localStorage. It is in the kept-keys list, so it survives a version reset.
-- **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, as hex values: light has a cool paper-white background (`#f4f6fa`) and indigo `--primary` (`#2b47a8`); dark has a deep indigo background (`#0d1220`) and `--primary` `#96aaff`. Other tokens: `--background`, `--foreground`, `--muted`, `--border`, `--sidebar-*`, `--chart-1..5` (an indigo scale, not used by any component), and others. `--now` with `--now-foreground` is kept for the present moment (today, the next stop). `--success` and `--warning` are for status. All of these exist in both themes. The Dashboard's charts take their colours from these tokens too: spend per day and "planned" stops use `--primary`, "done" stops `--success`, "skipped" stops `--muted-foreground`. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`, `bg-now`, `text-now-foreground`, `text-success`, `text-warning`). `h1` and `h2` use the heading font through a base rule.
+- **Tokens:** colours are CSS variables on `:root` and `.dark` in `src/app/globals.css`, as hex values: light has a cool paper-white background (`#f4f6fa`) and indigo `--primary` (`#2b47a8`); dark has a deep indigo background (`#0d1220`) and `--primary` `#96aaff`. Other tokens: `--background`, `--foreground`, `--muted`, `--border`, `--sidebar-*`, `--chart-1..5` (an indigo scale; only `--chart-2` is used, by the "Spent" bar in the Budget's targets totals, which turns red `--destructive` when over the budget), and others. `--now` with `--now-foreground` is kept for the present moment (today, the next stop). `--success` and `--warning` are for status. All of these exist in both themes. The Dashboard's charts take their colours from these tokens too: spend per day and "planned" stops use `--primary`, "done" stops `--success`, "skipped" stops `--muted-foreground`. Tailwind maps them to utility names (`bg-background`, `text-muted-foreground`, `bg-now`, `text-now-foreground`, `text-success`, `text-warning`). `h1` and `h2` use the heading font through a base rule.
 - **Status colours and page titles:** status colours always come from the tokens: `--warning` for warning states (planned expenses, due-soon to-dos, the cash warning, the early sunset, the medium day load and the day research warnings), `--success` for good states (the light day load, "Accepted" places, done to-dos) and `--destructive` for the heavy day load and late to-dos. No component uses fixed amber, emerald, red or hex colour classes. Every screen's `h1` is `text-3xl font-bold` in the heading font.
 - **Selected and highlighted controls:** selected toggles (`ui/toggle.tsx` with `aria-pressed`, and `ui/toggle-group.tsx` items with `data-state=on`) use a soft tint of `--primary`, not `bg-muted`. `--accent` (light and dark) is a soft indigo tint (`#e2e8fb` light, `#232e58` dark), so hovered and highlighted menu items show colour.
 - **Corners and cards:** `src/app/globals.css` redefines the radius scale in `@theme inline`, so `rounded-4xl` is 14px (sm 4px, md 6px, lg 8px, xl 10px, 2xl 11px, 3xl 12px, 4xl 14px, from `--radius` 0.625rem). Cards are flat: no shadow, a 1px ring in `--border`, 20px padding (16px for `size="sm"`). Badges use `rounded-md`, not pills.
@@ -764,7 +774,7 @@ Reduced motion applies to both layouts. When the phone's "reduce motion" setting
 
   Each hue is the same in every family, so a category keeps its meaning; lightness and chroma are tuned per family and mode. The colours were checked with the dataviz validator: at least 3:1 against `--card`. Where two colours sit close, the icon and label carry the meaning, not the colour alone.
 - **Taxonomy as tokens:** `CATEGORY_COLOR`, `PRIORITY_COLOR` and `EXPENSE_COLOR` in `taxonomy.ts` are `var(--…)` strings, so badges, filters, charts and pins follow the active theme without code changes. `DARK_STEP` and `darkStep()` are gone. `tint(color, percent)` mixes a colour into `var(--card)` with `color-mix`. `map-pins.ts` uses `var(--pin-…)` for the stop, finished and hotel pins. Category and priority badges show these colours only on their icon, not as a fill (`tag-badges.tsx`). `palette-tokens.test.ts` checks that every block defines each token the taxonomy and pins use.
-- **Charts:** `configFor()` in `charts.tsx` gives each series one colour, used in light and dark. The Dashboard's fallback colour is `var(--muted-foreground)`. City colours are the owner's data (`color` on the city) and are used as stored. `--chart-1..5` is still unused.
+- **Charts:** `configFor()` in `charts.tsx` gives each series one colour, used in light and dark. The Dashboard's fallback colour is `var(--muted-foreground)`. City colours are the owner's data (`color` on the city) and are used as stored. `--chart-2` colours the "Spent" bar in the Budget's targets totals (`--destructive` when over the budget); `--chart-1` and `--chart-3..5` are unused.
 - **Google Maps pins:** Google draws pins itself and cannot read CSS variables, so `src/lib/css-color.ts` turns each `var(--x)` into the real colour the page shows (`resolveCssColor`, `resolvePinColors`). `TripMap` redraws when pins, lines, the colour family or light/dark mode change.
 - **Theme options page:** `docs/theme-options.html` shows each theme's category and priority colours (swatches, and one matrix row per token), with the other tokens.
 - **Map:** `trip-map.tsx` reads `resolvedTheme` and passes `colorScheme: "light" | "dark"` to the Maps service, so the map follows the app.
@@ -953,7 +963,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 
 **For viewers** (no sign-in, `?share=` in the link):
 
-- The app shows Dashboard, Days and Cities only. `/budget/` and `/settings/` show `NotOnSharedView`. Each screen's changes are listed in §12.1 to §12.6.
+- The app shows Dashboard, Days, Cities and Miscellaneous. Miscellaneous shows only the Phrasebook (no To-dos), and the phone tab bar has four columns. `/budget/` and `/settings/` show `NotOnSharedView`. Each screen's changes are listed in §12.1 to §12.6.
 - The header shows the trip name, a "Read-only" badge, search and the viewer sheet (language, theme, and "Leave shared view", stored only on the device) in place of Activity and Account.
 - The copy loads once, and the app checks the expiry every minute. It re-reads the copy every 10 minutes, so a closed or expired link stops within that time. A closed, expired or unknown link shows "This link isn't open", with a button to leave and sign in.
 - Place details still fetch photos and hours from Google, under the same per-device daily limit as members (§14.2).
@@ -965,7 +975,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 
 `todos-screen.tsx` and `todo-forms.tsx`, on the pure logic in `domain/todos.ts` (§13). The route `/todos/` takes an optional `?list=<id>` that opens that list.
 
-- **Section:** "To-dos" (ListChecks icon) sits between Budget and Settings in `SECTIONS`. It is hidden on read-only links, as Budget and Settings are. The phone tab bar has six columns.
+- **Entry:** To-dos is no longer a top-level section. It is one of the two entries under Miscellaneous (`/misc/`, §12.10), which sits between Budget and Settings in `SECTIONS`. To-dos is hidden on read-only links, as Budget and Settings are. The phone tab bar has six columns for members.
 - **Lists:** each list has a title, an optional description, a colour dot and a sort order. On wide screens (lg) the lists sit in a left column, each with its colour dot, a progress bar and the open count, plus "All lists". On phones the list is picked from a Select.
 - **To-dos:** each row has a checkbox to mark it done, a due badge (late in `--destructive`, due within a week in `--warning`), a priority, the assignee (a member) and a menu for status, edit and archive. Status changes go through `withStatus`, which keeps `completedAt`.
 - **Filter and sort:** filter by all, open or done; sort by manual order, due date or priority (`visibleTodos`). In manual order, up and down buttons move a to-do (`swapOrder`); new to-dos get the next key (`nextOrder`).
@@ -973,6 +983,16 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 - **Dashboard:** the Watch out panel lists late or soon-due open to-dos first (§12.1).
 - **Shared view:** the section is hidden, and viewers get no to-dos (§12.8).
 - **Data:** lists and to-dos are trip collections (§23.22). They sync through `TripRepository` into `useTripStore`, go into backups and are written with `saveRecord`.
+
+### 12.10 Miscellaneous (`/misc/`)
+
+`misc-screen.tsx` on the route `src/app/misc/page.tsx`. It shows one card per entry in `MISC_ITEMS` (`app-header.tsx`).
+
+- **Section:** "Miscellaneous" (LayoutGrid icon, `nav.misc`) replaces To-dos in `SECTIONS`. It is highlighted on `/misc/`, `/todos/` and `/phrasebook/`.
+- **To-dos** (`/todos/`): the shared to-do lists (§12.9). A Next link.
+- **Phrasebook** (`/phrasebook/`): a Next route (`app/phrasebook/page.tsx`) that renders `PhrasebookScreen` inside the app shell (header, sidebar, tab bar). The guide is a generated static page at `/phrasebook-guide/` (§17.4), shown in an iframe that fills the height between the header and the phone tab bar. Both entries are reached with next/link, since `MISC_ITEMS` gives each one a `path`. The static guide itself works outside sign-in (§17.4).
+- **Viewers:** read-only links keep Miscellaneous but see only the Phrasebook (§12.8).
+- **Desktop:** the sidebar's Miscellaneous item opens both entries as a sub-menu (`MiscSubMenu`, §3.3).
 
 ---
 
@@ -993,7 +1013,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `live-hours.ts` | `parseGoogleHours`, `openNowFrom`, `hoursDifference` | Reads Google's English opening-hours text into periods, and works out whether a place is open now. |
 | `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor`, `dayFilterPins` | Pins per stop, straight lines when no route. `dayFilterPins` gives the City page's pins and day legend for the chosen days (a place on two days shows once, with the earlier day). |
 | `nearby.ts` | `distanceMeters`, `formatDistance`, `typeLabel` | Straight-line distance in metres, shown as metres under 1 km and kilometres above; Google's type text made readable. Google's own words stay in English (rule 13). |
-| `budget.ts` | `summarizeBudget`, `totalsByCategory`, `totalsByPayer`, `estimateStops`, `spendByDay`, `daysRemaining` | Expenses beat estimates for the same place; yen integers. |
+| `budget.ts` | `summarizeBudget`, `totalsByCategory`, `totalsByPayer`, `estimateStops`, `spendByDay`, `daysRemaining`, `summarizeTargets(categories, budget)` (rows with a target or spending, the targets added up, the budget, total paid, and paid in categories without a target), `BOOKING_CATEGORIES` (`flight`, `booking`), `DAILY_CATEGORIES` (the other expense categories) and `dailySpendByCategory(expenses, days)` (paid money per trip day by category, without bookings and flights, the categories used, and day-to-day money paid outside the trip days) | Expenses beat estimates for the same place; yen integers. |
 | `dashboard.ts` | many tile functions (see §12.1) | All figures from in-memory data. |
 | `todos.ts` | `dueState`, `todosDueSoon`, `listProgress`, `visibleTodos`, `nextOrder`, `swapOrder`, `withStatus`, `archiveList` | Due states in Japan time: overdue, soon (within 7 days), later, none. `archiveList` also archives the list's live to-dos. Nothing is deleted. |
 | `proposals.ts` | `newProposal`, `isOpenProposal`, `acceptProposal`, `changedFields`, `researchToAccept`, `cleanResearch`, `ResearchResultSchema` | Research never writes a place. Accepting copies chosen fields and their sources; status becomes `researched`. |
@@ -1178,7 +1198,7 @@ Run this by hand on both phones before the trip:
 
 - **Firestore persistent cache** (`persistentLocalCache` with `persistentMultipleTabManager`): the trip is readable offline once it has been loaded. Writes made offline are queued and sent when the connection returns.
 - **Listeners** keep working offline from the cache. A missing trip document from the cache does not count as "missing"; the app waits for the server (`metadata.fromCache`).
-- **Offline screens:** while signed in but with no answer and no connection, `AppGate` shows "offline" rather than a spinner.
+- **Offline screens:** while signed in but with no answer and no connection, `AppGate` shows "offline" rather than a spinner. That screen has a button to the static phrasebook (`/phrasebook-guide/`, §17.4), which opens without a connection.
 - **Banner:** `OfflineBanner` shows when offline (`useOnline`) and appends the number of writes waiting, if any.
 - **Sync indicator:** `SyncStatus` in the header shows whether this session's edits have reached the server. It reads `useSyncStore.pending`, so an edit made offline reads "waiting" with a count and returns to "saved" once the connection comes back and the server confirms. `startup` covers edits queued before a reload: `MemberSync` calls `watchStartupWrites()` once the member's trip is live, which waits for those writes with `waitForPendingWrites`, and the status reads "saving" until they are sent. Read-only share links do not show it.
 - **Persistent storage:** the browser may clear a site's storage under space pressure, or (Safari) after a while without a visit. Once a member's trip is live, `MemberSync` calls `requestPersistentStorage()` (`src/lib/storage-persist.ts`), which asks the browser to keep the copy (`navigator.storage.persist()`), only when it is not already kept. Chrome usually agrees by site engagement, Safari for home-screen apps. Settings → About shows whether the copy is kept and lets the member ask again (§12.6).
@@ -1190,6 +1210,7 @@ Run this by hand on both phones before the trip:
 - Precaches `**/*.{html,js,css,json,png,svg,ico,webmanifest,txt,woff2}` in `out/`. Excludes `version.json`.
 - `ignoreURLParametersMatching: [/.*/]`: query strings (`?trip=`, `?date=`) are ignored, so each page matches its one precached file.
 - The recharts chunk is precached even though charts load on first use, so the charts still open offline (§2.2).
+- `maximumFileSizeToCacheInBytes` is 5 MiB in `workbox-config.cjs`, so the phrasebook guide page (about 1.1 MB, and growing, §17.4) is precached too.
 - `skipWaiting` and `clientsClaim`: a new worker takes over at once. `cleanupOutdatedCaches` removes old files.
 - Registered only in production (`service-worker-register.tsx`), at `${BASE_PATH}/sw.js`.
 - The `.txt` files (Next's route data) are cached so a page and its data come from the same build.
@@ -1198,6 +1219,15 @@ Run this by hand on both phones before the trip:
 
 - `manifest.ts`: name "Trip Planner", standalone display, theme colour and background `#f4f6fa` (`THEME_COLOR.light`), icons 192 and 512 px (`public/icon-*.png`), `start_url` and `scope` under the base path. Apple web-app meta in layout.
 - Icons are generated by `scripts/make-icons.cjs` as plain PNGs; replace the files with real artwork later, keeping the names.
+
+### 17.4 Phrasebook (static page)
+
+- The guide is the file `public/phrasebook-guide/index.html`, served at `/phrasebook-guide/`. The path is the constant `PHRASEBOOK_GUIDE_PATH` in `src/lib/phrasebook.ts`. `scripts/phrasebook-import.ts` (`npm run phrasebook:import [-- <file>]`, default input `../phrasebook-src/japanese_guide.html`, outside the repo) generates it (§21). The build does not run the script.
+- `/phrasebook/` is a Next route, not the guide itself: `src/app/phrasebook/page.tsx` renders the client component `src/components/phrasebook-screen.tsx`, which shows the guide in an iframe inside the app shell (header, sidebar, tab bar). Being inside the app, it sits behind `AppGate` like every other page (§12.10).
+- The script injects blocks marked `<!-- trip-planner:start/end -->`: the manifest link, theme-colour metas, the app's CSS, the service worker registration and `THEME_SYNC`, a script in the guide's head. It is idempotent and fails if an anchor is missing.
+- `THEME_SYNC` does two things. Alone, it applies only the saved `theme` from localStorage. When the guide is framed by the app, it adds the `in-app` class, sets `data-theme` from the app's `dark` class, and copies the app's tokens onto the guide's variables (`--background`→`--bg`, `--card`→`--surface`, `--foreground`→`--ink`, `--muted-foreground`→`--muted`, `--border`→`--line`, `--muted`→`--chip`, `--primary`→`--accent`, `--font-display`→`--app-display`). It also copies the body font and the app's `@font-face` rules, and follows later changes with a MutationObserver on the app's `<html>`. When framed, the guide's "← Trip Planner" link is hidden.
+- The static guide holds no trip data and needs no sign-in on its own, so it opens from the offline screen too (§7, §16). Prettier and ESLint ignore `public/phrasebook-guide/`.
+- It is precached with the rest of the app, so it works offline (§17.2).
 
 ---
 
@@ -1315,13 +1345,14 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `maps:check` | `scripts/maps-check.ts` | Checks Google keys and test train routes; `-- --embed` serves the Maps Embed test | No |
 | `maps:match` | `scripts/maps-match.ts` | Saves place IDs and coordinates; reports doubtful matches | Yes |
 | `maps:refresh` | `scripts/maps-refresh.ts` | Renews coordinates before 30 days; `--all` refreshes all | Yes |
+| `phrasebook:import` | `scripts/phrasebook-import.ts` | Generates `public/phrasebook-guide/index.html` from the source page (`-- <file>` to choose another; default `../phrasebook-src/japanese_guide.html`). Injects the marked blocks (§17.4); idempotent | No |
 
 Shared helpers:
 
 - `scripts/admin-db.ts`: Admin SDK Firestore with application default credentials, for `projectId` `itinerary-f990b`.
 - `scripts/maps-api.ts`: Places API (New) REST helper, using the script key.
 
-Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts`, `scripts/research-pull.test.ts`, `scripts/validate.test.ts`.
+Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts`, `scripts/research-pull.test.ts`, `scripts/validate.test.ts`, `scripts/phrasebook-import.test.ts`.
 
 ---
 

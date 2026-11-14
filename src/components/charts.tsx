@@ -16,6 +16,7 @@ import {
   RadialBar,
   RadialBarChart,
   XAxis,
+  YAxis,
 } from "recharts";
 
 import {
@@ -232,17 +233,129 @@ export function ColumnChart({
   );
 }
 
-// Each day's stops, stacked by city in the cities' own colours.
+export type TargetBar = {
+  key: string;
+  label: string;
+  color: string;
+  target: number | null;
+  spent: number;
+};
+
+// Each category's target as a wide pale bar behind a thin bar of what was
+// spent, one row each. A row without a target shows only its spending; one
+// over its target turns red. The value axis has no numbers, so hidden amounts
+// stay hidden.
+export function TargetsChart({
+  rows,
+  targetName,
+  spentName,
+  noTarget,
+  label,
+  format = String,
+  hint,
+}: {
+  rows: TargetBar[];
+  targetName: string;
+  spentName: string;
+  noTarget: string;
+  label: string;
+  format?: (value: number) => string;
+  hint?: (value: number) => string;
+}) {
+  const data = rows.map((r) => ({
+    key: r.key,
+    spent: r.spent,
+    target: r.target ?? 0,
+    hasTarget: r.target !== null,
+  }));
+  const labelOf = (key: string) =>
+    rows.find((r) => r.key === key)?.label ?? key;
+  return (
+    <ChartContainer
+      config={{
+        target: { label: targetName, color: "var(--muted-foreground)" },
+        spent: { label: spentName, color: "var(--primary)" },
+      }}
+      role="img"
+      aria-label={label}
+      className="aspect-auto w-full"
+      style={{ height: Math.max(120, rows.length * 40 + 8) }}
+    >
+      <BarChart
+        data={data}
+        layout="vertical"
+        barGap={-15}
+        margin={{ left: 0, right: 8, top: 4, bottom: 4 }}
+      >
+        <CartesianGrid horizontal={false} />
+        <XAxis type="number" hide />
+        <YAxis
+          type="category"
+          dataKey="key"
+          width={92}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={labelOf}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelFormatter={(key) => labelOf(String(key))}
+              formatter={(value, name, item) => (
+                <span className="flex w-full justify-between gap-3">
+                  <span>{name === "target" ? targetName : spentName}</span>
+                  <span className="tabular-nums">
+                    {name === "target" && !item.payload.hasTarget
+                      ? noTarget
+                      : `${format(Number(value))}${hint ? ` · ${hint(Number(value))}` : ""}`}
+                  </span>
+                </span>
+              )}
+            />
+          }
+        />
+        <Bar
+          dataKey="target"
+          fill="var(--color-target)"
+          fillOpacity={0.25}
+          radius={4}
+          barSize={22}
+          isAnimationActive={false}
+        />
+        <Bar dataKey="spent" radius={4} barSize={8} isAnimationActive={false}>
+          {rows.map((r) => (
+            <Cell
+              key={r.key}
+              fill={
+                r.target !== null && r.spent > r.target
+                  ? "var(--destructive)"
+                  : r.color
+              }
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </ChartContainer>
+  );
+}
+
+// Each day's values stacked by series, in the series' own colours: stops by
+// city on the Dashboard, money by category on the Budget. Give format to show
+// the values as amounts, so a hidden amount stays hidden in the tooltip.
 export function StackedColumnChart({
   data,
   series,
   label,
   tick,
+  format,
+  hint,
 }: {
   data: ({ key: string } & Record<string, number | string>)[];
   series: Pick<Series, "key" | "label" | "color">[];
   label: string;
   tick: (key: string) => string;
+  format?: (value: number) => string;
+  hint?: (value: number) => string;
 }) {
   return (
     <ChartContainer
@@ -264,6 +377,25 @@ export function StackedColumnChart({
           content={
             <ChartTooltipContent
               labelFormatter={(value) => tick(String(value))}
+              formatter={
+                format &&
+                ((value, name) => (
+                  <span className="flex w-full items-center gap-2">
+                    <span
+                      aria-hidden
+                      className="size-2.5 shrink-0 rounded-[2px]"
+                      style={{ backgroundColor: `var(--color-${name})` }}
+                    />
+                    <span className="flex-1">
+                      {series.find((s) => s.key === name)?.label ?? name}
+                    </span>
+                    <span className="tabular-nums">
+                      {format(Number(value))}
+                      {hint && ` · ${hint(Number(value))}`}
+                    </span>
+                  </span>
+                ))
+              }
             />
           }
         />
@@ -271,7 +403,7 @@ export function StackedColumnChart({
           <Bar
             key={s.key}
             dataKey={s.key}
-            stackId="stops"
+            stackId="stack"
             fill={`var(--color-${s.key})`}
             stroke="var(--card)"
             strokeWidth={2}

@@ -10,7 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 // the chart's own size, so nothing moves when it arrives.
 
 export { BarList, SeriesLegend, type Series } from "@/components/chart-parts";
+export type { TargetBar } from "@/components/charts";
 
+export const TargetsChart = dynamic(
+  () => import("@/components/charts").then((m) => m.TargetsChart),
+  { ssr: false, loading: () => <Skeleton className="h-52 w-full" /> },
+);
 export const DonutChart = dynamic(
   () => import("@/components/charts").then((m) => m.DonutChart),
   {

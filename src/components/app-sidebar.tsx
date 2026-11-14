@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
-import { useSection, useSections } from "@/components/app-header";
+import { useMiscItems, useSection, useSections } from "@/components/app-header";
 import { Tip } from "@/components/tip";
 import {
   Sidebar,
@@ -17,6 +17,9 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -105,6 +108,7 @@ export function AppSidebar() {
                       </Link>
                     </SidebarMenuButton>
                   </Tip>
+                  {href === "/misc/" && <MiscSubMenu />}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -165,6 +169,35 @@ export function AppSidebar() {
         <CollapseButton />
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+// The entries of Miscellaneous, under it. They hide with the labels when the
+// sidebar is a rail of icons; the Misc icon still opens their page.
+function MiscSubMenu() {
+  const tripId = useTripId();
+  const path = usePathname();
+  const items = useMiscItems();
+  return (
+    <SidebarMenuSub>
+      {items.map((item) => {
+        const Icon = item.icon;
+        const active = path === item.path || `${path}/` === item.path;
+        return (
+          <SidebarMenuSubItem key={item.key}>
+            <SidebarMenuSubButton asChild isActive={active}>
+              <Link
+                href={pageHref(item.path, tripId)}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon />
+                <span>{t(item.label)}</span>
+              </Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        );
+      })}
+    </SidebarMenuSub>
   );
 }
 

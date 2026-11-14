@@ -79,7 +79,11 @@
     "hintCities": "Los lugares por visitar en cada ciudad",
     "hintBudget": "Lo gastado y lo que queda, compartido entre todos",
     "hintTodos": "Listas de lo que hay que preparar y revisar antes y durante el viaje",
-    "hintSettings": "Hoteles, ciudades, lugares, reservaciones, miembros y respaldos"
+    "hintSettings": "Hoteles, ciudades, lugares, reservaciones, miembros y respaldos",
+    "misc": "Varios",
+    "phrasebook": "Guía de frases",
+    "hintMisc": "Las listas de pendientes y la guía de frases en japonés",
+    "hintPhrasebook": "Frases en japonés por situación, con audio y práctica; funciona sin conexión"
   },
   "category": {
     "lights": "Iluminaciones",
@@ -124,7 +128,8 @@
     "noTripsTitle": "Aún no hay viajes",
     "noTripsBody": "{email} no está en la lista de miembros de ningún viaje. Pide a alguien de un viaje que agregue tu correo, o usa otra cuenta.",
     "newTrip": "Nuevo viaje",
-    "tryAgain": "Intentar de nuevo"
+    "tryAgain": "Intentar de nuevo",
+    "offlinePhrasebook": "Abrir la guía de frases en japonés"
   },
   "auth": {
     "popupBlocked": "El navegador bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.",
@@ -712,7 +717,22 @@
     "personExpenses": "Sus gastos",
     "personNothing": "{name} aún no ha pagado nada.",
     "personCount": "{count, plural, one {# gasto} other {# gastos}}",
-    "seeAll": "Mostrar sus gastos en la lista"
+    "seeAll": "Mostrar sus gastos en la lista",
+    "targetsVsSpent": "Objetivos frente a gastos",
+    "target": "Objetivo",
+    "noTarget": "Sin objetivo",
+    "spentLegend": "Gastado (en rojo si supera su objetivo)",
+    "targetsTotal": "Todos los objetivos",
+    "noTargetsYet": "No hay objetivos ni pagos todavía.",
+    "targetsNoBudget": "No hay un presupuesto total con el que comparar los objetivos.",
+    "targetsAbove": "Los objetivos suman {yen} más que el presupuesto total.",
+    "targetsBelow": "Los objetivos suman {yen} menos que el presupuesto total.",
+    "targetsMatch": "Los objetivos suman lo mismo que el presupuesto total.",
+    "untargeted": "{yen} gastados en categorías sin objetivo.",
+    "perDay": "Gastado cada día del viaje",
+    "noDailySpend": "Aún no se ha pagado nada en un día del viaje.",
+    "perDayHint": "Solo el gasto del día a día: se dejan fuera hoteles, reservas y vuelos.",
+    "perDayOutside": "{yen} del gasto del día a día se pagaron fuera de los días del viaje."
   },
   "dashboard": {
     "title": "Panel",
@@ -1119,6 +1139,17 @@
       "colours": "Los colores de gráficos, etiquetas y mapas siguen ahora el tema.",
       "quickAdd": "Toca + entre paradas para añadir al día un lugar cercano.",
       "changelog": "Toca la versión para ver las novedades."
+    },
+    "d20261114": {
+      "phrasebook": "La guía de frases en japonés está en la app, en Varios junto a los pendientes. Usa los colores y el tema claro u oscuro de la app, y abre sin señal.",
+      "misc": "Los pendientes pasaron a la nueva sección Varios.",
+      "budgetCharts": "El Presupuesto muestra el objetivo de cada categoría frente a su gasto, cuánto suman los objetivos junto al presupuesto y lo que costó cada día del viaje por categoría."
     }
+  },
+  "miscPage": {
+    "title": "Varios"
+  },
+  "phrasebook": {
+    "frameTitle": "Guía de frases en japonés"
   }
 }

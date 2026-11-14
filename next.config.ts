@@ -4,13 +4,14 @@ import { readFileSync } from "node:fs";
 import type { NextConfig } from "next";
 
 import { versionFromDescribe } from "./src/domain/version";
+import { SITE_BASE_PATH } from "./src/lib/base-path";
 
 // Static export for GitHub Pages. Anything that needs a server
 // (Server Actions, proxy, request-reading Route Handlers, ISR,
 // default image optimization) is not allowed. See CLAUDE.md.
-// Must equal the GitHub repo name: Pages serves it at
-// https://domokratos11.github.io/itinerary-app/
-const basePath = "/itinerary-app";
+// The GitHub Pages sub-path, kept in src/lib/base-path.ts (the phrasebook
+// import reads it too).
+const basePath = SITE_BASE_PATH;
 
 // From the latest v* tag on main; package.json only when there is none, as on
 // a fresh clone or a branch without the tag.

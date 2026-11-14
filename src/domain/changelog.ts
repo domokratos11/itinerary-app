@@ -13,6 +13,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "1.0.18",
+    date: "2026-11-14",
+    items: [
+      "changelog.d20261114.phrasebook",
+      "changelog.d20261114.misc",
+      "changelog.d20261114.budgetCharts",
+    ],
+  },
+  {
     version: "1.0.17",
     date: "2026-11-12",
     items: [

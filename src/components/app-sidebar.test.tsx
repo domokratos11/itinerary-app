@@ -30,3 +30,25 @@ describe("AppSidebar", () => {
     localStorage.removeItem("sidebar-open");
   });
 });
+
+describe("AppSidebar Miscellaneous", () => {
+  it("lists the to-dos and the phrasebook under Miscellaneous", () => {
+    const { getByRole } = render(
+      <AppSidebarProvider>
+        <AppSidebar />
+      </AppSidebarProvider>,
+    );
+    expect(getByRole("link", { name: "Miscellaneous" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/misc\/?$/),
+    );
+    expect(getByRole("link", { name: "To-dos" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/todos\/?$/),
+    );
+    expect(getByRole("link", { name: "Phrasebook" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/phrasebook\/?$/),
+    );
+  });
+});

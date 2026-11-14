@@ -79,7 +79,11 @@
     "hintCities": "The places to visit in each city",
     "hintBudget": "What's been spent and what's left, shared by everyone",
     "hintTodos": "Lists of what to get ready and check before and during the trip",
-    "hintSettings": "Hotels, cities, places, bookings, members and backups"
+    "hintSettings": "Hotels, cities, places, bookings, members and backups",
+    "misc": "Miscellaneous",
+    "phrasebook": "Phrasebook",
+    "hintMisc": "The to-do lists and the Japanese phrasebook",
+    "hintPhrasebook": "Japanese phrases by situation, with audio and practice; works offline"
   },
   "category": {
     "lights": "Lights",
@@ -124,7 +128,8 @@
     "noTripsTitle": "No trips yet",
     "noTripsBody": "{email} isn't on any trip's member list. Ask someone on a trip to add your email, or use another account.",
     "newTrip": "New trip",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "offlinePhrasebook": "Open the Japanese phrasebook"
   },
   "auth": {
     "popupBlocked": "The browser blocked the sign-in window. Allow pop-ups for this site and try again.",
@@ -712,7 +717,22 @@
     "personExpenses": "Their expenses",
     "personNothing": "{name} hasn't paid anything yet.",
     "personCount": "{count, plural, one {# expense} other {# expenses}}",
-    "seeAll": "Show their expenses in the list"
+    "seeAll": "Show their expenses in the list",
+    "targetsVsSpent": "Targets against spending",
+    "target": "Target",
+    "noTarget": "No target",
+    "spentLegend": "Spent (red when over its target)",
+    "targetsTotal": "All targets",
+    "noTargetsYet": "No targets set and nothing paid yet.",
+    "targetsNoBudget": "No overall budget is set to compare the targets with.",
+    "targetsAbove": "The targets add up to {yen} more than the overall budget.",
+    "targetsBelow": "The targets add up to {yen} less than the overall budget.",
+    "targetsMatch": "The targets add up to the overall budget.",
+    "untargeted": "{yen} spent in categories without a target.",
+    "perDay": "Spent each trip day",
+    "noDailySpend": "Nothing paid on a trip day yet.",
+    "perDayHint": "Day-to-day spending only: hotels, reservations and flights are left out.",
+    "perDayOutside": "{yen} of day-to-day spending was paid outside the trip's days."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1119,6 +1139,17 @@
       "colours": "Chart, badge and map colours now follow the theme.",
       "quickAdd": "Tap + between stops to add a place near you to the day.",
       "changelog": "Tap the version to see what's new."
+    },
+    "d20261114": {
+      "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos. It uses the app colours and light or dark theme, and opens without signal.",
+      "misc": "To-dos moved to the new Miscellaneous section.",
+      "budgetCharts": "The Budget shows each category's target against its spending, how the targets add up next to the budget, and what each trip day cost by category."
     }
+  },
+  "miscPage": {
+    "title": "Miscellaneous"
+  },
+  "phrasebook": {
+    "frameTitle": "Japanese phrasebook"
   }
 }

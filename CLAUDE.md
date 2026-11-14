@@ -51,6 +51,11 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 | `npm run preview`                                     | Serve `out/` like GitHub Pages, at `http://localhost:4173/itinerary-app/`                      |
 | `npm run lint` / `npm run format`                     | ESLint / Prettier                                                                              |
 | `npm run typecheck`                                   | Route types (`next typegen`), then a TypeScript check of the whole project (`tsc --noEmit`)    |
+| `npm run phrasebook:import [-- <file>]`               | Copy the phrasebook into `public/phrasebook-guide/index.html` (see below)                      |
+
+## Updating the phrasebook
+
+The Japanese phrasebook is one self-contained HTML file made outside this repo. It is a build input: never hand-edit `public/phrasebook-guide/index.html`. The app shows it at `/phrasebook/` (under Miscellaneous) in an iframe inside the app's frame; the static copy at `/phrasebook-guide/` also opens on its own, and the offline sign-in screen links to it. To update it, drop the new `japanese_guide.html` in `../phrasebook-src/`, run `npm run phrasebook:import`, commit, and push (deploy). The import adds only marked `trip-planner` blocks and fails if the guide's template no longer has the anchors it needs. One block (`THEME_SYNC`) gives the guide the app's look: framed, it copies the app's colour tokens, light or dark and fonts from the page around it and follows their changes; on its own it takes only the saved light or dark choice. The others are the link back to the app (hidden when framed), the manifest, the theme colour and the service worker. The service worker precaches it for offline use; `maximumFileSizeToCacheInBytes` in `workbox-config.cjs` must stay above its size.
 
 ## Layout
 

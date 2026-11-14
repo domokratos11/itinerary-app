@@ -42,6 +42,17 @@ on the sign-in screen or in the account panel. Your own data (place names,
 notes) stays as you typed it, and activity entries stay in the language they
 were written in. Google Maps itself stays in English.
 
+## Updating the phrasebook
+
+The Japanese phrasebook lives under Miscellaneous, in the app's colours and
+theme, and works offline once the app has been opened with signal. It is
+generated elsewhere, so don't edit `public/phrasebook-guide/index.html` by
+hand. To update it:
+
+1. Drop the new `japanese_guide.html` in `../phrasebook-src/`.
+2. Run `npm run phrasebook:import` (or `npm run phrasebook:import -- <file>`).
+3. Commit, then push (deploy).
+
 ## Security setup
 
 The app shows nothing until someone signs in with Google, and a trip opens
