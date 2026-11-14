@@ -716,7 +716,22 @@
     "personExpenses": "Sus gastos",
     "personNothing": "{name} aún no ha pagado nada.",
     "personCount": "{count, plural, one {# gasto} other {# gastos}}",
-    "seeAll": "Mostrar sus gastos en la lista"
+    "seeAll": "Mostrar sus gastos en la lista",
+    "targetsVsSpent": "Objetivos frente a gastos",
+    "target": "Objetivo",
+    "noTarget": "Sin objetivo",
+    "spentLegend": "Gastado (en rojo si supera su objetivo)",
+    "targetsTotal": "Todos los objetivos",
+    "noTargetsYet": "No hay objetivos ni pagos todavía.",
+    "targetsNoBudget": "No hay un presupuesto total con el que comparar los objetivos.",
+    "targetsAbove": "Los objetivos suman {yen} más que el presupuesto total.",
+    "targetsBelow": "Los objetivos suman {yen} menos que el presupuesto total.",
+    "targetsMatch": "Los objetivos suman lo mismo que el presupuesto total.",
+    "untargeted": "{yen} gastados en categorías sin objetivo.",
+    "perDay": "Gastado cada día del viaje",
+    "noDailySpend": "Aún no se ha pagado nada en un día del viaje.",
+    "perDayHint": "Solo el gasto del día a día: se dejan fuera hoteles, reservas y vuelos.",
+    "perDayOutside": "{yen} del gasto del día a día se pagaron fuera de los días del viaje."
   },
   "dashboard": {
     "title": "Panel",
@@ -1126,7 +1141,8 @@
     },
     "d20261114": {
       "phrasebook": "La guía de frases en japonés está en la app, en Varios junto a los pendientes, y abre sin señal.",
-      "misc": "Los pendientes pasaron a la nueva sección Varios."
+      "misc": "Los pendientes pasaron a la nueva sección Varios.",
+      "budgetCharts": "El Presupuesto muestra el objetivo de cada categoría frente a su gasto, cuánto suman los objetivos junto al presupuesto y lo que costó cada día del viaje por categoría."
     }
   },
   "miscPage": {

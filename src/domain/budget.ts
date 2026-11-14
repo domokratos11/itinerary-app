@@ -348,3 +348,90 @@ export function spendByDay(
     outside: sum(paid.filter((e) => !dates.has(e.date))),
   };
 }
+
+export type TargetsSummary = {
+  // Every category with a target or money paid, in the fixed order.
+  rows: CategoryTotal[];
+  // The category targets added up. They are open-ended: nothing makes them
+  // match the overall budget.
+  targets: number;
+  budget: number | null;
+  spent: number;
+  // Paid in categories that have no target.
+  untargeted: number;
+};
+
+// The category targets next to what was paid and the overall budget.
+export function summarizeTargets(
+  categories: CategoryTotal[],
+  budget: number | null,
+): TargetsSummary {
+  let targets = 0;
+  let spent = 0;
+  let untargeted = 0;
+  for (const row of categories) {
+    targets += row.target ?? 0;
+    spent += row.paid;
+    if (row.target === null) untargeted += row.paid;
+  }
+  return {
+    rows: categories.filter((row) => row.target !== null || row.paid > 0),
+    targets,
+    budget,
+    spent,
+    untargeted,
+  };
+}
+
+// Hotels, reservations and flights: booked once for the whole trip, so they
+// stay out of what each day costs.
+export const BOOKING_CATEGORIES: readonly ExpenseCategory[] = [
+  "flight",
+  "booking",
+];
+
+export const DAILY_CATEGORIES = EXPENSE_CATEGORIES.filter(
+  (c) => !BOOKING_CATEGORIES.includes(c),
+);
+
+export type DayCategorySpend = {
+  date: string;
+  total: number;
+  byCategory: Partial<Record<ExpenseCategory, number>>;
+};
+
+// What was paid each trip day, by category, bookings and flights left out.
+// Categories lists those with money on some day, in the fixed order; outside
+// is day-to-day money paid on a date that isn't a trip day.
+export function dailySpendByCategory(
+  expenses: ExpenseRecord[],
+  days: TripDay[],
+): {
+  days: DayCategorySpend[];
+  categories: ExpenseCategory[];
+  outside: number;
+} {
+  const rows = new Map<string, DayCategorySpend>(
+    days.map((d) => [d.date, { date: d.date, total: 0, byCategory: {} }]),
+  );
+  const used = new Set<ExpenseCategory>();
+  let outside = 0;
+  for (const e of expenses) {
+    if (e.status !== "paid" || BOOKING_CATEGORIES.includes(e.category))
+      continue;
+    const row = rows.get(e.date);
+    if (!row) {
+      outside += e.amountJPY;
+      continue;
+    }
+    row.total += e.amountJPY;
+    row.byCategory[e.category] =
+      (row.byCategory[e.category] ?? 0) + e.amountJPY;
+    if (e.amountJPY > 0) used.add(e.category);
+  }
+  return {
+    days: [...rows.values()],
+    categories: DAILY_CATEGORIES.filter((c) => used.has(c)),
+    outside,
+  };
+}

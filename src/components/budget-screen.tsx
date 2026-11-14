@@ -73,6 +73,7 @@ import {
   MemberTargetRow,
   TargetRow,
 } from "@/components/budget-parts";
+import { DailySpendCard, TargetsVsSpentCard } from "@/components/budget-charts";
 import { PersonPanel } from "@/components/budget-person";
 import { CashSection } from "@/components/cash-section";
 
@@ -242,6 +243,9 @@ function BudgetContent() {
             </ul>
           </CardContent>
         </Card>
+
+        <TargetsVsSpentCard categories={categories} budget={summary.budget} />
+        <DailySpendCard expenses={expenses} />
       </div>
 
       <Card>

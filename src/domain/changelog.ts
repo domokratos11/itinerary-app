@@ -15,7 +15,11 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: null,
     date: "2026-11-14",
-    items: ["changelog.d20261114.phrasebook", "changelog.d20261114.misc"],
+    items: [
+      "changelog.d20261114.phrasebook",
+      "changelog.d20261114.misc",
+      "changelog.d20261114.budgetCharts",
+    ],
   },
   {
     version: "1.0.17",

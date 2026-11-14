@@ -716,7 +716,22 @@
     "personExpenses": "Their expenses",
     "personNothing": "{name} hasn't paid anything yet.",
     "personCount": "{count, plural, one {# expense} other {# expenses}}",
-    "seeAll": "Show their expenses in the list"
+    "seeAll": "Show their expenses in the list",
+    "targetsVsSpent": "Targets against spending",
+    "target": "Target",
+    "noTarget": "No target",
+    "spentLegend": "Spent (red when over its target)",
+    "targetsTotal": "All targets",
+    "noTargetsYet": "No targets set and nothing paid yet.",
+    "targetsNoBudget": "No overall budget is set to compare the targets with.",
+    "targetsAbove": "The targets add up to {yen} more than the overall budget.",
+    "targetsBelow": "The targets add up to {yen} less than the overall budget.",
+    "targetsMatch": "The targets add up to the overall budget.",
+    "untargeted": "{yen} spent in categories without a target.",
+    "perDay": "Spent each trip day",
+    "noDailySpend": "Nothing paid on a trip day yet.",
+    "perDayHint": "Day-to-day spending only: hotels, reservations and flights are left out.",
+    "perDayOutside": "{yen} of day-to-day spending was paid outside the trip's days."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1126,7 +1141,8 @@
     },
     "d20261114": {
       "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos, and opens without signal.",
-      "misc": "To-dos moved to the new Miscellaneous section."
+      "misc": "To-dos moved to the new Miscellaneous section.",
+      "budgetCharts": "The Budget shows each category's target against its spending, how the targets add up next to the budget, and what each trip day cost by category."
     }
   },
   "miscPage": {

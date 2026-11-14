@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   categoryForPlace,
   categoryForReservation,
+  DAILY_CATEGORIES,
+  dailySpendByCategory,
   daysRemaining,
   estimateStops,
   filterExpenses,
@@ -11,6 +13,7 @@ import {
   personDetails,
   spendByDay,
   summarizeBudget,
+  summarizeTargets,
   totalsByCategory,
   totalsByMember,
   totalsByPayer,
@@ -321,5 +324,111 @@ describe("days", () => {
 describe("formatYen", () => {
   it("groups thousands", () => {
     expect(formatYen(1234567)).toBe("¥1,234,567");
+  });
+});
+
+describe("summarizeTargets", () => {
+  const categories = totalsByCategory(
+    [
+      expense({ amountJPY: 3000 }),
+      expense({ id: "e2", amountJPY: 5000, category: "souvenirs" }),
+      expense({ id: "e3", amountJPY: 700, status: "planned" }),
+    ],
+    {
+      totalJPY: 100000,
+      byCategory: { food: 2000, transport: 40000, temples: 0 },
+      travellers: null,
+      byMember: {},
+    },
+  );
+
+  it("adds up the targets apart from the overall budget", () => {
+    const result = summarizeTargets(categories, 100000);
+    expect(result.targets).toBe(42000);
+    expect(result.budget).toBe(100000);
+    expect(result.spent).toBe(8000);
+  });
+
+  it("keeps a category without a target when it has spending", () => {
+    const result = summarizeTargets(categories, null);
+    expect(result.rows.map((r) => r.category)).toEqual([
+      "transport",
+      "food",
+      "souvenirs",
+      "temples",
+    ]);
+    expect(result.untargeted).toBe(5000);
+    expect(result.budget).toBeNull();
+  });
+
+  it("lists nothing with no targets and nothing paid", () => {
+    const result = summarizeTargets(totalsByCategory([], null), null);
+    expect(result).toEqual({
+      rows: [],
+      targets: 0,
+      budget: null,
+      spent: 0,
+      untargeted: 0,
+    });
+  });
+});
+
+describe("dailySpendByCategory", () => {
+  const days = [day("2026-12-15"), day("2026-12-16")];
+
+  it("stacks each trip day's paid money by category", () => {
+    const result = dailySpendByCategory(
+      [
+        expense({ amountJPY: 1000, date: "2026-12-15" }),
+        expense({ id: "e2", amountJPY: 500, date: "2026-12-15" }),
+        expense({
+          id: "e3",
+          amountJPY: 2000,
+          category: "transport",
+          date: "2026-12-16",
+        }),
+        expense({ id: "e4", amountJPY: 900, status: "planned" }),
+      ],
+      days,
+    );
+    expect(result.days).toEqual([
+      { date: "2026-12-15", total: 1500, byCategory: { food: 1500 } },
+      { date: "2026-12-16", total: 2000, byCategory: { transport: 2000 } },
+    ]);
+    expect(result.categories).toEqual(["transport", "food"]);
+  });
+
+  it("leaves out flights and bookings", () => {
+    const result = dailySpendByCategory(
+      [
+        expense({ amountJPY: 90000, category: "flight" }),
+        expense({ id: "e2", amountJPY: 40000, category: "booking" }),
+        expense({
+          id: "e3",
+          amountJPY: 80000,
+          category: "booking",
+          date: "2026-10-01",
+        }),
+      ],
+      days,
+    );
+    expect(result.days.every((d) => d.total === 0)).toBe(true);
+    expect(result.categories).toEqual([]);
+    expect(result.outside).toBe(0);
+  });
+
+  it("keeps day-to-day money paid outside the trip apart", () => {
+    const result = dailySpendByCategory(
+      [expense({ amountJPY: 3000, category: "transport", date: "2026-11-20" })],
+      days,
+    );
+    expect(result.outside).toBe(3000);
+    expect(result.categories).toEqual([]);
+  });
+
+  it("never counts flights or bookings as daily categories", () => {
+    expect(DAILY_CATEGORIES).not.toContain("flight");
+    expect(DAILY_CATEGORIES).not.toContain("booking");
+    expect(DAILY_CATEGORIES).toContain("transport");
   });
 });
