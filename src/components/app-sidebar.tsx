@@ -24,7 +24,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BASE_PATH } from "@/lib/base-path";
 import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
 import { dayHref, pageHref } from "@/lib/links";
@@ -183,20 +182,6 @@ function MiscSubMenu() {
     <SidebarMenuSub>
       {items.map((item) => {
         const Icon = item.icon;
-        const content = (
-          <>
-            <Icon />
-            <span>{t(item.label)}</span>
-          </>
-        );
-        if ("staticPath" in item)
-          return (
-            <SidebarMenuSubItem key={item.key}>
-              <SidebarMenuSubButton href={`${BASE_PATH}${item.staticPath}`}>
-                {content}
-              </SidebarMenuSubButton>
-            </SidebarMenuSubItem>
-          );
         const active = path === item.path || `${path}/` === item.path;
         return (
           <SidebarMenuSubItem key={item.key}>
@@ -205,7 +190,8 @@ function MiscSubMenu() {
                 href={pageHref(item.path, tripId)}
                 aria-current={active ? "page" : undefined}
               >
-                {content}
+                <Icon />
+                <span>{t(item.label)}</span>
               </Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>

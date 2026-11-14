@@ -167,7 +167,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `scripts/` | Node scripts for data, research and Maps work. Run with `tsx`. |
 | `tests/rules/` | Firestore security rules tests (emulator). |
 | `docs/` | Operational docs: Maps setup and plan, research run guide, and this guide. |
-| `public/` | Static files copied as-is: icons, `.nojekyll` (so GitHub Pages serves `_next/`), Google Maps logo, and `phrasebook/` (the generated Japanese phrasebook page, §17.4). |
+| `public/` | Static files copied as-is: icons, `.nojekyll` (so GitHub Pages serves `_next/`), Google Maps logo, and `phrasebook-guide/` (the generated Japanese phrasebook guide, §17.4; Prettier and ESLint ignore it). |
 | `.github/workflows/deploy.yml` | Build and deploy to GitHub Pages on each push to `main`. |
 | `firebase.json` | Firestore rules file and emulator ports (Firestore on 8181, UI off, single project mode). |
 | `firestore.rules` | The security rules. Pasted into the Firebase console by hand; the deploy does not publish them. |
@@ -197,6 +197,7 @@ Read-only links are the one place the browser reads without sign-in. The viewer 
 | `budget/page.tsx` | `/budget/`: spending and budget. |
 | `todos/page.tsx` | `/todos/`: shared to-do lists. `?list=<id>` opens one list. Server Component shell around `TodosScreen`. |
 | `misc/page.tsx` | `/misc/`: the Miscellaneous hub, one card per entry (To-dos, Phrasebook, §12.10). Server Component shell around `MiscScreen`. |
+| `phrasebook/page.tsx` | `/phrasebook/`: the Japanese phrasebook inside the app shell. Server Component shell around `PhrasebookScreen` (§12.10, §17.4). |
 | `settings/page.tsx` | `/settings/`: trip administration. |
 | `not-found.tsx` | 404 page. Also `404.html` on Pages, where old day and city links are redirected (`old-link-redirect.tsx`). |
 | `manifest.ts` | `manifest.webmanifest` (installable app). |
@@ -214,8 +215,8 @@ Shared chrome and gates:
 
 | File | Role |
 |---|---|
-| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. |
-| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections; Miscellaneous at `/misc/` in place of To-dos), `MISC_ITEMS` and `useMiscItems()` (the Miscellaneous entries: To-dos at `/todos/`, a plain link to Phrasebook at `/phrasebook/` under `BASE_PATH`, §12.10) and `useSections()`, which gives viewers only Dashboard, Days, Cities and Miscellaneous (Miscellaneous shows only Phrasebook). |
+| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. The offline screen has a button to the static phrasebook (`gate.offlinePhrasebook`, linking to `/phrasebook-guide/`), so the phrasebook opens even when the app cannot. |
+| `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections; Miscellaneous at `/misc/` in place of To-dos), `MISC_ITEMS` and `useMiscItems()` (the Miscellaneous entries: To-dos at `/todos/`, both are ordinary Next links, each with a `path`: To-dos at `/todos/` and Phrasebook at `/phrasebook/`, §12.10) and `useSections()`, which gives viewers only Dashboard, Days, Cities and Miscellaneous (Miscellaneous shows only Phrasebook). |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. The Miscellaneous item opens `MiscSubMenu` (shadcn `SidebarMenuSub`) with both entries; it is hidden when the sidebar is collapsed to icons. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
 | `version-gate.tsx` | Runs first: sets the language, clears storage from an older version, checks for a newer deploy. |
@@ -272,6 +273,7 @@ Screens (one per page):
 | `todos-screen.tsx` | `/todos/` | `TodosScreen`: the list column (wide) or list Select (phone), the to-do rows, filters, sort and list progress (§12.9). |
 | `todo-forms.tsx` | `/todos/` | `ListForm` and `TodoForm`, both shown in `EditPanel`. |
 | `misc-screen.tsx` | `/misc/` | `MiscScreen`: one card per Miscellaneous entry (§12.10). |
+| `phrasebook-screen.tsx` | `/phrasebook/` | `PhrasebookScreen`: the static guide in an iframe (`title` from `phrasebook.frameTitle`) between the header and the phone tab bar, sized with `h-[calc(100svh-3.5rem-4rem-env(safe-area-inset-bottom))]` on phones and `md:h-[calc(100svh-3.5rem)]` from `md`. Tests in `phrasebook-screen.test.tsx` (§12.10). |
 
 Plan and place editing:
 
@@ -423,6 +425,7 @@ Maps and place helpers:
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` (from `NEXT_PUBLIC_BASE_PATH`) for URLs the browser fetches directly. `SITE_BASE_PATH` (`/itinerary-app`) is the same path as a constant, read by `next.config.ts` and the phrasebook import (§4.1). |
+| `phrasebook.ts` | `PHRASEBOOK_GUIDE_PATH`: the URL of the generated static guide (`/phrasebook-guide/`, under the base path). Shared by `PhrasebookScreen`, the offline screen's button and the import script (§17.4). |
 | `theme-color.ts` | `THEME_COLOR` (Sen: `light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme, palette)`, which picks the page background for the family and mode and sets `<meta name="theme-color">` so the browser bar follows the choice. Tests in `theme-color.test.ts`. |
 | `palette.ts` | Colour families: `PALETTES` (`sen`, `ink`, `pine`, `plum`), `getPalette`, `setPalette`, `applyPalette` and `usePalette` (a small Zustand store). Saved per device under localStorage key `palette`. Sen sets no attribute; the others set `data-palette` on `<html>`. Tests in `palette.test.ts`. |
 | `css-color.ts` | `resolveCssColor(value)` follows a `var(--x)` token (up to five hops) to the colour the page shows now; `resolvePinColors(pins)` does it for every pin. Google Maps draws pins itself and cannot read CSS variables, so this runs at draw time. Tests in `css-color.test.ts`. |
@@ -519,7 +522,8 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 | `/itinerary-app/budget/` | `app/budget/page.tsx` | `?trip=` | Budget |
 | `/itinerary-app/todos/` | `app/todos/page.tsx` | `?trip=`, optional `?list=<id>` | To-do lists (opens the named list) |
 | `/itinerary-app/misc/` | `app/misc/page.tsx` | `?trip=` | Miscellaneous: To-dos and Phrasebook (§12.10) |
-| `/itinerary-app/phrasebook/` | `public/phrasebook/index.html` (static, not a Next route) | — | Japanese phrasebook. Outside sign-in and holds no trip data (§17.4) |
+| `/itinerary-app/phrasebook/` | `app/phrasebook/page.tsx` | `?trip=` | Japanese phrasebook, shown in an iframe inside the app shell (§12.10). Behind sign-in like every app page |
+| `/itinerary-app/phrasebook-guide/` | `public/phrasebook-guide/index.html` (static, not a Next route) | — | The guide itself. Outside sign-in and holds no trip data (§17.4) |
 | `/itinerary-app/settings/` | `app/settings/page.tsx` | `?trip=`, optional `?tab=<section>` | Settings (opens the named tab, default Stays) |
 | `/itinerary-app/404.html` | `app/not-found.tsx` | any | Not found; redirects old links |
 | `/itinerary-app/manifest.webmanifest` | `app/manifest.ts` | — | Install metadata |
@@ -984,9 +988,9 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 
 `misc-screen.tsx` on the route `src/app/misc/page.tsx`. It shows one card per entry in `MISC_ITEMS` (`app-header.tsx`).
 
-- **Section:** "Miscellaneous" (LayoutGrid icon, `nav.misc`) replaces To-dos in `SECTIONS`. It is highlighted on `/misc/` and on `/todos/`.
+- **Section:** "Miscellaneous" (LayoutGrid icon, `nav.misc`) replaces To-dos in `SECTIONS`. It is highlighted on `/misc/`, `/todos/` and `/phrasebook/`.
 - **To-dos** (`/todos/`): the shared to-do lists (§12.9). A Next link.
-- **Phrasebook** (`/phrasebook/`): a static page, not a Next route, so it is a plain `<a href>` under `BASE_PATH`. It is generated and works outside sign-in (§17.4).
+- **Phrasebook** (`/phrasebook/`): a Next route (`app/phrasebook/page.tsx`) that renders `PhrasebookScreen` inside the app shell (header, sidebar, tab bar). The guide is a generated static page at `/phrasebook-guide/` (§17.4), shown in an iframe that fills the height between the header and the phone tab bar. Both entries are reached with next/link, since `MISC_ITEMS` gives each one a `path`. The static guide itself works outside sign-in (§17.4).
 - **Viewers:** read-only links keep Miscellaneous but see only the Phrasebook (§12.8).
 - **Desktop:** the sidebar's Miscellaneous item opens both entries as a sub-menu (`MiscSubMenu`, §3.3).
 
@@ -1194,7 +1198,7 @@ Run this by hand on both phones before the trip:
 
 - **Firestore persistent cache** (`persistentLocalCache` with `persistentMultipleTabManager`): the trip is readable offline once it has been loaded. Writes made offline are queued and sent when the connection returns.
 - **Listeners** keep working offline from the cache. A missing trip document from the cache does not count as "missing"; the app waits for the server (`metadata.fromCache`).
-- **Offline screens:** while signed in but with no answer and no connection, `AppGate` shows "offline" rather than a spinner.
+- **Offline screens:** while signed in but with no answer and no connection, `AppGate` shows "offline" rather than a spinner. That screen has a button to the static phrasebook (`/phrasebook-guide/`, §17.4), which opens without a connection.
 - **Banner:** `OfflineBanner` shows when offline (`useOnline`) and appends the number of writes waiting, if any.
 - **Sync indicator:** `SyncStatus` in the header shows whether this session's edits have reached the server. It reads `useSyncStore.pending`, so an edit made offline reads "waiting" with a count and returns to "saved" once the connection comes back and the server confirms. `startup` covers edits queued before a reload: `MemberSync` calls `watchStartupWrites()` once the member's trip is live, which waits for those writes with `waitForPendingWrites`, and the status reads "saving" until they are sent. Read-only share links do not show it.
 - **Persistent storage:** the browser may clear a site's storage under space pressure, or (Safari) after a while without a visit. Once a member's trip is live, `MemberSync` calls `requestPersistentStorage()` (`src/lib/storage-persist.ts`), which asks the browser to keep the copy (`navigator.storage.persist()`), only when it is not already kept. Chrome usually agrees by site engagement, Safari for home-screen apps. Settings → About shows whether the copy is kept and lets the member ask again (§12.6).
@@ -1206,7 +1210,7 @@ Run this by hand on both phones before the trip:
 - Precaches `**/*.{html,js,css,json,png,svg,ico,webmanifest,txt,woff2}` in `out/`. Excludes `version.json`.
 - `ignoreURLParametersMatching: [/.*/]`: query strings (`?trip=`, `?date=`) are ignored, so each page matches its one precached file.
 - The recharts chunk is precached even though charts load on first use, so the charts still open offline (§2.2).
-- `maximumFileSizeToCacheInBytes` is 5 MiB in `workbox-config.cjs`, so the phrasebook page (about 1.1 MB, and growing, §17.4) is precached too.
+- `maximumFileSizeToCacheInBytes` is 5 MiB in `workbox-config.cjs`, so the phrasebook guide page (about 1.1 MB, and growing, §17.4) is precached too.
 - `skipWaiting` and `clientsClaim`: a new worker takes over at once. `cleanupOutdatedCaches` removes old files.
 - Registered only in production (`service-worker-register.tsx`), at `${BASE_PATH}/sw.js`.
 - The `.txt` files (Next's route data) are cached so a page and its data come from the same build.
@@ -1218,9 +1222,11 @@ Run this by hand on both phones before the trip:
 
 ### 17.4 Phrasebook (static page)
 
-- `/phrasebook/` is the file `public/phrasebook/index.html`, not a Next route. `scripts/phrasebook-import.ts` (`npm run phrasebook:import [-- <file>]`, default input `../phrasebook-src/japanese_guide.html`, outside the repo) generates it (§21). The build does not run the script.
-- The script injects blocks marked `<!-- trip-planner:start/end -->`: the manifest link, theme-colour metas, a "← Trip Planner" link back to the app root, the app's CSS and the service worker registration. It is idempotent and fails if an anchor is missing.
-- It sits outside `AppGate`, so it needs no sign-in, and holds no trip data. Prettier and ESLint ignore it.
+- The guide is the file `public/phrasebook-guide/index.html`, served at `/phrasebook-guide/`. The path is the constant `PHRASEBOOK_GUIDE_PATH` in `src/lib/phrasebook.ts`. `scripts/phrasebook-import.ts` (`npm run phrasebook:import [-- <file>]`, default input `../phrasebook-src/japanese_guide.html`, outside the repo) generates it (§21). The build does not run the script.
+- `/phrasebook/` is a Next route, not the guide itself: `src/app/phrasebook/page.tsx` renders the client component `src/components/phrasebook-screen.tsx`, which shows the guide in an iframe inside the app shell (header, sidebar, tab bar). Being inside the app, it sits behind `AppGate` like every other page (§12.10).
+- The script injects blocks marked `<!-- trip-planner:start/end -->`: the manifest link, theme-colour metas, the app's CSS, the service worker registration and `THEME_SYNC`, a script in the guide's head. It is idempotent and fails if an anchor is missing.
+- `THEME_SYNC` does two things. Alone, it applies only the saved `theme` from localStorage. When the guide is framed by the app, it adds the `in-app` class, sets `data-theme` from the app's `dark` class, and copies the app's tokens onto the guide's variables (`--background`→`--bg`, `--card`→`--surface`, `--foreground`→`--ink`, `--muted-foreground`→`--muted`, `--border`→`--line`, `--muted`→`--chip`, `--primary`→`--accent`, `--font-display`→`--app-display`). It also copies the body font and the app's `@font-face` rules, and follows later changes with a MutationObserver on the app's `<html>`. When framed, the guide's "← Trip Planner" link is hidden.
+- The static guide holds no trip data and needs no sign-in on its own, so it opens from the offline screen too (§7, §16). Prettier and ESLint ignore `public/phrasebook-guide/`.
 - It is precached with the rest of the app, so it works offline (§17.2).
 
 ---
@@ -1339,7 +1345,7 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `maps:check` | `scripts/maps-check.ts` | Checks Google keys and test train routes; `-- --embed` serves the Maps Embed test | No |
 | `maps:match` | `scripts/maps-match.ts` | Saves place IDs and coordinates; reports doubtful matches | Yes |
 | `maps:refresh` | `scripts/maps-refresh.ts` | Renews coordinates before 30 days; `--all` refreshes all | Yes |
-| `phrasebook:import` | `scripts/phrasebook-import.ts` | Generates `public/phrasebook/index.html` from the source page (`-- <file>` to choose another; default `../phrasebook-src/japanese_guide.html`). Injects the marked blocks (§17.4); idempotent | No |
+| `phrasebook:import` | `scripts/phrasebook-import.ts` | Generates `public/phrasebook-guide/index.html` from the source page (`-- <file>` to choose another; default `../phrasebook-src/japanese_guide.html`). Injects the marked blocks (§17.4); idempotent | No |
 
 Shared helpers:
 

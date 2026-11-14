@@ -20,6 +20,7 @@ import { APP_VERSION } from "@/lib/app-reset";
 import { signInWithGoogle, signOut } from "@/lib/auth";
 import { useAuthStore } from "@/lib/auth-store";
 import { BASE_PATH } from "@/lib/base-path";
+import { PHRASEBOOK_GUIDE_PATH } from "@/lib/phrasebook";
 import { usePlanStore } from "@/lib/plan-store";
 import { openMyTrips, openTrip } from "@/lib/trip-id";
 import { useTripStore } from "@/lib/trip-store";
@@ -153,10 +154,17 @@ function ShareClosed() {
   );
 }
 
+// The phrasebook's static copy needs no sign-in or trip, so it still opens
+// from the precache here (a plain link: it isn't a Next route).
 function OfflineScreen() {
   return (
     <Screen title={t("gate.offlineTitle")}>
       <p>{t("gate.offlineBody")}</p>
+      <Button asChild variant="outline">
+        <a href={`${BASE_PATH}${PHRASEBOOK_GUIDE_PATH}`}>
+          {t("gate.offlinePhrasebook")}
+        </a>
+      </Button>
     </Screen>
   );
 }

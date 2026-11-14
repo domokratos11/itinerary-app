@@ -12,16 +12,15 @@ vi.mock("next/navigation", () => ({
 afterEach(() => useViewerStore.setState({ status: "off", share: null }));
 
 describe("MiscScreen", () => {
-  it("links the to-dos in the app and the phrasebook as a static page", () => {
+  it("links the to-dos and the phrasebook as pages of the app", () => {
     render(<MiscScreen />);
     expect(screen.getByRole("link", { name: /To-dos/ })).toHaveAttribute(
       "href",
       expect.stringMatching(/^\/todos\/?$/),
     );
-    // A plain link with no trip: the page isn't a Next route.
     expect(screen.getByRole("link", { name: /Phrasebook/ })).toHaveAttribute(
       "href",
-      "/phrasebook/",
+      expect.stringMatching(/^\/phrasebook\/?$/),
     );
   });
 

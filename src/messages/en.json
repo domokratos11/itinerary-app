@@ -128,7 +128,8 @@
     "noTripsTitle": "No trips yet",
     "noTripsBody": "{email} isn't on any trip's member list. Ask someone on a trip to add your email, or use another account.",
     "newTrip": "New trip",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "offlinePhrasebook": "Open the Japanese phrasebook"
   },
   "auth": {
     "popupBlocked": "The browser blocked the sign-in window. Allow pop-ups for this site and try again.",
@@ -1140,12 +1141,15 @@
       "changelog": "Tap the version to see what's new."
     },
     "d20261114": {
-      "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos, and opens without signal.",
+      "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos. It uses the app colours and light or dark theme, and opens without signal.",
       "misc": "To-dos moved to the new Miscellaneous section.",
       "budgetCharts": "The Budget shows each category's target against its spending, how the targets add up next to the budget, and what each trip day cost by category."
     }
   },
   "miscPage": {
     "title": "Miscellaneous"
+  },
+  "phrasebook": {
+    "frameTitle": "Japanese phrasebook"
   }
 }

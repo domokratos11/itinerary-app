@@ -1,12 +1,14 @@
 /**
  * Copies the Japanese phrasebook (one self-contained HTML file made elsewhere)
- * into public/phrasebook/index.html, so it is served at /phrasebook/ and
- * precached by the service worker for offline use. Run
+ * into public/phrasebook-guide/index.html, precached by the service worker for
+ * offline use. The app shows it at /phrasebook/ inside its own frame (an
+ * iframe), and it also opens on its own as a fallback. Run
  * `npm run phrasebook:import`, or `npm run phrasebook:import -- <file>` for
  * a file somewhere other than ../phrasebook-src/japanese_guide.html.
  *
- * It adds a few marked blocks (a link back to the app, the manifest, the
- * theme colour and the service worker) and leaves every other byte alone.
+ * It adds a few marked blocks (the app's look, a link back to the app, the
+ * manifest, the theme colour and the service worker) and leaves every other
+ * byte alone.
  * Running it again, even on its own output, gives the same file.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -14,6 +16,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { SITE_BASE_PATH } from "../src/lib/base-path";
+import { PHRASEBOOK_GUIDE_PATH } from "../src/lib/phrasebook";
 import { THEME_COLOR } from "../src/lib/theme-color";
 
 // Every block is wrapped in markers so a later import can find and replace
@@ -25,6 +28,34 @@ const MARKERS = {
 } as const;
 const BLOCK =
   /(?:<!-- trip-planner:start -->[\s\S]*?<!-- trip-planner:end -->|\/\* trip-planner:start \*\/[\s\S]*?\/\* trip-planner:end \*\/)/g;
+
+// Gives the guide the app's look. Inside the app's frame it copies the app's
+// colours (its palette, light or dark), its fonts and their @font-face rules
+// from the page around it, and follows them when they change. On its own it
+// only takes the light or dark choice saved by the app. The guide's own
+// colours for "they say" and "you say" stay, switched by data-theme.
+export const THEME_SYNC = `(function(){
+var root=document.documentElement,host=null,win=null;
+try{if(window.top!==window.self){win=window.parent;host=win.document.documentElement;root.classList.add('in-app');}}catch(e){host=null;}
+var VARS={'--bg':'--background','--surface':'--card','--ink':'--foreground','--muted':'--muted-foreground','--line':'--border','--chip':'--muted','--accent':'--primary','--app-display':'--font-display'};
+function own(){var t=null;try{t=localStorage.getItem('theme');}catch(e){}if(t==='light'||t==='dark')root.setAttribute('data-theme',t);}
+function sync(){
+if(!host){own();return;}
+root.setAttribute('data-theme',host.classList.contains('dark')?'dark':'light');
+var cs=win.getComputedStyle(host);
+for(var k in VARS){var v=cs.getPropertyValue(VARS[k]).trim();if(v)root.style.setProperty(k,v);}
+var f=win.getComputedStyle(win.document.body).fontFamily;if(f)root.style.setProperty('--font-body',f);
+}
+function fonts(){
+if(!host)return;
+var css='',sheets=win.document.styleSheets;
+for(var i=0;i<sheets.length;i++){var r;try{r=sheets[i].cssRules;}catch(e){continue;}for(var j=0;j<r.length;j++)if(r[j].type===5)css+=r[j].cssText+'\\n';}
+if(css){var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);}
+}
+sync();fonts();
+if(host&&window.MutationObserver)new MutationObserver(sync).observe(host,{attributes:true,attributeFilter:['class','data-palette','style']});
+window.addEventListener('storage',function(e){if(!host&&e.key==='theme')own();});
+})();`;
 
 // Where each block goes. Each anchor must appear exactly once: if the guide's
 // template changes, the import stops rather than guessing.
@@ -43,7 +74,8 @@ const INJECTIONS: {
       `\n<link rel="manifest" href="${SITE_BASE_PATH}/manifest.webmanifest">` +
       `\n<meta name="theme-color" media="(prefers-color-scheme: light)" content="${THEME_COLOR.light}">` +
       `\n<meta name="theme-color" media="(prefers-color-scheme: dark)" content="${THEME_COLOR.dark}">` +
-      `\n<meta name="apple-mobile-web-app-capable" content="yes">\n`,
+      `\n<meta name="apple-mobile-web-app-capable" content="yes">` +
+      `\n<script>${THEME_SYNC}</script>\n`,
   },
   {
     name: "</style>",
@@ -53,7 +85,10 @@ const INJECTIONS: {
     content:
       "\n.trip-home{display:inline-flex;align-self:flex-start;align-items:center;min-height:44px;padding:0 4px;" +
       "color:var(--muted);font-size:14px;font-weight:600;text-decoration:none}" +
-      "\n.trip-home:hover,.trip-home:focus-visible{color:var(--ink)}\n",
+      "\n.trip-home:hover,.trip-home:focus-visible{color:var(--ink)}" +
+      // Inside the app, its own header and tab bar lead back.
+      "\nhtml.in-app .trip-home{display:none}" +
+      "\nhtml.in-app .title b{font-family:var(--app-display),var(--font-body)}\n",
   },
   {
     name: '<div class="top-in">',
@@ -99,7 +134,7 @@ export const DEFAULT_SOURCE = path.resolve(
   "phrasebook-src",
   "japanese_guide.html",
 );
-const OUTPUT = path.join(ROOT, "public", "phrasebook", "index.html");
+const OUTPUT = path.join(ROOT, "public", PHRASEBOOK_GUIDE_PATH, "index.html");
 
 function main() {
   const source = path.resolve(process.argv[2] ?? DEFAULT_SOURCE);

@@ -128,7 +128,8 @@
     "noTripsTitle": "Aún no hay viajes",
     "noTripsBody": "{email} no está en la lista de miembros de ningún viaje. Pide a alguien de un viaje que agregue tu correo, o usa otra cuenta.",
     "newTrip": "Nuevo viaje",
-    "tryAgain": "Intentar de nuevo"
+    "tryAgain": "Intentar de nuevo",
+    "offlinePhrasebook": "Abrir la guía de frases en japonés"
   },
   "auth": {
     "popupBlocked": "El navegador bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.",
@@ -1140,12 +1141,15 @@
       "changelog": "Toca la versión para ver las novedades."
     },
     "d20261114": {
-      "phrasebook": "La guía de frases en japonés está en la app, en Varios junto a los pendientes, y abre sin señal.",
+      "phrasebook": "La guía de frases en japonés está en la app, en Varios junto a los pendientes. Usa los colores y el tema claro u oscuro de la app, y abre sin señal.",
       "misc": "Los pendientes pasaron a la nueva sección Varios.",
       "budgetCharts": "El Presupuesto muestra el objetivo de cada categoría frente a su gasto, cuánto suman los objetivos junto al presupuesto y lo que costó cada día del viaje por categoría."
     }
   },
   "miscPage": {
     "title": "Varios"
+  },
+  "phrasebook": {
+    "frameTitle": "Guía de frases en japonés"
   }
 }

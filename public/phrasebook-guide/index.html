@@ -7,6 +7,28 @@
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f6fa">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1220">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script>(function(){
+var root=document.documentElement,host=null,win=null;
+try{if(window.top!==window.self){win=window.parent;host=win.document.documentElement;root.classList.add('in-app');}}catch(e){host=null;}
+var VARS={'--bg':'--background','--surface':'--card','--ink':'--foreground','--muted':'--muted-foreground','--line':'--border','--chip':'--muted','--accent':'--primary','--app-display':'--font-display'};
+function own(){var t=null;try{t=localStorage.getItem('theme');}catch(e){}if(t==='light'||t==='dark')root.setAttribute('data-theme',t);}
+function sync(){
+if(!host){own();return;}
+root.setAttribute('data-theme',host.classList.contains('dark')?'dark':'light');
+var cs=win.getComputedStyle(host);
+for(var k in VARS){var v=cs.getPropertyValue(VARS[k]).trim();if(v)root.style.setProperty(k,v);}
+var f=win.getComputedStyle(win.document.body).fontFamily;if(f)root.style.setProperty('--font-body',f);
+}
+function fonts(){
+if(!host)return;
+var css='',sheets=win.document.styleSheets;
+for(var i=0;i<sheets.length;i++){var r;try{r=sheets[i].cssRules;}catch(e){continue;}for(var j=0;j<r.length;j++)if(r[j].type===5)css+=r[j].cssText+'\n';}
+if(css){var st=document.createElement('style');st.textContent=css;document.head.appendChild(st);}
+}
+sync();fonts();
+if(host&&window.MutationObserver)new MutationObserver(sync).observe(host,{attributes:true,attributeFilter:['class','data-palette','style']});
+window.addEventListener('storage',function(e){if(!host&&e.key==='theme')own();});
+})();</script>
 <!-- trip-planner:end -->
 <title>Japanese Trip Phrasebook</title>
 <style>
@@ -138,6 +160,8 @@ h3.vt{font-size:15px;margin:16px 0 6px}
 /* trip-planner:start */
 .trip-home{display:inline-flex;align-self:flex-start;align-items:center;min-height:44px;padding:0 4px;color:var(--muted);font-size:14px;font-weight:600;text-decoration:none}
 .trip-home:hover,.trip-home:focus-visible{color:var(--ink)}
+html.in-app .trip-home{display:none}
+html.in-app .title b{font-family:var(--app-display),var(--font-body)}
 /* trip-planner:end */</style>
 </head>
 <body>

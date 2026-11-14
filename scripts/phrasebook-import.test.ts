@@ -6,6 +6,7 @@ import {
   DEFAULT_SOURCE,
   importPhrasebook,
   stripPhrasebook,
+  THEME_SYNC,
 } from "./phrasebook-import";
 
 // The parts of the guide's template the import relies on.
@@ -103,4 +104,52 @@ describe("importPhrasebook", () => {
       expect(importPhrasebook(html)).toBe(html);
     },
   );
+});
+
+describe("THEME_SYNC", () => {
+  // Runs the injected script in a page framed by an "app" page.
+  function framedGuide(appClass: string) {
+    const app = document.implementation.createHTMLDocument("app");
+    app.documentElement.className = appClass;
+    app.documentElement.style.setProperty("--background", "#101010");
+    app.documentElement.style.setProperty("--primary", "#abcdef");
+    const parent = {
+      document: app,
+      getComputedStyle: (el: Element) => getComputedStyle(el),
+    };
+    const root = document.documentElement;
+    root.removeAttribute("data-theme");
+    root.className = "";
+    root.removeAttribute("style");
+    const run = new Function("window", "document", "localStorage", THEME_SYNC);
+    run(
+      { top: {}, self: {}, parent, MutationObserver, addEventListener() {} },
+      document,
+      localStorage,
+    );
+    return root;
+  }
+
+  it("copies the app's colours and light or dark when framed", () => {
+    const root = framedGuide("dark");
+    expect(root).toHaveClass("in-app");
+    expect(root.dataset.theme).toBe("dark");
+    expect(root.style.getPropertyValue("--bg")).toBe("#101010");
+    expect(root.style.getPropertyValue("--accent")).toBe("#abcdef");
+  });
+
+  it("is valid script once injected", () => {
+    const html = importPhrasebook(GUIDE);
+    const script = html.match(
+      /<script>(\(function\(\)\{[\s\S]*?\}\)\(\);)<\/script>/,
+    );
+    expect(script?.[1]).toBe(THEME_SYNC);
+    expect(() => new Function(THEME_SYNC)).not.toThrow();
+  });
+
+  it("hides its own link home inside the app", () => {
+    expect(importPhrasebook(GUIDE)).toContain(
+      "html.in-app .trip-home{display:none}",
+    );
+  });
 });

@@ -46,10 +46,9 @@ describe("AppSidebar Miscellaneous", () => {
       "href",
       expect.stringMatching(/^\/todos\/?$/),
     );
-    // A plain link to the static page, not a Next route.
     expect(getByRole("link", { name: "Phrasebook" })).toHaveAttribute(
       "href",
-      "/phrasebook/",
+      expect.stringMatching(/^\/phrasebook\/?$/),
     );
   });
 });

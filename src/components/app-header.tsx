@@ -65,7 +65,7 @@ export const SECTIONS = [
     label: "nav.misc",
     hint: "nav.hintMisc",
     icon: LayoutGrid,
-    match: ["/misc/", "/todos/"],
+    match: ["/misc/", "/todos/", "/phrasebook/"],
   },
   {
     path: "/settings/",
@@ -86,10 +86,7 @@ export function useSections(): readonly (typeof SECTIONS)[number][] {
   return useReadOnly() ? VIEWER_SECTIONS : SECTIONS;
 }
 
-// The entries under Miscellaneous. The phrasebook is a static page copied in
-// by scripts/phrasebook-import.ts, not a Next route, so it is opened with a
-// plain link (`staticPath`, under BASE_PATH): client-side navigation to it
-// would 404.
+// The entries under Miscellaneous, each a page of the app.
 export const MISC_ITEMS = [
   {
     key: "todos",
@@ -101,7 +98,7 @@ export const MISC_ITEMS = [
   },
   {
     key: "phrasebook",
-    staticPath: "/phrasebook/",
+    path: "/phrasebook/",
     label: "nav.phrasebook",
     hint: "nav.hintPhrasebook",
     icon: Languages,
