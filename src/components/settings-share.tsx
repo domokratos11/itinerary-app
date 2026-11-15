@@ -39,7 +39,7 @@ import { formatTokyoDateTime } from "@/lib/format-day";
 import { t } from "@/lib/i18n";
 import { usePlanStore } from "@/lib/plan-store";
 import { shareRepository } from "@/lib/share-repository-instance";
-import { useTripStore } from "@/lib/trip-store";
+import { useTripDates, useTripStore } from "@/lib/trip-store";
 import { useShares } from "@/lib/use-shares";
 import { shareUrl } from "@/lib/viewer-store";
 
@@ -76,6 +76,7 @@ function toTokyoInput(date: Date): string {
 export function ShareSettings({ tripId }: { tripId: string }) {
   const shares = useShares(tripId);
   const tripName = useActiveTrip()?.name ?? null;
+  const dates = useTripDates();
   const [editing, setEditing] = useState<{ share: Share | null } | null>(null);
   const [revoking, setRevoking] = useState<Share | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -86,7 +87,13 @@ export function ShareSettings({ tripId }: { tripId: string }) {
     setBusy("new");
     try {
       const share = await shareRepository.create(
-        { tripId, tripName, label, expiresAt: expiresAt.toISOString() },
+        {
+          tripId,
+          tripName,
+          label,
+          expiresAt: expiresAt.toISOString(),
+          dates,
+        },
         currentCopy(),
       );
       logActivity(tripId, {
@@ -115,7 +122,7 @@ export function ShareSettings({ tripId }: { tripId: string }) {
   async function refresh(share: Share) {
     setBusy(share.id);
     try {
-      await shareRepository.publish(share, currentCopy());
+      await shareRepository.publish(share, currentCopy(), dates);
       logActivity(tripId, {
         kind: "settings",
         targetId: null,

@@ -262,7 +262,8 @@
     "waitingNoMatches": "Ningún lugar en espera coincide con estos filtros.",
     "waitingUnpinned": "{count, plural, one {# lugar en espera aún no tiene} other {# lugares en espera aún no tienen}} marcador en el mapa.",
     "hotelOffMap": "{name} no está en el mapa, así que no tiene marcador ni distancia a pie o en tren.",
-    "hotelOffMapFix": "Búscalo en Ajustes"
+    "hotelOffMapFix": "Búscalo en Ajustes",
+    "noHotelYet": "Aún sin hotel"
   },
   "warnings": {
     "closedOnDay": "Cerrado este día",
@@ -364,7 +365,7 @@
   },
   "settings": {
     "title": "Ajustes del viaje",
-    "intro": "Los días se arman a partir de los hospedajes: si cambias las fechas de un hotel, los días cambian también.",
+    "intro": "Los días se arman a partir de las fechas del viaje y los hospedajes: si cambias cualquiera de los dos, los días cambian también.",
     "cantReach": "No se puede acceder al viaje: {error}",
     "tabStays": "Hospedajes",
     "tabCities": "Ciudades",
@@ -521,7 +522,14 @@
     "membersHint": "Cada persona inicia sesión con esta cuenta de Google para ver y editar el viaje.",
     "removeName": "Quitar a {name}",
     "addMember": "Agregar un miembro",
-    "addMemberButton": "Agregar miembro"
+    "addMemberButton": "Agregar miembro",
+    "dates": "Fechas del viaje",
+    "datesHint": "Los días del viaje van de la fecha de inicio a la de fin, más las noches que tus hoteles cubran fuera de ellas.",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de fin",
+    "endBeforeStart": "La fecha de fin no puede ser anterior a la de inicio.",
+    "saveDates": "Guardar fechas",
+    "clearDates": "Borrar fechas"
   },
   "backup": {
     "exportTrip": "Exportar viaje",
@@ -609,7 +617,9 @@
     "refreshedLink": "actualizó el enlace de solo lectura {label}",
     "revokedLink": "cerró el enlace de solo lectura {label}",
     "savedCash": "guardó un movimiento de efectivo de {yen}",
-    "archivedCash": "archivó un movimiento de efectivo de {yen}"
+    "archivedCash": "archivó un movimiento de efectivo de {yen}",
+    "changedTripDates": "puso las fechas del viaje del {from} al {to}",
+    "clearedTripDates": "borró las fechas del viaje"
   },
   "theme": {
     "light": "Claro",
@@ -1141,6 +1151,10 @@
       "colours": "Los colores de gráficos, etiquetas y mapas siguen ahora el tema.",
       "quickAdd": "Toca + entre paradas para añadir al día un lugar cercano.",
       "changelog": "Toca la versión para ver las novedades."
+    },
+    "d20261115": {
+      "tripDates": "Un viaje puede tener sus propias fechas de inicio y fin en Ajustes → Viaje, así tiene días antes de reservar ningún hotel.",
+      "noHotelYet": "Los días que aún no cubre ningún hotel lo indican y aceptan lugares de cualquier ciudad."
     },
     "d20261114": {
       "phrasebook": "La guía de frases en japonés está en la app, en Varios junto a los pendientes. Usa los colores y el tema claro u oscuro de la app, y abre sin señal.",

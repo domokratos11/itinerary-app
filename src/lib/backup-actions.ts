@@ -1,4 +1,4 @@
-import { makeBackup, type Backup } from "@/domain/backup";
+import { backupDates, makeBackup, type Backup } from "@/domain/backup";
 import type { DayResearch, PlanItem, Proposal } from "@/domain/schemas";
 import type { TripData } from "@/domain/trip";
 import type { TripSummary } from "@/domain/trip-repository";
@@ -31,6 +31,8 @@ export async function collectBackup(
       name: trip.name,
       members: trip.members,
       budget: trip.budget ?? null,
+      startDate: trip.startDate ?? null,
+      endDate: trip.endDate ?? null,
     },
     activity,
     queue,
@@ -55,8 +57,15 @@ export async function importBackup(
   await Promise.all(
     backup.dayResearch.map((row) => dayResearchRepository.save(tripId, row)),
   );
-  if (backup.trip?.budget)
-    await tripRepository.updateTrip(tripId, { budget: backup.trip.budget });
+  const budget = backup.trip?.budget ?? null;
+  const dates = backupDates(backup);
+  if (dates)
+    await tripRepository.updateTrip(tripId, {
+      ...(budget && { budget }),
+      startDate: dates.startDate,
+      endDate: dates.endDate,
+    });
+  else if (budget) await tripRepository.updateTrip(tripId, { budget });
   if (backup.activity.length)
     await activityRepository.saveMany(tripId, backup.activity);
   logActivity(tripId, {

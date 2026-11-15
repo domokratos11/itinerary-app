@@ -21,6 +21,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { dayTakesCity } from "@/domain/days";
 import { itemsForDay } from "@/domain/plan";
 import type { Place } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
@@ -50,9 +51,10 @@ export function AddToDay({
   const items = usePlanStore((s) => s.items);
   const tripDays = useTripDays();
   const citiesById = useCitiesById();
-  // Days where this place's city is staying (transfer days included).
+  // Days where this place's city is staying (transfer days included), and
+  // days no hotel covers yet, which take places from any city.
   const days = useMemo(
-    () => tripDays.filter((d) => d.cityIds.includes(place.cityId)),
+    () => tripDays.filter((d) => dayTakesCity(d, place.cityId)),
     [tripDays, place.cityId],
   );
 
@@ -85,6 +87,11 @@ export function AddToDay({
               onSelect={() => pick(day.date)}
             >
               {formatDayLabel(day.date)}
+              {day.cityIds.length === 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {t("day.noHotelYet")}
+                </span>
+              )}
               <span className="ml-auto text-muted-foreground">
                 {t("common.stops", {
                   count: itemsForDay(items, day.date).length,

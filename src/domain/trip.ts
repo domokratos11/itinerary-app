@@ -1,4 +1,4 @@
-import { deriveDays, type TripDay } from "./days";
+import { dayTakesCity, deriveDays, type TripDay } from "./days";
 import type { Translate } from "./i18n";
 import { stayLocation, type Location } from "./plan";
 import type {
@@ -15,6 +15,7 @@ import type {
   StayRecord,
   TodoListRecord,
   TodoRecord,
+  TripDates,
 } from "./schemas";
 
 // The trip's structure: everything except the plan items. Lives in
@@ -120,8 +121,9 @@ export function activeTrip(data: TripData): TripData {
   };
 }
 
-export function tripDays(data: TripData): TripDay[] {
-  return deriveDays(data.stays);
+// The trip's days: its hotels' range joined with its own dates, if it has any.
+export function tripDays(data: TripData, range?: TripDates | null): TripDay[] {
+  return deriveDays(data.stays, range);
 }
 
 export type Endpoint = { name: string; location: Location | null };
@@ -160,7 +162,8 @@ export function strandedItems(
     const day = dayByDate.get(item.date);
     if (!day) return [{ item, reason: "outside-trip" }];
     const cityId = cityOf.get(item.placeId);
-    if (cityId && !day.cityIds.includes(cityId))
+    // A day with no hotel yet takes places from any city.
+    if (cityId && !dayTakesCity(day, cityId))
       return [{ item, reason: "city-not-here" }];
     return [];
   });

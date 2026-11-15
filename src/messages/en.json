@@ -262,7 +262,8 @@
     "waitingNoMatches": "No waiting places match these filters.",
     "waitingUnpinned": "{count, plural, one {# waiting place has} other {# waiting places have}} no map pin yet.",
     "hotelOffMap": "{name} isn't on the map, so there's no pin or walk or train distance for it.",
-    "hotelOffMapFix": "Find it in Settings"
+    "hotelOffMapFix": "Find it in Settings",
+    "noHotelYet": "No hotel yet"
   },
   "warnings": {
     "closedOnDay": "Closed on this day",
@@ -364,7 +365,7 @@
   },
   "settings": {
     "title": "Trip settings",
-    "intro": "The days are built from the stays: change a hotel's dates and the days follow.",
+    "intro": "The days are built from the trip dates and the stays: change either and the days follow.",
     "cantReach": "Can't reach the trip: {error}",
     "tabStays": "Stays",
     "tabCities": "Cities",
@@ -521,7 +522,14 @@
     "membersHint": "Each person signs in with this Google account to see and edit the trip.",
     "removeName": "Remove {name}",
     "addMember": "Add a member",
-    "addMemberButton": "Add member"
+    "addMemberButton": "Add member",
+    "dates": "Trip dates",
+    "datesHint": "The trip's days run from the start date to the end date, plus any nights your hotels cover outside them.",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "endBeforeStart": "The end date can't be before the start date.",
+    "saveDates": "Save dates",
+    "clearDates": "Clear dates"
   },
   "backup": {
     "exportTrip": "Export trip",
@@ -609,7 +617,9 @@
     "refreshedLink": "refreshed the read-only link {label}",
     "revokedLink": "closed the read-only link {label}",
     "savedCash": "saved a cash record of {yen}",
-    "archivedCash": "archived a cash record of {yen}"
+    "archivedCash": "archived a cash record of {yen}",
+    "changedTripDates": "set the trip dates to {from} – {to}",
+    "clearedTripDates": "cleared the trip dates"
   },
   "theme": {
     "light": "Light",
@@ -1141,6 +1151,10 @@
       "colours": "Chart, badge and map colours now follow the theme.",
       "quickAdd": "Tap + between stops to add a place near you to the day.",
       "changelog": "Tap the version to see what's new."
+    },
+    "d20261115": {
+      "tripDates": "A trip can have its own start and end dates in Settings → Trip, so it has days before any hotel is booked.",
+      "noHotelYet": "Days no hotel covers yet say so, and take places from any city."
     },
     "d20261114": {
       "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos. It uses the app colours and light or dark theme, and opens without signal.",

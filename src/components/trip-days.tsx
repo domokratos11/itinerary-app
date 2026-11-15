@@ -182,6 +182,11 @@ export function TripDays() {
                   >
                     {city.name}
                   </Link>
+                ) : trip.stays.length === 0 ? (
+                  // A trip with dates but no hotels yet: nothing is missing.
+                  <span className="font-medium text-muted-foreground">
+                    {t("day.noHotelYet")}
+                  </span>
                 ) : (
                   <span className="font-medium text-destructive">
                     {t("home.noHotel")}

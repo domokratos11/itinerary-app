@@ -75,6 +75,7 @@ import {
   NO_HOTELS,
   type HotelsShown,
 } from "@/components/map-hotels";
+import { dayPlaceCities, dayTakesCity } from "@/domain/days";
 import { dayLegs } from "@/domain/legs";
 import { cityPins, dayMap, endpointPoint, placePoint } from "@/domain/map-pins";
 import { applyWaitingView, DEFAULT_WAITING_VIEW } from "@/domain/waiting-view";
@@ -166,9 +167,19 @@ export function DayPlan(props: Props) {
 
   // Wide screens: what can be dragged in from the side panel, and the other
   // days of this day's cities to drop a stop on.
+  // A day no hotel covers yet takes places from every city.
+  const noHotel = props.cityIds.length === 0;
+  const placeCityIds = useMemo(
+    () =>
+      dayPlaceCities(
+        { cityIds: props.cityIds },
+        trip.cities.map((c) => c.id),
+      ),
+    [props.cityIds, trip.cities],
+  );
   const allWaiting = useMemo(
-    () => waitingPlaces(trip.places, items, props.cityIds),
-    [items, trip.places, props.cityIds],
+    () => waitingPlaces(trip.places, items, placeCityIds),
+    [items, trip.places, placeCityIds],
   );
   const waiting = useMemo(
     () =>
@@ -180,7 +191,10 @@ export function DayPlan(props: Props) {
   );
   const otherDays = tripDays.filter(
     (d) =>
-      d.date !== props.date && d.cityIds.some((c) => props.cityIds.includes(c)),
+      d.date !== props.date &&
+      (noHotel ||
+        d.cityIds.length === 0 ||
+        d.cityIds.some((c) => props.cityIds.includes(c))),
   );
   const stopCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -209,7 +223,7 @@ export function DayPlan(props: Props) {
   function dayOptionsFor(cityId: string | undefined) {
     if (!cityId) return [];
     return tripDays
-      .filter((d) => d.cityIds.includes(cityId))
+      .filter((d) => dayTakesCity(d, cityId))
       .map((d) => ({ date: d.date, label: formatDayLabel(d.date) }));
   }
 
@@ -345,6 +359,7 @@ export function DayPlan(props: Props) {
               {name}
             </Badge>
           ))}
+          {noHotel && <Badge variant="outline">{t("day.noHotelYet")}</Badge>}
         </div>
         <CostLine places={stops.map((i) => placesById.get(i.placeId))} />
         <DayWeatherStrip outlook={outlook.get(props.date)} />
@@ -605,7 +620,7 @@ export function DayPlan(props: Props) {
           date={props.date}
           index={quickAddAt ?? 0}
           dayItems={stops}
-          cityIds={props.cityIds}
+          cityIds={placeCityIds}
           open={quickAddAt !== null}
           onOpenChange={(open) => !open && setQuickAddAt(null)}
         />

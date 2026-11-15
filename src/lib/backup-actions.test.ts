@@ -64,6 +64,8 @@ describe("collectBackup", () => {
       name: "Peru",
       members: ["ana@example.com"],
       budget,
+      startDate: null,
+      endDate: null,
     });
     expect(backup.activity).toEqual([entry]);
     expect(backup.queue).toEqual([{ id: "q" }]);
@@ -74,6 +76,46 @@ describe("collectBackup", () => {
 });
 
 describe("importBackup", () => {
+  it("restores the trip's dates, and reads files without them", async () => {
+    const target = await trips.createTrip("Empty", "ana@example.com");
+    const backup = await collectBackup(
+      "trip-1",
+      {
+        id: "trip-1",
+        name: "Peru",
+        members: ["ana@example.com"],
+        startDate: "2027-03-01",
+        endDate: "2027-03-10",
+      },
+      fixtureTrip,
+      [],
+      [],
+    );
+    expect(backup.trip).toMatchObject({
+      startDate: "2027-03-01",
+      endDate: "2027-03-10",
+    });
+    await importBackup(target, backup);
+    let found: unknown[] = [];
+    trips.watchMyTrips("ana@example.com", (list) => (found = list))();
+    expect(found).toContainEqual(
+      expect.objectContaining({
+        id: target,
+        startDate: "2027-03-01",
+        endDate: "2027-03-10",
+      }),
+    );
+
+    const older = JSON.parse(JSON.stringify(backup));
+    delete older.trip.startDate;
+    delete older.trip.endDate;
+    const { BackupSchema } = await import("@/domain/backup");
+    expect(BackupSchema.parse(older).trip).toMatchObject({
+      startDate: null,
+      endDate: null,
+    });
+  });
+
   it("writes every collection and the plan into the trip", async () => {
     const place = testPlace();
     const item = {

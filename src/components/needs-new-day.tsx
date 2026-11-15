@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { dayTakesCity } from "@/domain/days";
 import { itemsForDay } from "@/domain/plan";
 import { strandedItems } from "@/domain/trip";
 import { t } from "@/lib/i18n";
@@ -59,7 +60,7 @@ export function NeedsNewDay() {
           {stranded.map(({ item, reason }, index) => {
             const place = placesById.get(item.placeId);
             const options = days.filter(
-              (d) => !place || d.cityIds.includes(place.cityId),
+              (d) => !place || dayTakesCity(d, place.cityId),
             );
             return (
               <li

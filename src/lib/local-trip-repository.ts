@@ -1,4 +1,5 @@
 import type {
+  NewTripOptions,
   TripAccess,
   TripChanges,
   TripRepository,
@@ -55,16 +56,30 @@ export class LocalTripRepository implements TripRepository {
     return this.creator;
   }
 
-  async createTrip(name: string, email: string): Promise<string> {
+  async createTrip(
+    name: string,
+    email: string,
+    options: NewTripOptions = {},
+  ): Promise<string> {
     const id = `trip${String(this.trips.size + 1).padStart(6, "0")}`;
-    this.trips.set(id, { id, name, members: [email] });
+    this.trips.set(id, {
+      id,
+      name,
+      members: [email],
+      setup: "pending",
+      startDate: options.dates?.startDate ?? null,
+      endDate: options.dates?.endDate ?? null,
+    });
     this.tripListeners.forEach((notify) => notify());
     return id;
   }
 
   async updateTrip(tripId: string, changes: TripChanges): Promise<void> {
     const trip = this.trips.get(tripId);
-    if (trip) this.trips.set(tripId, { ...trip, ...changes });
+    const fields = Object.fromEntries(
+      Object.entries(changes).filter(([, value]) => value !== undefined),
+    );
+    if (trip) this.trips.set(tripId, { ...trip, ...fields });
     this.tripListeners.forEach((notify) => notify());
   }
 

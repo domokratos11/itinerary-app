@@ -29,7 +29,12 @@ import { formatDayLabel } from "@/lib/format-day";
 import { mapsService } from "@/lib/maps-service-instance";
 import { usePlanStore } from "@/lib/plan-store";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
-import { useCitiesById, useTrip, useTripStore } from "@/lib/trip-store";
+import {
+  useCitiesById,
+  useTrip,
+  useTripDates,
+  useTripStore,
+} from "@/lib/trip-store";
 import { usePlaceSuggestions } from "@/lib/use-place-suggestions";
 
 type Editing =
@@ -48,6 +53,8 @@ export function StaysSettings({ tripId }: { tripId: string }) {
   const allStays = useTripStore((s) => s.data.stays);
   const citiesById = useCitiesById();
   const items = usePlanStore((s) => s.items);
+  // The trip's own dates also make days, so the preview counts them.
+  const range = useTripDates();
   const [editing, setEditing] = useState<Editing>(null);
   const issues = useMemo(() => stayIssues(trip.stays), [trip.stays]);
 
@@ -59,6 +66,7 @@ export function StaysSettings({ tripId }: { tripId: string }) {
       next ? [...others, next] : others,
       items,
       trip.places,
+      range,
     );
   }
 

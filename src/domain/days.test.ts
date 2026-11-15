@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveDays, tripPhase, weekdayOf } from "@/domain/days";
+import {
+  dayPlaceCities,
+  dayTakesCity,
+  deriveDays,
+  tripPhase,
+  weekdayOf,
+} from "@/domain/days";
 import type { Stay } from "@/domain/schemas";
 
 const stay = (cityId: string, checkIn: string, checkOut: string): Stay => ({
@@ -53,6 +59,76 @@ describe("deriveDays", () => {
       "2027-01-01",
       "2027-01-02",
     ]);
+  });
+});
+
+describe("deriveDays with the trip's own dates", () => {
+  it("is unchanged without dates", () => {
+    expect(deriveDays(stays, null)).toEqual(deriveDays(stays));
+    expect(deriveDays(stays, undefined)).toEqual(deriveDays(stays));
+  });
+
+  it("gives a trip with no hotels a day per date, with no city", () => {
+    const days = deriveDays([], {
+      startDate: "2027-03-30",
+      endDate: "2027-04-02",
+    });
+    expect(days).toEqual([
+      { date: "2027-03-30", cityIds: [], stays: [] },
+      { date: "2027-03-31", cityIds: [], stays: [] },
+      { date: "2027-04-01", cityIds: [], stays: [] },
+      { date: "2027-04-02", cityIds: [], stays: [] },
+    ]);
+  });
+
+  it("has one day when the trip starts and ends on the same date", () => {
+    const days = deriveDays([], {
+      startDate: "2027-03-30",
+      endDate: "2027-03-30",
+    });
+    expect(days.map((d) => d.date)).toEqual(["2027-03-30"]);
+  });
+
+  it("widens the hotels' range, leaving the extra days without a city", () => {
+    const days = deriveDays(stays, {
+      startDate: "2026-12-15",
+      endDate: "2027-01-01",
+    });
+    expect(days[0]).toEqual({ date: "2026-12-15", cityIds: [], stays: [] });
+    expect(days.at(-1)).toEqual({
+      date: "2027-01-01",
+      cityIds: [],
+      stays: [],
+    });
+    expect(days).toHaveLength(18);
+    const inside = days.filter(
+      (d) => d.date >= "2026-12-17" && d.date <= "2026-12-30",
+    );
+    expect(inside).toEqual(deriveDays(stays));
+  });
+
+  it("keeps hotel nights that fall outside the dates", () => {
+    const days = deriveDays(stays, {
+      startDate: "2026-12-20",
+      endDate: "2026-12-22",
+    });
+    expect(days).toEqual(deriveDays(stays));
+  });
+
+  it("ignores an end before the start", () => {
+    expect(
+      deriveDays(stays, { startDate: "2027-01-05", endDate: "2027-01-01" }),
+    ).toEqual(deriveDays(stays));
+  });
+});
+
+describe("dayTakesCity", () => {
+  it("takes the day's own cities, and any city on a day with no hotel", () => {
+    expect(dayTakesCity({ cityIds: ["nagoya"] }, "nagoya")).toBe(true);
+    expect(dayTakesCity({ cityIds: ["nagoya"] }, "kyoto")).toBe(false);
+    expect(dayTakesCity({ cityIds: [] }, "kyoto")).toBe(true);
+    expect(dayPlaceCities({ cityIds: [] }, ["a", "b"])).toEqual(["a", "b"]);
+    expect(dayPlaceCities({ cityIds: ["a"] }, ["a", "b"])).toEqual(["a"]);
   });
 });
 

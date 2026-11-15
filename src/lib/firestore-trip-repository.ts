@@ -9,6 +9,7 @@ import {
 import { z } from "zod";
 
 import type {
+  NewTripOptions,
   TripAccess,
   TripChanges,
   TripRepository,
@@ -31,6 +32,8 @@ import {
   StayRecordSchema,
   TodoListRecordSchema,
   TodoRecordSchema,
+  TripSetupSchema,
+  tripDatesOf,
 } from "@/domain/schemas";
 import { getDb } from "@/lib/firebase";
 import { setDoc, updateDoc, writeBatch } from "@/lib/tracked-firestore";
@@ -48,11 +51,25 @@ const SCHEMAS: { [C in TripCollection]: z.ZodType<TripRecordOf[C]> } = {
   todos: TodoRecordSchema,
 };
 
-const TripDocSchema = z.object({
-  name: z.string().nullable().default(null),
-  members: z.array(z.string()).default([]),
-  budget: BudgetSchema.nullable().default(null).catch(null),
-});
+const TripDocSchema = z
+  .object({
+    name: z.string().nullable().default(null),
+    members: z.array(z.string()).default([]),
+    budget: BudgetSchema.nullable().default(null).catch(null),
+    // Added later: older trips have none. A pair that isn't valid reads as
+    // no dates, and an unknown setup as done, rather than hiding the trip.
+    startDate: z.string().nullable().default(null).catch(null),
+    endDate: z.string().nullable().default(null).catch(null),
+    setup: TripSetupSchema.nullable().default(null).catch(null),
+  })
+  .transform((trip) => {
+    const dates = tripDatesOf(trip);
+    return {
+      ...trip,
+      startDate: dates?.startDate ?? null,
+      endDate: dates?.endDate ?? null,
+    };
+  });
 
 // Reads and writes
 // trips/{tripId}/{cities,stays,reservations,places,holidays,expenses,flights,cash,todoLists,todos}/{id}.
@@ -113,7 +130,11 @@ export class FirestoreTripRepository implements TripRepository {
     }
   }
 
-  async createTrip(name: string, email: string): Promise<string> {
+  async createTrip(
+    name: string,
+    email: string,
+    options: NewTripOptions = {},
+  ): Promise<string> {
     const trip = doc(collection(getDb(), "trips"));
     const now = new Date().toISOString();
     await setDoc(trip, {
@@ -122,13 +143,22 @@ export class FirestoreTripRepository implements TripRepository {
       createdBy: email,
       createdAt: now,
       updatedAt: now,
+      setup: "pending",
+      ...(options.dates && {
+        startDate: options.dates.startDate,
+        endDate: options.dates.endDate,
+      }),
     });
     return trip.id;
   }
 
   async updateTrip(tripId: string, changes: TripChanges): Promise<void> {
+    // Firestore refuses undefined values, so unset keys are left out.
+    const fields = Object.fromEntries(
+      Object.entries(changes).filter(([, value]) => value !== undefined),
+    );
     await updateDoc(doc(getDb(), "trips", tripId), {
-      ...changes,
+      ...fields,
       updatedAt: new Date().toISOString(),
     });
   }

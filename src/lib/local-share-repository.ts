@@ -1,3 +1,4 @@
+import type { TripDates } from "@/domain/schemas";
 import {
   newShareId,
   shareStatus,
@@ -31,12 +32,15 @@ export class LocalShareRepository implements ShareRepository {
 
   async create(input: NewShare, trip: SharedTrip): Promise<Share> {
     const at = this.now().toISOString();
+    const { dates, ...fields } = input;
     const share: Share = {
-      ...input,
+      ...fields,
       id: newShareId(),
       createdAt: at,
       revoked: false,
       publishedAt: at,
+      startDate: dates?.startDate ?? null,
+      endDate: dates?.endDate ?? null,
     };
     this.shares.set(share.id, share);
     this.copies.set(share.id, structuredClone(trip));
@@ -44,9 +48,17 @@ export class LocalShareRepository implements ShareRepository {
     return share;
   }
 
-  async publish(share: Share, trip: SharedTrip): Promise<void> {
+  async publish(
+    share: Share,
+    trip: SharedTrip,
+    dates: TripDates | null = null,
+  ): Promise<void> {
     this.copies.set(share.id, structuredClone(trip));
-    this.change(share.id, { publishedAt: this.now().toISOString() });
+    this.change(share.id, {
+      publishedAt: this.now().toISOString(),
+      startDate: dates?.startDate ?? null,
+      endDate: dates?.endDate ?? null,
+    });
   }
 
   async setExpiry(share: Share, expiresAt: string): Promise<void> {

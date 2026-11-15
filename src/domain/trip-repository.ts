@@ -1,4 +1,4 @@
-import type { Budget } from "./schemas";
+import type { Budget, TripDates, TripSetup } from "./schemas";
 import type { TripCollection, TripRecordOf } from "./trip";
 
 // Whether the signed-in user may open a trip: "member" when their email is
@@ -7,16 +7,32 @@ import type { TripCollection, TripRecordOf } from "./trip";
 export type TripAccess = "checking" | "member" | "denied" | "missing";
 
 // A trip the signed-in user belongs to. Trips made before names existed
-// have none.
+// have none. Dates and setup came later, so older trips have neither: no
+// dates means the days come from the hotels alone, no setup means done.
 export type TripSummary = {
   id: string;
   name: string | null;
   members: string[];
   budget?: Budget | null;
+  // Both or neither, YYYY-MM-DD, endDate on or after startDate.
+  startDate?: string | null;
+  endDate?: string | null;
+  setup?: TripSetup | null;
 };
 
+// Dates change together: both set, or both null to clear them.
 export type TripChanges = Partial<Pick<TripSummary, "members" | "budget">> & {
   name?: string;
+  setup?: TripSetup;
+} & (
+    | { startDate?: undefined; endDate?: undefined }
+    | { startDate: string; endDate: string }
+    | { startDate: null; endDate: null }
+  );
+
+// What a new trip starts with besides its name and first member.
+export type NewTripOptions = {
+  dates?: TripDates | null;
 };
 
 // Screens read and change the trip's structure only through this
@@ -39,8 +55,13 @@ export interface TripRepository {
   ): () => void;
   // Whether this user may create trips. False when that can't be determined.
   canCreateTrips(): Promise<boolean>;
-  // Makes a trip with this one member and returns its ID.
-  createTrip(name: string, email: string): Promise<string>;
+  // Makes a trip with this one member and returns its ID. It starts with
+  // setup pending, so the setup wizard opens on it.
+  createTrip(
+    name: string,
+    email: string,
+    options?: NewTripOptions,
+  ): Promise<string>;
   updateTrip(tripId: string, changes: TripChanges): Promise<void>;
   // Calls onRecords with a collection's full list now and after every
   // change, once per collection. Returns a function that stops listening.

@@ -20,6 +20,7 @@ import {
   PlanItemSchema,
   ReservationRecordSchema,
   StayRecordSchema,
+  type TripDates,
 } from "@/domain/schemas";
 import {
   newShareId,
@@ -87,6 +88,10 @@ export class FirestoreShareRepository implements ShareRepository {
       expiresAt: input.expiresAt,
       revoked: false,
       publishedAt: now,
+      ...(input.dates && {
+        startDate: input.dates.startDate,
+        endDate: input.dates.endDate,
+      }),
     };
     const { id, ...fields } = share;
     // The link first: the rules for its copy look it up.
@@ -98,10 +103,21 @@ export class FirestoreShareRepository implements ShareRepository {
     return share;
   }
 
-  async publish(share: Share, trip: SharedTrip): Promise<void> {
+  async publish(
+    share: Share,
+    trip: SharedTrip,
+    dates: TripDates | null = null,
+  ): Promise<void> {
     await this.writeCopy(share.id, trip);
+    // Dates are written only when there are some, or to clear old ones, so
+    // links of trips without dates keep exactly their old fields.
+    const hadDates = share.startDate != null || share.endDate != null;
     await updateDoc(doc(getDb(), "shares", share.id), {
       publishedAt: new Date().toISOString(),
+      ...((dates || hadDates) && {
+        startDate: dates?.startDate ?? null,
+        endDate: dates?.endDate ?? null,
+      }),
     });
   }
 

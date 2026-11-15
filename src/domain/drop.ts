@@ -1,4 +1,4 @@
-import type { TripDay } from "./days";
+import { dayTakesCity, type TripDay } from "./days";
 import type { PlanItem } from "./schemas";
 
 // What is being dragged on the day page: a stop already in the plan, a
@@ -37,7 +37,7 @@ export function planDrop(
   if (!day) return { kind: "refuse", reason: "not-a-day", date };
 
   const cityId = source.cityId;
-  if (cityId !== null && !day.cityIds.includes(cityId))
+  if (cityId !== null && !dayTakesCity(day, cityId))
     return { kind: "refuse", reason: "city-not-on-day", date };
 
   const isStop = source.kind === "stop";

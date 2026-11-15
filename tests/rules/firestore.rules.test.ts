@@ -132,6 +132,55 @@ describe("creating a trip", () => {
       setDoc(doc(as(ANA), "trips/new"), { ...newTrip(ANA), extra: true }),
     );
   });
+
+  it("may start with dates and setup pending, or without dates", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(ANA), "trips/dated"), {
+        ...newTrip(ANA),
+        startDate: "2027-03-01",
+        endDate: "2027-03-10",
+        setup: "pending",
+      }),
+    );
+    await assertSucceeds(
+      setDoc(doc(as(ANA), "trips/undated"), {
+        ...newTrip(ANA),
+        setup: "pending",
+      }),
+    );
+    await assertSucceeds(
+      setDoc(doc(as(ANA), "trips/one-day"), {
+        ...newTrip(ANA),
+        startDate: "2027-03-01",
+        endDate: "2027-03-01",
+        setup: "done",
+      }),
+    );
+  });
+
+  it("refuses bad dates and unknown setup values", async () => {
+    const bad = [
+      { startDate: "2027-03-10", endDate: "2027-03-01" },
+      { startDate: "2027-03-01" },
+      { endDate: "2027-03-01" },
+      { startDate: "1 March", endDate: "2027-03-10" },
+      { startDate: 20270301, endDate: "2027-03-10" },
+      { setup: "maybe" },
+      { setup: true },
+    ];
+    for (const fields of bad)
+      await assertFails(
+        setDoc(doc(as(ANA), "trips/new"), { ...newTrip(ANA), ...fields }),
+      );
+    await assertFails(
+      setDoc(doc(as(EVE), "trips/new"), {
+        ...newTrip(EVE),
+        startDate: "2027-03-01",
+        endDate: "2027-03-10",
+        setup: "pending",
+      }),
+    );
+  });
 });
 
 describe("changing a trip", () => {
@@ -172,7 +221,65 @@ describe("changing a trip", () => {
     await assertFails(
       updateDoc(doc(as(ANA), "trips/peru"), { createdBy: EVE }),
     );
+    await assertFails(
+      updateDoc(doc(as(ANA), "trips/peru"), {
+        startDate: "2027-03-01",
+        endDate: "2027-03-10",
+        createdAt: NOW,
+        updatedAt: NOW,
+      }),
+    );
     await assertFails(deleteDoc(doc(as(ANA), "trips/peru")));
+  });
+
+  it("lets a member set, change and clear the dates and setup", async () => {
+    const peru = doc(as(BEN), "trips/peru");
+    await assertSucceeds(
+      updateDoc(peru, {
+        startDate: "2027-03-01",
+        endDate: "2027-03-10",
+        updatedAt: NOW,
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(peru, { endDate: "2027-03-12", updatedAt: NOW }),
+    );
+    await assertSucceeds(updateDoc(peru, { setup: "done", updatedAt: NOW }));
+    await assertSucceeds(
+      updateDoc(peru, { startDate: null, endDate: null, updatedAt: NOW }),
+    );
+  });
+
+  it("refuses bad dates, unknown setup values and non-members", async () => {
+    const peru = doc(as(BEN), "trips/peru");
+    await assertFails(
+      updateDoc(peru, {
+        startDate: "2027-03-10",
+        endDate: "2027-03-01",
+        updatedAt: NOW,
+      }),
+    );
+    await assertFails(
+      updateDoc(peru, { startDate: "2027-03-01", updatedAt: NOW }),
+    );
+    await assertFails(
+      updateDoc(peru, {
+        startDate: "March",
+        endDate: "2027-03-10",
+        updatedAt: NOW,
+      }),
+    );
+    await assertFails(updateDoc(peru, { setup: "later", updatedAt: NOW }));
+    await assertFails(
+      updateDoc(doc(as(EVE), "trips/peru"), {
+        startDate: "2027-03-01",
+        endDate: "2027-03-10",
+        updatedAt: NOW,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(as(EVE), "trips/peru"), { setup: "done", updatedAt: NOW }),
+    );
   });
 });
 
@@ -698,6 +805,33 @@ describe("read-only links", () => {
         link({ tripId: "japan", revoked: true }),
       ),
     );
+  });
+
+  it("may carry the trip's dates, valid ones only", async () => {
+    const dates = { startDate: "2027-03-01", endDate: "2027-03-10" };
+    await assertSucceeds(setDoc(doc(as(BEN), "shares/dated"), link(dates)));
+    await assertFails(
+      setDoc(
+        doc(as(BEN), "shares/backwards"),
+        link({ startDate: "2027-03-10", endDate: "2027-03-01" }),
+      ),
+    );
+    await assertFails(
+      setDoc(doc(as(BEN), "shares/half"), link({ startDate: "2027-03-01" })),
+    );
+    await seed("open");
+    await assertSucceeds(
+      updateDoc(doc(as(BEN), "shares/open"), { ...dates, publishedAt: NOW }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(as(BEN), "shares/open"), {
+        startDate: null,
+        endDate: null,
+        publishedAt: NOW,
+      }),
+    );
+    await assertFails(updateDoc(doc(anonymous(), "shares/open"), dates));
+    await assertFails(updateDoc(doc(as(EVE), "shares/open"), dates));
   });
 
   it("stay open at most 30 days", async () => {
