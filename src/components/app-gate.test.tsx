@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 
 import { AppGate } from "@/components/app-gate";
@@ -7,9 +7,13 @@ import { signInWithGoogle } from "@/lib/auth";
 import { useAuthStore } from "@/lib/auth-store";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
+import { useViewerStore } from "@/lib/viewer-store";
 
 vi.mock("@/lib/auth", () => ({ signInWithGoogle: vi.fn(), signOut: vi.fn() }));
 vi.mock("@/lib/trip-repository-instance", () => ({ tripRepository: {} }));
+vi.mock("@/lib/maps-service-instance", () => ({
+  mapsService: { isConfigured: () => false },
+}));
 vi.mock("@/lib/use-media-query", () => ({ useMediaQuery: () => true }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
@@ -103,7 +107,7 @@ describe("AppGate", () => {
     expect(
       screen.getByRole("dialog", { name: "No trips yet" }),
     ).toHaveTextContent("ana@example.com");
-    expect(screen.queryByRole("button", { name: "New trip" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New itinerary" })).toBeNull();
   });
 
   it("offers a new trip only to someone allowed to create one", () => {
@@ -115,7 +119,7 @@ describe("AppGate", () => {
     });
     renderGate();
     expect(
-      screen.getByRole("button", { name: "New trip" }),
+      screen.getByRole("button", { name: "New itinerary" }),
     ).toBeInTheDocument();
   });
 
@@ -132,8 +136,63 @@ describe("AppGate", () => {
     expect(screen.getByRole("button", { name: "My trip" })).toBeInTheDocument();
   });
 
+  it("shows each trip's dates and whether it is set up", () => {
+    useAuthStore.setState({
+      status: "signed-in",
+      user,
+      trips: [
+        {
+          ...trip("japan", "Japan"),
+          startDate: "2026-12-15",
+          endDate: "2027-01-12",
+        },
+        { ...trip("peru", "Peru"), setup: "pending" },
+      ],
+      tripChosen: true,
+      canCreateTrips: true,
+    });
+    renderGate();
+    const japan = screen.getByRole("button", { name: /Japan/ });
+    expect(japan).toHaveTextContent("Dec 15, 2026");
+    expect(japan).toHaveTextContent("Jan 12, 2027");
+    expect(japan).not.toHaveTextContent("Not set up yet");
+    expect(screen.getByRole("button", { name: /Peru/ })).toHaveTextContent(
+      "Not set up yet",
+    );
+    expect(
+      screen.getByRole("button", { name: "New itinerary" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Sign out" }),
+    ).toBeInTheDocument();
+  });
+
+  it("lists a single trip when none was opened (All itineraries)", () => {
+    useAuthStore.setState({
+      status: "signed-in",
+      user,
+      trips: [trip("japan", "Japan")],
+      tripChosen: true,
+      canCreateTrips: true,
+    });
+    renderGate();
+    expect(app()).toBeNull();
+    expect(
+      screen.getByRole("dialog", { name: "Choose an itinerary" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Japan" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "New itinerary" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "No trips yet" })).toBeNull();
+  });
+
   it("keeps the splash while a trip is being chosen from the list", () => {
-    useAuthStore.setState({ status: "signed-in", user, trips: [trip("japan")] });
+    useAuthStore.setState({
+      status: "signed-in",
+      user,
+      trips: [trip("japan")],
+    });
     renderGate();
     expect(app()).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -181,6 +240,64 @@ describe("AppGate", () => {
     });
     renderGate();
     expect(app()).toBeNull();
+  });
+
+  describe("the setup wizard", () => {
+    function openTripWith(setup?: "pending" | "done") {
+      useAuthStore.setState({
+        status: "signed-in",
+        user,
+        trips: [
+          { ...trip("trip-1", "Kyoto"), ...(setup !== undefined && { setup }) },
+        ],
+        tripId: "trip-1",
+        tripChosen: true,
+        access: "member",
+      });
+      useTripStore.setState({ loaded: allLoaded });
+      usePlanStore.getState().setItems([]);
+    }
+    const wizard = () => screen.queryByRole("main", { name: "Kyoto" });
+
+    afterEach(() => useViewerStore.setState({ status: "off", share: null }));
+
+    it("shows instead of the app while setup is pending", () => {
+      openTripWith("pending");
+      renderGate();
+      expect(app()).toBeNull();
+      expect(wizard()).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Name and dates" }),
+      ).toBeInTheDocument();
+    });
+
+    it("never shows for a trip without setup, or once it is done", () => {
+      openTripWith();
+      const { unmount } = renderGate();
+      expect(app()).toBeInTheDocument();
+      expect(wizard()).toBeNull();
+      unmount();
+      openTripWith("done");
+      renderGate();
+      expect(app()).toBeInTheDocument();
+      expect(wizard()).toBeNull();
+    });
+
+    it("never shows on a read-only link", () => {
+      openTripWith("pending");
+      useViewerStore.setState({ status: "active" });
+      renderGate();
+      expect(app()).toBeInTheDocument();
+      expect(wizard()).toBeNull();
+    });
+
+    it("waits, like the app, until the trip has arrived", () => {
+      openTripWith("pending");
+      useTripStore.getState().reset();
+      renderGate();
+      expect(wizard()).toBeNull();
+      expect(app()).toBeNull();
+    });
   });
 
   it("opens the app for a member once the data has arrived", () => {

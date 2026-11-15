@@ -37,7 +37,7 @@ import { Yen } from "@/components/yen";
 import { PlaceEditor } from "@/components/place-editor";
 import { PlaceLive, PlacePhotos } from "@/components/place-live";
 import { CategoryBadge, PriorityBadge } from "@/components/tag-badges";
-import { isDraft, mapsSearchUrl } from "@/domain/place-edit";
+import { isDraft, mapsSearchUrl, wasResearched } from "@/domain/place-edit";
 import { isOpenProposal } from "@/domain/proposals";
 import type { PlaceRecord } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
@@ -312,17 +312,17 @@ function PlaceBody({
           {place.costEstimateJPY ? (
             <Yen yen={place.costEstimateJPY} />
           ) : (
-            formatCost(place.costEstimateJPY)
+            formatCost(place)
           )}
         </Section>
       )}
       <Section label={t("common.timeNeeded")}>
         {place.durationMin === null
-          ? t("common.notResearched")
+          ? emptyValue(place)
           : t("common.minutes", { minutes: place.durationMin })}
       </Section>
       <Section label={t("common.openingHours")}>
-        {place.openingHours ?? t("common.notResearched")}
+        {place.openingHours ?? emptyValue(place)}
       </Section>
       {place.closedDates.length > 0 && (
         <Section label={t("common.closedOn")}>
@@ -446,9 +446,17 @@ function PlaceResearch({ place }: { place: PlaceRecord }) {
   );
 }
 
-function formatCost(yen: number | null): string {
-  if (yen === null) return t("common.notResearched");
+function formatCost(place: PlaceRecord): string {
+  if (place.costEstimateJPY === null) return emptyValue(place);
   return t("common.free");
+}
+
+// An empty value after accepted research wasn't found; asking again won't
+// fill it, so it shouldn't read as still to be researched.
+function emptyValue(place: PlaceRecord): string {
+  return wasResearched(place)
+    ? t("common.notFound")
+    : t("common.notResearched");
 }
 
 function Section({ label, children }: { label: string; children: ReactNode }) {

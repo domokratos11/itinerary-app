@@ -110,6 +110,33 @@ describe("a stop in the day's plan", () => {
     useAuthStore.setState({ tripId: "trip-1", access: "member" });
   });
 
+  it("on a day with no hotel yet, says so and waits for places of any city", () => {
+    const temple = testPlace({
+      id: "temple",
+      name: "Ueno Temple",
+      cityId: "tokyo-ueno",
+    });
+    useTripStore.setState({
+      data: { ...fixtureTrip, places: [place, castle, market, temple] },
+    });
+    render(
+      <DayPlan
+        date={DATE}
+        label="Dec 18"
+        cityNames={[]}
+        cityIds={[]}
+        start={null}
+        end={null}
+        reservations={[]}
+        flights={[]}
+      />,
+    );
+    expect(screen.getByText("No hotel yet")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Waiting (3)" }));
+    expect(screen.getByText("Ueno Temple")).toBeInTheDocument();
+    expect(screen.getByText("Nagoya Castle")).toBeInTheDocument();
+  });
+
   it("opens the place's details from its name", () => {
     dayPlan();
     expect(screen.queryByRole("dialog")).toBeNull();

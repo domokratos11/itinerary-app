@@ -38,6 +38,7 @@ import {
   ProposalSchema,
   ReservationRecordSchema,
   StayRecordSchema,
+  tripDatesOf,
   type Proposal,
 } from "../src/domain/schemas";
 import { parseTripId } from "../src/lib/trip-id";
@@ -163,7 +164,11 @@ async function main() {
       parsed(await load("reservations"), ReservationRecordSchema),
     );
     const flights = live(parsed(await load("flights"), FlightRecordSchema));
-    const tripDays = new Map(deriveDays(stays).map((d) => [d.date, d]));
+    // The trip's own dates, if it has them, make days too.
+    const range = tripDatesOf(
+      (await db.doc(`trips/${tripId}`).get()).data() ?? {},
+    );
+    const tripDays = new Map(deriveDays(stays, range).map((d) => [d.date, d]));
     const placesById = new Map(places.map((p) => [p.id, p]));
     const now = new Date();
     for (const day of days) {

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import type { PlanItem, Stay } from "@/domain/schemas";
+import {
+  TripDatesSchema,
+  TripSetupSchema,
+  tripDatesOf,
+  type PlanItem,
+  type Stay,
+} from "@/domain/schemas";
 import { dayChanges, stayIssues, uniqueId } from "@/domain/trip-edit";
 
 const stay = (
@@ -94,6 +100,76 @@ describe("dayChanges", () => {
   it("lists new days when a stay gets longer", () => {
     const after = [before[0], { ...before[1], checkOut: "2026-12-28" }];
     expect(dayChanges(before, after, [], places).added).toEqual(["2026-12-28"]);
+  });
+
+  it("counts the trip's own dates, before and after a change to them", () => {
+    const range = { startDate: "2026-12-15", endDate: "2026-12-29" };
+    const shorter = { startDate: "2026-12-16", endDate: "2026-12-27" };
+    expect(
+      dayChanges(
+        before,
+        before,
+        [item({ date: "2026-12-28" }), item({ id: "j", date: "2026-12-15" })],
+        places,
+        range,
+        shorter,
+      ),
+    ).toEqual({
+      added: [],
+      removed: ["2026-12-15", "2026-12-28", "2026-12-29"],
+      stranded: 2,
+    });
+    expect(dayChanges(before, before, [], places, null, range).added).toEqual([
+      "2026-12-15",
+      "2026-12-16",
+      "2026-12-28",
+      "2026-12-29",
+    ]);
+  });
+
+  it("lets a day with no hotel hold places from any city", () => {
+    const range = { startDate: "2026-12-15", endDate: "2026-12-27" };
+    // The castle is in Nagoya; Dec 15 has no hotel, so it can stay there.
+    expect(
+      dayChanges(before, before, [item({ date: "2026-12-15" })], places, range)
+        .stranded,
+    ).toBe(0);
+  });
+});
+
+describe("trip dates", () => {
+  it("accept a valid pair, including a one-day trip", () => {
+    expect(
+      tripDatesOf({ startDate: "2027-03-01", endDate: "2027-03-10" }),
+    ).toEqual({ startDate: "2027-03-01", endDate: "2027-03-10" });
+    expect(
+      tripDatesOf({ startDate: "2027-03-01", endDate: "2027-03-01" }),
+    ).not.toBeNull();
+  });
+
+  it("read as none when missing, half there, backwards or not dates", () => {
+    expect(tripDatesOf({})).toBeNull();
+    expect(tripDatesOf({ startDate: null, endDate: null })).toBeNull();
+    expect(tripDatesOf({ startDate: "2027-03-01" })).toBeNull();
+    expect(
+      tripDatesOf({ startDate: "2027-03-10", endDate: "2027-03-01" }),
+    ).toBeNull();
+    expect(
+      tripDatesOf({ startDate: "2027-02-30", endDate: "2027-03-01" }),
+    ).toBeNull();
+    expect(tripDatesOf({ startDate: 1, endDate: "2027-03-01" })).toBeNull();
+    expect(
+      TripDatesSchema.safeParse({
+        startDate: "2027-03-10",
+        endDate: "2027-03-01",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("know the setup states", () => {
+    expect(TripSetupSchema.safeParse("pending").success).toBe(true);
+    expect(TripSetupSchema.safeParse("done").success).toBe(true);
+    expect(TripSetupSchema.safeParse("later").success).toBe(false);
   });
 });
 

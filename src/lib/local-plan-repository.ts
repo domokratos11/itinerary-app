@@ -17,6 +17,10 @@ export class LocalPlanRepository implements PlanRepository {
     };
   }
 
+  async readItems(tripId: string): Promise<PlanItem[]> {
+    return this.list(tripId);
+  }
+
   async save(tripId: string, item: PlanItem): Promise<void> {
     const items = this.trips.get(tripId) ?? new Map<string, PlanItem>();
     items.set(item.id, item);

@@ -6,6 +6,8 @@ import {
   parseTripId,
   recallTripId,
   rememberTripId,
+  requestTripPicker,
+  takePickerRequest,
 } from "@/lib/trip-id";
 
 const A = "tripAAAAAA";
@@ -62,5 +64,31 @@ describe("chooseTrip", () => {
   it("falls back to the remembered trip when the list can't be read", () => {
     expect(chooseTrip({ ...none, remembered: A, trips: null })).toBe(A);
     expect(chooseTrip({ ...none, trips: null })).toBeNull();
+  });
+
+  it("opens none after All itineraries, unless a link names one", () => {
+    const showPicker = true;
+    expect(
+      chooseTrip({
+        ...none,
+        remembered: A,
+        lastTripId: A,
+        trips: [A, B],
+        showPicker,
+      }),
+    ).toBeNull();
+    expect(chooseTrip({ ...none, trips: [A], showPicker })).toBeNull();
+    expect(chooseTrip({ ...none, fromUrl: B, trips: [A], showPicker })).toBe(B);
+  });
+});
+
+describe("All itineraries request", () => {
+  beforeEach(() => window.sessionStorage.clear());
+
+  it("is taken once", () => {
+    expect(takePickerRequest()).toBe(false);
+    requestTripPicker();
+    expect(takePickerRequest()).toBe(true);
+    expect(takePickerRequest()).toBe(false);
   });
 });

@@ -304,6 +304,35 @@ export const BudgetSchema = z.object({
     .default({}),
 });
 
+// The trip's own first and last day, kept on the trip document. Its days are
+// these plus whatever the hotels cover, so a trip with no hotels yet still
+// has days. Trips made before this have none and get their days from the
+// hotels alone.
+export const TripDatesSchema = z
+  .object({ startDate: isoDate, endDate: isoDate })
+  .refine((d) => d.endDate >= d.startDate, {
+    message: "The end date must not be before the start date",
+    path: ["endDate"],
+  });
+
+// Whether the setup wizard is still to be finished. Absent means done, so
+// trips made before the wizard never show it.
+export const TRIP_SETUP_STATES = ["pending", "done"] as const;
+export const TripSetupSchema = z.enum(TRIP_SETUP_STATES);
+
+// The dates as the trip document holds them: both, or neither. Anything else
+// (one alone, a bad date, an end before the start) reads as none.
+export function tripDatesOf(doc: {
+  startDate?: unknown;
+  endDate?: unknown;
+}): TripDates | null {
+  const parsed = TripDatesSchema.safeParse({
+    startDate: doc.startDate,
+    endDate: doc.endDate,
+  });
+  return parsed.success ? parsed.data : null;
+}
+
 // A whole trip's structure in one object; the sample trip the tests use.
 export const TripDataSchema = z.object({
   cities: z.array(CityRecordSchema),
@@ -451,6 +480,8 @@ export type TodoRecord = z.infer<typeof TodoRecordSchema>;
 export type TodoStatus = (typeof TODO_STATUSES)[number];
 export type TodoPriority = (typeof TODO_PRIORITIES)[number];
 export type Budget = z.infer<typeof BudgetSchema>;
+export type TripDates = z.infer<typeof TripDatesSchema>;
+export type TripSetup = (typeof TRIP_SETUP_STATES)[number];
 export type Proposal = z.infer<typeof ProposalSchema>;
 export type DayResearch = z.infer<typeof DayResearchSchema>;
 export type DayAnalysis = z.infer<typeof DayAnalysisSchema>;

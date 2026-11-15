@@ -1,4 +1,4 @@
-import { deriveDays, type TripDay } from "./days";
+import { dayTakesCity, deriveDays, type TripDay } from "./days";
 import type { Translate } from "./i18n";
 import { stayLocation, type Location } from "./plan";
 import type {
@@ -15,6 +15,7 @@ import type {
   StayRecord,
   TodoListRecord,
   TodoRecord,
+  TripDates,
 } from "./schemas";
 
 // The trip's structure: everything except the plan items. Lives in
@@ -62,6 +63,16 @@ export const EMPTY_TRIP: TripData = {
   todoLists: [],
   todos: [],
 };
+
+// Nothing saved in the trip yet, archived records and removed stops
+// included. Only such a trip takes a backup or a copy of another, so
+// neither ever overwrites someone's work.
+export function isEmptyTrip(data: TripData, items: PlanItem[]): boolean {
+  return (
+    TRIP_COLLECTIONS.every((name) => data[name].length === 0) &&
+    items.length === 0
+  );
+}
 
 export function stayId(stay: Pick<Stay, "cityId" | "checkIn">): string {
   return `${stay.cityId}-${stay.checkIn}`;
@@ -120,8 +131,9 @@ export function activeTrip(data: TripData): TripData {
   };
 }
 
-export function tripDays(data: TripData): TripDay[] {
-  return deriveDays(data.stays);
+// The trip's days: its hotels' range joined with its own dates, if it has any.
+export function tripDays(data: TripData, range?: TripDates | null): TripDay[] {
+  return deriveDays(data.stays, range);
 }
 
 export type Endpoint = { name: string; location: Location | null };
@@ -160,7 +172,8 @@ export function strandedItems(
     const day = dayByDate.get(item.date);
     if (!day) return [{ item, reason: "outside-trip" }];
     const cityId = cityOf.get(item.placeId);
-    if (cityId && !day.cityIds.includes(cityId))
+    // A day with no hotel yet takes places from any city.
+    if (cityId && !dayTakesCity(day, cityId))
       return [{ item, reason: "city-not-here" }];
     return [];
   });

@@ -27,6 +27,7 @@
     "list": "Lista",
     "map": "Mapa",
     "notResearched": "Sin investigar todavía",
+    "notFound": "La investigación no lo encontró",
     "today": "Hoy",
     "minutes": "{minutes} min",
     "minutesWalk": "{minutes} min a pie",
@@ -124,10 +125,12 @@
     "notFoundBody": "No hay ningún viaje con este enlace. Revisa que lo hayas copiado completo.",
     "offlineTitle": "No tienes conexión",
     "offlineBody": "Este dispositivo no ha abierto el viaje antes, así que no tiene una copia que mostrar. Conéctate a internet para cargarlo.",
-    "chooseTrip": "Elige un viaje",
+    "chooseTrip": "Elige un itinerario",
     "noTripsTitle": "Aún no hay viajes",
     "noTripsBody": "{email} no está en la lista de miembros de ningún viaje. Pide a alguien de un viaje que agregue tu correo, o usa otra cuenta.",
-    "newTrip": "Nuevo viaje",
+    "newTrip": "Nuevo itinerario",
+    "allTrips": "Todos los itinerarios",
+    "notSetUp": "Sin configurar aún",
     "tryAgain": "Intentar de nuevo",
     "offlinePhrasebook": "Abrir la guía de frases en japonés"
   },
@@ -145,9 +148,9 @@
   },
   "newTrip": {
     "descriptionOnline": "Empieza vacío, contigo como único miembro.",
-    "descriptionOffline": "Para crear un viaje necesitas conexión.",
-    "create": "Crear viaje",
-    "failed": "No se pudo crear el viaje."
+    "descriptionOffline": "Para crear un itinerario necesitas conexión.",
+    "create": "Crear itinerario",
+    "failed": "No se pudo crear el itinerario."
   },
   "home": {
     "planLoading": "Cargando el plan…",
@@ -261,7 +264,8 @@
     "waitingNoMatches": "Ningún lugar en espera coincide con estos filtros.",
     "waitingUnpinned": "{count, plural, one {# lugar en espera aún no tiene} other {# lugares en espera aún no tienen}} marcador en el mapa.",
     "hotelOffMap": "{name} no está en el mapa, así que no tiene marcador ni distancia a pie o en tren.",
-    "hotelOffMapFix": "Búscalo en Ajustes"
+    "hotelOffMapFix": "Búscalo en Ajustes",
+    "noHotelYet": "Aún sin hotel"
   },
   "warnings": {
     "closedOnDay": "Cerrado este día",
@@ -363,7 +367,7 @@
   },
   "settings": {
     "title": "Ajustes del viaje",
-    "intro": "Los días se arman a partir de los hospedajes: si cambias las fechas de un hotel, los días cambian también.",
+    "intro": "Los días se arman a partir de las fechas del viaje y los hospedajes: si cambias cualquiera de los dos, los días cambian también.",
     "cantReach": "No se puede acceder al viaje: {error}",
     "tabStays": "Hospedajes",
     "tabCities": "Ciudades",
@@ -451,7 +455,8 @@
     "accepted": "Investigado y aceptado",
     "acceptedOn": "Investigación revisada y aceptada. Datos verificados por última vez el {date}.",
     "acceptedTip": "Investigación revisada y aceptada.",
-    "missingCount": "Faltan {count}",
+    "notFoundCount": "{count} sin encontrar",
+    "notFoundTip": "La investigación buscó pero no encontró nada para: {fields}. Edita el lugar para agregarlos a mano.",
     "acceptAll": "Aceptar todo ({count})",
     "acceptCount": "Aceptar investigación ({count})",
     "tipAcceptAll": "Acepta toda la investigación terminada, en todas las ciudades",
@@ -519,7 +524,14 @@
     "membersHint": "Cada persona inicia sesión con esta cuenta de Google para ver y editar el viaje.",
     "removeName": "Quitar a {name}",
     "addMember": "Agregar un miembro",
-    "addMemberButton": "Agregar miembro"
+    "addMemberButton": "Agregar miembro",
+    "dates": "Fechas del viaje",
+    "datesHint": "Los días del viaje van de la fecha de inicio a la de fin, más las noches que tus hoteles cubran fuera de ellas.",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de fin",
+    "endBeforeStart": "La fecha de fin no puede ser anterior a la de inicio.",
+    "saveDates": "Guardar fechas",
+    "clearDates": "Borrar fechas"
   },
   "backup": {
     "exportTrip": "Exportar viaje",
@@ -607,7 +619,10 @@
     "refreshedLink": "actualizó el enlace de solo lectura {label}",
     "revokedLink": "cerró el enlace de solo lectura {label}",
     "savedCash": "guardó un movimiento de efectivo de {yen}",
-    "archivedCash": "archivó un movimiento de efectivo de {yen}"
+    "archivedCash": "archivó un movimiento de efectivo de {yen}",
+    "changedTripDates": "puso las fechas del viaje del {from} al {to}",
+    "clearedTripDates": "borró las fechas del viaje",
+    "copiedItinerary": "copió partes del itinerario {name}"
   },
   "theme": {
     "light": "Claro",
@@ -1140,9 +1155,18 @@
       "quickAdd": "Toca + entre paradas para añadir al día un lugar cercano.",
       "changelog": "Toca la versión para ver las novedades."
     },
+    "d20261115": {
+      "tripDates": "Un viaje puede tener sus propias fechas de inicio y fin en Ajustes → Viaje, así tiene días antes de reservar ningún hotel.",
+      "noHotelYet": "Los días que aún no cubre ningún hotel lo indican y aceptan lugares de cualquier ciudad.",
+      "itineraries": "Al elegir un itinerario se ven sus fechas y si aún falta configurarlo, y Todos los itinerarios en el menú del viaje vuelve a la lista.",
+      "setupWizard": "Un itinerario nuevo se abre con una configuración que pide sus fechas, ciudades, hoteles, vuelos, viajeros y presupuesto, y cualquier paso se puede omitir o terminar después.",
+      "setupChecklist": "El Panel de un itinerario nuevo muestra las partes que aún están vacías, con enlaces para completarlas.",
+      "copyItinerary": "Un itinerario nuevo puede empezar copiando partes de otro, en su configuración o en Ajustes → Respaldo mientras está vacío, con todas las fechas movidas al nuevo inicio."
+    },
     "d20261114": {
       "phrasebook": "La guía de frases en japonés está en la app, en Varios junto a los pendientes. Usa los colores y el tema claro u oscuro de la app, y abre sin señal.",
       "misc": "Los pendientes pasaron a la nueva sección Varios.",
+      "researchNotFound": "Lo que la investigación aceptada no pudo encontrar ahora aparece como no encontrado en vez de faltante, y esos lugares ya no cuentan como pendientes de investigar.",
       "budgetCharts": "El Presupuesto muestra el objetivo de cada categoría frente a su gasto, cuánto suman los objetivos junto al presupuesto y lo que costó cada día del viaje por categoría."
     }
   },
@@ -1151,5 +1175,126 @@
   },
   "phrasebook": {
     "frameTitle": "Guía de frases en japonés"
+  },
+  "setup": {
+    "title": "Configura tu itinerario",
+    "stepOf": "Paso {step} de {total}",
+    "stepList": "Pasos de la configuración",
+    "back": "Atrás",
+    "skip": "Omitir",
+    "next": "Siguiente",
+    "finishLater": "Terminar después",
+    "open": "Abrir itinerario",
+    "filled": "Tiene datos",
+    "step": {
+      "details": "Nombre y fechas",
+      "startFrom": "Empezar desde",
+      "cities": "Ciudades",
+      "hotels": "Hoteles",
+      "flights": "Vuelos",
+      "people": "Viajeros y presupuesto",
+      "summary": "Resumen"
+    },
+    "detailsHint": "Ponle un nombre al itinerario y elige el primer y el último día del viaje. Sus días van de uno a otro.",
+    "nameRequired": "Ponle un nombre al itinerario.",
+    "datesRequired": "Elige una fecha de inicio y una de fin.",
+    "startFromHint": "Empieza con un itinerario vacío o copia partes de otro.",
+    "startEmpty": "Empezar vacío",
+    "startEmptyHint": "Agrega tú mismo las ciudades, los hoteles y los vuelos en los siguientes pasos.",
+    "citiesHint": "Las ciudades donde te alojarás. Cada una tiene un color en el calendario y en el mapa.",
+    "noCities": "Aún no hay ciudades.",
+    "hotelsHint": "Dónde duermes cada noche. ¿Aún sin reservar? Escribe \"Por decidir\" como nombre del hotel.",
+    "hotelsNeedCity": "Cada hotel pertenece a una ciudad. Vuelve atrás para agregar una o salta este paso.",
+    "noHotels": "Aún no hay hoteles.",
+    "flightsHint": "Tus vuelos de ida y vuelta a Japón, en la hora local de cada aeropuerto.",
+    "peopleHint": "Quién más está en el itinerario y cuánto piensas gastar.",
+    "budget": "Presupuesto",
+    "budgetTotal": "Total: {total}",
+    "budgetTravellers": "{count, plural, one {# viajero} other {# viajeros}}",
+    "summaryHint": "Esto es lo que tiene el itinerario hasta ahora. Lo que omitiste puedes agregarlo después en Ajustes.",
+    "skipped": "Omitido",
+    "noDates": "Sin fechas",
+    "countCities": "{count, plural, one {# ciudad} other {# ciudades}}",
+    "countHotels": "{count, plural, one {# hotel} other {# hoteles}}",
+    "countFlights": "{count, plural, one {# vuelo} other {# vuelos}}",
+    "countMembers": "{count, plural, one {# miembro} other {# miembros}}",
+    "startedEmpty": "Empezó vacío",
+    "offlineTitle": "Estás sin conexión",
+    "offlineBody": "Configurar un itinerario necesita conexión. Lo que agregaste hasta ahora está guardado: continúa cuando vuelvas a tener conexión o termina después."
+  },
+  "setupChecklist": {
+    "title": "Termina de configurar",
+    "body": "Estas partes del itinerario aún están vacías.",
+    "dismiss": "Ocultar esta lista",
+    "part": {
+      "cities": "Agregar ciudades",
+      "hotels": "Agregar hoteles",
+      "flights": "Agregar vuelos",
+      "budget": "Definir un presupuesto",
+      "places": "Agregar lugares"
+    }
+  },
+  "copyTrip": {
+    "title": "Copiar de otro itinerario",
+    "hint": "Trae ciudades, hoteles, lugares y más de otro itinerario en el que estés.",
+    "description": "Elige un itinerario y qué traer de él. Ese itinerario no cambia.",
+    "source": "Copiar de",
+    "reading": "Leyendo el itinerario…",
+    "readFailed": "No se pudo leer ese itinerario. Revisa tu conexión.",
+    "what": "Qué copiar",
+    "part": {
+      "cities": "Ciudades",
+      "places": "Lugares",
+      "hotels": "Hoteles",
+      "flights": "Vuelos",
+      "bookings": "Reservas",
+      "plan": "Plan del día",
+      "budget": "Presupuesto",
+      "todos": "Listas de pendientes",
+      "holidays": "Feriados",
+      "members": "Miembros"
+    },
+    "partHint": {
+      "cities": "Todas las ciudades en uso.",
+      "places": "La lista de lugares tal como está, sin investigación por revisar. Necesita las ciudades.",
+      "hotels": "Movidos a las nuevas fechas, sin sus notas. Necesita las ciudades.",
+      "flights": "Movidos a las nuevas fechas, sin números de confirmación, costos ni notas.",
+      "bookings": "Movidas a las nuevas fechas, sin sus notas ni costos.",
+      "plan": "Las paradas planeadas, movidas a las nuevas fechas y planeadas otra vez. Necesita los lugares.",
+      "budget": "El total, las categorías y los viajeros. Las metas por miembro solo con los miembros.",
+      "todos": "Las listas y sus pendientes, todos otra vez por hacer, con las fechas límite movidas. Los responsables solo con los miembros.",
+      "holidays": "Los feriados y cierres, ya que las fechas no se mueven.",
+      "members": "Todos los del otro itinerario se agregan a este."
+    },
+    "count": {
+      "cities": "{count, plural, one {# ciudad} other {# ciudades}}",
+      "places": "{count, plural, one {# lugar} other {# lugares}}",
+      "hotels": "{count, plural, one {# hotel} other {# hoteles}}",
+      "flights": "{count, plural, one {# vuelo} other {# vuelos}}",
+      "bookings": "{count, plural, one {# reserva} other {# reservas}}",
+      "plan": "{count, plural, one {# parada} other {# paradas}}",
+      "budget": "El presupuesto",
+      "todos": "{lists, plural, one {# lista} other {# listas}} con {count, plural, one {# pendiente} other {# pendientes}}",
+      "holidays": "{count, plural, one {# feriado} other {# feriados}}",
+      "members": "{count, plural, one {# miembro agregado} other {# miembros agregados}}"
+    },
+    "preview": "Lo que se copiará",
+    "shiftNone": "Las fechas quedan como están.",
+    "shiftLater": "{days, plural, one {Cada fecha se mueve # día después} other {Cada fecha se mueve # días después}}: el {from} pasa a ser el {to}.",
+    "shiftEarlier": "{days, plural, one {Cada fecha se mueve # día antes} other {Cada fecha se mueve # días antes}}: el {from} pasa a ser el {to}.",
+    "noFirstDay": "Ese itinerario no tiene fechas ni hoteles, así que las fechas quedan como están.",
+    "membersLeftOut": "{count, plural, one {# miembro no cabe} other {# miembros no caben}}: un itinerario tiene como máximo 20.",
+    "outsideTitle": "Fuera de las nuevas fechas",
+    "outsideBody": "{count, plural, one {# registro queda} other {# registros quedan}} fuera de {range}. Se copian igual; corrígelos después en Ajustes.",
+    "chooseSome": "Elige al menos una cosa para copiar.",
+    "copy": "Copiar",
+    "copying": "Copiando…",
+    "copied": "Copiado de {name}",
+    "failed": "La copia se detuvo a medias, así que parte de ella puede haberse copiado. Revisa el itinerario antes de intentarlo otra vez.",
+    "offline": "Copiar necesita conexión.",
+    "notEmpty": "Este itinerario ya tiene algo guardado, así que no se puede copiar nada en él.",
+    "choose": "Elegir qué copiar",
+    "settingsBody": "Mientras este itinerario siga vacío, copia ciudades, hoteles, lugares y más de otro itinerario en el que estés. Ese no cambia.",
+    "copiedSummary": "De {name}: {what}"
   }
 }

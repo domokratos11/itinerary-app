@@ -27,6 +27,7 @@
     "list": "List",
     "map": "Map",
     "notResearched": "Not researched yet",
+    "notFound": "Not found by research",
     "today": "Today",
     "minutes": "{minutes} min",
     "minutesWalk": "{minutes} min walk",
@@ -124,10 +125,12 @@
     "notFoundBody": "There is no trip with this link. Check that you copied all of it.",
     "offlineTitle": "You're offline",
     "offlineBody": "This device hasn't opened the trip before, so it has no copy to show. Connect to the internet to load it.",
-    "chooseTrip": "Choose a trip",
+    "chooseTrip": "Choose an itinerary",
     "noTripsTitle": "No trips yet",
     "noTripsBody": "{email} isn't on any trip's member list. Ask someone on a trip to add your email, or use another account.",
-    "newTrip": "New trip",
+    "newTrip": "New itinerary",
+    "allTrips": "All itineraries",
+    "notSetUp": "Not set up yet",
     "tryAgain": "Try again",
     "offlinePhrasebook": "Open the Japanese phrasebook"
   },
@@ -145,9 +148,9 @@
   },
   "newTrip": {
     "descriptionOnline": "It starts empty, with you as its only member.",
-    "descriptionOffline": "Creating a trip needs a connection.",
-    "create": "Create trip",
-    "failed": "The trip couldn't be created."
+    "descriptionOffline": "Creating an itinerary needs a connection.",
+    "create": "Create itinerary",
+    "failed": "The itinerary couldn't be created."
   },
   "home": {
     "planLoading": "Loading plan…",
@@ -261,7 +264,8 @@
     "waitingNoMatches": "No waiting places match these filters.",
     "waitingUnpinned": "{count, plural, one {# waiting place has} other {# waiting places have}} no map pin yet.",
     "hotelOffMap": "{name} isn't on the map, so there's no pin or walk or train distance for it.",
-    "hotelOffMapFix": "Find it in Settings"
+    "hotelOffMapFix": "Find it in Settings",
+    "noHotelYet": "No hotel yet"
   },
   "warnings": {
     "closedOnDay": "Closed on this day",
@@ -363,7 +367,7 @@
   },
   "settings": {
     "title": "Trip settings",
-    "intro": "The days are built from the stays: change a hotel's dates and the days follow.",
+    "intro": "The days are built from the trip dates and the stays: change either and the days follow.",
     "cantReach": "Can't reach the trip: {error}",
     "tabStays": "Stays",
     "tabCities": "Cities",
@@ -451,7 +455,8 @@
     "accepted": "Researched and accepted",
     "acceptedOn": "Research reviewed and accepted. Facts last checked {date}.",
     "acceptedTip": "Research reviewed and accepted.",
-    "missingCount": "{count} missing",
+    "notFoundCount": "{count} not found",
+    "notFoundTip": "Research looked but found nothing for: {fields}. Edit the place to add them by hand.",
     "acceptAll": "Accept all ({count})",
     "acceptCount": "Accept research ({count})",
     "tipAcceptAll": "Accept all finished research, in every city",
@@ -519,7 +524,14 @@
     "membersHint": "Each person signs in with this Google account to see and edit the trip.",
     "removeName": "Remove {name}",
     "addMember": "Add a member",
-    "addMemberButton": "Add member"
+    "addMemberButton": "Add member",
+    "dates": "Trip dates",
+    "datesHint": "The trip's days run from the start date to the end date, plus any nights your hotels cover outside them.",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "endBeforeStart": "The end date can't be before the start date.",
+    "saveDates": "Save dates",
+    "clearDates": "Clear dates"
   },
   "backup": {
     "exportTrip": "Export trip",
@@ -607,7 +619,10 @@
     "refreshedLink": "refreshed the read-only link {label}",
     "revokedLink": "closed the read-only link {label}",
     "savedCash": "saved a cash record of {yen}",
-    "archivedCash": "archived a cash record of {yen}"
+    "archivedCash": "archived a cash record of {yen}",
+    "changedTripDates": "set the trip dates to {from} – {to}",
+    "clearedTripDates": "cleared the trip dates",
+    "copiedItinerary": "copied parts of the itinerary {name}"
   },
   "theme": {
     "light": "Light",
@@ -1140,9 +1155,18 @@
       "quickAdd": "Tap + between stops to add a place near you to the day.",
       "changelog": "Tap the version to see what's new."
     },
+    "d20261115": {
+      "tripDates": "A trip can have its own start and end dates in Settings → Trip, so it has days before any hotel is booked.",
+      "noHotelYet": "Days no hotel covers yet say so, and take places from any city.",
+      "itineraries": "Choosing an itinerary shows each one's dates and whether it still needs setting up, and All itineraries in the trip menu goes back to the list.",
+      "setupWizard": "A new itinerary opens with a setup that asks for its dates, cities, hotels, flights, travellers and budget, and any step can be skipped or finished later.",
+      "setupChecklist": "The Dashboard of a new itinerary lists the parts still empty, with links to fill them in.",
+      "copyItinerary": "A new itinerary can start as a copy of parts of another one, in its setup or in Settings → Backup while it's empty, with every date moved to the new start."
+    },
     "d20261114": {
       "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos. It uses the app colours and light or dark theme, and opens without signal.",
       "misc": "To-dos moved to the new Miscellaneous section.",
+      "researchNotFound": "What accepted research couldn't find now shows as not found instead of missing, and those places no longer count as needing research.",
       "budgetCharts": "The Budget shows each category's target against its spending, how the targets add up next to the budget, and what each trip day cost by category."
     }
   },
@@ -1151,5 +1175,126 @@
   },
   "phrasebook": {
     "frameTitle": "Japanese phrasebook"
+  },
+  "setup": {
+    "title": "Set up your itinerary",
+    "stepOf": "Step {step} of {total}",
+    "stepList": "Setup steps",
+    "back": "Back",
+    "skip": "Skip",
+    "next": "Next",
+    "finishLater": "Finish later",
+    "open": "Open itinerary",
+    "filled": "Has something",
+    "step": {
+      "details": "Name and dates",
+      "startFrom": "Start from",
+      "cities": "Cities",
+      "hotels": "Hotels",
+      "flights": "Flights",
+      "people": "Travellers and budget",
+      "summary": "Summary"
+    },
+    "detailsHint": "Give the itinerary a name and the first and last day of the trip. Its days run from one to the other.",
+    "nameRequired": "Give the itinerary a name.",
+    "datesRequired": "Choose both a start and an end date.",
+    "startFromHint": "Start with an empty itinerary, or copy parts of another one.",
+    "startEmpty": "Start empty",
+    "startEmptyHint": "Add the cities, hotels and flights yourself in the next steps.",
+    "citiesHint": "The cities you'll stay in. Each one gets a colour on the calendar and the map.",
+    "noCities": "No cities yet.",
+    "hotelsHint": "Where you sleep each night. Not booked yet? Write \"To be decided\" as the hotel's name.",
+    "hotelsNeedCity": "Each hotel belongs to a city. Go back to add one first, or skip this step.",
+    "noHotels": "No hotels yet.",
+    "flightsHint": "Your flights to and from Japan, in each airport's local time.",
+    "peopleHint": "Who else is on the itinerary, and how much you plan to spend.",
+    "budget": "Budget",
+    "budgetTotal": "Total: {total}",
+    "budgetTravellers": "{count, plural, one {# traveller} other {# travellers}}",
+    "summaryHint": "This is what the itinerary has so far. Anything skipped can be added later in Settings.",
+    "skipped": "Skipped",
+    "noDates": "No dates",
+    "countCities": "{count, plural, one {# city} other {# cities}}",
+    "countHotels": "{count, plural, one {# hotel} other {# hotels}}",
+    "countFlights": "{count, plural, one {# flight} other {# flights}}",
+    "countMembers": "{count, plural, one {# member} other {# members}}",
+    "startedEmpty": "Started empty",
+    "offlineTitle": "You're offline",
+    "offlineBody": "Setting up an itinerary needs a connection. What you've added so far is saved: carry on once you're back online, or finish later."
+  },
+  "setupChecklist": {
+    "title": "Finish setting up",
+    "body": "These parts of the itinerary are still empty.",
+    "dismiss": "Hide this checklist",
+    "part": {
+      "cities": "Add cities",
+      "hotels": "Add hotels",
+      "flights": "Add flights",
+      "budget": "Set a budget",
+      "places": "Add places"
+    }
+  },
+  "copyTrip": {
+    "title": "Copy from another itinerary",
+    "hint": "Bring cities, hotels, places and more from another itinerary you're on.",
+    "description": "Choose an itinerary and what to bring from it. That itinerary isn't changed.",
+    "source": "Copy from",
+    "reading": "Reading the itinerary…",
+    "readFailed": "That itinerary couldn't be read. Check your connection.",
+    "what": "What to copy",
+    "part": {
+      "cities": "Cities",
+      "places": "Places",
+      "hotels": "Hotels",
+      "flights": "Flights",
+      "bookings": "Bookings",
+      "plan": "Day plan",
+      "budget": "Budget",
+      "todos": "To-do lists",
+      "holidays": "Holidays",
+      "members": "Members"
+    },
+    "partHint": {
+      "cities": "Every city in use.",
+      "places": "The place list as it is, without research to review. Needs the cities.",
+      "hotels": "Moved to the new dates, without their notes. Needs the cities.",
+      "flights": "Moved to the new dates, without confirmation numbers, costs or notes.",
+      "bookings": "Moved to the new dates, without their notes or costs.",
+      "plan": "The planned stops, moved to the new dates and planned again. Needs the places.",
+      "budget": "The total, the categories and the travellers. Targets per member only with the members.",
+      "todos": "The lists and their to-dos, all back to do, with due dates moved. Assignees only with the members.",
+      "holidays": "The holidays and closures, as the dates don't move.",
+      "members": "Everyone on the other itinerary is added to this one."
+    },
+    "count": {
+      "cities": "{count, plural, one {# city} other {# cities}}",
+      "places": "{count, plural, one {# place} other {# places}}",
+      "hotels": "{count, plural, one {# hotel} other {# hotels}}",
+      "flights": "{count, plural, one {# flight} other {# flights}}",
+      "bookings": "{count, plural, one {# booking} other {# bookings}}",
+      "plan": "{count, plural, one {# stop} other {# stops}}",
+      "budget": "The budget",
+      "todos": "{lists, plural, one {# list} other {# lists}} with {count, plural, one {# to-do} other {# to-dos}}",
+      "holidays": "{count, plural, one {# holiday} other {# holidays}}",
+      "members": "{count, plural, one {# member} other {# members}} added"
+    },
+    "preview": "What will be copied",
+    "shiftNone": "The dates stay as they are.",
+    "shiftLater": "{days, plural, one {Every date moves # day later} other {Every date moves # days later}}: {from} becomes {to}.",
+    "shiftEarlier": "{days, plural, one {Every date moves # day earlier} other {Every date moves # days earlier}}: {from} becomes {to}.",
+    "noFirstDay": "That itinerary has no dates or hotels, so the dates stay as they are.",
+    "membersLeftOut": "{count, plural, one {# member doesn't fit} other {# members don't fit}}: an itinerary holds at most 20.",
+    "outsideTitle": "Outside the new dates",
+    "outsideBody": "{count, plural, one {# record lands} other {# records land}} outside {range}. They are copied anyway; fix them afterwards in Settings.",
+    "chooseSome": "Choose at least one thing to copy.",
+    "copy": "Copy",
+    "copying": "Copying…",
+    "copied": "Copied from {name}",
+    "failed": "The copy stopped partway, so part of it may have been copied. Check the itinerary before trying again.",
+    "offline": "Copying needs a connection.",
+    "notEmpty": "This itinerary already has something saved, so nothing can be copied into it.",
+    "choose": "Choose what to copy",
+    "settingsBody": "While this itinerary is still empty, copy cities, hotels, places and more from another itinerary you're on. That one isn't changed.",
+    "copiedSummary": "From {name}: {what}"
   }
 }

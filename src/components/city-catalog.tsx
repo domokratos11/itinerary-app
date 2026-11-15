@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatDayLabel } from "@/lib/format-day";
 import { useTripDays } from "@/lib/trip-store";
+import { dayTakesCity } from "@/domain/days";
 import { cityPins, dayFilterPins, type DayLegend } from "@/domain/map-pins";
 import { itemsForDay } from "@/domain/plan";
 import {
@@ -127,7 +128,7 @@ export function CityCatalog({
   // its own colour. None chosen shows every place.
   const tripDays = useTripDays();
   const cityDays = useMemo(
-    () => tripDays.filter((d) => d.cityIds.includes(city.id)),
+    () => tripDays.filter((d) => dayTakesCity(d, city.id)),
     [tripDays, city.id],
   );
   const [days, setDays] = useState<string[]>([]);

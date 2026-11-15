@@ -4,11 +4,12 @@ import { useRef, useState } from "react";
 import { Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 
+import { CopyItinerary, useCanCopy } from "@/components/copy-itinerary";
 import { EditPanel } from "@/components/edit-panel";
 import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { BackupSchema, backupSummary, type Backup } from "@/domain/backup";
-import { TRIP_COLLECTIONS } from "@/domain/trip";
+import { isEmptyTrip } from "@/domain/trip";
 import { t } from "@/lib/i18n";
 import { useActiveTrip } from "@/lib/auth-store";
 import { collectBackup, importBackup } from "@/lib/backup-actions";
@@ -77,9 +78,10 @@ export function ExportTrip({
 export function BackupSettings({ tripId }: { tripId: string }) {
   const data = useTripStore((s) => s.data);
   const items = usePlanStore((s) => s.items);
-  const empty =
-    TRIP_COLLECTIONS.every((name) => data[name].length === 0) &&
-    items.length === 0;
+  const empty = isEmptyTrip(data, items);
+  const readOnly = useReadOnly();
+  const canCopy = useCanCopy(tripId);
+  const [copyOpen, setCopyOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<Backup | null>(null);
 
@@ -137,6 +139,19 @@ export function BackupSettings({ tripId }: { tripId: string }) {
           </Button>
         </div>
       </section>
+      {/* Kept while its panel is open: the first records it writes make
+          the trip no longer empty. */}
+      {(empty || copyOpen) && !readOnly && canCopy && (
+        <section className="flex flex-col gap-2">
+          <h3 className="font-medium">{t("copyTrip.title")}</h3>
+          <p className="text-muted-foreground">{t("copyTrip.settingsBody")}</p>
+          <CopyItinerary
+            tripId={tripId}
+            trigger="button"
+            onOpenChange={setCopyOpen}
+          />
+        </section>
+      )}
       {pending && (
         <EditPanel
           open

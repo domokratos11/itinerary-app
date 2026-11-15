@@ -117,9 +117,11 @@ export function TripCalendar({
             const holiday = holidays.get(cell.date);
             const isToday = cell.date === today;
             const researched = researchByDate.get(cell.date);
-            const cities = cell.day.cityIds
-              .map((id) => citiesById.get(id)?.name ?? id)
-              .join(" → ");
+            // A day no hotel covers yet says so instead of naming a city.
+            const cities =
+              cell.day.cityIds
+                .map((id) => citiesById.get(id)?.name ?? id)
+                .join(" → ") || t("day.noHotelYet");
             return (
               <Link
                 key={cell.date}

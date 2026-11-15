@@ -215,7 +215,13 @@ Shared chrome and gates:
 
 | File | Role |
 |---|---|
-| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. The offline screen has a button to the static phrasebook (`gate.offlinePhrasebook`, linking to `/phrasebook-guide/`), so the phrasebook opens even when the app cannot. |
+| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. With one or more trips and none chosen, the picker shows a card per trip (name, dates, and a "Not set up yet" badge when `setup` is `pending`; two columns from `lg`); "No trips yet" shows only for an empty list. The offline screen has a button to the static phrasebook (`gate.offlinePhrasebook`, linking to `/phrasebook-guide/`), so the phrasebook opens even when the app cannot. A member's trip whose `setup` is `pending` (never on a read-only link) gets `SetupWizard` in place of the app (§12.11). |
+| `setup-wizard.tsx` | `SetupWizard` (Client Component): the setup screen for a new itinerary (§12.11). Holds the current step, the header ("Finish later", the link to all itineraries), the step list down the side from `lg`, or "Step X of Y" with a progress bar on phones, and the offline message. Each step saves through the existing actions. |
+| `setup-steps.tsx` | The wizard's steps: `DetailsStep`, `CitiesStep`, `HotelsStep`, `FlightsStep`, `PeopleStep` and `SummaryStep`. They reuse the Settings forms and savers: `saveCity` and `CityForm` (`settings-cities.tsx`), `saveStay`, `useStayPreview` and `StayForm` (`settings-stays.tsx`), `saveFlight` and `FlightFormPanel` (`settings-flights.tsx`), and `MembersSection` (`settings-trip.tsx`), all exported for this. `SummaryStep` adds a "Start from" row (`copySummary`) only after a copy in the same visit. |
+| `setup-parts.tsx` | `StepIntro`, `WizardActions` (Back, Skip, Next), `AddedList` and the `StepNav` type. |
+| `setup-start-from.tsx` | `StartFromStep` (the "Start from" step): "Start empty" and `CopyItinerary` (trigger `card`) beside it. The step is shown only when `useCanCopy` says the person has another itinerary (§12.11). A finished copy calls `onCopied`, and the wizard moves on. |
+| `copy-itinerary.tsx` | `CopyItinerary` (Client Component): copies chosen parts of another itinerary into this one (§13 `trip-copy.ts`, §3.5 `trip-copy-actions.ts`). Trigger `card` in the wizard, `button` in Settings → Backup. The panel picks one of the person's other itineraries (read once with `readCopySource`), ticks parts (`withNeeds` adds what they need), shows a preview (counts, date shift, members left out, records outside the trip's dates), then copies. Copying is offered only while this itinerary is empty (`isEmptyTrip`) and online. `useCopySources(tripId)` lists the other itineraries from the auth store, `useCanCopy(tripId)` says whether there are any, and `copyCounts` and `copySummary` word the report. |
+| `setup-checklist.tsx` | `SetupChecklist` (the Dashboard's "Finish setting up" card) and `useSetupChecklist` (the empty parts, and hiding the card on this device). |
 | `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections; Miscellaneous at `/misc/` in place of To-dos), `MISC_ITEMS` and `useMiscItems()` (the Miscellaneous entries: To-dos at `/todos/`, both are ordinary Next links, each with a `path`: To-dos at `/todos/` and Phrasebook at `/phrasebook/`, §12.10) and `useSections()`, which gives viewers only Dashboard, Days, Cities and Miscellaneous (Miscellaneous shows only Phrasebook). |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. The Miscellaneous item opens `MiscSubMenu` (shadcn `SidebarMenuSub`) with both entries; it is hidden when the sidebar is collapsed to icons. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
@@ -228,7 +234,7 @@ Shared chrome and gates:
 | `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Light / Dark button. `theme-provider.tsx` also puts the saved colour family on the page (`PickPalette`) and re-applies the browser bar colour (`ThemeColor`). |
 | `palette-picker.tsx` | Colour family picker (Sen, Ink, Pine, Plum): shadcn ToggleGroup, two per row on phones and one row from `lg`. Sits under the Light / Dark toggle in the Account sheet and the viewer sheet. |
 | `search-palette.tsx` | The Ctrl+K / ⌘K search over days, hotels and places. |
-| `trip-switcher.tsx`, `new-trip.tsx` | Trip name menu; panel to create a trip (for permitted creators). |
+| `trip-switcher.tsx`, `new-trip.tsx` | `TripSwitcher`: trip name menu, with each trip's dates and "Not set up yet" badge, then "All itineraries" (`openTripPicker`) and "New itinerary" (for permitted creators). Exports `TripSummaryText` (name, dates and badge), shared with the trip picker in `app-gate.tsx`. `new-trip.tsx`: panel to create a trip (for permitted creators). |
 | `account-sheet.tsx` | Account side sheet: signed-in email, theme (Light / Dark and colour family), language, About, sign-out. |
 | `activity-sheet.tsx` | Change log sheet with undo. |
 | `language-select.tsx` | Language picker. |
@@ -240,7 +246,7 @@ Screens (one per page):
 
 | File | Page | Role |
 |---|---|---|
-| `dashboard-screen.tsx` | `/` | `DashboardScreen` and `DashboardContent`: dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research, and open to-dos that are late or due soon (§12.9). Imports the budget figures from `budget-figures.tsx`. |
+| `dashboard-screen.tsx` | `/` | `DashboardScreen` and `DashboardContent`: dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research, and open to-dos that are late or due soon (§12.9). Imports the budget figures from `budget-figures.tsx`. Shows `SetupChecklist` (§12.1) while setup parts are missing. |
 | `dashboard-parts.tsx` | `/` | The pieces the dashboard is built from: `Tile`, `Panel`, `Hint`, `Empty` and `ClockTiles`. |
 | `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions, and the quick cost button (`QuickExpenseButton`); before it, a countdown. During the trip it also shows the day's weather (`WeatherBadge`). |
 | `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. `trip-days.tsx` holds the Calendar / List toggle (shadcn `ToggleGroup`, next to Today). |
@@ -266,7 +272,7 @@ Screens (one per page):
 | `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Share, Backup, Clean up. |
 | `settings-share.tsx` | Settings tab | Read-only share links: create, copy, refresh, change expiry, close (§12.8). |
 | `settings-stays.tsx`, `settings-cities.tsx`, `settings-places.tsx`, `settings-flights.tsx`, `settings-reservations.tsx`, `settings-holidays.tsx`, `settings-trip.tsx` | Settings tabs | Admin editors for each collection. `settings-places.tsx` also holds the research requests and proposal review. |
-| `settings-backup.tsx` | Settings tab | Export the whole trip as JSON; import only into an empty trip. |
+| `settings-backup.tsx` | Settings tab | Export the whole trip as JSON; import only into an empty trip. A "Copy from another itinerary" section (`CopyItinerary`, button trigger) shows while the trip is empty or its panel is open, and only when the trip is not read-only and the person has another itinerary. |
 | `settings-cleanup.tsx` | Settings tab | Lists retired records and deletes them for good, including archived to-dos and to-do lists that no live to-do uses. |
 | `settings-about.tsx` | Account sheet | Version (a `WhatsNewButton`, §18.4) and "start fresh" button. |
 | `whats-new.tsx` | Desktop corner, Account sheet | `WhatsNewButton` turns the version text into a button (in `VersionTag` on wide screens, in `settings-about.tsx` on phones). `WhatsNewPanel` is a Drawer on phones and a Dialog from `md`, listing "Version X · date" with the bullets of `CHANGELOG`. Tests in `whats-new.test.tsx`. |
@@ -309,19 +315,21 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 
 | File | Role |
 |---|---|
-| `schemas.ts` | The Zod schemas for every Firestore record and the enums (categories, priorities, statuses, expense categories, reservation types, payment methods, cash kinds). `CashRecordSchema` is the cash record; `ExpenseRecordSchema` has `paymentMethod` (default `card`); `BudgetSchema` has `byMember`. `TodoListRecordSchema` and `TodoRecordSchema` hold the to-do records (§23.22). |
+| `schemas.ts` | The Zod schemas for every Firestore record and the enums (categories, priorities, statuses, expense categories, reservation types, payment methods, cash kinds). `CashRecordSchema` is the cash record; `ExpenseRecordSchema` has `paymentMethod` (default `card`); `BudgetSchema` has `byMember`. `TodoListRecordSchema` and `TodoRecordSchema` hold the to-do records (§23.22). `TripDatesSchema` and `tripDatesOf(doc)` hold the trip's own first and last day (both or neither; anything else reads as none), and `TripSetupSchema` the setup state (`pending` or `done`). |
 | `cash.ts` | `summarizeCash(cash, expenses, members)`: each member's cash on hand (withdrawn + received − handed over − paid in cash), the total withdrawn with dollars charged, and who owes whom (handovers net out per pair). Pure; never part of the budget totals. |
-| `trip.ts` | `TripData` type, `TRIP_COLLECTIONS` (the ten trip collections: the eight record collections, plus `todoLists` and `todos`), `EMPTY_TRIP`, `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
-| `trip-repository.ts` | `TripRepository` interface and `TripAccess` / `TripSummary` types. |
-| `plan-repository.ts` | `PlanRepository` interface; `markRemoved`. |
+| `trip.ts` | `TripData` type, `TRIP_COLLECTIONS` (the ten trip collections: the eight record collections, plus `todoLists` and `todos`), `EMPTY_TRIP`, `isEmptyTrip` (nothing saved, archived records and removed stops included; only such a trip takes a backup or a copy), `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
+| `trip-repository.ts` | `TripRepository` interface and the `TripAccess`, `TripSummary` (with the trip's `startDate`, `endDate` and `setup`), `TripChanges` and `NewTripOptions` (the dates a new trip can start with) types. `readTrip(tripId)` reads every trip collection once, archived records included, for copying from another itinerary (§3.5). |
+| `trip-copy.ts` | `copyTrip(source, choices, target, now)` and its helpers: `COPY_PARTS`, `CopyPart`, `withNeeds`, `neededBy`, `needsOf`, `availableParts`, `copyShift`, `sourceFirstDay`, `copiesAnything`, `MAX_MEMBERS` (20). Pure logic that returns what to write into the target; it words nothing. The rules are in §13. |
+| `setup.ts` | `SETUP_STEPS` and `setupSteps({canCopy})` (the wizard's steps; "Start from" is left out unless a copy is possible), `isSkippable`, `isStepFilled`, `resumeStep`, `SETUP_PARTS` and `setupChecklist` (the empty parts for the Dashboard card). Pure logic with no words; the wizard words its steps. |
+| `plan-repository.ts` | `PlanRepository` interface (`readItems(tripId)` reads every item once, removed ones included, for copying; `save`, `subscribe`); `markRemoved`. |
 | `proposal-repository.ts` | `ProposalRepository` interface. |
 | `user-repository.ts` | `UserRepository` interface and the user profile schema (language, last trip). |
 | `activity.ts` | Activity schema, kinds, `ActivityRepository`, and `undoFor`. |
 | `cleanup.ts` | Plans the Clean up step (what is retired and can go) and the `CleanupRepository` interface. |
-| `backup.ts` | Backup file schema and builder (includes day research and cash records). |
+| `backup.ts` | Backup file schema and builder (includes day research and cash records; the trip's dates are part of the trip block, `backupDates`). |
 | `day-research.ts` | `DayResearchRepository` interface; `requestDay`, `isOpenDayResearch`, `dayPlaces`, `dayProposals`, `dayBrief`, `DayResultSchema`. Day research: requests and analyses per day, and the day's part of the research file. |
 | `plan.ts` | Plan logic: items for a day, next stop, keys for insert, stop warnings, holiday warnings, costs, hotels for a day. |
-| `days.ts` | `deriveDays`: the trip's days, from the stays (a day belongs to every stay whose range includes it). `tripPhase` (before, during, after). |
+| `days.ts` | `deriveDays(stays, range?)`: the trip's days, from the stays and, when given, the trip's own dates (`range`, §23.2). A day belongs to every stay whose range includes it; a day no stay covers has no city. `dayTakesCity` and `dayPlaceCities` say which places suit a day (every city, when no hotel covers it). `tripPhase` (before, during, after). |
 | `legs.ts` | Legs between stops (walk, transit, taxi) and distance formatting. Walking legs are at most `WALK_LEG_MAX_KM` (1.5 km). |
 | `drop.ts` | Drop rules for drag and drop (which target, which order key). |
 | `location.ts` | Google coordinate expiry (30 days) and refresh (after 20 days); match radii for the place matcher. |
@@ -344,7 +352,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `sun.ts` | `sunTimes(date, lat, lng)` → sunrise, sunset and daylight minutes in Tokyo time (NOAA solar equations, about a minute's accuracy). |
 | `proposals.ts` | Research proposals: new, open check, accept field by field, research result schema and cleaning. |
 | `place-edit.ts` | Place form: fields, validation, changes, filters (`PLACE_FILTERS`), Maps link parsing, draft places. `categoryFromGoogleType(type)` guesses a category from Google's primary type (food, temple, shopping, otherwise sight); the person can change it. |
-| `trip-edit.ts` | Stay issues and day changes when stays move. |
+| `trip-edit.ts` | Stay issues and day changes when stays move or the trip's dates change (`dayChanges` takes the dates before and after). |
 | `taxonomy.ts` | Colours for categories, priorities and expenses, as `var(--…)` tokens (§10); `tint()` mixes a colour into `var(--card)`. |
 | `version.ts` | `versionFromDescribe`: turns `git describe` output into a version number. |
 | `changelog.ts` | `ChangelogEntry` (`version`: a string, or null for work not deployed yet; `date`; `items`: `MessageKey[]`), `CHANGELOG` (newest first) and `changelogForDisplay(entries, appVersion)`, which labels a null entry with the running version. Starts on 2026-11-12; older versions have no entries. Tests in `changelog.test.ts`. |
@@ -362,8 +370,8 @@ Firebase and repositories:
 | `auth.ts` | The only file that talks to `firebase/auth` for sign-in: Google popup, `watchUser`, sign-out, session clear. `signInWithGoogle()` stops waiting after `SIGN_IN_TIMEOUT_MS` (90 s) and throws "Sign-in didn't finish", so the button can be tapped again; a popup that finishes later still signs in through `onAuthStateChanged`. `signInErrorKey(code, standalone)` maps Firebase codes to message keys, and `isStandalone()` detects the home-screen app (`navigator.standalone` on iOS, or `display-mode: standalone`). |
 | `tracked-firestore.ts` | `setDoc`, `updateDoc`, `deleteDoc` and `writeBatch`, with the same signatures as `firebase/firestore`, each wrapped with `trackWrite` so the write counts in `sync-store.ts` until the server confirms (`writeBatch` wraps `commit`). Every `firestore-*-repository.ts` imports these four from here, not from `firebase/firestore`. `watchStartupWrites()` calls `waitForPendingWrites(getDb())` once. |
 | `storage-persist.ts` | Asks the browser to keep the offline copy of the trip (IndexedDB). `storageStatus()` returns `kept`, `may-be-cleared` or `unsupported` from `navigator.storage.persisted()`; `requestPersistentStorage()` calls `navigator.storage.persist()` only when the copy is not already kept. Browsers usually decide without a prompt (Chrome by engagement, Safari for home-screen apps). Tests in `storage-persist.test.ts`. |
-| `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. |
-| `firestore-plan-repository.ts` | Implements `PlanRepository` on `trips/{id}/items`. |
+| `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. `readTrip` reads each trip collection once with `getDocs`. |
+| `firestore-plan-repository.ts` | Implements `PlanRepository` on `trips/{id}/items`. `readItems` reads them once with `getDocs`. |
 | `firestore-proposal-repository.ts` | Implements `ProposalRepository` on `trips/{id}/proposals`. |
 | `firestore-day-research-repository.ts` | Implements `DayResearchRepository` (`subscribe`, `save`) on `trips/{id}/dayResearch/{date}`. `local-day-research-repository.ts` is the in-memory version for tests. |
 | `firestore-user-repository.ts` | Implements `UserRepository` on `users/{uid}`. |
@@ -382,8 +390,8 @@ State and sync:
 | File | Role |
 |---|---|
 | `auth-store.ts` | Zustand: sign-in status, user, trips, access, canCreateTrips, trip ID. `useActiveTrip()`. The `tripChosen` flag is set by `setTripId` (also when it sets null) and reset by `setUser`. |
-| `use-auth-sync.ts` | Watches sign-in, loads the person's trips and profile, picks a trip, checks membership, remembers the trip. |
-| `trip-store.ts` | Zustand: trip collections, loaded flags, error. Hooks `useTrip`, `useTripDays`, `usePlacesById`, `useCitiesById`. |
+| `use-auth-sync.ts` | Watches sign-in, loads the person's trips and profile, picks a trip (reads the "All itineraries" request once per page, §16), checks membership, remembers the trip. |
+| `trip-store.ts` | Zustand: trip collections, loaded flags, error. Hooks `useTrip`, `useTripDays`, `useTripDates` (the open trip's own dates, or the link's dates in viewer mode), `usePlacesById`, `useCitiesById`. |
 | `use-trip-sync.ts` | Subscribes to the ten trip collections (`TRIP_COLLECTIONS`, including `cash` and the two to-do collections) when access is `member`. |
 | `plan-store.ts` | Zustand: plan items, ready flag, error. |
 | `use-plan-sync.ts` | Subscribes to `items` for the trip. |
@@ -392,7 +400,7 @@ State and sync:
 | `sync-store.ts` | Zustand `useSyncStore`: `pending` (writes from this session the server has not confirmed) and `startup` (true until edits queued in an earlier session, before a reload, are sent). `trackWrite(promise)` counts a write until it settles; `trackStartupWrites(promise)` does the same for those earlier edits; `syncStatus(state, online)` returns `"saved"`, `"saving"` or `"waiting"`. Firestore write promises settle only when the server confirms, so offline writes stay counted. |
 | `use-proposals.ts`, `use-activity.ts` | Live proposals (always), and the activity log (only while its sheet is open). |
 | `use-trip-id.ts` | The open trip's ID from the auth store. |
-| `trip-id.ts` | Trip ID format (`[A-Za-z0-9_-]`, 6 to 128 characters), remembering it on the device, choosing a trip, opening trips. |
+| `trip-id.ts` | Trip ID format (`[A-Za-z0-9_-]`, 6 to 128 characters), remembering it on the device, choosing a trip (`chooseTrip`, with `showPicker`), opening trips, and the one-time request for the picker (`requestTripPicker`, `takePickerRequest`, `openTripPicker`; sessionStorage key `trip-picker`, kept for the tab). |
 | `plan-actions.ts` | Every plan change: add, move, re-key, edit, remove, restore. Updates the store first, then saves. |
 | `trip-actions.ts` | Every change to trip records (`saveRecord`, `archiveRecord`, `saveBudget`). |
 | `proposal-actions.ts` | Request research; accept or dismiss proposals. |
@@ -404,6 +412,7 @@ State and sync:
 | `lang-boot.ts` | `LOCALE_STORAGE_KEY` (`"locale"`, the localStorage key for the chosen language, also used by `i18n.ts`) and `LANG_BOOT_SCRIPT`, the inline script the root layout puts in `<head>`. It sets `<html lang>` before the first paint: the stored language if valid, else Spanish for an `es*` browser, else English (the same rule as `initLocale`). Tests in `lang-boot.test.ts`. |
 | `usd-rate.ts` | Zustand store `useUsdRate`: today's USD to JPY rate, fetched once per session from Frankfurter (§14.4), falling back to the fixed `YEN_PER_USD` offline. Used by the expense, quick cost and reservation forms and by the dollar display. |
 | `backup-actions.ts` | Export and import of the trip file. |
+| `trip-copy-actions.ts` | `readCopySource(summary)` reads another itinerary once (`readTrip` and `readItems`) for copying; nothing is written to it. `writeTripCopy(tripId, copy, sourceName)` writes the copy: the record collections in `TRIP_COLLECTIONS` order (cities first, in batches), then the stops (`planRepository.save` each), then the trip's budget and members (`updateTrip`, only when they change), then one `settings` activity entry. A failure midway leaves what was written. Tests in `trip-copy-actions.test.ts`. |
 | `trip-actions.test.ts` etc. | Tests beside each module. |
 
 Maps and place helpers:
@@ -421,7 +430,7 @@ Maps and place helpers:
 | `device-location.ts` | `currentPosition()`: the phone's position with high accuracy, a 10 s timeout and a 60 s `maximumAge`. Rejects with a `LocationError` whose `reason` is `denied`, `unavailable`, `timeout` or `unsupported`. The position is used for one search and never stored, in the stores or in Firestore. |
 | `geo.ts` | Straight-line distance. |
 | `tokyo-date.ts` | Date helpers in Tokyo time. |
-| `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). `formatFullDate` gives a date with its year ("Nov 12, 2026") in the current language, for What's new. |
+| `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). `formatFullDate` gives a date with its year ("Nov 12, 2026") in the current language, for What's new. `formatDateRange(start, end)` gives two dates as one range in the current language, for the trip picker and trip menu. |
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` (from `NEXT_PUBLIC_BASE_PATH`) for URLs the browser fetches directly. `SITE_BASE_PATH` (`/itinerary-app`) is the same path as a constant, read by `next.config.ts` and the phrasebook import (§4.1). |
@@ -556,6 +565,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
     Suspense > PlanSync                   member listeners, or ViewerSync for ?share= (no DOM)
     LocaleRoot                            remounts the app on language change
      AppGate                              splash / sign-in / trip picker / member app / shared view
+      SetupWizard                          instead of the app, while a member's trip has setup pending (§12.11)
       AppSidebarProvider                  sidebar open state (localStorage)
        AppHeader (Suspense)               trip switcher, section links (md), sync status, search, activity, account
                                           (viewer: trip name, Read-only badge, search, ViewerSheet)
@@ -574,7 +584,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 
 | Page | Screen | Main children |
 |---|---|---|
-| `/` | `DashboardScreen` → `DashboardContent` | `TodayCard`, `Tile`, `Panel`, `ClockTiles` (`dashboard-parts.tsx`), `Charts`, `Yen`, `HideAmountsButton` |
+| `/` | `DashboardScreen` → `DashboardContent` | `TodayCard`, `SetupChecklist` (§12.1), `Tile`, `Panel`, `ClockTiles` (`dashboard-parts.tsx`), `Charts`, `Yen`, `HideAmountsButton` |
 | `/days/` | `TripName`, `TripDates`, `TripPlanStatus`, `ExportTrip`, `TodayCard`, `NeedsNewDay`, `ResearchNotice`, `TripDays` (`TripCalendar` or the list, by the `ToggleGroup`) | — |
 | `/day/` | `DayScreen` → `DayPlan` | `SortableStop`, `StopCard` (`day-plan-stop.tsx`), `FullDay`, `HotelButtons`, `BookingsButton`, `Reservations` (`day-plan-links.tsx`), `FlightCard`, `DayResearchPanel`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
@@ -614,7 +624,7 @@ What happens on first load, in order:
    - `watchUser` (Firebase Auth state) sets `status` to `signed-in` or `signed-out`.
    - If signed in: `canCreateTrips()` reads `config/access`; `watchMyTrips(email)` lists trips where `members` contains the lowercase email; `users.get(uid)` loads the profile (language, last trip).
    - Language: the saved profile language wins; otherwise the current language is saved to the profile.
-   - Trip choice (`chooseTrip`): the `?trip=` link first; then the remembered trip or last trip if it is in the list; then the only trip if there is exactly one.
+   - Trip choice (`chooseTrip`): the `?trip=` link first; if the list could not be read, the remembered trip; if "All itineraries" asked for the picker (`showPicker`, read once per page), no trip; then the remembered trip or last trip if it is in the list; then the only trip if there is exactly one.
    - Access: `watchAccess(tripId)` reads `trips/{tripId}`: `member` (exists), `denied` (permission denied), or `missing` (not in cache and not on server).
 6. **`AppGate` decides what to show**:
 
@@ -623,12 +633,13 @@ What happens on first load, in order:
 | `loading` | Splash |
 | `signed-out` | "Sign in" screen with language choice and Google sign-in |
 | signed in, no trip chosen yet (trips still loading, or listed but none chosen yet) | Splash (or offline screen if offline) |
-| several trips, none chosen | Trip picker |
-| no trips | "No trips" screen (with "New trip" if allowed) |
+| one or more trips, none chosen | Trip picker: a card per trip (name, dates, "Not set up yet" when setup is pending); two columns from `lg` |
+| no trips (empty list) | "No trips yet" screen (with "New itinerary" if allowed) |
 | `access = denied` | "Not on this trip" |
 | `access = missing` | "Trip not found" |
 | `access = checking` | Splash (or offline screen) |
 | `member`, a trip collection or the plan store not yet answered | Splash |
+| `member`, trip loaded with `setup` `pending` (never on a read-only link) | The setup wizard (§12.11), in place of the app |
 | `member`, loaded | The app |
 
 7. **Listeners open only for `member`** (`PlanSync`): `usePlanSync(tripId)` subscribes to `items`, `useTripSync(tripId)` subscribes to the ten collections. Until then the rules would refuse them. In the same effect, `MemberSync` calls `watchStartupWrites()` and `requestPersistentStorage()` (§17.1) once the trip is live.
@@ -651,7 +662,7 @@ What happens on first load, in order:
 Firestore (trips/{id}/cities|stays|reservations|places|holidays|expenses|flights|cash|todoLists|todos)
    └─ onSnapshot ─ FirestoreTripRepository.subscribe ─ zod parse (bad rows skipped)
         └─ useTripSync ─ tripStore.setCollection(name, rows)
-             └─ hooks: useTrip() (archived hidden, sorted), useTripDays(), usePlacesById(), useCitiesById()
+             └─ hooks: useTrip() (archived hidden, sorted), useTripDays(), useTripDates(), usePlacesById(), useCitiesById()
                   └─ screens re-render
 
 Firestore (trips/{id}/items)
@@ -661,6 +672,8 @@ Firestore (trips/{id}/items)
 ```
 
 Each listener delivers the full list, not diffs. Each snapshot replaces the store contents.
+
+Copying from another itinerary (§8.2, §13) is the one read that is not a listener. `TripRepository.readTrip` and `PlanRepository.readItems` each run `getDocs` once for the itinerary the person picked, parse rows as the listeners do, and return the result to the copy panel's own state. Nothing is put in the stores.
 
 Shared view (viewer mode, no sign-in):
 
@@ -688,6 +701,7 @@ UI event (drop, edit, add, archive, budget change)
 - Counting: every write goes through `tracked-firestore.ts`, which calls `trackWrite` (`sync-store.ts`) on its promise. The write counts as pending from the moment it is made until that promise settles, so the header's `SyncStatus` shows "saving" while it is in flight and "waiting" when offline (§17.1). Writes queued before a reload are counted through `trackStartupWrites` instead.
 - Batches: `saveMany` uses `writeBatch` in chunks of 450 (Firestore limit is 500 per batch). Each committed batch is counted the same way.
 - Share links (members only, Settings → Share): create writes `shares/{shareId}` and its copy; **Refresh** (publish) rewrites the copy from the current trip; **Change expiry** updates `expiresAt`; **Close link** sets `revoked: true`, which cannot be undone. Each action writes one activity entry (kind `settings`). The trip itself is only read.
+- Copy from another itinerary (`CopyItinerary`, only into an empty trip, §3.5 `writeTripCopy`): the records are written in batches (`saveMany`), then the stops (`save` each), then the trip's budget and members (`updateTrip`), then one `settings` activity entry. The source itinerary is only read. The writes are counted like any other (see Counting above).
 
 ### 8.3 Deletes
 
@@ -828,8 +842,10 @@ Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordi
 | `missing-cost` | have no cost estimate |
 | `missing-hours` | have no opening hours |
 | `no-pin` | have no coordinates |
-| `needs-research` | are still drafts |
+| `needs-research` | have empty fields and no accepted research (see `wasResearched`) |
 | `review` | have a research proposal waiting |
+
+A place counts as researched (`wasResearched`) when its status is `researched` and it has sources or a `verifiedAt` date, which accepted research leaves. Its empty fields are then not found (`notFoundFields`): Settings → Places shows one "N not found" badge with the fields in its hint instead of a badge per missing field, place details show "Not found by research" instead of "Not researched yet", and the place no longer counts on the Dashboard or for `research:pull --all-missing`. Pressing Research on the place still asks again.
 
 ### 11.4 Other search-like features
 
@@ -846,11 +862,15 @@ Nearby places: `nearbyByPlace` finds other places within 1 km using saved coordi
 
 Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, next flight (`nextFlight`), route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts-lazy.tsx` (recharts via shadcn chart, loaded on first use). The Watch out panel lists open to-dos that are late or due within 7 days first (up to 4, then "N more"), each linking to `/todos/?list=<id>` (§12.9).
 
+**Finish setting up** (`SetupChecklist`, `setup-checklist.tsx`): for a trip with a `setup` field (§12.11), and not on a read-only link, the card lists each empty part as a link: cities, hotels, flights and places (Settings tabs), and the budget (`/budget/`). It sits above the tiles, or in place of the "nothing yet" message when the trip has no days or places. A card with nothing missing is not shown. The × hides it for this trip on this device (localStorage key `setup-checklist-hidden:<tripId>`); a version reset clears that key (§18.2).
+
 **Shared view:** the budget tile, the Money section and cost per city are removed. The "Watch out" list has no research or Settings links.
 
 ### 12.2 Days (`/days/`)
 
 Trip name and dates, plan status, export of the trip (`ExportTrip`), today card, "needs a new day" (stops whose day is no longer valid after a stay moved), research notice (proposals to review), and the days in one of two views, chosen with a Calendar / List `ToggleGroup` next to the "Today" button. **Calendar** is the default (`TripCalendar`, `trip-calendar.tsx`): Monday-first weeks in one grid, each trip day linking to `/day/?date=` with its stop count, flight, holiday and today ring; each hotel night is a city-coloured bar. Phones get compact cells; from `lg` cells also show city names, holiday names and "N stops". **List** is the day list grouped by hotel (`trip-days.tsx`, city dots, date, stop count, flight cards leaving or landing that day). Flights leaving on a date no stay covers (such as the way there and back) appear as cards before the first or after the last group of days, in both views. The choice is saved on the device in localStorage under `days-view`, kept through a version reset. Each calendar day has id `day-YYYY-MM-DD`, so "Today" scrolls to it. Research icons (search for a requested day, sparkles for a ready analysis) show on calendar cells.
+
+The days come from the hotels and from the trip's own dates (§13, `useTripDays`). A day that no hotel covers has no city. The List then shows "No hotel yet" in place of the city when the trip has no hotels at all; once it has some, such a day keeps the red "No hotel" label. Each calendar cell shows "No hotel yet" where the city names would go.
 
 **Shared view:** Export trip is hidden.
 
@@ -866,6 +886,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
   - **Read-only link:** there is no chevron. The stop always shows its map link and nothing else.
 - **Legs** between stops (`dayLegs`): the hotel to the first stop, stop to stop, and the last stop back to the hotel. Each leg is keyed by the stop it arrives at (or `end`). Walking routes are used for legs up to 1.5 km (`WALK_LEG_MAX_KM`), fetched from the Maps SDK and kept in memory; straight-line distance is the fallback (`use-walking-legs.ts`). The legs from and back to the hotel are labelled "From {hotel}" and "Back to {hotel}" (`LegLine`'s `label`). Legs sit on the rail between two stops (`LegLine`), and the list has no gaps between items, so the rail is continuous. This is the same on the phone list and the desktop stops column (`DroppableList`, `SortableStop`). Drag and drop is unchanged.
 - **Warnings:** `stopWarnings` flags a place on one of its closed dates; `holidayWarnings` flags a holiday or closure on that date for the place's category. These are the only warnings on a stop.
+- **No hotel yet:** a day no hotel covers gets a "No hotel yet" badge in the header. Such a day takes places from every city: the waiting list, the quick add sheet and the other-days list are not limited to one city, and a stop from any city may be dropped on it (`dayTakesCity`, `planDrop`).
 - **Hotels** for the day (`hotelsForDay`): check-in and check-out. A hotel with saved coordinates gets the same walk time or distance as other legs, and, when **Show hotel** is on (see Map below), an "H" pin on the map, drawn larger than the stops (`emphasised`). A hotel with only a text location gets a directions link and no pin, walk time or distance; a note at the top of the day links to Settings > Stays (`hotelsOffMap` in `day-plan.tsx`).
 - **Waiting list**: places in the trip not yet on a day (`waitingPlaces`), listed through `applyWaitingView`.
   - **Sort and filter** menu: sort by priority (the default), name A to Z or Z to A; filter by priority and category. **Clear** appears when anything differs from the default and resets sorting and filters.
@@ -886,7 +907,7 @@ Trip name and dates, plan status, export of the trip (`ExportTrip`), today card,
 ### 12.4 Cities (`/cities/`) and City (`/city/?id=`)
 
 - Cities list: each city in trip order with dates and how much is planned. Each city card is a plain card with a band across the top in the city's colour.
-- City page: the catalogue (§11.2) for one city, with place details, add place, cost lines, the Days filter and the map.
+- City page: the catalogue (§11.2) for one city, with place details, add place, cost lines, the Days filter and the map. Days no hotel covers count as this city's days for the Days filter and the Add to day list, which marks them "No hotel yet".
 
 **Shared view:** the city page has no edit name, Add place or archive. The filters and the map stay.
 
@@ -921,15 +942,15 @@ Tabs (`settings-screen.tsx`):
 
 | Tab | Edits |
 |---|---|
-| Stays | hotels (name, maps link, check-in/out, city, note). The form offers Google's suggestions under the hotel name; choosing one saves the place ID and coordinates (`locationSource` `google`, so `maps:refresh` renews them). Renaming a hotel or changing its link clears the old place ID and coordinates. A stay with no coordinates shows a "Not on the map yet" badge. A hotel still to be decided (`isUndecidedHotel` in `domain/trip.ts`) is never looked up. |
+| Stays | hotels (name, maps link, check-in/out, city, note). The form offers Google's suggestions under the hotel name; choosing one saves the place ID and coordinates (`locationSource` `google`, so `maps:refresh` renews them). Renaming a hotel or changing its link clears the old place ID and coordinates. A stay with no coordinates shows a "Not on the map yet" badge. A hotel still to be decided (`isUndecidedHotel` in `domain/trip.ts`) is never looked up. The change preview counts the trip's own dates too. |
 | Cities | cities (name, colour) |
 | Places | places: edit fields, filters, research requests, proposal review (`ProposalReview`), add draft |
 | Flights | flights: airline, flight number, departure and arrival airport, city, date and time, confirmation (optional), cost (USD or yen), note. Archive and restore. Each flight shows on the days it leaves and lands. |
 | Bookings | reservations (train, hotel, tour, ticket). New bookings can no longer be of type flight; an older flight booking can still be edited. Optional cost in yen or USD, with Paid or Planned; it is saved as one linked expense (§12.5). Reservation cards show that cost. |
 | Holidays | holidays and closures |
-| Trip | trip name, members (email list, max 20), budget (total, by category, travellers, and per-member targets) |
+| Trip | trip name; trip dates (first and last day, both or neither, end on or after the start; Save is enabled only when they change, Clear dates empties both, and a preview lists the days and stops that would come or go); members (email list, max 20); budget (total, by category, travellers, and per-member targets) |
 | Share | read-only share links: name, expiry, copy link, refresh, change expiry, close (§12.8). Members only. |
-| Backup | export the whole trip as JSON, including flights, cash records and day research; import only into a trip that has nothing saved. Older backups without flights still import. |
+| Backup | export the whole trip as JSON, including the trip's dates, flights, cash records and day research; import restores the dates with the budget (files from before trips had dates have none), and only into a trip that has nothing saved. Older backups without flights still import. Below it, "Copy from another itinerary" (`CopyItinerary`, §3.3) shows while the trip is empty and the person has another itinerary; it brings chosen parts of that itinerary (§13) and is never shown on a read-only link. |
 | Clean up | the retired records (archived, including archived cash records, removed, dismissed, archived day research, archived to-dos and to-do lists no live to-do uses, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
 
 Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, which opens What's new, and "start fresh" which runs `resetApp`), and sign-out.
@@ -940,7 +961,9 @@ Account sheet (header): signed-in email, theme toggle, language choice (saved to
 
 ### 12.7 Trip switcher and trip creation
 
-- Header trip name opens a menu when there are other trips, or when the person may create one. `New trip` makes a trip with the person as the only member (`createTrip`).
+- Header trip name opens a menu when there are other trips, or when the person may create one; otherwise it is a link home. The menu lists each trip with its dates and a "Not set up yet" badge (`TripSummaryText`, the same as the picker), then "All itineraries" and, for permitted creators, "New itinerary".
+- "All itineraries" (`openTripPicker`) asks for the picker once and reloads, so the trip picker (§7) shows even with a remembered or only trip. Picking a trip there reloads the page as usual.
+- "New itinerary" makes a trip with the person as the only member (`createTrip`). It starts with setup `pending`, so the setup wizard (§12.11) opens on it. The form passes no dates, so the trip has none until they are set in Settings > Trip.
 - Only emails in `config/access.tripCreators` can create trips (rules and `canCreateTrips`).
 
 ### 12.8 Read-only share links
@@ -959,6 +982,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 - Cities, stays, reservations, places, holidays, flights and plan items, in the same record shapes as the trip. Archived records and removed stops are left out.
 - Not included: expenses, the budget, cash records, to-dos, member emails and day research. `sharedTripData` gives the viewer an empty cash list and no to-dos.
 - Blanked: a place's cost estimate (null); a flight's confirmation number (null), cost (null, currency JPY) and note (null); the notes on stays and reservations (null).
+- The trip's own dates are copied too when it has them (`startDate` and `endDate` on the link, §23.1). Refresh replaces them with the trip's current dates, clearing them when it has none. A viewer's days come from the copy's stays and these dates.
 - Google coordinates older than 30 days are dropped (§14).
 
 **For viewers** (no sign-in, `?share=` in the link):
@@ -994,6 +1018,23 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 - **Viewers:** read-only links keep Miscellaneous but see only the Phrasebook (§12.8).
 - **Desktop:** the sidebar's Miscellaneous item opens both entries as a sub-menu (`MiscSubMenu`, §3.3).
 
+### 12.11 Setup wizard (new itineraries)
+
+A trip made with "New itinerary" (§12.7) starts with `setup` `pending`. While it is pending, `AppGate` shows `SetupWizard` in place of the app for a signed-in member (§7), and never on a read-only link. It is not a route: the URL stays as it was. Trips with no `setup` field (made before the wizard) never see it.
+
+- **Layout:** full screen on phones, with "Step X of Y" and a progress bar. From `lg` a centred card, with the steps listed down the side. A step can be opened from that list once the name and dates are saved.
+- **Steps:** name and dates; cities; hotels; flights; travellers and budget; summary. "Start from" is in `SETUP_STEPS` only when the person has another itinerary to copy from (`useCanCopy`, then `setupSteps({canCopy})`). It offers "Start empty" and copying (`CopyItinerary`, §3.3). A finished copy moves the wizard on at once.
+  - Name and dates: the name and both dates are required, and the end is on or after the start. Next saves them through `tripRepository.updateTrip`, and a change of dates is logged in the activity log.
+  - Cities: added with `saveCity` and `CityForm`. Each new city gets a different colour.
+  - Hotels: added with `saveStay` and `StayForm`. Each new hotel starts where the last one ends and runs to the trip's last day. A city is needed first.
+  - Flights: added with `saveFlight` through `FlightFormPanel`.
+  - Travellers and budget: the member list (`MembersSection`) and the budget form (`BudgetForm`).
+  - Summary: each step's value, with skipped steps marked, and "Open itinerary". After a copy in this visit, a "Start from" row shows what it brought (`copySummary`).
+- **Moving on:** Back is shown from the second step. Skip is shown on an empty step other than name and dates and the summary. Next is shown once a step has something in it, or on a step that cannot be skipped. Each step saves as it goes, so leaving halfway loses nothing.
+- **Finish later** (header) and **Open itinerary** (summary) set `setup` to `done` through `updateTrip` and open the app at once, also offline, since the write waits in Firestore's cache. If the write fails, a "refused" toast shows.
+- **Resume:** while the trip is still pending, the wizard reopens at the first step with nothing in it, or at the summary when every step has something (`resumeStep`).
+- **Offline:** each step's form is replaced by an offline message (`setup.offlineTitle`), so the steps' buttons are not shown until the connection is back. The header buttons still work.
+
 ---
 
 ## 13. Domain logic
@@ -1002,7 +1043,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 
 | Module | Key functions | Rule it encodes |
 |---|---|---|
-| `days.ts` | `deriveDays(stays)`, `weekdayOf`, `tripPhase`, `toUtcDate`, `addDays` | A day belongs to every stay whose range includes it, both ends included, so transfer days belong to two cities. |
+| `days.ts` | `deriveDays(stays, range?)`, `dayTakesCity`, `dayPlaceCities`, `weekdayOf`, `tripPhase`, `toUtcDate`, `addDays` | A day belongs to every stay whose range includes it, both ends included, so transfer days belong to two cities. With the trip's own dates (`range`), the days also cover them, so a day no stay covers has no city and takes places from any city. |
 | `calendar.ts` | `calendarWeeks(days)`, `stayBands(week, stays)` | `calendarWeeks` gives whole Monday–Sunday weeks around the trip, cells `{date, day, showMonth, monthIndex}`. `stayBands` gives runs of columns per hotel night for the coloured bars. |
 | `trip.ts` | `activeTrip`, `stayId`, `nightStay` | Archived hidden; stays sorted by check-in; stay ID = `cityId-checkIn`. `nightStay(date, stays)` is the hotel slept in that night: on a transfer day, the hotel you arrive at; on the last day, the hotel you leave. `groupDaysByStay` uses it too. |
 | `plan.ts` | `itemsForDay`, `nextStop`, `keysForInsert`, `holidayWarnings`, `stopWarnings`, `costTotal`, `newPlanItem`, `distanceBetweenPlaces`, `placeLocation`, `stayLocation`, `directionsUrl` | Order is a fractional key. Stops have no time of their own. |
@@ -1014,15 +1055,18 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor`, `dayFilterPins` | Pins per stop, straight lines when no route. `dayFilterPins` gives the City page's pins and day legend for the chosen days (a place on two days shows once, with the earlier day). |
 | `nearby.ts` | `distanceMeters`, `formatDistance`, `typeLabel` | Straight-line distance in metres, shown as metres under 1 km and kilometres above; Google's type text made readable. Google's own words stay in English (rule 13). |
 | `budget.ts` | `summarizeBudget`, `totalsByCategory`, `totalsByPayer`, `estimateStops`, `spendByDay`, `daysRemaining`, `summarizeTargets(categories, budget)` (rows with a target or spending, the targets added up, the budget, total paid, and paid in categories without a target), `BOOKING_CATEGORIES` (`flight`, `booking`), `DAILY_CATEGORIES` (the other expense categories) and `dailySpendByCategory(expenses, days)` (paid money per trip day by category, without bookings and flights, the categories used, and day-to-day money paid outside the trip days) | Expenses beat estimates for the same place; yen integers. |
+| `setup.ts` | `setupSteps`, `isSkippable`, `isStepFilled`, `resumeStep`, `setupChecklist` | Only name and dates (the days need them) and the summary cannot be skipped. A step is filled once it has something in it; "People" is filled by a second member or a budget. The Dashboard lists the empty cities, hotels, flights, budget and places, only for trips with a `setup` field. |
 | `dashboard.ts` | many tile functions (see §12.1) | All figures from in-memory data. |
 | `todos.ts` | `dueState`, `todosDueSoon`, `listProgress`, `visibleTodos`, `nextOrder`, `swapOrder`, `withStatus`, `archiveList` | Due states in Japan time: overdue, soon (within 7 days), later, none. `archiveList` also archives the list's live to-dos. Nothing is deleted. |
 | `proposals.ts` | `newProposal`, `isOpenProposal`, `acceptProposal`, `changedFields`, `researchToAccept`, `cleanResearch`, `ResearchResultSchema` | Research never writes a place. Accepting copies chosen fields and their sources; status becomes `researched`. |
-| `place-edit.ts` | `applyPlaceEdit`, `validatePlaceForm`, `missingFields`, `needsResearch`, `parseMapsLink`, `matchesPlaceFilter`, `newDraftPlace` | Locked fields (hand-edited) are never changed by research. |
-| `trip-edit.ts` | `stayIssues`, `dayChanges` | When a stay moves, which stops lose their day. |
+| `place-edit.ts` | `applyPlaceEdit`, `validatePlaceForm`, `missingFields`, `needsResearch`, `wasResearched`, `notFoundFields`, `parseMapsLink`, `matchesPlaceFilter`, `newDraftPlace` | Locked fields (hand-edited) are never changed by research. |
+| `trip-edit.ts` | `stayIssues`, `dayChanges` | When a stay moves, or the trip's dates change, which stops lose their day. |
+| `trip.ts` (`strandedItems`) | `strandedItems`, `tripDays` | A stop is stranded when its day is outside the trip or its city is not on that day. A day no hotel covers takes a stop from any city, so it is not stranded for its city. |
 | `flights.ts` | `flightsOnDay`, `flightsOutsideDays`, `nextFlight`, `flightRoute`, `flightCostLabel`, `flightCostInYen`, `flightToForm`, `flightFromForm` | Dates and times stay local to each airport, as on the ticket, and are never converted. A flight's yen cost is its USD amount × `YEN_PER_USD`, rounded. Flights outside the days are those leaving on a date no stay covers. |
 | `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS` | Sort (priority first, then name) and filters for the waiting list and its pins. The view is not saved. |
 | `cleanup.ts` | `planCleanup`, `planEverything`, `CLEANUP_KINDS` | What Clean up will delete, from the retired records only. |
-| `backup.ts` | `makeBackup`, `BackupSchema`, `backupSummary` | Whole-trip file, validated on import. |
+| `backup.ts` | `makeBackup`, `BackupSchema`, `backupSummary` | Whole-trip file, validated on import. The trip's dates travel with it (`backupDates`) and are restored with the budget. |
+| `trip-copy.ts` | `copyTrip`, `withNeeds`, `neededBy`, `needsOf`, `availableParts`, `copyShift`, `sourceFirstDay`, `copiesAnything`, `MAX_MEMBERS` | Copies only active records; never expenses, cash, activity, share links, proposals or day research. A part pulls in what it needs: places and hotels need cities, the plan needs places, so unticking one unticks those that need it. Dates move by the shift from the source's first day (its `startDate`, else its earliest active check-in) to the target's `startDate`. An ID that holds the old date gets the new one (a clash gets a number). Holidays come only when the shift is 0. Hotel and booking notes, and flight confirmation, cost and note, are cleared. Plan stops reset to planned; to-dos reset to `todo` with no completion date, and keep their assignee only when members are copied. Members: the person copying stays first, then the target's list, then the source's, up to 20. Budget comes only when the source has one; per-member targets only for members copied. Records outside the target's dates are still copied and reported. `locationFetchedAt` is kept, so the 30-day limit counts from the first fetch (§14.1). |
 | `activity.ts` | `undoFor`, `ActivitySchema` | Reverse of a change, if the target has not changed since. |
 | `budget.ts` | `formatYen`, `formatUsd`, `formatUsdAt`, `usdToYen`, `parseUsd`, `parseRate` | Display and entry formats for yen and dollars. |
 | `amount.ts` | `readAmount`, `entryFor`, `AmountEntry` | Turns a typed yen or dollar amount into the stored fields (§23.9). |
@@ -1044,6 +1088,7 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 - **Stored:** Google place IDs (indefinitely) and Google coordinates (at most 30 days; `maps:refresh` renews them). Our own notes can be stored.
 - **In memory only:** hours, ratings, photos, route times and distances, and nearby search results. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
 - **Share copies** (§12.8) keep place IDs and Google coordinates as the trip does. Coordinates older than 30 days are dropped from the copy. `npm run maps:refresh` brings the copies' coordinates in line with the trip (renewed or deleted), so a copy never keeps them past 30 days. Copies hold no hours, ratings or photos.
+- Copying from another itinerary (§13, `trip-copy.ts`) copies its places as they are, with their place IDs and Google coordinates, and keeps `locationFetchedAt`. The 30-day limit counts from the first fetch, so a copy is not given a new one. Hours, ratings and photos are never stored, so none are copied.
 - Google data appears only on a Google map or next to the Google logo. Never on another map provider.
 - Weather and daylight are not Google data. City coordinates come from Open-Meteo's geocoding by the city's name, never from the Maps SDK or stored Google coordinates. Nothing is written to Firestore. Results stay in memory, with the `weather:*` localStorage cache described in §3.5.
 - The browser key is public and restricted by website and API. The script key stays in a git-ignored `.env`.
@@ -1124,14 +1169,14 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 - **`trips/{tripId}`:**
   - `get`: members only. Missing trip = denied, so nobody can test which IDs exist.
   - `list`: only queries where `members` contains the caller's own email.
-  - `create`: trip creators only, with one member (themselves) and a name of up to 100 characters.
-  - `update`: members only, and only the fields `name`, `members` (1 to 20, must include the caller), `budget`, `updatedAt`.
+  - `create`: trip creators only, with one member (themselves) and a name of up to 100 characters. Optional `startDate` and `endDate` (both or neither, the end on or after the start) and `setup` (`pending` or `done`) may be set.
+  - `update`: members only, and only the fields `name`, `members` (1 to 20, must include the caller), `budget`, `startDate` and `endDate` (both or neither, the end on or after the start, or both null), `setup` (`pending` or `done`) and `updatedAt`.
   - `delete`: never.
 - **Trip subcollections** (`cities`, `stays`, `reservations`, `holidays`, `expenses`, `flights`, `cash`, `places`, `proposals`, `items`, `activity`, `todoLists`, `todos`): read and write for members, with the schema check on each write. Delete only if already retired.
 - **`expenses`:** `paymentMethod` is optional and must be `card` or `cash` (missing reads as `card`).
 - **`budget`** (on the trip document): `byMember` is optional, a map of at most 20 entries.
 - **`cash/{id}`:** members only. `isCash` checks the field whitelist and types. A handover needs a `to` different from `by`. Delete only when `archived` is true.
-- **`shares/{shareId}`:** `get` is allowed to anyone while the link is open (`revoked == false` and `request.time < expiresAt`), and to members of its trip. `list` is for members only, with a query on `tripId`. `create` and `update` are for members only, through `isShare`: at most 30 days ahead (plus 1 hour of clock drift), `tripId` and `createdAt` unchanged, and a revoked link cannot be reopened. `delete` is for members only, once the link is revoked or expired.
+- **`shares/{shareId}`:** `get` is allowed to anyone while the link is open (`revoked == false` and `request.time < expiresAt`), and to members of its trip. `list` is for members only, with a query on `tripId`. `create` and `update` are for members only, through `isShare`: at most 30 days ahead (plus 1 hour of clock drift), `tripId` and `createdAt` unchanged, any trip dates valid (both or neither, end on or after start), and a revoked link cannot be reopened. `delete` is for members only, once the link is revoked or expired.
 - **`shares/{shareId}/{cities|stays|reservations|places|holidays|flights|items}/{id}`** (the copy): read while the link is open, or by members. Writes are for members only and must pass `isSharedCopy`: the existing field checks, with no amount, confirmation or booking note, plan items not `removed`, and no other collection name. This is the only data readable without sign-in.
 - **`todoLists/{id}` and `todos/{id}`:** members only, through `isTodoList` and `isTodo` (exact keys, enum values, length limits, `dueDate` as `YYYY-MM-DD` or null, `assignee` an email or null). Delete only when `archived` is true. Not copied to share links (`isSharedCopy` has no to-do collection).
 - **`items`:** a plan item may hold only `id`, `placeId`, `date`, `order`, `status` and `updatedAt`. The old stop fields (`startTime`, `durationMin`, `note`, `legNote`) are refused.
@@ -1171,12 +1216,13 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 | **Sign-in** | Google popup. Errors mapped to messages by `signInErrorKey`: popup blocked, unauthorized domain, operation not allowed, network, web storage blocked, too many attempts, account disabled (`SIGN_IN_ERRORS`). In the home-screen app, popup blocked, storage blocked and internal error show "close the app completely, open it again and try once more" (`auth.standaloneRetry`). The sign-in button waits at most 90 s; a failed sign-in toast has a "Try again" action. Redirect sign-in is still not used: it needs the auth domain on the site's own origin root, which a GitHub Pages project site does not have. |
 | **Session** | Firebase keeps it in IndexedDB, so it survives reloads and works offline. |
 | **Trip list** | `watchMyTrips(email)`: `where("members", "array-contains", email)`. Needs no index (single-field). |
-| **Opening a trip** | From the link (`?trip=`), the remembered trip, the last trip, or the only trip. Opening another trip reloads the page. |
+| **Opening a trip** | From the link (`?trip=`), the remembered trip, the last trip, or the only trip. "All itineraries" (§12.7) shows the picker instead, once per page load. Opening another trip reloads the page. |
 | **Waiting for a trip** | While the trip list has answered with trips but none is chosen yet, the splash stays up (§7). |
 | **Membership check** | `watchAccess(tripId)` reads `trips/{id}`. Permission denied = not a member; missing = no such trip. |
 | **Remembering** | localStorage key `trip-id`, plus `users/{uid}.lastTripId`. |
 | **Members** | Trip settings add and remove emails (lowercase, at most 20). The list must always include the person saving it. |
 | **New trip** | `config/access.tripCreators` must contain the email. Name required. |
+| **Setup** | A new trip's `setup` is `pending` until the setup wizard is finished (§12.11). "Finish later" and "Open itinerary" write `done` through `TripRepository.updateTrip`. Trips with no `setup` field never show the wizard. |
 | **Language** | Saved in `users/{uid}.language` and applied at sign-in. |
 | **Sign-out** | Clears this device's trip cache. Unsynced edits are lost, which the UI warns about. |
 
@@ -1340,7 +1386,7 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `places:reset` | `scripts/places-reset.ts` | Shows what clearing all places would change; `-- --apply` does it | Yes, with `--apply` |
 | `items:clean` | `scripts/items-clean.ts` | Shows which plan items hold the old stop fields (`startTime`, `durationMin`, `note`, `legNote`); `-- --apply` removes them | Yes, with `--apply` |
 | `flights:push` | `scripts/flights-push.ts` | Saves flights from a file in the git-ignored `research/` folder (`-- research/<file>.json`); a flight with the same ID is replaced. Shows what would change unless `-- --apply` is added | Yes, with `--apply` |
-| `research:pull` | `scripts/research-pull.ts` | Exports place and day research requests for a research run (`research/days-<date>.json` for days); creates missing proposals for the day's stops; archives requests for days no stay covers. Each day entry includes `sunrise` and `sunset` for the day's first city | Yes (proposals, archived requests) |
+| `research:pull` | `scripts/research-pull.ts` | Exports place and day research requests for a research run (`research/days-<date>.json` for days); creates missing proposals for the day's stops; archives requests for days that neither a stay nor the trip's own dates cover (the dates are read from the trip document first). Each day entry includes `sunrise` and `sunset` for the day's first city; `--all-missing` skips places whose research was already accepted | Yes (proposals, archived requests) |
 | `research:push` | `scripts/research-push.ts` | Writes research as proposals for review, and day analyses onto their day; never changes a place | Yes (proposals and day research) |
 | `maps:check` | `scripts/maps-check.ts` | Checks Google keys and test train routes; `-- --embed` serves the Maps Embed test | No |
 | `maps:match` | `scripts/maps-match.ts` | Saves place IDs and coordinates; reports doubtful matches | Yes |
@@ -1369,7 +1415,7 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 
 ### 22.2 Test coverage by area (files with tests)
 
-72 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, screens, place details and the old-link redirect; `scripts` has four.
+98 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, the setup wizard and checklist, the copy panel (`copy-itinerary.test.tsx`), the trip switcher (`trip-switcher.test.tsx`), screens, place details and the old-link redirect; `scripts` has four.
 
 ### 22.3 Quality gates
 
@@ -1441,6 +1487,7 @@ No other top-level collections are used by the app. Everything else is denied.
 | `expiresAt` | timestamp | Link stops working at this time. At most 30 days (plus 1 hour) ahead of creation or change. |
 | `revoked` | bool | `true` once closed. A revoked link cannot be reopened. |
 | `publishedAt` | ISO string (≤ 30) | When the copy was last refreshed. |
+| `startDate`, `endDate` | `YYYY-MM-DD` or null | The trip's own first and last day when the copy was last refreshed (both or neither). Links made before trips had dates have none. |
 
 Deletes: members only, and only once the link is revoked or expired.
 
@@ -1454,8 +1501,10 @@ Deletes: members only, and only once the link is revoked or expired.
 | `createdAt` | ISO datetime string | Set at creation. |
 | `updatedAt` | ISO datetime string (≤30 chars) | Set on every update. |
 | `budget` | map or absent | `totalJPY` (int ≥ 0 or null), `byCategory` (map of expense category → int ≥ 0), `travellers` (int 1 to 20 or null), `byMember` (optional map of member email → int ≥ 0 or null, at most 20 entries; a spending target per person). |
+| `startDate`, `endDate` | `YYYY-MM-DD` or null | The trip's own first and last day, both or neither, the end on or after the start. Absent or null means no dates; they feed the days (§13). |
+| `setup` | `pending` or `done` | Whether the setup wizard is still to be finished. A new trip is created as `pending`; absent means `done`, and null is refused. Read by `AppGate` (the setup wizard, §12.11) and by the Dashboard's checklist (§12.1). |
 
-Only `name`, `members`, `budget` and `updatedAt` may change on update.
+Only `name`, `members`, `budget`, `startDate`, `endDate`, `setup` and `updatedAt` may change on update.
 
 ### 23.3 Plan items (`trips/{tripId}/items/{itemId}`)
 
@@ -1638,6 +1687,7 @@ Cross-collection links are **not enforced** by the rules or by the database. The
 | Member | `trips/{id}` get (live) | While trip is open | Membership check; live so removal is noticed. |
 | Member | ten collection listeners (`TRIP_COLLECTIONS`, including `cash` and the to-do collections), full collections | While trip is open | No pagination; the whole trip is loaded. |
 | Member | `items` listener | While trip is open | Plan. |
+| Member | `readTrip` (the ten trip collections) and `readItems` (`items`), each once with `getDocs` | Once per copy, for the other itinerary picked | Copying from another itinerary (§3.5). Allowed by `isMember` on that other trip. Reads only; the copy writes into an empty trip only. |
 | Member | `proposals` listener | While trip is open | Research notice and review. |
 | Member | `dayResearch` listener (`useDayResearch`) | While trip is open | Day research panel and calendar icons. |
 | Member | `activity` orderBy `at` desc, limit 50 | Only while the activity sheet is open | Single-field order; no composite index. |

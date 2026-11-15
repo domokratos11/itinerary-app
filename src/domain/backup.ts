@@ -18,6 +18,8 @@ import {
   ProposalSchema,
   ReservationRecordSchema,
   StayRecordSchema,
+  tripDatesOf,
+  type TripDates,
   type PlanItem,
   type DayResearch,
   type Proposal,
@@ -30,14 +32,29 @@ import type { TripData } from "./trip";
 // fetches them again by place ID. Older backups lack the parts added since.
 // Restoring never changes who has access, so the trip's name and members, and
 // the old Queue's links (which can no longer be written), stay in the file only.
+// The trip's own dates are restored with the budget; files made before trips
+// had dates have none.
 const TripDetailsSchema = z.object({
   name: z.string().nullable(),
   members: z.array(z.string()),
   budget: BudgetSchema.nullable(),
+  startDate: z.iso.date().nullable().default(null),
+  endDate: z.iso.date().nullable().default(null),
 });
 
+// The dates a backup holds, if it holds a valid pair.
+export function backupDates(backup: Backup): TripDates | null {
+  return backup.trip ? tripDatesOf(backup.trip) : null;
+}
+
+type TripDetails = z.infer<typeof TripDetailsSchema>;
+
 export type BackupExtras = {
-  trip: z.infer<typeof TripDetailsSchema> | null;
+  // The dates may be left out: a trip without them has none.
+  trip:
+    | (Omit<TripDetails, "startDate" | "endDate"> &
+        Partial<Pick<TripDetails, "startDate" | "endDate">>)
+    | null;
   activity: Activity[];
   queue: Record<string, unknown>[];
   dayResearch?: DayResearch[];
@@ -91,6 +108,11 @@ export function makeBackup(
     items,
     proposals,
     ...extras,
+    trip: extras.trip && {
+      ...extras.trip,
+      startDate: extras.trip.startDate ?? null,
+      endDate: extras.trip.endDate ?? null,
+    },
     dayResearch: extras.dayResearch ?? [],
   };
 }

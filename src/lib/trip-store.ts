@@ -4,7 +4,12 @@ import { useMemo } from "react";
 import { create } from "zustand";
 
 import type { TripDay } from "@/domain/days";
-import type { CityRecord, PlaceRecord } from "@/domain/schemas";
+import {
+  tripDatesOf,
+  type CityRecord,
+  type PlaceRecord,
+  type TripDates,
+} from "@/domain/schemas";
 import {
   activeTrip,
   EMPTY_TRIP,
@@ -13,6 +18,8 @@ import {
   type TripData,
   type TripRecordOf,
 } from "@/domain/trip";
+import { useActiveTrip } from "@/lib/auth-store";
+import { useViewerStore } from "@/lib/viewer-store";
 
 type TripState = {
   data: TripData;
@@ -75,9 +82,25 @@ export function useTrip(): TripData {
   return useMemo(() => activeTrip(data), [data]);
 }
 
+// The open trip's own dates, or null when it has none. On a read-only link
+// they come with the link.
+export function useTripDates(): TripDates | null {
+  const viewing = useViewerStore((s) => s.status !== "off");
+  const shared = useViewerStore((s) => s.share);
+  const active = useActiveTrip();
+  const source = viewing ? shared : active;
+  const startDate = source?.startDate ?? null;
+  const endDate = source?.endDate ?? null;
+  return useMemo(
+    () => tripDatesOf({ startDate, endDate }),
+    [startDate, endDate],
+  );
+}
+
 export function useTripDays(): TripDay[] {
   const trip = useTrip();
-  return useMemo(() => tripDays(trip), [trip]);
+  const range = useTripDates();
+  return useMemo(() => tripDays(trip, range), [trip, range]);
 }
 
 export function usePlacesById(): Map<string, PlaceRecord> {

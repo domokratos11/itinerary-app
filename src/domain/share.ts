@@ -34,6 +34,10 @@ export const ShareSchema = z.object({
   expiresAt: z.iso.datetime(),
   revoked: z.boolean(),
   publishedAt: z.iso.datetime(),
+  // The trip's own dates when the copy was published, so a trip with no
+  // hotels still shows its days. Links made before this have none.
+  startDate: z.iso.date().nullish().catch(null),
+  endDate: z.iso.date().nullish().catch(null),
 });
 
 export type Share = z.infer<typeof ShareSchema>;

@@ -303,22 +303,43 @@ service cloud.firestore {
         && myEmail() in members;
     }
 
+    function isIsoDate(v) {
+      return v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    // The trip's own first and last day, added later: both absent (or null),
+    // or both dates with the end on or after the start.
+    function hasValidTripDates(d) {
+      return (d.get('startDate', null) == null && d.get('endDate', null) == null)
+        || (isIsoDate(d.get('startDate', null)) && isIsoDate(d.get('endDate', null))
+          && d.endDate >= d.startDate);
+    }
+
+    // Whether the setup wizard is still to be finished. Absent means done.
+    function hasValidSetup(d) {
+      return d.get('setup', 'done') in ['pending', 'done'];
+    }
+
     function isNewTrip(d) {
-      return d.keys().hasOnly(['name', 'members', 'createdBy', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['name', 'members', 'createdBy', 'createdAt', 'updatedAt', 'startDate', 'endDate', 'setup'])
         && d.keys().hasAll(['name', 'members', 'createdBy', 'createdAt', 'updatedAt'])
         && shortString(d.name, 100) && d.name.size() > 0
         && isMemberList(d.members)
         && d.createdBy == myEmail()
         && shortString(d.createdAt, 30)
-        && shortString(d.updatedAt, 30);
+        && shortString(d.updatedAt, 30)
+        && hasValidTripDates(d)
+        && hasValidSetup(d);
     }
 
     function isTripEdit(after, before) {
-      return after.diff(before).affectedKeys().hasOnly(['name', 'members', 'budget', 'updatedAt'])
+      return after.diff(before).affectedKeys().hasOnly(['name', 'members', 'budget', 'startDate', 'endDate', 'setup', 'updatedAt'])
         && shortString(after.get('name', 'unnamed'), 100)
         && after.get('name', 'unnamed').size() > 0
         && isMemberList(after.members)
         && isBudget(after.get('budget', null))
+        && hasValidTripDates(after)
+        && hasValidSetup(after)
         && shortString(after.updatedAt, 30);
     }
 
@@ -333,8 +354,9 @@ service cloud.firestore {
     // trip until it expires or is revoked; at most 30 days ahead (plus an
     // hour for clock drift), and a revoked link stays revoked.
     function isShare(d) {
-      return d.keys().hasOnly(['tripId', 'tripName', 'label', 'createdAt', 'expiresAt', 'revoked', 'publishedAt'])
+      return d.keys().hasOnly(['tripId', 'tripName', 'label', 'createdAt', 'expiresAt', 'revoked', 'publishedAt', 'startDate', 'endDate'])
         && d.keys().hasAll(['tripId', 'tripName', 'label', 'createdAt', 'expiresAt', 'revoked', 'publishedAt'])
+        && hasValidTripDates(d)
         && shortString(d.tripId, 128) && d.tripId.size() > 0
         && optionalString(d.tripName, 100)
         && shortString(d.label, 100)

@@ -11,6 +11,9 @@ export interface PlanRepository {
     onItems: (items: PlanItem[]) => void,
     onError?: (error: Error) => void,
   ): () => void;
+  // Every item, read once, removed ones included. For copying from another
+  // trip the user is a member of.
+  readItems(tripId: string): Promise<PlanItem[]>;
   // Creates or replaces one plan item.
   save(tripId: string, item: PlanItem): Promise<void>;
 }

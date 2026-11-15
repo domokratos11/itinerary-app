@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { deriveDays } from "./days";
-import type { Place, PlanItem, Stay } from "./schemas";
+import type { Place, PlanItem, Stay, TripDates } from "./schemas";
 import { strandedItems } from "./trip";
 
 export type StayIssue = {
@@ -50,18 +50,23 @@ export type DayChanges = {
 };
 
 // What saving `after` instead of `before` does to the trip's days, so the
-// settings screen can say it before the change is made.
+// settings screen can say it before the change is made. The trip's own
+// dates, if it has them, also make days: `range` is the dates now and
+// `rangeAfter` the dates after the change (the same unless given).
 export function dayChanges(
   before: Stay[],
   after: Stay[],
   items: PlanItem[],
   places: Pick<Place, "id" | "cityId">[],
+  range?: TripDates | null,
+  rangeAfter: TripDates | null | undefined = range,
 ): DayChanges {
-  const oldDays = new Set(deriveDays(before).map((d) => d.date));
-  const newDays = deriveDays(after);
+  const beforeDays = deriveDays(before, range);
+  const oldDays = new Set(beforeDays.map((d) => d.date));
+  const newDays = deriveDays(after, rangeAfter);
   const newDates = new Set(newDays.map((d) => d.date));
   const strandedBefore = new Set(
-    strandedItems(items, deriveDays(before), places).map((s) => s.item.id),
+    strandedItems(items, beforeDays, places).map((s) => s.item.id),
   );
   const strandedAfter = strandedItems(items, newDays, places).filter(
     (s) => !strandedBefore.has(s.item.id),
