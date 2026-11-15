@@ -5,6 +5,7 @@ import { Plus, SkipForward } from "lucide-react";
 import { toast } from "sonner";
 
 import { BudgetForm } from "@/components/budget-parts";
+import { copySummary, type CopyDone } from "@/components/copy-itinerary";
 import { Field } from "@/components/edit-panel";
 import { CityForm, saveCity } from "@/components/settings-cities";
 import { FlightFormPanel, saveFlight } from "@/components/settings-flights";
@@ -360,11 +361,14 @@ export function PeopleStep({
 export function SummaryStep({
   input,
   steps,
+  copied = null,
   nav,
   onOpen,
 }: {
   input: SetupInput;
   steps: readonly SetupStep[];
+  // What a copy from another itinerary brought in this visit.
+  copied?: CopyDone | null;
   nav: StepNav;
   onOpen: () => void;
 }) {
@@ -377,6 +381,7 @@ export function SummaryStep({
         ? formatDateRange(trip.startDate, trip.endDate)
         : t("setup.noDates"),
     ].join(" · "),
+    ...(copied && { startFrom: copySummary(copied) }),
     cities: t("setup.countCities", { count: data.cities.length }),
     hotels: t("setup.countHotels", { count: data.stays.length }),
     flights: t("setup.countFlights", { count: data.flights.length }),
@@ -387,7 +392,7 @@ export function SummaryStep({
         : [t("setup.budgetTotal", { total: formatYen(budget.totalJPY) })]),
     ].join(" · "),
   };
-  // "Start from" has nothing to sum up yet: copying will say what it brought.
+  // "Start from" shows only after a copy in this visit, with what it brought.
   const rows = steps.filter((step) => value[step] !== undefined);
 
   return (
@@ -395,7 +400,10 @@ export function SummaryStep({
       <StepIntro step="summary" hint={t("setup.summaryHint")} />
       <dl className="flex flex-col divide-y rounded-lg border text-sm">
         {rows.map((step) => {
-          const skipped = step !== "details" && !isStepFilled(step, input);
+          const skipped =
+            step !== "details" &&
+            !(step === "startFrom" && copied) &&
+            !isStepFilled(step, input);
           return (
             <div
               key={step}

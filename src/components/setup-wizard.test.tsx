@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SetupWizard } from "@/components/setup-wizard";
@@ -15,6 +21,10 @@ vi.mock("@/lib/trip-repository-instance", () => ({
     return repository.current;
   },
 }));
+vi.mock("@/lib/plan-repository-instance", async () => {
+  const { LocalPlanRepository } = await import("@/lib/local-plan-repository");
+  return { planRepository: new LocalPlanRepository() };
+});
 vi.mock("@/lib/maps-service-instance", () => ({
   mapsService: { isConfigured: () => false },
 }));
@@ -58,7 +68,7 @@ function renderWizard(id: string) {
 }
 
 const heading = (name: string) => screen.findByRole("heading", { name });
-const button = (name: string) => screen.getByRole("button", { name });
+const button = (name: string | RegExp) => screen.getByRole("button", { name });
 const input = (label: string) =>
   screen.getByLabelText(label) as HTMLInputElement;
 
@@ -189,6 +199,59 @@ describe("SetupWizard", () => {
     await screen.findByRole("dialog", { name: "Add stay" });
     expect(input("Check-in").value).toBe("2027-03-01");
     expect(input("Check-out").value).toBe("2027-03-10");
+  });
+
+  it("offers Start from only with another itinerary to copy from", async () => {
+    const id = await newTrip({
+      startDate: "2027-03-01",
+      endDate: "2027-03-10",
+    });
+    const { unmount } = render(
+      <SetupWizard tripId={id} trip={summary(id)} onDone={vi.fn()} />,
+    );
+    const steps = () => screen.getByRole("navigation", { name: "Setup steps" });
+    await heading("Cities");
+    expect(
+      within(steps()).queryByRole("button", { name: /Start from/ }),
+    ).toBeNull();
+    unmount();
+
+    const other = await trips.createTrip("Japan", EMAIL);
+    await trips.saveMany(other, "cities", fixtureTrip.cities);
+    renderWizard(id);
+    await heading("Start from");
+    expect(
+      within(steps()).getByRole("button", { name: /Start from/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("copies from another itinerary, moves on and sums it up", async () => {
+    const id = await newTrip({
+      startDate: "2027-03-01",
+      endDate: "2027-03-10",
+    });
+    const other = await trips.createTrip("Japan", EMAIL);
+    await trips.saveMany(other, "cities", fixtureTrip.cities);
+    renderWizard(id);
+    await heading("Start from");
+    fireEvent.click(button(/Copy from another itinerary/));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Cities" }));
+    fireEvent.click(button("Copy"));
+    await heading("Cities");
+    expect(useTripStore.getState().data.cities.map((c) => c.id)).toEqual([
+      "tokyo-ueno",
+      "nagoya",
+    ]);
+    // The source keeps its own cities as they were.
+    expect((await trips.readTrip(other)).cities).toEqual(fixtureTrip.cities);
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Setup steps" })).getByRole(
+        "button",
+        { name: /Summary/ },
+      ),
+    );
+    await heading("Summary");
+    expect(screen.getByText("From Japan: 2 cities")).toBeInTheDocument();
   });
 
   it("says when it is offline and still lets you finish later", async () => {

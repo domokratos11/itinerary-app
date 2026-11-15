@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   query,
   where,
@@ -16,8 +17,10 @@ import type {
   TripSummary,
 } from "@/domain/trip-repository";
 import {
+  EMPTY_TRIP,
   TRIP_COLLECTIONS,
   type TripCollection,
+  type TripData,
   type TripRecordOf,
 } from "@/domain/trip";
 import {
@@ -186,6 +189,23 @@ export class FirestoreTripRepository implements TripRepository {
       ),
     );
     return () => stops.forEach((stop) => stop());
+  }
+
+  // Every collection once, parsed as subscribe does: bad rows are skipped.
+  async readTrip(tripId: string): Promise<TripData> {
+    const db = getDb();
+    const lists = await Promise.all(
+      TRIP_COLLECTIONS.map(async (name) => {
+        const snapshot = await getDocs(collection(db, "trips", tripId, name));
+        const schema: z.ZodType<unknown> = SCHEMAS[name];
+        const records = snapshot.docs.flatMap((d) => {
+          const result = schema.safeParse(d.data());
+          return result.success ? [result.data] : [];
+        });
+        return [name, records] as const;
+      }),
+    );
+    return { ...EMPTY_TRIP, ...(Object.fromEntries(lists) as TripData) };
   }
 
   async save<C extends TripCollection>(

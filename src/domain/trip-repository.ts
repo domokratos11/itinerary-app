@@ -1,5 +1,5 @@
 import type { Budget, TripDates, TripSetup } from "./schemas";
-import type { TripCollection, TripRecordOf } from "./trip";
+import type { TripCollection, TripData, TripRecordOf } from "./trip";
 
 // Whether the signed-in user may open a trip: "member" when their email is
 // on the trip's member list, "denied" when it isn't, "missing" when there
@@ -73,6 +73,10 @@ export interface TripRepository {
     ) => void,
     onError?: (collection: TripCollection, error: Error) => void,
   ): () => void;
+  // Every record of every collection, read once, archived ones included,
+  // parsed as subscribe parses them. For copying from another trip the user
+  // is a member of.
+  readTrip(tripId: string): Promise<TripData>;
   // Creates or replaces one record. To retire one, set `archived`; only
   // Clean up in Settings deletes.
   save<C extends TripCollection>(

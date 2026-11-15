@@ -1,8 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { FilePlus } from "lucide-react";
 
+import { CopyItinerary, type CopyDone } from "@/components/copy-itinerary";
 import {
   StepIntro,
   WizardActions,
@@ -11,24 +11,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 
-// Where copying from another itinerary plugs in. It returns the panel that
-// offers it beside "Start empty", or null while there is no such panel. With
-// null, "Start from" would have one choice only, so the wizard leaves the
-// step out (setupSteps({ canCopy: false })).
-export function copyPanel(tripId: string): ReactNode | null {
-  void tripId;
-  return null;
-}
-
-// "Start from": an empty itinerary, or (with copyPanel) parts of another.
+// "Start from": an empty itinerary, or parts of another one. The wizard
+// shows this step only when there is another itinerary to copy from
+// (useCanCopy); with "Start empty" alone it would be no choice.
 export function StartFromStep({
+  tripId,
   nav,
   filled,
-  copy,
+  onCopied,
 }: {
+  tripId: string;
   nav: StepNav;
   filled: boolean;
-  copy: ReactNode | null;
+  // After a copy: what it brought. The wizard then moves on.
+  onCopied: (done: CopyDone) => void;
 }) {
   return (
     <>
@@ -48,7 +44,7 @@ export function StartFromStep({
             {t("setup.startEmptyHint")}
           </span>
         </Button>
-        {copy}
+        <CopyItinerary tripId={tripId} trigger="card" onCopied={onCopied} />
       </div>
       <WizardActions nav={nav} filled={filled} />
     </>

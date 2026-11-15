@@ -6,8 +6,10 @@ import type {
   TripSummary,
 } from "@/domain/trip-repository";
 import {
+  EMPTY_TRIP,
   TRIP_COLLECTIONS,
   type TripCollection,
+  type TripData,
   type TripRecordOf,
 } from "@/domain/trip";
 
@@ -92,6 +94,13 @@ export class LocalTripRepository implements TripRepository {
     return () => {
       set.delete(onRecords);
     };
+  }
+
+  async readTrip(tripId: string): Promise<TripData> {
+    const lists = TRIP_COLLECTIONS.map(
+      (name) => [name, this.list(tripId, name)] as const,
+    );
+    return { ...EMPTY_TRIP, ...(Object.fromEntries(lists) as TripData) };
   }
 
   async save<C extends TripCollection>(

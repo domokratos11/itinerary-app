@@ -217,9 +217,10 @@ Shared chrome and gates:
 |---|---|
 | `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. With one or more trips and none chosen, the picker shows a card per trip (name, dates, and a "Not set up yet" badge when `setup` is `pending`; two columns from `lg`); "No trips yet" shows only for an empty list. The offline screen has a button to the static phrasebook (`gate.offlinePhrasebook`, linking to `/phrasebook-guide/`), so the phrasebook opens even when the app cannot. A member's trip whose `setup` is `pending` (never on a read-only link) gets `SetupWizard` in place of the app (§12.11). |
 | `setup-wizard.tsx` | `SetupWizard` (Client Component): the setup screen for a new itinerary (§12.11). Holds the current step, the header ("Finish later", the link to all itineraries), the step list down the side from `lg`, or "Step X of Y" with a progress bar on phones, and the offline message. Each step saves through the existing actions. |
-| `setup-steps.tsx` | The wizard's steps: `DetailsStep`, `CitiesStep`, `HotelsStep`, `FlightsStep`, `PeopleStep` and `SummaryStep`. They reuse the Settings forms and savers: `saveCity` and `CityForm` (`settings-cities.tsx`), `saveStay`, `useStayPreview` and `StayForm` (`settings-stays.tsx`), `saveFlight` and `FlightFormPanel` (`settings-flights.tsx`), and `MembersSection` (`settings-trip.tsx`), all exported for this. |
+| `setup-steps.tsx` | The wizard's steps: `DetailsStep`, `CitiesStep`, `HotelsStep`, `FlightsStep`, `PeopleStep` and `SummaryStep`. They reuse the Settings forms and savers: `saveCity` and `CityForm` (`settings-cities.tsx`), `saveStay`, `useStayPreview` and `StayForm` (`settings-stays.tsx`), `saveFlight` and `FlightFormPanel` (`settings-flights.tsx`), and `MembersSection` (`settings-trip.tsx`), all exported for this. `SummaryStep` adds a "Start from" row (`copySummary`) only after a copy in the same visit. |
 | `setup-parts.tsx` | `StepIntro`, `WizardActions` (Back, Skip, Next), `AddedList` and the `StepNav` type. |
-| `setup-start-from.tsx` | `StartFromStep` (the "Start from" step, with "Start empty") and `copyPanel(tripId)`, where copying from another itinerary will plug in. It returns null for now, so the step is left out. |
+| `setup-start-from.tsx` | `StartFromStep` (the "Start from" step): "Start empty" and `CopyItinerary` (trigger `card`) beside it. The step is shown only when `useCanCopy` says the person has another itinerary (§12.11). A finished copy calls `onCopied`, and the wizard moves on. |
+| `copy-itinerary.tsx` | `CopyItinerary` (Client Component): copies chosen parts of another itinerary into this one (§13 `trip-copy.ts`, §3.5 `trip-copy-actions.ts`). Trigger `card` in the wizard, `button` in Settings → Backup. The panel picks one of the person's other itineraries (read once with `readCopySource`), ticks parts (`withNeeds` adds what they need), shows a preview (counts, date shift, members left out, records outside the trip's dates), then copies. Copying is offered only while this itinerary is empty (`isEmptyTrip`) and online. `useCopySources(tripId)` lists the other itineraries from the auth store, `useCanCopy(tripId)` says whether there are any, and `copyCounts` and `copySummary` word the report. |
 | `setup-checklist.tsx` | `SetupChecklist` (the Dashboard's "Finish setting up" card) and `useSetupChecklist` (the empty parts, and hiding the card on this device). |
 | `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections; Miscellaneous at `/misc/` in place of To-dos), `MISC_ITEMS` and `useMiscItems()` (the Miscellaneous entries: To-dos at `/todos/`, both are ordinary Next links, each with a `path`: To-dos at `/todos/` and Phrasebook at `/phrasebook/`, §12.10) and `useSections()`, which gives viewers only Dashboard, Days, Cities and Miscellaneous (Miscellaneous shows only Phrasebook). |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
@@ -271,7 +272,7 @@ Screens (one per page):
 | `settings-screen.tsx` | `/settings/` | Tabs: Stays, Cities, Places, Flights, Bookings, Holidays, Trip, Share, Backup, Clean up. |
 | `settings-share.tsx` | Settings tab | Read-only share links: create, copy, refresh, change expiry, close (§12.8). |
 | `settings-stays.tsx`, `settings-cities.tsx`, `settings-places.tsx`, `settings-flights.tsx`, `settings-reservations.tsx`, `settings-holidays.tsx`, `settings-trip.tsx` | Settings tabs | Admin editors for each collection. `settings-places.tsx` also holds the research requests and proposal review. |
-| `settings-backup.tsx` | Settings tab | Export the whole trip as JSON; import only into an empty trip. |
+| `settings-backup.tsx` | Settings tab | Export the whole trip as JSON; import only into an empty trip. A "Copy from another itinerary" section (`CopyItinerary`, button trigger) shows while the trip is empty or its panel is open, and only when the trip is not read-only and the person has another itinerary. |
 | `settings-cleanup.tsx` | Settings tab | Lists retired records and deletes them for good, including archived to-dos and to-do lists that no live to-do uses. |
 | `settings-about.tsx` | Account sheet | Version (a `WhatsNewButton`, §18.4) and "start fresh" button. |
 | `whats-new.tsx` | Desktop corner, Account sheet | `WhatsNewButton` turns the version text into a button (in `VersionTag` on wide screens, in `settings-about.tsx` on phones). `WhatsNewPanel` is a Drawer on phones and a Dialog from `md`, listing "Version X · date" with the bullets of `CHANGELOG`. Tests in `whats-new.test.tsx`. |
@@ -316,10 +317,11 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 |---|---|
 | `schemas.ts` | The Zod schemas for every Firestore record and the enums (categories, priorities, statuses, expense categories, reservation types, payment methods, cash kinds). `CashRecordSchema` is the cash record; `ExpenseRecordSchema` has `paymentMethod` (default `card`); `BudgetSchema` has `byMember`. `TodoListRecordSchema` and `TodoRecordSchema` hold the to-do records (§23.22). `TripDatesSchema` and `tripDatesOf(doc)` hold the trip's own first and last day (both or neither; anything else reads as none), and `TripSetupSchema` the setup state (`pending` or `done`). |
 | `cash.ts` | `summarizeCash(cash, expenses, members)`: each member's cash on hand (withdrawn + received − handed over − paid in cash), the total withdrawn with dollars charged, and who owes whom (handovers net out per pair). Pure; never part of the budget totals. |
-| `trip.ts` | `TripData` type, `TRIP_COLLECTIONS` (the ten trip collections: the eight record collections, plus `todoLists` and `todos`), `EMPTY_TRIP`, `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
-| `trip-repository.ts` | `TripRepository` interface and the `TripAccess`, `TripSummary` (with the trip's `startDate`, `endDate` and `setup`), `TripChanges` and `NewTripOptions` (the dates a new trip can start with) types. |
+| `trip.ts` | `TripData` type, `TRIP_COLLECTIONS` (the ten trip collections: the eight record collections, plus `todoLists` and `todos`), `EMPTY_TRIP`, `isEmptyTrip` (nothing saved, archived records and removed stops included; only such a trip takes a backup or a copy), `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
+| `trip-repository.ts` | `TripRepository` interface and the `TripAccess`, `TripSummary` (with the trip's `startDate`, `endDate` and `setup`), `TripChanges` and `NewTripOptions` (the dates a new trip can start with) types. `readTrip(tripId)` reads every trip collection once, archived records included, for copying from another itinerary (§3.5). |
+| `trip-copy.ts` | `copyTrip(source, choices, target, now)` and its helpers: `COPY_PARTS`, `CopyPart`, `withNeeds`, `neededBy`, `needsOf`, `availableParts`, `copyShift`, `sourceFirstDay`, `copiesAnything`, `MAX_MEMBERS` (20). Pure logic that returns what to write into the target; it words nothing. The rules are in §13. |
 | `setup.ts` | `SETUP_STEPS` and `setupSteps({canCopy})` (the wizard's steps; "Start from" is left out unless a copy is possible), `isSkippable`, `isStepFilled`, `resumeStep`, `SETUP_PARTS` and `setupChecklist` (the empty parts for the Dashboard card). Pure logic with no words; the wizard words its steps. |
-| `plan-repository.ts` | `PlanRepository` interface; `markRemoved`. |
+| `plan-repository.ts` | `PlanRepository` interface (`readItems(tripId)` reads every item once, removed ones included, for copying; `save`, `subscribe`); `markRemoved`. |
 | `proposal-repository.ts` | `ProposalRepository` interface. |
 | `user-repository.ts` | `UserRepository` interface and the user profile schema (language, last trip). |
 | `activity.ts` | Activity schema, kinds, `ActivityRepository`, and `undoFor`. |
@@ -368,8 +370,8 @@ Firebase and repositories:
 | `auth.ts` | The only file that talks to `firebase/auth` for sign-in: Google popup, `watchUser`, sign-out, session clear. `signInWithGoogle()` stops waiting after `SIGN_IN_TIMEOUT_MS` (90 s) and throws "Sign-in didn't finish", so the button can be tapped again; a popup that finishes later still signs in through `onAuthStateChanged`. `signInErrorKey(code, standalone)` maps Firebase codes to message keys, and `isStandalone()` detects the home-screen app (`navigator.standalone` on iOS, or `display-mode: standalone`). |
 | `tracked-firestore.ts` | `setDoc`, `updateDoc`, `deleteDoc` and `writeBatch`, with the same signatures as `firebase/firestore`, each wrapped with `trackWrite` so the write counts in `sync-store.ts` until the server confirms (`writeBatch` wraps `commit`). Every `firestore-*-repository.ts` imports these four from here, not from `firebase/firestore`. `watchStartupWrites()` calls `waitForPendingWrites(getDb())` once. |
 | `storage-persist.ts` | Asks the browser to keep the offline copy of the trip (IndexedDB). `storageStatus()` returns `kept`, `may-be-cleared` or `unsupported` from `navigator.storage.persisted()`; `requestPersistentStorage()` calls `navigator.storage.persist()` only when the copy is not already kept. Browsers usually decide without a prompt (Chrome by engagement, Safari for home-screen apps). Tests in `storage-persist.test.ts`. |
-| `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. |
-| `firestore-plan-repository.ts` | Implements `PlanRepository` on `trips/{id}/items`. |
+| `firestore-trip-repository.ts` | Implements `TripRepository` on `trips/…`. Skips rows that fail the schema. Batches writes in chunks of 450. `readTrip` reads each trip collection once with `getDocs`. |
+| `firestore-plan-repository.ts` | Implements `PlanRepository` on `trips/{id}/items`. `readItems` reads them once with `getDocs`. |
 | `firestore-proposal-repository.ts` | Implements `ProposalRepository` on `trips/{id}/proposals`. |
 | `firestore-day-research-repository.ts` | Implements `DayResearchRepository` (`subscribe`, `save`) on `trips/{id}/dayResearch/{date}`. `local-day-research-repository.ts` is the in-memory version for tests. |
 | `firestore-user-repository.ts` | Implements `UserRepository` on `users/{uid}`. |
@@ -410,6 +412,7 @@ State and sync:
 | `lang-boot.ts` | `LOCALE_STORAGE_KEY` (`"locale"`, the localStorage key for the chosen language, also used by `i18n.ts`) and `LANG_BOOT_SCRIPT`, the inline script the root layout puts in `<head>`. It sets `<html lang>` before the first paint: the stored language if valid, else Spanish for an `es*` browser, else English (the same rule as `initLocale`). Tests in `lang-boot.test.ts`. |
 | `usd-rate.ts` | Zustand store `useUsdRate`: today's USD to JPY rate, fetched once per session from Frankfurter (§14.4), falling back to the fixed `YEN_PER_USD` offline. Used by the expense, quick cost and reservation forms and by the dollar display. |
 | `backup-actions.ts` | Export and import of the trip file. |
+| `trip-copy-actions.ts` | `readCopySource(summary)` reads another itinerary once (`readTrip` and `readItems`) for copying; nothing is written to it. `writeTripCopy(tripId, copy, sourceName)` writes the copy: the record collections in `TRIP_COLLECTIONS` order (cities first, in batches), then the stops (`planRepository.save` each), then the trip's budget and members (`updateTrip`, only when they change), then one `settings` activity entry. A failure midway leaves what was written. Tests in `trip-copy-actions.test.ts`. |
 | `trip-actions.test.ts` etc. | Tests beside each module. |
 
 Maps and place helpers:
@@ -670,6 +673,8 @@ Firestore (trips/{id}/items)
 
 Each listener delivers the full list, not diffs. Each snapshot replaces the store contents.
 
+Copying from another itinerary (§8.2, §13) is the one read that is not a listener. `TripRepository.readTrip` and `PlanRepository.readItems` each run `getDocs` once for the itinerary the person picked, parse rows as the listeners do, and return the result to the copy panel's own state. Nothing is put in the stores.
+
 Shared view (viewer mode, no sign-in):
 
 ```
@@ -696,6 +701,7 @@ UI event (drop, edit, add, archive, budget change)
 - Counting: every write goes through `tracked-firestore.ts`, which calls `trackWrite` (`sync-store.ts`) on its promise. The write counts as pending from the moment it is made until that promise settles, so the header's `SyncStatus` shows "saving" while it is in flight and "waiting" when offline (§17.1). Writes queued before a reload are counted through `trackStartupWrites` instead.
 - Batches: `saveMany` uses `writeBatch` in chunks of 450 (Firestore limit is 500 per batch). Each committed batch is counted the same way.
 - Share links (members only, Settings → Share): create writes `shares/{shareId}` and its copy; **Refresh** (publish) rewrites the copy from the current trip; **Change expiry** updates `expiresAt`; **Close link** sets `revoked: true`, which cannot be undone. Each action writes one activity entry (kind `settings`). The trip itself is only read.
+- Copy from another itinerary (`CopyItinerary`, only into an empty trip, §3.5 `writeTripCopy`): the records are written in batches (`saveMany`), then the stops (`save` each), then the trip's budget and members (`updateTrip`), then one `settings` activity entry. The source itinerary is only read. The writes are counted like any other (see Counting above).
 
 ### 8.3 Deletes
 
@@ -944,7 +950,7 @@ Tabs (`settings-screen.tsx`):
 | Holidays | holidays and closures |
 | Trip | trip name; trip dates (first and last day, both or neither, end on or after the start; Save is enabled only when they change, Clear dates empties both, and a preview lists the days and stops that would come or go); members (email list, max 20); budget (total, by category, travellers, and per-member targets) |
 | Share | read-only share links: name, expiry, copy link, refresh, change expiry, close (§12.8). Members only. |
-| Backup | export the whole trip as JSON, including the trip's dates, flights, cash records and day research; import restores the dates with the budget (files from before trips had dates have none), and only into a trip that has nothing saved. Older backups without flights still import. |
+| Backup | export the whole trip as JSON, including the trip's dates, flights, cash records and day research; import restores the dates with the budget (files from before trips had dates have none), and only into a trip that has nothing saved. Older backups without flights still import. Below it, "Copy from another itinerary" (`CopyItinerary`, §3.3) shows while the trip is empty and the person has another itinerary; it brings chosen parts of that itinerary (§13) and is never shown on a read-only link. |
 | Clean up | the retired records (archived, including archived cash records, removed, dismissed, archived day research, archived to-dos and to-do lists no live to-do uses, legacy queue, activity) and delete them for good; counts shown first. A "Closed share links" row deletes expired or closed share links with their copies. |
 
 Account sheet (header): signed-in email, theme toggle, language choice (saved to the profile), About (version, which opens What's new, and "start fresh" which runs `resetApp`), and sign-out.
@@ -1017,13 +1023,13 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 A trip made with "New itinerary" (§12.7) starts with `setup` `pending`. While it is pending, `AppGate` shows `SetupWizard` in place of the app for a signed-in member (§7), and never on a read-only link. It is not a route: the URL stays as it was. Trips with no `setup` field (made before the wizard) never see it.
 
 - **Layout:** full screen on phones, with "Step X of Y" and a progress bar. From `lg` a centred card, with the steps listed down the side. A step can be opened from that list once the name and dates are saved.
-- **Steps:** name and dates; cities; hotels; flights; travellers and budget; summary. "Start from" is in `SETUP_STEPS`, but it is left out while `copyPanel` returns null, so nothing can be copied yet.
+- **Steps:** name and dates; cities; hotels; flights; travellers and budget; summary. "Start from" is in `SETUP_STEPS` only when the person has another itinerary to copy from (`useCanCopy`, then `setupSteps({canCopy})`). It offers "Start empty" and copying (`CopyItinerary`, §3.3). A finished copy moves the wizard on at once.
   - Name and dates: the name and both dates are required, and the end is on or after the start. Next saves them through `tripRepository.updateTrip`, and a change of dates is logged in the activity log.
   - Cities: added with `saveCity` and `CityForm`. Each new city gets a different colour.
   - Hotels: added with `saveStay` and `StayForm`. Each new hotel starts where the last one ends and runs to the trip's last day. A city is needed first.
   - Flights: added with `saveFlight` through `FlightFormPanel`.
   - Travellers and budget: the member list (`MembersSection`) and the budget form (`BudgetForm`).
-  - Summary: each step's value, with skipped steps marked, and "Open itinerary".
+  - Summary: each step's value, with skipped steps marked, and "Open itinerary". After a copy in this visit, a "Start from" row shows what it brought (`copySummary`).
 - **Moving on:** Back is shown from the second step. Skip is shown on an empty step other than name and dates and the summary. Next is shown once a step has something in it, or on a step that cannot be skipped. Each step saves as it goes, so leaving halfway loses nothing.
 - **Finish later** (header) and **Open itinerary** (summary) set `setup` to `done` through `updateTrip` and open the app at once, also offline, since the write waits in Firestore's cache. If the write fails, a "refused" toast shows.
 - **Resume:** while the trip is still pending, the wizard reopens at the first step with nothing in it, or at the summary when every step has something (`resumeStep`).
@@ -1060,6 +1066,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS` | Sort (priority first, then name) and filters for the waiting list and its pins. The view is not saved. |
 | `cleanup.ts` | `planCleanup`, `planEverything`, `CLEANUP_KINDS` | What Clean up will delete, from the retired records only. |
 | `backup.ts` | `makeBackup`, `BackupSchema`, `backupSummary` | Whole-trip file, validated on import. The trip's dates travel with it (`backupDates`) and are restored with the budget. |
+| `trip-copy.ts` | `copyTrip`, `withNeeds`, `neededBy`, `needsOf`, `availableParts`, `copyShift`, `sourceFirstDay`, `copiesAnything`, `MAX_MEMBERS` | Copies only active records; never expenses, cash, activity, share links, proposals or day research. A part pulls in what it needs: places and hotels need cities, the plan needs places, so unticking one unticks those that need it. Dates move by the shift from the source's first day (its `startDate`, else its earliest active check-in) to the target's `startDate`. An ID that holds the old date gets the new one (a clash gets a number). Holidays come only when the shift is 0. Hotel and booking notes, and flight confirmation, cost and note, are cleared. Plan stops reset to planned; to-dos reset to `todo` with no completion date, and keep their assignee only when members are copied. Members: the person copying stays first, then the target's list, then the source's, up to 20. Budget comes only when the source has one; per-member targets only for members copied. Records outside the target's dates are still copied and reported. `locationFetchedAt` is kept, so the 30-day limit counts from the first fetch (§14.1). |
 | `activity.ts` | `undoFor`, `ActivitySchema` | Reverse of a change, if the target has not changed since. |
 | `budget.ts` | `formatYen`, `formatUsd`, `formatUsdAt`, `usdToYen`, `parseUsd`, `parseRate` | Display and entry formats for yen and dollars. |
 | `amount.ts` | `readAmount`, `entryFor`, `AmountEntry` | Turns a typed yen or dollar amount into the stored fields (§23.9). |
@@ -1081,6 +1088,7 @@ From `CLAUDE.md` rule 4 and `docs/maps-and-research-plan.md`:
 - **Stored:** Google place IDs (indefinitely) and Google coordinates (at most 30 days; `maps:refresh` renews them). Our own notes can be stored.
 - **In memory only:** hours, ratings, photos, route times and distances, and nearby search results. Live details and photo lists are also kept for 30 minutes per place (`place-live-cache.ts`), never in storage, so a reload empties them.
 - **Share copies** (§12.8) keep place IDs and Google coordinates as the trip does. Coordinates older than 30 days are dropped from the copy. `npm run maps:refresh` brings the copies' coordinates in line with the trip (renewed or deleted), so a copy never keeps them past 30 days. Copies hold no hours, ratings or photos.
+- Copying from another itinerary (§13, `trip-copy.ts`) copies its places as they are, with their place IDs and Google coordinates, and keeps `locationFetchedAt`. The 30-day limit counts from the first fetch, so a copy is not given a new one. Hours, ratings and photos are never stored, so none are copied.
 - Google data appears only on a Google map or next to the Google logo. Never on another map provider.
 - Weather and daylight are not Google data. City coordinates come from Open-Meteo's geocoding by the city's name, never from the Maps SDK or stored Google coordinates. Nothing is written to Firestore. Results stay in memory, with the `weather:*` localStorage cache described in §3.5.
 - The browser key is public and restricted by website and API. The script key stays in a git-ignored `.env`.
@@ -1407,7 +1415,7 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 
 ### 22.2 Test coverage by area (files with tests)
 
-95 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, the setup wizard and checklist, the trip switcher (`trip-switcher.test.tsx`), screens, place details and the old-link redirect; `scripts` has four.
+98 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, the setup wizard and checklist, the copy panel (`copy-itinerary.test.tsx`), the trip switcher (`trip-switcher.test.tsx`), screens, place details and the old-link redirect; `scripts` has four.
 
 ### 22.3 Quality gates
 
@@ -1679,6 +1687,7 @@ Cross-collection links are **not enforced** by the rules or by the database. The
 | Member | `trips/{id}` get (live) | While trip is open | Membership check; live so removal is noticed. |
 | Member | ten collection listeners (`TRIP_COLLECTIONS`, including `cash` and the to-do collections), full collections | While trip is open | No pagination; the whole trip is loaded. |
 | Member | `items` listener | While trip is open | Plan. |
+| Member | `readTrip` (the ten trip collections) and `readItems` (`items`), each once with `getDocs` | Once per copy, for the other itinerary picked | Copying from another itinerary (§3.5). Allowed by `isMember` on that other trip. Reads only; the copy writes into an empty trip only. |
 | Member | `proposals` listener | While trip is open | Research notice and review. |
 | Member | `dayResearch` listener (`useDayResearch`) | While trip is open | Day research panel and calendar icons. |
 | Member | `activity` orderBy `at` desc, limit 50 | Only while the activity sheet is open | Single-field order; no composite index. |

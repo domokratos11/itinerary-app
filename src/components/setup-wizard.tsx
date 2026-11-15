@@ -13,7 +13,8 @@ import {
   SummaryStep,
 } from "@/components/setup-steps";
 import { type StepNav } from "@/components/setup-parts";
-import { copyPanel, StartFromStep } from "@/components/setup-start-from";
+import { useCanCopy, type CopyDone } from "@/components/copy-itinerary";
+import { StartFromStep } from "@/components/setup-start-from";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -50,8 +51,10 @@ export function SetupWizard({
   const trip = useActiveTrip() ?? initial;
   const data = useTrip();
   const online = useOnline();
-  const copy = copyPanel(tripId);
-  const steps = useMemo(() => setupSteps({ canCopy: copy !== null }), [copy]);
+  const canCopy = useCanCopy(tripId);
+  const steps = useMemo(() => setupSteps({ canCopy }), [canCopy]);
+  // What a copy from another itinerary brought, for the summary.
+  const [copied, setCopied] = useState<CopyDone | null>(null);
   const input: SetupInput = { trip, data };
   const [index, setIndex] = useState(() =>
     Math.max(0, steps.indexOf(resumeStep(steps, input))),
@@ -187,7 +190,15 @@ export function SetupWizard({
             ) : step === "details" ? (
               <DetailsStep {...props} trip={trip} />
             ) : step === "startFrom" ? (
-              <StartFromStep nav={nav} filled={filled} copy={copy} />
+              <StartFromStep
+                tripId={tripId}
+                nav={nav}
+                filled={filled}
+                onCopied={(done) => {
+                  setCopied(done);
+                  nav.next();
+                }}
+              />
             ) : step === "cities" ? (
               <CitiesStep {...props} />
             ) : step === "hotels" ? (
@@ -200,6 +211,7 @@ export function SetupWizard({
               <SummaryStep
                 input={input}
                 steps={steps}
+                copied={copied}
                 nav={nav}
                 onOpen={finish}
               />

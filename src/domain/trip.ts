@@ -64,6 +64,16 @@ export const EMPTY_TRIP: TripData = {
   todos: [],
 };
 
+// Nothing saved in the trip yet, archived records and removed stops
+// included. Only such a trip takes a backup or a copy of another, so
+// neither ever overwrites someone's work.
+export function isEmptyTrip(data: TripData, items: PlanItem[]): boolean {
+  return (
+    TRIP_COLLECTIONS.every((name) => data[name].length === 0) &&
+    items.length === 0
+  );
+}
+
 export function stayId(stay: Pick<Stay, "cityId" | "checkIn">): string {
   return `${stay.cityId}-${stay.checkIn}`;
 }

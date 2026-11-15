@@ -1,4 +1,4 @@
-import { collection, doc, onSnapshot } from "firebase/firestore";
+import { collection, doc, getDocs, onSnapshot } from "firebase/firestore";
 
 import type { PlanRepository } from "@/domain/plan-repository";
 import { PlanItemSchema, type PlanItem } from "@/domain/schemas";
@@ -25,6 +25,16 @@ export class FirestorePlanRepository implements PlanRepository {
       },
       (error) => onError?.(error),
     );
+  }
+
+  async readItems(tripId: string): Promise<PlanItem[]> {
+    const snapshot = await getDocs(
+      collection(getDb(), "trips", tripId, "items"),
+    );
+    return snapshot.docs.flatMap((d) => {
+      const result = PlanItemSchema.safeParse(d.data());
+      return result.success ? [result.data] : [];
+    });
   }
 
   async save(tripId: string, item: PlanItem): Promise<void> {
