@@ -103,7 +103,7 @@ describe("AppGate", () => {
     expect(
       screen.getByRole("dialog", { name: "No trips yet" }),
     ).toHaveTextContent("ana@example.com");
-    expect(screen.queryByRole("button", { name: "New trip" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New itinerary" })).toBeNull();
   });
 
   it("offers a new trip only to someone allowed to create one", () => {
@@ -115,7 +115,7 @@ describe("AppGate", () => {
     });
     renderGate();
     expect(
-      screen.getByRole("button", { name: "New trip" }),
+      screen.getByRole("button", { name: "New itinerary" }),
     ).toBeInTheDocument();
   });
 
@@ -130,6 +130,57 @@ describe("AppGate", () => {
     expect(app()).toBeNull();
     expect(screen.getByRole("button", { name: "Japan" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "My trip" })).toBeInTheDocument();
+  });
+
+  it("shows each trip's dates and whether it is set up", () => {
+    useAuthStore.setState({
+      status: "signed-in",
+      user,
+      trips: [
+        {
+          ...trip("japan", "Japan"),
+          startDate: "2026-12-15",
+          endDate: "2027-01-12",
+        },
+        { ...trip("peru", "Peru"), setup: "pending" },
+      ],
+      tripChosen: true,
+      canCreateTrips: true,
+    });
+    renderGate();
+    const japan = screen.getByRole("button", { name: /Japan/ });
+    expect(japan).toHaveTextContent("Dec 15, 2026");
+    expect(japan).toHaveTextContent("Jan 12, 2027");
+    expect(japan).not.toHaveTextContent("Not set up yet");
+    expect(screen.getByRole("button", { name: /Peru/ })).toHaveTextContent(
+      "Not set up yet",
+    );
+    expect(
+      screen.getByRole("button", { name: "New itinerary" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Sign out" }),
+    ).toBeInTheDocument();
+  });
+
+  it("lists a single trip when none was opened (All itineraries)", () => {
+    useAuthStore.setState({
+      status: "signed-in",
+      user,
+      trips: [trip("japan", "Japan")],
+      tripChosen: true,
+      canCreateTrips: true,
+    });
+    renderGate();
+    expect(app()).toBeNull();
+    expect(
+      screen.getByRole("dialog", { name: "Choose an itinerary" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Japan" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "New itinerary" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "No trips yet" })).toBeNull();
   });
 
   it("keeps the splash while a trip is being chosen from the list", () => {

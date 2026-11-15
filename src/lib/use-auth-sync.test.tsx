@@ -5,6 +5,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { getLocale, setLocale } from "@/lib/i18n";
 import { LocalTripRepository } from "@/lib/local-trip-repository";
 import { LocalUserRepository } from "@/lib/local-user-repository";
+import { requestTripPicker } from "@/lib/trip-id";
 import { useAuthSync } from "@/lib/use-auth-sync";
 
 const ana = { uid: "u1", email: "Ana@Example.com", name: "Ana" };
@@ -25,12 +26,14 @@ describe("useAuthSync", () => {
   beforeEach(() => {
     signedIn = ana;
     window.localStorage.clear();
+    window.sessionStorage.clear();
     useAuthStore.setState({
       status: "loading",
       user: null,
       trips: null,
       tripsFailed: false,
       tripId: null,
+      tripChosen: false,
       access: "checking",
     });
   });
@@ -56,6 +59,19 @@ describe("useAuthSync", () => {
 
     await waitFor(() => expect(store().trips).toHaveLength(2));
     expect(store().tripId).toBeNull();
+  });
+
+  it("lists even the last trip after All itineraries, once", async () => {
+    const trips = new LocalTripRepository();
+    const id = await trips.createTrip("Japan", "ana@example.com");
+    const users = new LocalUserRepository();
+    await users.update("u1", { lastTripId: id });
+    requestTripPicker();
+    renderHook(() => useAuthSync(null, trips, users));
+
+    await waitFor(() => expect(store().tripChosen).toBe(true));
+    expect(store().tripId).toBeNull();
+    expect(window.sessionStorage.getItem("trip-picker")).toBeNull();
   });
 
   it("doesn't remember a trip the user was refused", async () => {

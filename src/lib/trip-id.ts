@@ -36,18 +36,44 @@ export function forgetTripId(): void {
   }
 }
 
+// "All itineraries" asks for the list once: the next page load shows the
+// picker instead of reopening the remembered, last or only trip. Kept for
+// this tab only, and read once (takePickerRequest clears it).
+const PICKER_KEY = "trip-picker";
+
+export function requestTripPicker(): void {
+  try {
+    window.sessionStorage.setItem(PICKER_KEY, "1");
+  } catch {
+    // Blocked storage: the remembered or last trip opens as before.
+  }
+}
+
+export function takePickerRequest(): boolean {
+  try {
+    const asked = window.sessionStorage.getItem(PICKER_KEY) === "1";
+    window.sessionStorage.removeItem(PICKER_KEY);
+    return asked;
+  } catch {
+    return false;
+  }
+}
+
 // Which trip to open once the user's trips are known. `trips` is null when
 // the list couldn't be read; the remembered trip is still tried, and its
 // access check decides. A trip in a link is always tried for the same reason.
+// `showPicker` (from "All itineraries") opens none, so the picker shows.
 export function chooseTrip(input: {
   fromUrl: string | null;
   remembered: string | null;
   lastTripId: string | null;
   trips: string[] | null;
+  showPicker?: boolean;
 }): string | null {
   const fromUrl = parseTripId(input.fromUrl);
   if (fromUrl) return fromUrl;
   if (input.trips === null) return input.remembered;
+  if (input.showPicker) return null;
   for (const id of [input.remembered, input.lastTripId])
     if (id && input.trips.includes(id)) return id;
   return input.trips.length === 1 ? input.trips[0] : null;
@@ -67,4 +93,11 @@ export function openTrip(tripId: string): void {
 export function openMyTrips(): void {
   forgetTripId();
   loadPage(`${BASE_PATH}/`);
+}
+
+// "All itineraries": the list of the user's trips, even when one would
+// otherwise reopen by itself.
+export function openTripPicker(): void {
+  requestTripPicker();
+  openMyTrips();
 }

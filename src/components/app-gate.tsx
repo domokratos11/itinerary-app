@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { LanguageSelect } from "@/components/language-select";
 import { NewTripPanel } from "@/components/new-trip";
+import { TripSummaryText } from "@/components/trip-switcher";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +26,7 @@ import { usePlanStore } from "@/lib/plan-store";
 import { openMyTrips, openTrip } from "@/lib/trip-id";
 import { useTripStore } from "@/lib/trip-store";
 import { useOnline } from "@/lib/use-online";
+import { cn } from "@/lib/utils";
 import { leaveSharedView, useViewerStore } from "@/lib/viewer-store";
 // The first thing on every page. `children` is the whole app and renders only
 // for a signed-in member whose trip has arrived; everything else gets a screen
@@ -74,7 +76,9 @@ export function AppGate({ children }: { children: ReactNode }) {
     const choosing = trips !== null && trips.length > 0 && !tripChosen;
     if ((trips === null && !tripsFailed) || choosing)
       return online ? <Splash /> : <OfflineScreen />;
-    if (trips && trips.length > 1) return <TripPicker />;
+    // A single trip reaches here after "All itineraries" (or when it arrived
+    // after the choice): it is still listed, with "New itinerary".
+    if (trips && trips.length > 0) return <TripPicker />;
     return <NoTrips email={email} />;
   }
   if (access === "denied")
@@ -114,7 +118,16 @@ export function Splash() {
   );
 }
 
-function Screen({ title, children }: { title: string; children: ReactNode }) {
+function Screen({
+  title,
+  wide = false,
+  children,
+}: {
+  title: string;
+  // Room for two columns from lg, for the trip picker.
+  wide?: boolean;
+  children: ReactNode;
+}) {
   return (
     <div
       role="dialog"
@@ -122,7 +135,7 @@ function Screen({ title, children }: { title: string; children: ReactNode }) {
       aria-labelledby="app-gate-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4"
     >
-      <Card className="w-full max-w-sm">
+      <Card className={cn("w-full max-w-sm", wide && "lg:max-w-xl")}>
         <CardHeader>
           <LockKeyhole className="size-6 text-primary" aria-hidden />
           <CardTitle id="app-gate-title" className="text-lg">
@@ -169,19 +182,21 @@ function OfflineScreen() {
   );
 }
 
+// Each trip as a card to open, with its dates and whether it still needs
+// setting up. A long list scrolls inside the card, so sign-out stays in view.
 function TripPicker() {
   const trips = useAuthStore((s) => s.trips) ?? [];
   return (
-    <Screen title={t("gate.chooseTrip")}>
-      <ul className="flex flex-col gap-2">
+    <Screen title={t("gate.chooseTrip")} wide>
+      <ul className="-mx-1 grid max-h-[min(55svh,28rem)] gap-2 overflow-y-auto px-1 py-0.5 lg:grid-cols-2">
         {trips.map((trip) => (
-          <li key={trip.id}>
+          <li key={trip.id} className="min-w-0">
             <Button
               variant="outline"
-              className="w-full justify-start"
+              className="h-auto min-h-14 w-full justify-start py-2 whitespace-normal"
               onClick={() => openTrip(trip.id)}
             >
-              {trip.name ?? t("common.myTrip")}
+              <TripSummaryText trip={trip} />
             </Button>
           </li>
         ))}

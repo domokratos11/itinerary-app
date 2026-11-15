@@ -125,10 +125,12 @@
     "notFoundBody": "There is no trip with this link. Check that you copied all of it.",
     "offlineTitle": "You're offline",
     "offlineBody": "This device hasn't opened the trip before, so it has no copy to show. Connect to the internet to load it.",
-    "chooseTrip": "Choose a trip",
+    "chooseTrip": "Choose an itinerary",
     "noTripsTitle": "No trips yet",
     "noTripsBody": "{email} isn't on any trip's member list. Ask someone on a trip to add your email, or use another account.",
-    "newTrip": "New trip",
+    "newTrip": "New itinerary",
+    "allTrips": "All itineraries",
+    "notSetUp": "Not set up yet",
     "tryAgain": "Try again",
     "offlinePhrasebook": "Open the Japanese phrasebook"
   },
@@ -146,9 +148,9 @@
   },
   "newTrip": {
     "descriptionOnline": "It starts empty, with you as its only member.",
-    "descriptionOffline": "Creating a trip needs a connection.",
-    "create": "Create trip",
-    "failed": "The trip couldn't be created."
+    "descriptionOffline": "Creating an itinerary needs a connection.",
+    "create": "Create itinerary",
+    "failed": "The itinerary couldn't be created."
   },
   "home": {
     "planLoading": "Loading plan…",
@@ -1154,7 +1156,8 @@
     },
     "d20261115": {
       "tripDates": "A trip can have its own start and end dates in Settings → Trip, so it has days before any hotel is booked.",
-      "noHotelYet": "Days no hotel covers yet say so, and take places from any city."
+      "noHotelYet": "Days no hotel covers yet say so, and take places from any city.",
+      "itineraries": "Choosing an itinerary shows each one's dates and whether it still needs setting up, and All itineraries in the trip menu goes back to the list."
     },
     "d20261114": {
       "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos. It uses the app colours and light or dark theme, and opens without signal.",

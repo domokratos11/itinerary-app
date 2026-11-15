@@ -18,6 +18,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
     items: [
       "changelog.d20261115.tripDates",
       "changelog.d20261115.noHotelYet",
+      "changelog.d20261115.itineraries",
       "changelog.d20261114.researchNotFound",
     ],
   },

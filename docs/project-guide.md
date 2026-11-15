@@ -215,7 +215,7 @@ Shared chrome and gates:
 
 | File | Role |
 |---|---|
-| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. The offline screen has a button to the static phrasebook (`gate.offlinePhrasebook`, linking to `/phrasebook-guide/`), so the phrasebook opens even when the app cannot. |
+| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. With one or more trips and none chosen, the picker shows a card per trip (name, dates, and a "Not set up yet" badge when `setup` is `pending`; two columns from `lg`); "No trips yet" shows only for an empty list. The offline screen has a button to the static phrasebook (`gate.offlinePhrasebook`, linking to `/phrasebook-guide/`), so the phrasebook opens even when the app cannot. |
 | `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections; Miscellaneous at `/misc/` in place of To-dos), `MISC_ITEMS` and `useMiscItems()` (the Miscellaneous entries: To-dos at `/todos/`, both are ordinary Next links, each with a `path`: To-dos at `/todos/` and Phrasebook at `/phrasebook/`, §12.10) and `useSections()`, which gives viewers only Dashboard, Days, Cities and Miscellaneous (Miscellaneous shows only Phrasebook). |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. The Miscellaneous item opens `MiscSubMenu` (shadcn `SidebarMenuSub`) with both entries; it is hidden when the sidebar is collapsed to icons. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
@@ -228,7 +228,7 @@ Shared chrome and gates:
 | `theme-provider.tsx`, `theme-toggle.tsx` | Theme state and the Light / Dark button. `theme-provider.tsx` also puts the saved colour family on the page (`PickPalette`) and re-applies the browser bar colour (`ThemeColor`). |
 | `palette-picker.tsx` | Colour family picker (Sen, Ink, Pine, Plum): shadcn ToggleGroup, two per row on phones and one row from `lg`. Sits under the Light / Dark toggle in the Account sheet and the viewer sheet. |
 | `search-palette.tsx` | The Ctrl+K / ⌘K search over days, hotels and places. |
-| `trip-switcher.tsx`, `new-trip.tsx` | Trip name menu; panel to create a trip (for permitted creators). |
+| `trip-switcher.tsx`, `new-trip.tsx` | `TripSwitcher`: trip name menu, with each trip's dates and "Not set up yet" badge, then "All itineraries" (`openTripPicker`) and "New itinerary" (for permitted creators). Exports `TripSummaryText` (name, dates and badge), shared with the trip picker in `app-gate.tsx`. `new-trip.tsx`: panel to create a trip (for permitted creators). |
 | `account-sheet.tsx` | Account side sheet: signed-in email, theme (Light / Dark and colour family), language, About, sign-out. |
 | `activity-sheet.tsx` | Change log sheet with undo. |
 | `language-select.tsx` | Language picker. |
@@ -382,7 +382,7 @@ State and sync:
 | File | Role |
 |---|---|
 | `auth-store.ts` | Zustand: sign-in status, user, trips, access, canCreateTrips, trip ID. `useActiveTrip()`. The `tripChosen` flag is set by `setTripId` (also when it sets null) and reset by `setUser`. |
-| `use-auth-sync.ts` | Watches sign-in, loads the person's trips and profile, picks a trip, checks membership, remembers the trip. |
+| `use-auth-sync.ts` | Watches sign-in, loads the person's trips and profile, picks a trip (reads the "All itineraries" request once per page, §16), checks membership, remembers the trip. |
 | `trip-store.ts` | Zustand: trip collections, loaded flags, error. Hooks `useTrip`, `useTripDays`, `useTripDates` (the open trip's own dates, or the link's dates in viewer mode), `usePlacesById`, `useCitiesById`. |
 | `use-trip-sync.ts` | Subscribes to the ten trip collections (`TRIP_COLLECTIONS`, including `cash` and the two to-do collections) when access is `member`. |
 | `plan-store.ts` | Zustand: plan items, ready flag, error. |
@@ -392,7 +392,7 @@ State and sync:
 | `sync-store.ts` | Zustand `useSyncStore`: `pending` (writes from this session the server has not confirmed) and `startup` (true until edits queued in an earlier session, before a reload, are sent). `trackWrite(promise)` counts a write until it settles; `trackStartupWrites(promise)` does the same for those earlier edits; `syncStatus(state, online)` returns `"saved"`, `"saving"` or `"waiting"`. Firestore write promises settle only when the server confirms, so offline writes stay counted. |
 | `use-proposals.ts`, `use-activity.ts` | Live proposals (always), and the activity log (only while its sheet is open). |
 | `use-trip-id.ts` | The open trip's ID from the auth store. |
-| `trip-id.ts` | Trip ID format (`[A-Za-z0-9_-]`, 6 to 128 characters), remembering it on the device, choosing a trip, opening trips. |
+| `trip-id.ts` | Trip ID format (`[A-Za-z0-9_-]`, 6 to 128 characters), remembering it on the device, choosing a trip (`chooseTrip`, with `showPicker`), opening trips, and the one-time request for the picker (`requestTripPicker`, `takePickerRequest`, `openTripPicker`; sessionStorage key `trip-picker`, kept for the tab). |
 | `plan-actions.ts` | Every plan change: add, move, re-key, edit, remove, restore. Updates the store first, then saves. |
 | `trip-actions.ts` | Every change to trip records (`saveRecord`, `archiveRecord`, `saveBudget`). |
 | `proposal-actions.ts` | Request research; accept or dismiss proposals. |
@@ -421,7 +421,7 @@ Maps and place helpers:
 | `device-location.ts` | `currentPosition()`: the phone's position with high accuracy, a 10 s timeout and a 60 s `maximumAge`. Rejects with a `LocationError` whose `reason` is `denied`, `unavailable`, `timeout` or `unsupported`. The position is used for one search and never stored, in the stores or in Firestore. |
 | `geo.ts` | Straight-line distance. |
 | `tokyo-date.ts` | Date helpers in Tokyo time. |
-| `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). `formatFullDate` gives a date with its year ("Nov 12, 2026") in the current language, for What's new. |
+| `format-day.ts` | Day labels, such as "Thursday 17 Dec". `formatTokyoDateTime` gives a date and time in Japan time (used for share expiry). `formatFullDate` gives a date with its year ("Nov 12, 2026") in the current language, for What's new. `formatDateRange(start, end)` gives two dates as one range in the current language, for the trip picker and trip menu. |
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` (from `NEXT_PUBLIC_BASE_PATH`) for URLs the browser fetches directly. `SITE_BASE_PATH` (`/itinerary-app`) is the same path as a constant, read by `next.config.ts` and the phrasebook import (§4.1). |
@@ -614,7 +614,7 @@ What happens on first load, in order:
    - `watchUser` (Firebase Auth state) sets `status` to `signed-in` or `signed-out`.
    - If signed in: `canCreateTrips()` reads `config/access`; `watchMyTrips(email)` lists trips where `members` contains the lowercase email; `users.get(uid)` loads the profile (language, last trip).
    - Language: the saved profile language wins; otherwise the current language is saved to the profile.
-   - Trip choice (`chooseTrip`): the `?trip=` link first; then the remembered trip or last trip if it is in the list; then the only trip if there is exactly one.
+   - Trip choice (`chooseTrip`): the `?trip=` link first; if the list could not be read, the remembered trip; if "All itineraries" asked for the picker (`showPicker`, read once per page), no trip; then the remembered trip or last trip if it is in the list; then the only trip if there is exactly one.
    - Access: `watchAccess(tripId)` reads `trips/{tripId}`: `member` (exists), `denied` (permission denied), or `missing` (not in cache and not on server).
 6. **`AppGate` decides what to show**:
 
@@ -623,8 +623,8 @@ What happens on first load, in order:
 | `loading` | Splash |
 | `signed-out` | "Sign in" screen with language choice and Google sign-in |
 | signed in, no trip chosen yet (trips still loading, or listed but none chosen yet) | Splash (or offline screen if offline) |
-| several trips, none chosen | Trip picker |
-| no trips | "No trips" screen (with "New trip" if allowed) |
+| one or more trips, none chosen | Trip picker: a card per trip (name, dates, "Not set up yet" when setup is pending); two columns from `lg` |
+| no trips (empty list) | "No trips yet" screen (with "New itinerary" if allowed) |
 | `access = denied` | "Not on this trip" |
 | `access = missing` | "Trip not found" |
 | `access = checking` | Splash (or offline screen) |
@@ -945,7 +945,9 @@ Account sheet (header): signed-in email, theme toggle, language choice (saved to
 
 ### 12.7 Trip switcher and trip creation
 
-- Header trip name opens a menu when there are other trips, or when the person may create one. `New trip` makes a trip with the person as the only member (`createTrip`). It starts with setup `pending`. The New trip form passes no dates, so the trip has none until they are set in Settings > Trip.
+- Header trip name opens a menu when there are other trips, or when the person may create one; otherwise it is a link home. The menu lists each trip with its dates and a "Not set up yet" badge (`TripSummaryText`, the same as the picker), then "All itineraries" and, for permitted creators, "New itinerary".
+- "All itineraries" (`openTripPicker`) asks for the picker once and reloads, so the trip picker (§7) shows even with a remembered or only trip. Picking a trip there reloads the page as usual.
+- "New itinerary" makes a trip with the person as the only member (`createTrip`). It starts with setup `pending`. The form passes no dates, so the trip has none until they are set in Settings > Trip.
 - Only emails in `config/access.tripCreators` can create trips (rules and `canCreateTrips`).
 
 ### 12.8 Read-only share links
@@ -1178,7 +1180,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 | **Sign-in** | Google popup. Errors mapped to messages by `signInErrorKey`: popup blocked, unauthorized domain, operation not allowed, network, web storage blocked, too many attempts, account disabled (`SIGN_IN_ERRORS`). In the home-screen app, popup blocked, storage blocked and internal error show "close the app completely, open it again and try once more" (`auth.standaloneRetry`). The sign-in button waits at most 90 s; a failed sign-in toast has a "Try again" action. Redirect sign-in is still not used: it needs the auth domain on the site's own origin root, which a GitHub Pages project site does not have. |
 | **Session** | Firebase keeps it in IndexedDB, so it survives reloads and works offline. |
 | **Trip list** | `watchMyTrips(email)`: `where("members", "array-contains", email)`. Needs no index (single-field). |
-| **Opening a trip** | From the link (`?trip=`), the remembered trip, the last trip, or the only trip. Opening another trip reloads the page. |
+| **Opening a trip** | From the link (`?trip=`), the remembered trip, the last trip, or the only trip. "All itineraries" (§12.7) shows the picker instead, once per page load. Opening another trip reloads the page. |
 | **Waiting for a trip** | While the trip list has answered with trips but none is chosen yet, the splash stays up (§7). |
 | **Membership check** | `watchAccess(tripId)` reads `trips/{id}`. Permission denied = not a member; missing = no such trip. |
 | **Remembering** | localStorage key `trip-id`, plus `users/{uid}.lastTripId`. |
@@ -1376,7 +1378,7 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 
 ### 22.2 Test coverage by area (files with tests)
 
-91 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, screens, place details and the old-link redirect; `scripts` has four.
+92 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, the trip switcher (`trip-switcher.test.tsx`), screens, place details and the old-link redirect; `scripts` has four.
 
 ### 22.3 Quality gates
 

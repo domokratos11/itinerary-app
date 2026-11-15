@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { TripRepository } from "@/domain/trip-repository";
 import type { UserProfile, UserRepository } from "@/domain/user-repository";
 import { watchUser } from "@/lib/auth";
 import { useAuthStore } from "@/lib/auth-store";
 import { getLocale, setLocale } from "@/lib/i18n";
-import { chooseTrip, recallTripId, rememberTripId } from "@/lib/trip-id";
+import {
+  chooseTrip,
+  recallTripId,
+  rememberTripId,
+  takePickerRequest,
+} from "@/lib/trip-id";
 import { tripRepository } from "@/lib/trip-repository-instance";
 import { userRepository } from "@/lib/user-repository-instance";
 
@@ -67,14 +72,19 @@ export function useAuthSync(
   // Once a trip is open it stays open; opening another reloads the page.
   const profileReady = profile !== null && profile.uid === uid;
   const listAnswered = trips !== null || tripsFailed;
+  // "All itineraries" is read once, when the first choice is made, and then
+  // holds for this page, so a later update of the list doesn't reopen a trip.
+  const showPicker = useRef<boolean | null>(null);
   useEffect(() => {
     if (tripId || !profileReady || !listAnswered) return;
+    showPicker.current ??= takePickerRequest();
     useAuthStore.getState().setTripId(
       chooseTrip({
         fromUrl,
         remembered: recallTripId(),
         lastTripId: profile.value.lastTripId,
         trips: trips?.map((trip) => trip.id) ?? null,
+        showPicker: showPicker.current,
       }),
     );
   }, [tripId, profileReady, listAnswered, fromUrl, profile, trips]);
