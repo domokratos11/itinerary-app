@@ -15,33 +15,45 @@ import { useTrip, useTripStore } from "@/lib/trip-store";
 
 type Editing = { record: CityRecord | null } | null;
 
+// Adds a city, or changes the one given, and logs it. Shared with the setup
+// wizard. `allCities` includes archived ones, so no ID is reused.
+export function saveCity(
+  tripId: string,
+  allCities: CityRecord[],
+  existing: CityRecord | null,
+  name: string,
+  color: string,
+): void {
+  const now = new Date().toISOString();
+  const record: CityRecord = existing
+    ? { ...existing, name, color, updatedAt: now }
+    : {
+        id: uniqueId(
+          name,
+          allCities.map((c) => c.id),
+        ),
+        name,
+        color,
+        archived: false,
+        updatedAt: now,
+      };
+  saveRecord(
+    tripId,
+    "cities",
+    record,
+    existing
+      ? t("activity.editedCity", { name })
+      : t("activity.addedCity", { name }),
+  ).catch(() => toast.error(t("common.refused")));
+}
+
 export function CitiesSettings({ tripId }: { tripId: string }) {
   const trip = useTrip();
   const allCities = useTripStore((s) => s.data.cities);
   const [editing, setEditing] = useState<Editing>(null);
 
   function save(name: string, color: string) {
-    const now = new Date().toISOString();
-    const record: CityRecord = editing?.record
-      ? { ...editing.record, name, color, updatedAt: now }
-      : {
-          id: uniqueId(
-            name,
-            allCities.map((c) => c.id),
-          ),
-          name,
-          color,
-          archived: false,
-          updatedAt: now,
-        };
-    saveRecord(
-      tripId,
-      "cities",
-      record,
-      editing?.record
-        ? t("activity.editedCity", { name })
-        : t("activity.addedCity", { name }),
-    ).catch(() => toast.error(t("common.refused")));
+    saveCity(tripId, allCities, editing?.record ?? null, name, color);
     setEditing(null);
   }
 
@@ -133,15 +145,18 @@ export function CitiesSettings({ tripId }: { tripId: string }) {
 
 export function CityForm({
   city,
+  defaultColor = "#0f766e",
   onCancel,
   onSave,
 }: {
   city: CityRecord | null;
+  // The setup wizard gives each new city a different one.
+  defaultColor?: string;
   onCancel: () => void;
   onSave: (name: string, color: string) => void;
 }) {
   const [name, setName] = useState(city?.name ?? "");
-  const [color, setColor] = useState(city?.color ?? "#0f766e");
+  const [color, setColor] = useState(city?.color ?? defaultColor);
   const valid = name.trim().length > 0 && /^#[0-9a-fA-F]{6}$/.test(color);
 
   return (

@@ -135,12 +135,8 @@ function TripDatesForm({
 export function TripSettings({ tripId }: { tripId: string }) {
   const trip = useActiveTrip();
   const savedRange = useTripDates();
-  const me = useAuthStore((s) => s.user?.email?.toLowerCase() ?? null);
   const [name, setName] = useState(trip?.name ?? "");
-  const [email, setEmail] = useState("");
-  const members = trip?.members ?? [];
   const trimmed = name.trim();
-  const added = memberEmail(email);
 
   function saveName(event: FormEvent) {
     event.preventDefault();
@@ -154,26 +150,6 @@ export function TripSettings({ tripId }: { tripId: string }) {
         }),
       )
       .catch(() => toast.error(t("common.refused")));
-  }
-
-  function saveMembers(next: string[]) {
-    tripRepository
-      .updateTrip(tripId, { members: next })
-      .then(() =>
-        logActivity(tripId, {
-          kind: "settings",
-          targetId: null,
-          summary: t("activity.changedMembers"),
-        }),
-      )
-      .catch(() => toast.error(t("common.refused")));
-  }
-
-  function addMember(event: FormEvent) {
-    event.preventDefault();
-    if (!added) return;
-    setEmail("");
-    if (!members.includes(added)) saveMembers([...members, added]);
   }
 
   return (
@@ -201,53 +177,84 @@ export function TripSettings({ tripId }: { tripId: string }) {
           {t("tripSettings.saveName")}
         </Button>
       </form>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="font-medium">{t("tripSettings.members")}</h3>
-        <p className="text-muted-foreground">{t("tripSettings.membersHint")}</p>
-        <ul className="flex flex-col gap-2">
-          {members.map((member) => (
-            <li
-              key={member}
-              className="flex items-center gap-3 rounded-lg border p-3"
-            >
-              <span className="min-w-0 flex-1 truncate">{member}</span>
-              {member !== me && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t("tripSettings.removeName", { name: member })}
-                  onClick={() =>
-                    saveMembers(members.filter((m) => m !== member))
-                  }
-                >
-                  <UserMinus />
-                </Button>
-              )}
-            </li>
-          ))}
-        </ul>
-        <form onSubmit={addMember} className="flex flex-col gap-3">
-          <Field label={t("tripSettings.addMember")} htmlFor="trip-member">
-            <Input
-              id="trip-member"
-              type="email"
-              value={email}
-              maxLength={200}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </Field>
-          <Button
-            type="submit"
-            variant="outline"
-            className="self-start"
-            disabled={!added}
-          >
-            <UserPlus />
-            {t("tripSettings.addMemberButton")}
-          </Button>
-        </form>
-      </section>
+      <MembersSection tripId={tripId} />
     </div>
+  );
+}
+
+// Who is on the trip: each signs in with this Google account. Also the
+// setup wizard's travellers step.
+export function MembersSection({ tripId }: { tripId: string }) {
+  const trip = useActiveTrip();
+  const me = useAuthStore((s) => s.user?.email?.toLowerCase() ?? null);
+  const [email, setEmail] = useState("");
+  const members = trip?.members ?? [];
+  const added = memberEmail(email);
+
+  function saveMembers(next: string[]) {
+    tripRepository
+      .updateTrip(tripId, { members: next })
+      .then(() =>
+        logActivity(tripId, {
+          kind: "settings",
+          targetId: null,
+          summary: t("activity.changedMembers"),
+        }),
+      )
+      .catch(() => toast.error(t("common.refused")));
+  }
+
+  function addMember(event: FormEvent) {
+    event.preventDefault();
+    if (!added) return;
+    setEmail("");
+    if (!members.includes(added)) saveMembers([...members, added]);
+  }
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h3 className="font-medium">{t("tripSettings.members")}</h3>
+      <p className="text-muted-foreground">{t("tripSettings.membersHint")}</p>
+      <ul className="flex flex-col gap-2">
+        {members.map((member) => (
+          <li
+            key={member}
+            className="flex items-center gap-3 rounded-lg border p-3"
+          >
+            <span className="min-w-0 flex-1 truncate">{member}</span>
+            {member !== me && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("tripSettings.removeName", { name: member })}
+                onClick={() => saveMembers(members.filter((m) => m !== member))}
+              >
+                <UserMinus />
+              </Button>
+            )}
+          </li>
+        ))}
+      </ul>
+      <form onSubmit={addMember} className="flex flex-col gap-3">
+        <Field label={t("tripSettings.addMember")} htmlFor="trip-member">
+          <Input
+            id="trip-member"
+            type="email"
+            value={email}
+            maxLength={200}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </Field>
+        <Button
+          type="submit"
+          variant="outline"
+          className="self-start"
+          disabled={!added}
+        >
+          <UserPlus />
+          {t("tripSettings.addMemberButton")}
+        </Button>
+      </form>
+    </section>
   );
 }

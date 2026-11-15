@@ -37,6 +37,16 @@ import { useTrip, useTripStore } from "@/lib/trip-store";
 
 type Editing = { record: FlightRecord | null } | null;
 
+// Saves one flight and logs it. Shared with the setup wizard.
+export function saveFlight(tripId: string, record: FlightRecord): void {
+  saveRecord(
+    tripId,
+    "flights",
+    record,
+    t("activity.savedFlight", { flight: record.flightNumber }),
+  ).catch(() => toast.error(t("common.refused")));
+}
+
 // Settings → Flights. Each one also shows on the days it leaves and lands.
 export function FlightsSettings({ tripId }: { tripId: string }) {
   const { flights } = useTrip();
@@ -44,12 +54,7 @@ export function FlightsSettings({ tripId }: { tripId: string }) {
   const [editing, setEditing] = useState<Editing>(null);
 
   function save(record: FlightRecord) {
-    saveRecord(
-      tripId,
-      "flights",
-      record,
-      t("activity.savedFlight", { flight: record.flightNumber }),
-    ).catch(() => toast.error(t("common.refused")));
+    saveFlight(tripId, record);
     setEditing(null);
   }
 
@@ -146,7 +151,7 @@ export function FlightsSettings({ tripId }: { tripId: string }) {
   );
 }
 
-function FlightFormPanel({
+export function FlightFormPanel({
   flight,
   takenIds,
   onCancel,

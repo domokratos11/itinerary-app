@@ -1157,7 +1157,9 @@
     "d20261115": {
       "tripDates": "Un viaje puede tener sus propias fechas de inicio y fin en Ajustes → Viaje, así tiene días antes de reservar ningún hotel.",
       "noHotelYet": "Los días que aún no cubre ningún hotel lo indican y aceptan lugares de cualquier ciudad.",
-      "itineraries": "Al elegir un itinerario se ven sus fechas y si aún falta configurarlo, y Todos los itinerarios en el menú del viaje vuelve a la lista."
+      "itineraries": "Al elegir un itinerario se ven sus fechas y si aún falta configurarlo, y Todos los itinerarios en el menú del viaje vuelve a la lista.",
+      "setupWizard": "Un itinerario nuevo se abre con una configuración que pide sus fechas, ciudades, hoteles, vuelos, viajeros y presupuesto, y cualquier paso se puede omitir o terminar después.",
+      "setupChecklist": "El Panel de un itinerario nuevo muestra las partes que aún están vacías, con enlaces para completarlas."
     },
     "d20261114": {
       "phrasebook": "La guía de frases en japonés está en la app, en Varios junto a los pendientes. Usa los colores y el tema claro u oscuro de la app, y abre sin señal.",
@@ -1171,5 +1173,63 @@
   },
   "phrasebook": {
     "frameTitle": "Guía de frases en japonés"
+  },
+  "setup": {
+    "title": "Configura tu itinerario",
+    "stepOf": "Paso {step} de {total}",
+    "stepList": "Pasos de la configuración",
+    "back": "Atrás",
+    "skip": "Omitir",
+    "next": "Siguiente",
+    "finishLater": "Terminar después",
+    "open": "Abrir itinerario",
+    "filled": "Tiene datos",
+    "step": {
+      "details": "Nombre y fechas",
+      "startFrom": "Empezar desde",
+      "cities": "Ciudades",
+      "hotels": "Hoteles",
+      "flights": "Vuelos",
+      "people": "Viajeros y presupuesto",
+      "summary": "Resumen"
+    },
+    "detailsHint": "Ponle un nombre al itinerario y elige el primer y el último día del viaje. Sus días van de uno a otro.",
+    "nameRequired": "Ponle un nombre al itinerario.",
+    "datesRequired": "Elige una fecha de inicio y una de fin.",
+    "startFromHint": "Empieza con un itinerario vacío o copia partes de otro.",
+    "startEmpty": "Empezar vacío",
+    "startEmptyHint": "Agrega tú mismo las ciudades, los hoteles y los vuelos en los siguientes pasos.",
+    "citiesHint": "Las ciudades donde te alojarás. Cada una tiene un color en el calendario y en el mapa.",
+    "noCities": "Aún no hay ciudades.",
+    "hotelsHint": "Dónde duermes cada noche. ¿Aún sin reservar? Escribe \"Por decidir\" como nombre del hotel.",
+    "hotelsNeedCity": "Cada hotel pertenece a una ciudad. Vuelve atrás para agregar una o salta este paso.",
+    "noHotels": "Aún no hay hoteles.",
+    "flightsHint": "Tus vuelos de ida y vuelta a Japón, en la hora local de cada aeropuerto.",
+    "peopleHint": "Quién más está en el itinerario y cuánto piensas gastar.",
+    "budget": "Presupuesto",
+    "budgetTotal": "Total: {total}",
+    "budgetTravellers": "{count, plural, one {# viajero} other {# viajeros}}",
+    "summaryHint": "Esto es lo que tiene el itinerario hasta ahora. Lo que omitiste puedes agregarlo después en Ajustes.",
+    "skipped": "Omitido",
+    "noDates": "Sin fechas",
+    "countCities": "{count, plural, one {# ciudad} other {# ciudades}}",
+    "countHotels": "{count, plural, one {# hotel} other {# hoteles}}",
+    "countFlights": "{count, plural, one {# vuelo} other {# vuelos}}",
+    "countMembers": "{count, plural, one {# miembro} other {# miembros}}",
+    "startedEmpty": "Empezó vacío",
+    "offlineTitle": "Estás sin conexión",
+    "offlineBody": "Configurar un itinerario necesita conexión. Lo que agregaste hasta ahora está guardado: continúa cuando vuelvas a tener conexión o termina después."
+  },
+  "setupChecklist": {
+    "title": "Termina de configurar",
+    "body": "Estas partes del itinerario aún están vacías.",
+    "dismiss": "Ocultar esta lista",
+    "part": {
+      "cities": "Agregar ciudades",
+      "hotels": "Agregar hoteles",
+      "flights": "Agregar vuelos",
+      "budget": "Definir un presupuesto",
+      "places": "Agregar lugares"
+    }
   }
 }

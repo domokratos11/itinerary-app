@@ -215,7 +215,12 @@ Shared chrome and gates:
 
 | File | Role |
 |---|---|
-| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. With one or more trips and none chosen, the picker shows a card per trip (name, dates, and a "Not set up yet" badge when `setup` is `pending`; two columns from `lg`); "No trips yet" shows only for an empty list. The offline screen has a button to the static phrasebook (`gate.offlinePhrasebook`, linking to `/phrasebook-guide/`), so the phrasebook opens even when the app cannot. |
+| `app-gate.tsx` | Shows the splash, sign-in, trip picker, "not on this trip", "This link isn't open" (viewer mode) and offline screens. Renders the app only when access is `member`, every trip collection has answered, the plan store has answered (`ready` or `error`), or when a shared view is active. While the trip list has answered with trips but none is chosen yet, it keeps the splash (offline: the offline screen), so "No trips yet" or the picker does not flash first. With one or more trips and none chosen, the picker shows a card per trip (name, dates, and a "Not set up yet" badge when `setup` is `pending`; two columns from `lg`); "No trips yet" shows only for an empty list. The offline screen has a button to the static phrasebook (`gate.offlinePhrasebook`, linking to `/phrasebook-guide/`), so the phrasebook opens even when the app cannot. A member's trip whose `setup` is `pending` (never on a read-only link) gets `SetupWizard` in place of the app (§12.11). |
+| `setup-wizard.tsx` | `SetupWizard` (Client Component): the setup screen for a new itinerary (§12.11). Holds the current step, the header ("Finish later", the link to all itineraries), the step list down the side from `lg`, or "Step X of Y" with a progress bar on phones, and the offline message. Each step saves through the existing actions. |
+| `setup-steps.tsx` | The wizard's steps: `DetailsStep`, `CitiesStep`, `HotelsStep`, `FlightsStep`, `PeopleStep` and `SummaryStep`. They reuse the Settings forms and savers: `saveCity` and `CityForm` (`settings-cities.tsx`), `saveStay`, `useStayPreview` and `StayForm` (`settings-stays.tsx`), `saveFlight` and `FlightFormPanel` (`settings-flights.tsx`), and `MembersSection` (`settings-trip.tsx`), all exported for this. |
+| `setup-parts.tsx` | `StepIntro`, `WizardActions` (Back, Skip, Next), `AddedList` and the `StepNav` type. |
+| `setup-start-from.tsx` | `StartFromStep` (the "Start from" step, with "Start empty") and `copyPanel(tripId)`, where copying from another itinerary will plug in. It returns null for now, so the step is left out. |
+| `setup-checklist.tsx` | `SetupChecklist` (the Dashboard's "Finish setting up" card) and `useSetupChecklist` (the empty parts, and hiding the card on this device). |
 | `app-header.tsx` | Top bar (trip switcher, section links on tablets, `SyncStatus`, search, activity, account; in viewer mode the trip name, a "Read-only" badge, search and the viewer sheet in place of Activity and Account). Exports `BottomNav` (phone tab bar), `VersionTag` (desktop corner text; its version opens What's new, §18.4), `SECTIONS` (the six sections; Miscellaneous at `/misc/` in place of To-dos), `MISC_ITEMS` and `useMiscItems()` (the Miscellaneous entries: To-dos at `/todos/`, both are ordinary Next links, each with a `path`: To-dos at `/todos/` and Phrasebook at `/phrasebook/`, §12.10) and `useSections()`, which gives viewers only Dashboard, Days, Cities and Miscellaneous (Miscellaneous shows only Phrasebook). |
 | `viewer.tsx` | `ViewerSheet` (side sheet: language, theme and colour family, "Leave shared view", stored on the device only) and `NotOnSharedView` (shown on `/budget/` and `/settings/` in viewer mode). |
 | `app-sidebar.tsx` | Left sidebar on wide screens: sections and every trip day with city colour dots and stop counts. The Miscellaneous item opens `MiscSubMenu` (shadcn `SidebarMenuSub`) with both entries; it is hidden when the sidebar is collapsed to icons. Its content scrolls in both the expanded and icon-rail states, with the slim `thin-scrollbar` (`SidebarContent` in `ui/sidebar.tsx`). |
@@ -240,7 +245,7 @@ Screens (one per page):
 
 | File | Page | Role |
 |---|---|---|
-| `dashboard-screen.tsx` | `/` | `DashboardScreen` and `DashboardContent`: dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research, and open to-dos that are late or due soon (§12.9). Imports the budget figures from `budget-figures.tsx`. |
+| `dashboard-screen.tsx` | `/` | `DashboardScreen` and `DashboardContent`: dashboard tiles and charts: days to go, trip length, stops today, budget, next reservation, stay tonight, warnings, places to research, and open to-dos that are late or due soon (§12.9). Imports the budget figures from `budget-figures.tsx`. Shows `SetupChecklist` (§12.1) while setup parts are missing. |
 | `dashboard-parts.tsx` | `/` | The pieces the dashboard is built from: `Tile`, `Panel`, `Hint`, `Empty` and `ClockTiles`. |
 | `today-card.tsx` | `/` and `/days/` | Today in Japan: during the trip shows the day and the next stop with directions, and the quick cost button (`QuickExpenseButton`); before it, a countdown. During the trip it also shows the day's weather (`WeatherBadge`). |
 | `trip-days.tsx`, `needs-new-day.tsx`, `research-notice.tsx` | `/days/` | Day list with each day's flights, and flights leaving on dates no stay covers; stops left without a valid day after stays changed; research results waiting for review. `trip-days.tsx` holds the Calendar / List toggle (shadcn `ToggleGroup`, next to Today). |
@@ -313,6 +318,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `cash.ts` | `summarizeCash(cash, expenses, members)`: each member's cash on hand (withdrawn + received − handed over − paid in cash), the total withdrawn with dollars charged, and who owes whom (handovers net out per pair). Pure; never part of the budget totals. |
 | `trip.ts` | `TripData` type, `TRIP_COLLECTIONS` (the ten trip collections: the eight record collections, plus `todoLists` and `todos`), `EMPTY_TRIP`, `activeTrip` (hides archived records, sorts), `stayId`, endpoint and stay grouping helpers. |
 | `trip-repository.ts` | `TripRepository` interface and the `TripAccess`, `TripSummary` (with the trip's `startDate`, `endDate` and `setup`), `TripChanges` and `NewTripOptions` (the dates a new trip can start with) types. |
+| `setup.ts` | `SETUP_STEPS` and `setupSteps({canCopy})` (the wizard's steps; "Start from" is left out unless a copy is possible), `isSkippable`, `isStepFilled`, `resumeStep`, `SETUP_PARTS` and `setupChecklist` (the empty parts for the Dashboard card). Pure logic with no words; the wizard words its steps. |
 | `plan-repository.ts` | `PlanRepository` interface; `markRemoved`. |
 | `proposal-repository.ts` | `ProposalRepository` interface. |
 | `user-repository.ts` | `UserRepository` interface and the user profile schema (language, last trip). |
@@ -556,6 +562,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
     Suspense > PlanSync                   member listeners, or ViewerSync for ?share= (no DOM)
     LocaleRoot                            remounts the app on language change
      AppGate                              splash / sign-in / trip picker / member app / shared view
+      SetupWizard                          instead of the app, while a member's trip has setup pending (§12.11)
       AppSidebarProvider                  sidebar open state (localStorage)
        AppHeader (Suspense)               trip switcher, section links (md), sync status, search, activity, account
                                           (viewer: trip name, Read-only badge, search, ViewerSheet)
@@ -574,7 +581,7 @@ All routes are static. Dynamic data comes from query strings, read in the browse
 
 | Page | Screen | Main children |
 |---|---|---|
-| `/` | `DashboardScreen` → `DashboardContent` | `TodayCard`, `Tile`, `Panel`, `ClockTiles` (`dashboard-parts.tsx`), `Charts`, `Yen`, `HideAmountsButton` |
+| `/` | `DashboardScreen` → `DashboardContent` | `TodayCard`, `SetupChecklist` (§12.1), `Tile`, `Panel`, `ClockTiles` (`dashboard-parts.tsx`), `Charts`, `Yen`, `HideAmountsButton` |
 | `/days/` | `TripName`, `TripDates`, `TripPlanStatus`, `ExportTrip`, `TodayCard`, `NeedsNewDay`, `ResearchNotice`, `TripDays` (`TripCalendar` or the list, by the `ToggleGroup`) | — |
 | `/day/` | `DayScreen` → `DayPlan` | `SortableStop`, `StopCard` (`day-plan-stop.tsx`), `FullDay`, `HotelButtons`, `BookingsButton`, `Reservations` (`day-plan-links.tsx`), `FlightCard`, `DayResearchPanel`, `DaySidePanel` columns, `PlaceDetails`, `EditPanel`, `TripMap`, `CostLine`, `LegLine`, `CategoryBadge`, `PriorityBadge`, `WaitingTags` |
 | `/city/` | `CityScreen` → `CityCatalog` | `TripMap`, `PlaceDetails`, `AddPlace`, `CostLine`, `ToggleGroup` filters, `Select` for priority |
@@ -629,6 +636,7 @@ What happens on first load, in order:
 | `access = missing` | "Trip not found" |
 | `access = checking` | Splash (or offline screen) |
 | `member`, a trip collection or the plan store not yet answered | Splash |
+| `member`, trip loaded with `setup` `pending` (never on a read-only link) | The setup wizard (§12.11), in place of the app |
 | `member`, loaded | The app |
 
 7. **Listeners open only for `member`** (`PlanSync`): `usePlanSync(tripId)` subscribes to `items`, `useTripSync(tripId)` subscribes to the ten collections. Until then the rules would refuse them. In the same effect, `MemberSync` calls `watchStartupWrites()` and `requestPersistentStorage()` (§17.1) once the trip is live.
@@ -848,6 +856,8 @@ A place counts as researched (`wasResearched`) when its status is `researched` a
 
 Tiles built from `domain/dashboard.ts`: days until the trip or days left (`tripClock`), trip length, stops today and left today, stops per day, quiet days, places by category and priority, must-see places not yet planned, stops on closed days, upcoming holidays, nights without a hotel, next reservation, stay tonight, next flight (`nextFlight`), route legs for today, budget summary (`Yen`, which can be hidden, see §12.5), and places to research. Charts from `charts-lazy.tsx` (recharts via shadcn chart, loaded on first use). The Watch out panel lists open to-dos that are late or due within 7 days first (up to 4, then "N more"), each linking to `/todos/?list=<id>` (§12.9).
 
+**Finish setting up** (`SetupChecklist`, `setup-checklist.tsx`): for a trip with a `setup` field (§12.11), and not on a read-only link, the card lists each empty part as a link: cities, hotels, flights and places (Settings tabs), and the budget (`/budget/`). It sits above the tiles, or in place of the "nothing yet" message when the trip has no days or places. A card with nothing missing is not shown. The × hides it for this trip on this device (localStorage key `setup-checklist-hidden:<tripId>`); a version reset clears that key (§18.2).
+
 **Shared view:** the budget tile, the Money section and cost per city are removed. The "Watch out" list has no research or Settings links.
 
 ### 12.2 Days (`/days/`)
@@ -947,7 +957,7 @@ Account sheet (header): signed-in email, theme toggle, language choice (saved to
 
 - Header trip name opens a menu when there are other trips, or when the person may create one; otherwise it is a link home. The menu lists each trip with its dates and a "Not set up yet" badge (`TripSummaryText`, the same as the picker), then "All itineraries" and, for permitted creators, "New itinerary".
 - "All itineraries" (`openTripPicker`) asks for the picker once and reloads, so the trip picker (§7) shows even with a remembered or only trip. Picking a trip there reloads the page as usual.
-- "New itinerary" makes a trip with the person as the only member (`createTrip`). It starts with setup `pending`. The form passes no dates, so the trip has none until they are set in Settings > Trip.
+- "New itinerary" makes a trip with the person as the only member (`createTrip`). It starts with setup `pending`, so the setup wizard (§12.11) opens on it. The form passes no dates, so the trip has none until they are set in Settings > Trip.
 - Only emails in `config/access.tripCreators` can create trips (rules and `canCreateTrips`).
 
 ### 12.8 Read-only share links
@@ -1002,6 +1012,23 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 - **Viewers:** read-only links keep Miscellaneous but see only the Phrasebook (§12.8).
 - **Desktop:** the sidebar's Miscellaneous item opens both entries as a sub-menu (`MiscSubMenu`, §3.3).
 
+### 12.11 Setup wizard (new itineraries)
+
+A trip made with "New itinerary" (§12.7) starts with `setup` `pending`. While it is pending, `AppGate` shows `SetupWizard` in place of the app for a signed-in member (§7), and never on a read-only link. It is not a route: the URL stays as it was. Trips with no `setup` field (made before the wizard) never see it.
+
+- **Layout:** full screen on phones, with "Step X of Y" and a progress bar. From `lg` a centred card, with the steps listed down the side. A step can be opened from that list once the name and dates are saved.
+- **Steps:** name and dates; cities; hotels; flights; travellers and budget; summary. "Start from" is in `SETUP_STEPS`, but it is left out while `copyPanel` returns null, so nothing can be copied yet.
+  - Name and dates: the name and both dates are required, and the end is on or after the start. Next saves them through `tripRepository.updateTrip`, and a change of dates is logged in the activity log.
+  - Cities: added with `saveCity` and `CityForm`. Each new city gets a different colour.
+  - Hotels: added with `saveStay` and `StayForm`. Each new hotel starts where the last one ends and runs to the trip's last day. A city is needed first.
+  - Flights: added with `saveFlight` through `FlightFormPanel`.
+  - Travellers and budget: the member list (`MembersSection`) and the budget form (`BudgetForm`).
+  - Summary: each step's value, with skipped steps marked, and "Open itinerary".
+- **Moving on:** Back is shown from the second step. Skip is shown on an empty step other than name and dates and the summary. Next is shown once a step has something in it, or on a step that cannot be skipped. Each step saves as it goes, so leaving halfway loses nothing.
+- **Finish later** (header) and **Open itinerary** (summary) set `setup` to `done` through `updateTrip` and open the app at once, also offline, since the write waits in Firestore's cache. If the write fails, a "refused" toast shows.
+- **Resume:** while the trip is still pending, the wizard reopens at the first step with nothing in it, or at the summary when every step has something (`resumeStep`).
+- **Offline:** each step's form is replaced by an offline message (`setup.offlineTitle`), so the steps' buttons are not shown until the connection is back. The header buttons still work.
+
 ---
 
 ## 13. Domain logic
@@ -1022,6 +1049,7 @@ Pure functions in `src/domain/`. Names are the exports most often used.
 | `map-pins.ts` | `placePoint`, `cityPins`, `dayMap`, `straightLines`, `stopColor`, `dayFilterPins` | Pins per stop, straight lines when no route. `dayFilterPins` gives the City page's pins and day legend for the chosen days (a place on two days shows once, with the earlier day). |
 | `nearby.ts` | `distanceMeters`, `formatDistance`, `typeLabel` | Straight-line distance in metres, shown as metres under 1 km and kilometres above; Google's type text made readable. Google's own words stay in English (rule 13). |
 | `budget.ts` | `summarizeBudget`, `totalsByCategory`, `totalsByPayer`, `estimateStops`, `spendByDay`, `daysRemaining`, `summarizeTargets(categories, budget)` (rows with a target or spending, the targets added up, the budget, total paid, and paid in categories without a target), `BOOKING_CATEGORIES` (`flight`, `booking`), `DAILY_CATEGORIES` (the other expense categories) and `dailySpendByCategory(expenses, days)` (paid money per trip day by category, without bookings and flights, the categories used, and day-to-day money paid outside the trip days) | Expenses beat estimates for the same place; yen integers. |
+| `setup.ts` | `setupSteps`, `isSkippable`, `isStepFilled`, `resumeStep`, `setupChecklist` | Only name and dates (the days need them) and the summary cannot be skipped. A step is filled once it has something in it; "People" is filled by a second member or a budget. The Dashboard lists the empty cities, hotels, flights, budget and places, only for trips with a `setup` field. |
 | `dashboard.ts` | many tile functions (see §12.1) | All figures from in-memory data. |
 | `todos.ts` | `dueState`, `todosDueSoon`, `listProgress`, `visibleTodos`, `nextOrder`, `swapOrder`, `withStatus`, `archiveList` | Due states in Japan time: overdue, soon (within 7 days), later, none. `archiveList` also archives the list's live to-dos. Nothing is deleted. |
 | `proposals.ts` | `newProposal`, `isOpenProposal`, `acceptProposal`, `changedFields`, `researchToAccept`, `cleanResearch`, `ResearchResultSchema` | Research never writes a place. Accepting copies chosen fields and their sources; status becomes `researched`. |
@@ -1186,6 +1214,7 @@ Security is decided in Firestore rules (`firestore.rules`), not in the app. The 
 | **Remembering** | localStorage key `trip-id`, plus `users/{uid}.lastTripId`. |
 | **Members** | Trip settings add and remove emails (lowercase, at most 20). The list must always include the person saving it. |
 | **New trip** | `config/access.tripCreators` must contain the email. Name required. |
+| **Setup** | A new trip's `setup` is `pending` until the setup wizard is finished (§12.11). "Finish later" and "Open itinerary" write `done` through `TripRepository.updateTrip`. Trips with no `setup` field never show the wizard. |
 | **Language** | Saved in `users/{uid}.language` and applied at sign-in. |
 | **Sign-out** | Clears this device's trip cache. Unsynced edits are lost, which the UI warns about. |
 
@@ -1378,7 +1407,7 @@ Tests for scripts: `scripts/flights-push.test.ts`, `scripts/places-reset.test.ts
 
 ### 22.2 Test coverage by area (files with tests)
 
-92 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, the trip switcher (`trip-switcher.test.tsx`), screens, place details and the old-link redirect; `scripts` has four.
+95 test files in total, including the rules tests: most `src/domain` modules have a `*.test.ts`; `src/lib` has tests for actions, stores, sync hooks, versioning, reset, trip ID, tap limit, catalogue filters, i18n and the message capital-letter check (`src/messages/messages.test.ts`); `src/components` has tests for the app gate, the setup wizard and checklist, the trip switcher (`trip-switcher.test.tsx`), screens, place details and the old-link redirect; `scripts` has four.
 
 ### 22.3 Quality gates
 
@@ -1465,7 +1494,7 @@ Deletes: members only, and only once the link is revoked or expired.
 | `updatedAt` | ISO datetime string (≤30 chars) | Set on every update. |
 | `budget` | map or absent | `totalJPY` (int ≥ 0 or null), `byCategory` (map of expense category → int ≥ 0), `travellers` (int 1 to 20 or null), `byMember` (optional map of member email → int ≥ 0 or null, at most 20 entries; a spending target per person). |
 | `startDate`, `endDate` | `YYYY-MM-DD` or null | The trip's own first and last day, both or neither, the end on or after the start. Absent or null means no dates; they feed the days (§13). |
-| `setup` | `pending` or `done` | Whether the setup wizard is still to be finished. A new trip is created as `pending`; absent means `done`, and null is refused. Nothing reads it yet. |
+| `setup` | `pending` or `done` | Whether the setup wizard is still to be finished. A new trip is created as `pending`; absent means `done`, and null is refused. Read by `AppGate` (the setup wizard, §12.11) and by the Dashboard's checklist (§12.1). |
 
 Only `name`, `members`, `budget`, `startDate`, `endDate`, `setup` and `updatedAt` may change on update.
 

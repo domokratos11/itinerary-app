@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { LanguageSelect } from "@/components/language-select";
 import { NewTripPanel } from "@/components/new-trip";
+import { SetupWizard } from "@/components/setup-wizard";
 import { TripSummaryText } from "@/components/trip-switcher";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +20,7 @@ import {
 import { t } from "@/lib/i18n";
 import { APP_VERSION } from "@/lib/app-reset";
 import { signInWithGoogle, signOut } from "@/lib/auth";
-import { useAuthStore } from "@/lib/auth-store";
+import { useActiveTrip, useAuthStore } from "@/lib/auth-store";
 import { BASE_PATH } from "@/lib/base-path";
 import { PHRASEBOOK_GUIDE_PATH } from "@/lib/phrasebook";
 import { usePlanStore } from "@/lib/plan-store";
@@ -48,6 +49,9 @@ export function AppGate({ children }: { children: ReactNode }) {
   const tripLoaded = tripArrived && planArrived;
   const online = useOnline();
   const viewer = useViewerStore((s) => s.status);
+  const activeTrip = useActiveTrip();
+  // "Finish later" opens the app at once, before the trip list says done.
+  const [setupLeft, setSetupLeft] = useState(false);
 
   // A read-only link: its own screens, and never the sign-in ones.
   if (viewer !== "off") {
@@ -99,6 +103,15 @@ export function AppGate({ children }: { children: ReactNode }) {
     );
   if (access === "checking") return online ? <Splash /> : <OfflineScreen />;
   if (!tripLoaded) return <Splash />;
+  // A new itinerary still being set up. Trips with no `setup` never see it.
+  if (activeTrip?.setup === "pending" && !setupLeft)
+    return (
+      <SetupWizard
+        tripId={tripId}
+        trip={activeTrip}
+        onDone={() => setSetupLeft(true)}
+      />
+    );
   return children;
 }
 

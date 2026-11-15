@@ -1157,7 +1157,9 @@
     "d20261115": {
       "tripDates": "A trip can have its own start and end dates in Settings → Trip, so it has days before any hotel is booked.",
       "noHotelYet": "Days no hotel covers yet say so, and take places from any city.",
-      "itineraries": "Choosing an itinerary shows each one's dates and whether it still needs setting up, and All itineraries in the trip menu goes back to the list."
+      "itineraries": "Choosing an itinerary shows each one's dates and whether it still needs setting up, and All itineraries in the trip menu goes back to the list.",
+      "setupWizard": "A new itinerary opens with a setup that asks for its dates, cities, hotels, flights, travellers and budget, and any step can be skipped or finished later.",
+      "setupChecklist": "The Dashboard of a new itinerary lists the parts still empty, with links to fill them in."
     },
     "d20261114": {
       "phrasebook": "The Japanese phrasebook is in the app under Miscellaneous, with the to-dos. It uses the app colours and light or dark theme, and opens without signal.",
@@ -1171,5 +1173,63 @@
   },
   "phrasebook": {
     "frameTitle": "Japanese phrasebook"
+  },
+  "setup": {
+    "title": "Set up your itinerary",
+    "stepOf": "Step {step} of {total}",
+    "stepList": "Setup steps",
+    "back": "Back",
+    "skip": "Skip",
+    "next": "Next",
+    "finishLater": "Finish later",
+    "open": "Open itinerary",
+    "filled": "Has something",
+    "step": {
+      "details": "Name and dates",
+      "startFrom": "Start from",
+      "cities": "Cities",
+      "hotels": "Hotels",
+      "flights": "Flights",
+      "people": "Travellers and budget",
+      "summary": "Summary"
+    },
+    "detailsHint": "Give the itinerary a name and the first and last day of the trip. Its days run from one to the other.",
+    "nameRequired": "Give the itinerary a name.",
+    "datesRequired": "Choose both a start and an end date.",
+    "startFromHint": "Start with an empty itinerary, or copy parts of another one.",
+    "startEmpty": "Start empty",
+    "startEmptyHint": "Add the cities, hotels and flights yourself in the next steps.",
+    "citiesHint": "The cities you'll stay in. Each one gets a colour on the calendar and the map.",
+    "noCities": "No cities yet.",
+    "hotelsHint": "Where you sleep each night. Not booked yet? Write \"To be decided\" as the hotel's name.",
+    "hotelsNeedCity": "Each hotel belongs to a city. Go back to add one first, or skip this step.",
+    "noHotels": "No hotels yet.",
+    "flightsHint": "Your flights to and from Japan, in each airport's local time.",
+    "peopleHint": "Who else is on the itinerary, and how much you plan to spend.",
+    "budget": "Budget",
+    "budgetTotal": "Total: {total}",
+    "budgetTravellers": "{count, plural, one {# traveller} other {# travellers}}",
+    "summaryHint": "This is what the itinerary has so far. Anything skipped can be added later in Settings.",
+    "skipped": "Skipped",
+    "noDates": "No dates",
+    "countCities": "{count, plural, one {# city} other {# cities}}",
+    "countHotels": "{count, plural, one {# hotel} other {# hotels}}",
+    "countFlights": "{count, plural, one {# flight} other {# flights}}",
+    "countMembers": "{count, plural, one {# member} other {# members}}",
+    "startedEmpty": "Started empty",
+    "offlineTitle": "You're offline",
+    "offlineBody": "Setting up an itinerary needs a connection. What you've added so far is saved: carry on once you're back online, or finish later."
+  },
+  "setupChecklist": {
+    "title": "Finish setting up",
+    "body": "These parts of the itinerary are still empty.",
+    "dismiss": "Hide this checklist",
+    "part": {
+      "cities": "Add cities",
+      "hotels": "Add hotels",
+      "flights": "Add flights",
+      "budget": "Set a budget",
+      "places": "Add places"
+    }
   }
 }

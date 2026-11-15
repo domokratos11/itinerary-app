@@ -48,18 +48,30 @@ function nights(checkIn: string, checkOut: string): number {
   return Math.round(ms / 86_400_000);
 }
 
-export function StaysSettings({ tripId }: { tripId: string }) {
-  const trip = useTrip();
-  const allStays = useTripStore((s) => s.data.stays);
-  const citiesById = useCitiesById();
-  const items = usePlanStore((s) => s.items);
-  // The trip's own dates also make days, so the preview counts them.
-  const range = useTripDates();
-  const [editing, setEditing] = useState<Editing>(null);
-  const issues = useMemo(() => stayIssues(trip.stays), [trip.stays]);
+// Saves one stay and logs it. Shared with the setup wizard.
+export function saveStay(tripId: string, record: StayRecord): void {
+  saveRecord(
+    tripId,
+    "stays",
+    record,
+    t("activity.savedStay", {
+      hotel: record.hotelName,
+      from: formatDayLabel(record.checkIn),
+      to: formatDayLabel(record.checkOut),
+    }),
+  ).catch(() => toast.error(t("common.refused")));
+}
 
-  // The day preview for replacing (or removing) one stay.
-  function preview(next: StayRecord | null, replacing: string | null) {
+// The day preview for replacing (or removing) one stay. The trip's own dates
+// also make days, so the preview counts them.
+export function useStayPreview(): (
+  next: StayRecord | null,
+  replacing: string | null,
+) => DayChanges {
+  const trip = useTrip();
+  const items = usePlanStore((s) => s.items);
+  const range = useTripDates();
+  return (next, replacing) => {
     const others = trip.stays.filter((s) => s.id !== replacing);
     return dayChanges(
       trip.stays,
@@ -68,19 +80,19 @@ export function StaysSettings({ tripId }: { tripId: string }) {
       trip.places,
       range,
     );
-  }
+  };
+}
+
+export function StaysSettings({ tripId }: { tripId: string }) {
+  const trip = useTrip();
+  const allStays = useTripStore((s) => s.data.stays);
+  const citiesById = useCitiesById();
+  const preview = useStayPreview();
+  const [editing, setEditing] = useState<Editing>(null);
+  const issues = useMemo(() => stayIssues(trip.stays), [trip.stays]);
 
   function save(record: StayRecord) {
-    saveRecord(
-      tripId,
-      "stays",
-      record,
-      t("activity.savedStay", {
-        hotel: record.hotelName,
-        from: formatDayLabel(record.checkIn),
-        to: formatDayLabel(record.checkOut),
-      }),
-    ).catch(() => toast.error(t("common.refused")));
+    saveStay(tripId, record);
     setEditing(null);
   }
 
@@ -224,10 +236,11 @@ export function StaysSettings({ tripId }: { tripId: string }) {
   );
 }
 
-function StayForm({
+export function StayForm({
   stay,
   takenIds,
   defaultCheckIn,
+  defaultCheckOut = "",
   preview,
   onCancel,
   onSave,
@@ -235,6 +248,8 @@ function StayForm({
   stay: StayRecord | null;
   takenIds: string[];
   defaultCheckIn: string;
+  // The setup wizard starts a new stay at the trip's last day.
+  defaultCheckOut?: string;
   preview: (next: StayRecord) => DayChanges;
   onCancel: () => void;
   onSave: (record: StayRecord) => void;
@@ -246,7 +261,7 @@ function StayForm({
   const [hotelName, setHotelName] = useState(stay?.hotelName ?? "");
   const [mapsUrl, setMapsUrl] = useState(stay?.hotelMapsUrl ?? "");
   const [checkIn, setCheckIn] = useState(stay?.checkIn ?? defaultCheckIn);
-  const [checkOut, setCheckOut] = useState(stay?.checkOut ?? "");
+  const [checkOut, setCheckOut] = useState(stay?.checkOut ?? defaultCheckOut);
   const [note, setNote] = useState(stay?.note ?? "");
   const [chosen, setChosen] = useState<PlaceSuggestion | null>(null);
   const [saving, setSaving] = useState(false);

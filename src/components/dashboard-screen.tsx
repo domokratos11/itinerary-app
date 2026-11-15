@@ -31,6 +31,10 @@ import {
 } from "@/components/budget-figures";
 import { personLabel } from "@/components/expense-form";
 import { useActiveTrip } from "@/lib/auth-store";
+import {
+  SetupChecklist,
+  useSetupChecklist,
+} from "@/components/setup-checklist";
 import { TodayCard } from "@/components/today-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -112,6 +116,7 @@ function DashboardContent() {
   const { summary, categories, expenses } = useBudgetFigures();
   // A read-only link: no money and no way into Settings.
   const readOnly = useReadOnly();
+  const checklist = useSetupChecklist(tripId);
 
   const perDay = useMemo(
     () => stopsPerDay(days, items, placesById),
@@ -131,17 +136,26 @@ function DashboardContent() {
 
   if (!today) return null;
 
+  // An itinerary set up with the wizard lists what's still missing instead.
   if (days.length === 0 && trip.places.length === 0)
     return (
       <div className="flex flex-col items-start gap-3">
         <h1 className="text-3xl font-bold">{t("dashboard.title")}</h1>
-        <Empty>{t("dashboard.empty")}</Empty>
-        {!readOnly && (
-          <Button asChild variant="outline">
-            <Link href={pageHref("/settings/", tripId)}>
-              {t("dashboard.openSettings")}
-            </Link>
-          </Button>
+        {checklist.missing.length > 0 ? (
+          <div className="w-full">
+            <SetupChecklist {...checklist} />
+          </div>
+        ) : (
+          <>
+            <Empty>{t("dashboard.empty")}</Empty>
+            {!readOnly && (
+              <Button asChild variant="outline">
+                <Link href={pageHref("/settings/", tripId)}>
+                  {t("dashboard.openSettings")}
+                </Link>
+              </Button>
+            )}
+          </>
         )}
       </div>
     );
@@ -259,6 +273,8 @@ function DashboardContent() {
           <CurrencyButton />
         </div>
       </header>
+
+      {checklist.missing.length > 0 && <SetupChecklist {...checklist} />}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <ClockTiles
