@@ -1149,6 +1149,10 @@
     "open": "Open what's new",
     "entryHeading": "Version {version} · {date}",
     "empty": "Nothing to show yet.",
+    "d20261117": {
+      "showToStaff": "Tap any Japanese text in the phrasebook to fill the screen with it, large enough to show to staff, with a Listen button.",
+      "numberHelper": "The phrasebook's Numbers button shows and reads aloud how prices, numbers, times and counted things are said in Japanese."
+    },
     "d20261112": {
       "palette": "Pick a colour theme (Sen, Ink, Pine or Plum) in the Account sheet.",
       "colours": "Chart, badge and map colours now follow the theme.",
@@ -1174,7 +1178,82 @@
     "title": "Miscellaneous"
   },
   "phrasebook": {
-    "frameTitle": "Japanese phrasebook"
+    "frameTitle": "Japanese phrasebook",
+    "numbers": {
+      "open": "Numbers",
+      "openLabel": "Numbers, prices and times in Japanese",
+      "title": "Numbers in Japanese",
+      "description": "Type a price, number, time or count to see and hear how it's said.",
+      "modes": {
+        "label": "What to read",
+        "price": "Price",
+        "number": "Number",
+        "time": "Time",
+        "counter": "Counter"
+      },
+      "input": {
+        "price": "Price in yen",
+        "number": "Number",
+        "time": "Time, 24-hour",
+        "counter": "How many"
+      },
+      "placeholder": {
+        "price": "For example 1,980",
+        "number": "For example 8,000",
+        "time": "For example 15:30 or 1530",
+        "counter": "For example 3"
+      },
+      "examples": "Examples",
+      "counter": "What you're counting",
+      "counters": {
+        "tsu": {
+          "name": "Things",
+          "counts": "Things in general, up to ten: items, orders, portions."
+        },
+        "ko": {
+          "name": "Pieces",
+          "counts": "Small or compact things: pieces, eggs, fruit, cakes."
+        },
+        "nin": {
+          "name": "People",
+          "counts": "People: a table for two, tickets for three."
+        },
+        "mai": {
+          "name": "Flat things",
+          "counts": "Flat, thin things: tickets, shirts, plates, sheets of paper."
+        },
+        "hon": {
+          "name": "Long things",
+          "counts": "Long, thin things: bottles, umbrellas, pens, trains on a line."
+        },
+        "hai": {
+          "name": "Cups",
+          "counts": "Cups, glasses and bowls of drink or food."
+        },
+        "haku": {
+          "name": "Nights",
+          "counts": "Nights at a hotel or ryokan."
+        },
+        "kai": {
+          "name": "Floors",
+          "counts": "Floors of a building."
+        }
+      },
+      "kinds": {
+        "clock": "24-hour, as on timetables",
+        "twelveHour": "12-hour, as people say it",
+        "half": "Half past"
+      },
+      "alsoHeard": "Also heard",
+      "listen": "Listen",
+      "listenTo": "Listen to {text}",
+      "empty": "Type a number to see how it's read in Japanese.",
+      "emptyTime": "Type a time to see how it's read in Japanese.",
+      "invalid": "That isn't a whole number. Use digits only, like 1980.",
+      "invalidTime": "That isn't a time. Type it like 15:30 or 1530.",
+      "range": "Use a number from {min} to {max}.",
+      "timeRange": "Use a time from 0:00 to 23:59."
+    }
   },
   "setup": {
     "title": "Set up your itinerary",

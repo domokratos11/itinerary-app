@@ -1149,6 +1149,10 @@
     "open": "Abrir las novedades",
     "entryHeading": "Versión {version} · {date}",
     "empty": "Aún no hay nada que mostrar.",
+    "d20261117": {
+      "showToStaff": "Toca cualquier texto en japonés de la guía de frases para verlo a pantalla completa, lo bastante grande para mostrarlo al personal, con un botón para escucharlo.",
+      "numberHelper": "El botón Números de la guía de frases muestra y lee en voz alta cómo se dicen en japonés precios, números, horas y cantidades de cosas."
+    },
     "d20261112": {
       "palette": "Elige un tema de color (Sen, Tinta, Pino o Ciruela) en la hoja de cuenta.",
       "colours": "Los colores de gráficos, etiquetas y mapas siguen ahora el tema.",
@@ -1174,7 +1178,82 @@
     "title": "Varios"
   },
   "phrasebook": {
-    "frameTitle": "Guía de frases en japonés"
+    "frameTitle": "Guía de frases en japonés",
+    "numbers": {
+      "open": "Números",
+      "openLabel": "Números, precios y horas en japonés",
+      "title": "Números en japonés",
+      "description": "Escribe un precio, un número, una hora o una cantidad para ver y oír cómo se dice.",
+      "modes": {
+        "label": "Qué leer",
+        "price": "Precio",
+        "number": "Número",
+        "time": "Hora",
+        "counter": "Contador"
+      },
+      "input": {
+        "price": "Precio en yenes",
+        "number": "Número",
+        "time": "Hora, en formato de 24 horas",
+        "counter": "Cuántos"
+      },
+      "placeholder": {
+        "price": "Por ejemplo 1,980",
+        "number": "Por ejemplo 8,000",
+        "time": "Por ejemplo 15:30 o 1530",
+        "counter": "Por ejemplo 3"
+      },
+      "examples": "Ejemplos",
+      "counter": "Qué estás contando",
+      "counters": {
+        "tsu": {
+          "name": "Cosas",
+          "counts": "Cosas en general, hasta diez: artículos, pedidos, porciones."
+        },
+        "ko": {
+          "name": "Piezas",
+          "counts": "Cosas pequeñas o compactas: piezas, huevos, frutas, pasteles."
+        },
+        "nin": {
+          "name": "Personas",
+          "counts": "Personas: una mesa para dos, entradas para tres."
+        },
+        "mai": {
+          "name": "Cosas planas",
+          "counts": "Cosas planas y finas: boletos, camisas, platos, hojas de papel."
+        },
+        "hon": {
+          "name": "Cosas largas",
+          "counts": "Cosas largas y delgadas: botellas, paraguas, bolígrafos, trenes de una línea."
+        },
+        "hai": {
+          "name": "Tazas",
+          "counts": "Tazas, vasos y tazones de bebida o comida."
+        },
+        "haku": {
+          "name": "Noches",
+          "counts": "Noches en un hotel o ryokan."
+        },
+        "kai": {
+          "name": "Pisos",
+          "counts": "Pisos de un edificio."
+        }
+      },
+      "kinds": {
+        "clock": "24 horas, como en los horarios",
+        "twelveHour": "12 horas, como se dice al hablar",
+        "half": "Y media"
+      },
+      "alsoHeard": "También se oye",
+      "listen": "Escuchar",
+      "listenTo": "Escuchar {text}",
+      "empty": "Escribe un número para ver cómo se lee en japonés.",
+      "emptyTime": "Escribe una hora para ver cómo se lee en japonés.",
+      "invalid": "Eso no es un número entero. Usa solo dígitos, como 1980.",
+      "invalidTime": "Eso no es una hora. Escríbela como 15:30 o 1530.",
+      "range": "Usa un número del {min} al {max}.",
+      "timeRange": "Usa una hora entre 0:00 y 23:59."
+    }
   },
   "setup": {
     "title": "Configura tu itinerario",
