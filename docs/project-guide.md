@@ -279,7 +279,8 @@ Screens (one per page):
 | `todos-screen.tsx` | `/todos/` | `TodosScreen`: the list column (wide) or list Select (phone), the to-do rows, filters, sort and list progress (§12.9). |
 | `todo-forms.tsx` | `/todos/` | `ListForm` and `TodoForm`, both shown in `EditPanel`. |
 | `misc-screen.tsx` | `/misc/` | `MiscScreen`: one card per Miscellaneous entry (§12.10). |
-| `phrasebook-screen.tsx` | `/phrasebook/` | `PhrasebookScreen`: the static guide in an iframe (`title` from `phrasebook.frameTitle`) between the header and the phone tab bar, sized with `h-[calc(100svh-3.5rem-4rem-env(safe-area-inset-bottom))]` on phones and `md:h-[calc(100svh-3.5rem)]` from `md`. Tests in `phrasebook-screen.test.tsx` (§12.10). |
+| `phrasebook-screen.tsx` | `/phrasebook/` | `PhrasebookScreen`: the static guide in an iframe (`title` from `phrasebook.frameTitle`) between the header and the phone tab bar, sized with `h-[calc(100svh-3.5rem-4rem-env(safe-area-inset-bottom))]` on phones and `md:h-[calc(100svh-3.5rem)]` from `md`. It accepts the guide's `trip-planner:phrasebook-fullscreen` message (`PHRASEBOOK_FULLSCREEN_MESSAGE`) only from its own origin and its own iframe; while open, `<main>` becomes `fixed inset-0 z-50` with safe-area padding, so the frame covers the header and tab bar (the "show to staff" view, §17.4). It also renders the round "Numbers" button (bottom right) that opens `NumberHelper`. Tests in `phrasebook-screen.test.tsx` (§12.10). |
+| `number-helper.tsx` | `/phrasebook/` | `NumberHelper` (the button and a Drawer below `lg`, a Sheet from `lg`) and `NumberHelperBody` (the form): Price, Number, Time and Counter tabs, example chips, and the result in Japanese with kana, romaji and a Listen button. Logic from `domain/japanese-numbers.ts`, speech from `lib/speech.ts`. Texts under `phrasebook.numbers.*` (§12.10). |
 
 Plan and place editing:
 
@@ -347,6 +348,7 @@ No React, no Firebase, no current language. Functions that need words take a `Tr
 | `share.ts`, `share-repository.ts` | `share.ts`: `newShareId` and `parseShareId` (128-bit base64url IDs), `MAX_SHARE_DAYS` (30), `toSharedTrip` (builds the copy, §12.8). `share-repository.ts`: the `ShareRepository` interface. |
 | `waiting-view.ts` | `applyWaitingView`, `isDefaultWaitingView`, `DEFAULT_WAITING_VIEW`, `WAITING_SORTS`: sort and filter for the Day page's waiting list and its pins. |
 | `dashboard.ts` | Figures for the dashboard tiles. |
+| `japanese-numbers.ts` | Pure reading of numbers for the phrasebook's Numbers helper (§12.10). `readJapanese(mode, input, counter)` with modes `price`, `number`, `time` and `counter` returns readings as `{ written, kana, romaji }` plus alternatives, or a status (`empty`, `invalid`, `range`, `timeRange`). Also `readNumber`, `readPrice`, `readTime`, `readCounter`, `parseWholeNumber`, `parseTime`, `kanjiNumber`, `groupDigits`, `COUNTER_IDS`, `counterSymbol` and `NUMBER_MAX`. Range 0 to 999,999,999,999; counters つ, 個, 人, 枚, 本, 杯, 泊 and 階. Free of the UI language. |
 | `todos.ts` | Pure to-do logic: due states (overdue, soon, later, none) in Japan time, `todosDueSoon`, list progress, filter and sort, order keys, status changes that keep `completedAt`, and list archiving. |
 | `weather.ts` | `WeatherKind`, `weatherKind(wmoCode)`, `typicalWeather(pastYears)`, `yearsBefore`, type `DayWeather`. Kinds are clear, partly, cloudy, fog, drizzle, rain, snow and storm. Typical weather is the average high and low, the % of years with at least 1 mm of rain, and the most common kind. |
 | `sun.ts` | `sunTimes(date, lat, lng)` → sunrise, sunset and daylight minutes in Tokyo time (NOAA solar equations, about a minute's accuracy). |
@@ -434,7 +436,8 @@ Maps and place helpers:
 | `category-label.ts`, `taxonomy-icons.ts` | Labels and icons per category. |
 | `links.ts` | Internal links that keep `?trip=`. |
 | `base-path.ts` | `BASE_PATH` (from `NEXT_PUBLIC_BASE_PATH`) for URLs the browser fetches directly. `SITE_BASE_PATH` (`/itinerary-app`) is the same path as a constant, read by `next.config.ts` and the phrasebook import (§4.1). |
-| `phrasebook.ts` | `PHRASEBOOK_GUIDE_PATH`: the URL of the generated static guide (`/phrasebook-guide/`, under the base path). Shared by `PhrasebookScreen`, the offline screen's button and the import script (§17.4). |
+| `phrasebook.ts` | `PHRASEBOOK_GUIDE_PATH`: the URL of the generated static guide (`/phrasebook-guide/`, under the base path). Shared by `PhrasebookScreen`, the offline screen's button and the import script (§17.4). `PHRASEBOOK_FULLSCREEN_MESSAGE` (`trip-planner:phrasebook-fullscreen`) is the message type the guide posts to ask the app for full screen. |
+| `speech.ts` | Browser speech for Japanese: `canSpeakJapanese()`, `speakJapanese(text)` (speech synthesis, `ja-JP`, rate 0.85) and `useCanSpeakJapanese()`. Used by the Numbers helper's Listen buttons (§12.10). |
 | `theme-color.ts` | `THEME_COLOR` (Sen: `light: "#f4f6fa"`, `dark: "#0d1220"`) and `applyThemeColor(theme, palette)`, which picks the page background for the family and mode and sets `<meta name="theme-color">` so the browser bar follows the choice. Tests in `theme-color.test.ts`. |
 | `palette.ts` | Colour families: `PALETTES` (`sen`, `ink`, `pine`, `plum`), `getPalette`, `setPalette`, `applyPalette` and `usePalette` (a small Zustand store). Saved per device under localStorage key `palette`. Sen sets no attribute; the others set `data-palette` on `<html>`. Tests in `palette.test.ts`. |
 | `css-color.ts` | `resolveCssColor(value)` follows a `var(--x)` token (up to five hops) to the colour the page shows now; `resolvePinColors(pins)` does it for every pin. Google Maps draws pins itself and cannot read CSS variables, so this runs at draw time. Tests in `css-color.test.ts`. |
@@ -1015,6 +1018,7 @@ Members can give anyone with the link a read-only view of the trip, with no sign
 - **Section:** "Miscellaneous" (LayoutGrid icon, `nav.misc`) replaces To-dos in `SECTIONS`. It is highlighted on `/misc/`, `/todos/` and `/phrasebook/`.
 - **To-dos** (`/todos/`): the shared to-do lists (§12.9). A Next link.
 - **Phrasebook** (`/phrasebook/`): a Next route (`app/phrasebook/page.tsx`) that renders `PhrasebookScreen` inside the app shell (header, sidebar, tab bar). The guide is a generated static page at `/phrasebook-guide/` (§17.4), shown in an iframe that fills the height between the header and the phone tab bar. Both entries are reached with next/link, since `MISC_ITEMS` gives each one a `path`. The static guide itself works outside sign-in (§17.4).
+- **Phrasebook extras:** tapping any Japanese text in the guide (or pressing Enter or Space on it) opens a full-screen "show to staff" view with the phrase sized to fit, its kana, a small meaning, and Listen and Close buttons. It closes on Escape, Close or a tap. When framed in the app, the view covers the header and tab bar (§17.4). A round "Numbers" button at the bottom right of the Phrasebook screen opens the number helper: Price, Number, Time and Counter tabs, with the result in Japanese, kana, romaji and a Listen button. It opens a Drawer below `lg` and a Sheet from `lg`. Logic is in `domain/japanese-numbers.ts` (range 0 to 999,999,999,999), speech in `lib/speech.ts`, texts under `phrasebook.numbers.*`.
 - **Viewers:** read-only links keep Miscellaneous but see only the Phrasebook (§12.8).
 - **Desktop:** the sidebar's Miscellaneous item opens both entries as a sub-menu (`MiscSubMenu`, §3.3).
 
@@ -1256,7 +1260,7 @@ Run this by hand on both phones before the trip:
 - Precaches `**/*.{html,js,css,json,png,svg,ico,webmanifest,txt,woff2}` in `out/`. Excludes `version.json`.
 - `ignoreURLParametersMatching: [/.*/]`: query strings (`?trip=`, `?date=`) are ignored, so each page matches its one precached file.
 - The recharts chunk is precached even though charts load on first use, so the charts still open offline (§2.2).
-- `maximumFileSizeToCacheInBytes` is 5 MiB in `workbox-config.cjs`, so the phrasebook guide page (about 1.1 MB, and growing, §17.4) is precached too.
+- `maximumFileSizeToCacheInBytes` is 5 MiB in `workbox-config.cjs`, so the phrasebook guide page (about 1.17 MB, and growing, §17.4) is precached too.
 - `skipWaiting` and `clientsClaim`: a new worker takes over at once. `cleanupOutdatedCaches` removes old files.
 - Registered only in production (`service-worker-register.tsx`), at `${BASE_PATH}/sw.js`.
 - The `.txt` files (Next's route data) are cached so a page and its data come from the same build.
@@ -1272,6 +1276,7 @@ Run this by hand on both phones before the trip:
 - `/phrasebook/` is a Next route, not the guide itself: `src/app/phrasebook/page.tsx` renders the client component `src/components/phrasebook-screen.tsx`, which shows the guide in an iframe inside the app shell (header, sidebar, tab bar). Being inside the app, it sits behind `AppGate` like every other page (§12.10).
 - The script injects blocks marked `<!-- trip-planner:start/end -->`: the manifest link, theme-colour metas, the app's CSS, the service worker registration and `THEME_SYNC`, a script in the guide's head. It is idempotent and fails if an anchor is missing.
 - `THEME_SYNC` does two things. Alone, it applies only the saved `theme` from localStorage. When the guide is framed by the app, it adds the `in-app` class, sets `data-theme` from the app's `dark` class, and copies the app's tokens onto the guide's variables (`--background`→`--bg`, `--card`→`--surface`, `--foreground`→`--ink`, `--muted-foreground`→`--muted`, `--border`→`--line`, `--muted`→`--chip`, `--primary`→`--accent`, `--font-display`→`--app-display`). It also copies the body font and the app's `@font-face` rules, and follows later changes with a MutationObserver on the app's `<html>`. When framed, the guide's "← Trip Planner" link is hidden.
+- The script also injects the "show to staff" pair of marked `trip-planner` blocks: `SHOW_TO_STAFF_CSS` (before `</style>`) and `SHOW_TO_STAFF` (a script before `</body>`, after the service-worker block). Tapping Japanese text opens the full-screen view described in §12.10. When framed in the app, the guide posts `{ type, open }` to its own origin with type `PHRASEBOOK_FULLSCREEN_MESSAGE`, and `PhrasebookScreen` acts on it (§3.3).
 - The static guide holds no trip data and needs no sign-in on its own, so it opens from the offline screen too (§7, §16). Prettier and ESLint ignore `public/phrasebook-guide/`.
 - It is precached with the rest of the app, so it works offline (§17.2).
 
@@ -1391,7 +1396,7 @@ All scripts need `TRIP_ID` where noted, and the Google Cloud login (`gcloud auth
 | `maps:check` | `scripts/maps-check.ts` | Checks Google keys and test train routes; `-- --embed` serves the Maps Embed test | No |
 | `maps:match` | `scripts/maps-match.ts` | Saves place IDs and coordinates; reports doubtful matches | Yes |
 | `maps:refresh` | `scripts/maps-refresh.ts` | Renews coordinates before 30 days; `--all` refreshes all | Yes |
-| `phrasebook:import` | `scripts/phrasebook-import.ts` | Generates `public/phrasebook-guide/index.html` from the source page (`-- <file>` to choose another; default `../phrasebook-src/japanese_guide.html`). Injects the marked blocks (§17.4); idempotent | No |
+| `phrasebook:import` | `scripts/phrasebook-import.ts` | Generates `public/phrasebook-guide/index.html` from the source page (`-- <file>` to choose another; default `../phrasebook-src/japanese_guide.html`). Injects the marked blocks, including the show-to-staff pair (§17.4); idempotent | No |
 
 Shared helpers:
 

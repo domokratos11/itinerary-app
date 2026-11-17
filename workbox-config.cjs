@@ -12,7 +12,7 @@ module.exports = {
   // parameters so every page matches its precached file.
   ignoreURLParametersMatching: [/.*/],
   // Workbox skips bigger files with only a warning. The phrasebook
-  // (public/phrasebook/index.html, about 1.1 MB) grows with every topic and
+  // (public/phrasebook-guide/index.html, about 1.2 MB) grows with every topic and
   // must stay offline, so allow up to 5 MiB instead of the default 2 MiB.
   maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
   cleanupOutdatedCaches: true,

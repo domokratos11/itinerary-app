@@ -1,10 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   DEFAULT_SOURCE,
   importPhrasebook,
+  SHOW_TO_STAFF,
   stripPhrasebook,
   THEME_SYNC,
 } from "./phrasebook-import";
@@ -151,5 +152,206 @@ describe("THEME_SYNC", () => {
     expect(importPhrasebook(GUIDE)).toContain(
       "html.in-app .trip-home{display:none}",
     );
+  });
+});
+
+describe("SHOW_TO_STAFF", () => {
+  // The guide's markup for a phrase card, a word-list row, a topic button
+  // and the quiz, as its own code renders them.
+  const MAIN = `
+<p class="lede">Pick a situation.</p>
+<button class="topic"><span class="jp" lang="ja">基本</span></button>
+<article class="card"><div class="head"><button class="ib say" data-say="すみません">L</button></div>
+<div class="jp" lang="ja">すみません</div><div class="kana" lang="ja">すみません</div><div class="ro">sumimasen</div><div class="mean">Excuse me</div>
+<div class="sub"><div class="row"><div class="tx"><div class="jp" lang="ja">袋はいりません</div><div class="kana" lang="ja">ふくろはいりません</div><div class="ro">fukuro wa irimasen</div><div class="mean">No bag, thanks</div></div></div></div>
+</article>
+<table><tr><td class="j" lang="ja">切符</td><td><span lang="ja">きっぷ</span><br><i class="ro">kippu</i></td><td><span class="mean">Ticket</span></td></tr></table>
+<div class="quiz"><div class="head"><div class="big" lang="ja">お会計</div></div></div>`;
+
+  const added: [string, EventListener][] = [];
+  afterEach(() => {
+    for (const [type, fn] of added.splice(0)) {
+      document.removeEventListener(type, fn);
+    }
+    vi.restoreAllMocks();
+    document.body.innerHTML = "";
+    document.documentElement.className = "";
+  });
+
+  // Runs the injected script on that markup, framed by the app unless
+  // `standalone`, with or without speech.
+  function guide({ standalone = false, speech = true } = {}) {
+    document.body.innerHTML = `<header class="top"><button id="back">Back</button></header><main class="wrap" id="main">${MAIN}</main>`;
+    const add = document.addEventListener.bind(document);
+    vi.spyOn(document, "addEventListener").mockImplementation(
+      (type: string, fn: EventListenerOrEventListenerObject) => {
+        added.push([type, fn as EventListener]);
+        add(type, fn);
+      },
+    );
+    const postMessage = vi.fn();
+    const speak = vi.fn();
+    const win: Record<string, unknown> = {
+      location: { origin: "http://localhost:3000" },
+      getSelection: () => window.getSelection(),
+      addEventListener() {},
+      MutationObserver,
+    };
+    win.parent = standalone ? win : { postMessage };
+    if (speech) {
+      win.speechSynthesis = { cancel() {}, speak };
+      win.SpeechSynthesisUtterance = class {
+        lang = "";
+        rate = 1;
+        constructor(public text: string) {}
+      };
+    }
+    new Function("window", "document", SHOW_TO_STAFF)(win, document);
+    return { postMessage, speak };
+  }
+
+  function click(el: Element | null) {
+    el?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  }
+
+  function key(target: Element | Document, value: string) {
+    target.dispatchEvent(
+      new KeyboardEvent("keydown", { key: value, bubbles: true }),
+    );
+  }
+
+  const overlay = () => document.querySelector<HTMLElement>(".tp-staff");
+
+  it("shows a tapped phrase full screen, with its kana and meaning", () => {
+    const { postMessage } = guide();
+    click(document.querySelectorAll(".card .jp")[1]);
+    const box = overlay();
+    expect(box).toHaveAttribute("role", "dialog");
+    expect(box).toHaveAttribute("aria-modal", "true");
+    expect(box).toBeVisible();
+    expect(box?.querySelector(".tp-staff-jp")).toHaveTextContent(
+      "袋はいりません",
+    );
+    expect(box?.querySelector(".tp-staff-jp")).toHaveAttribute("lang", "ja");
+    expect(box?.querySelector(".tp-staff-kana")).toHaveTextContent(
+      "ふくろはいりません",
+    );
+    expect(box?.querySelector(".tp-staff-mean")).toHaveTextContent(
+      "No bag, thanks",
+    );
+    expect(document.activeElement).toHaveTextContent("Close");
+    expect(document.querySelector("header")).toHaveAttribute("inert");
+    expect(document.documentElement).toHaveClass("tp-staff-on");
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: "trip-planner:phrasebook-fullscreen", open: true },
+      "http://localhost:3000",
+    );
+  });
+
+  it("skips kana that only repeats the phrase", () => {
+    guide();
+    click(document.querySelector(".card > .jp"));
+    expect(overlay()?.querySelector(".tp-staff-kana")).not.toBeVisible();
+  });
+
+  it("closes on Escape and gives focus back to the phrase", () => {
+    const { postMessage } = guide();
+    const phrase = document.querySelector<HTMLElement>(".card > .jp");
+    phrase?.focus();
+    click(phrase);
+    key(document, "Escape");
+    expect(overlay()).not.toBeVisible();
+    expect(document.activeElement).toBe(phrase);
+    expect(document.querySelector("header")).not.toHaveAttribute("inert");
+    expect(postMessage).toHaveBeenLastCalledWith(
+      { type: "trip-planner:phrasebook-fullscreen", open: false },
+      "http://localhost:3000",
+    );
+  });
+
+  it("closes from its button and on a tap on the text", () => {
+    guide();
+    click(document.querySelector(".card > .jp"));
+    click(overlay()?.querySelector(".tp-staff-close") ?? null);
+    expect(overlay()).not.toBeVisible();
+    click(document.querySelector(".card > .jp"));
+    click(overlay()?.querySelector(".tp-staff-jp") ?? null);
+    expect(overlay()).not.toBeVisible();
+  });
+
+  it("reads the phrase aloud without closing", () => {
+    const { speak } = guide();
+    click(document.querySelector(".card > .jp"));
+    click(overlay()?.querySelector(".tp-staff-say") ?? null);
+    expect(speak).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: "すみません",
+        lang: "ja-JP",
+        rate: 0.85,
+      }),
+    );
+    expect(overlay()).toBeVisible();
+  });
+
+  it("hides Listen without speech", () => {
+    guide({ speech: false });
+    click(document.querySelector(".card > .jp"));
+    expect(overlay()?.querySelector(".tp-staff-say")).not.toBeVisible();
+  });
+
+  it("takes a word-list entry's kana and meaning from its row", () => {
+    guide();
+    click(document.querySelector("td.j"));
+    expect(overlay()?.querySelector(".tp-staff-jp")).toHaveTextContent("切符");
+    expect(overlay()?.querySelector(".tp-staff-kana")).toHaveTextContent(
+      "きっぷ",
+    );
+    expect(overlay()?.querySelector(".tp-staff-mean")).toHaveTextContent(
+      "Ticket",
+    );
+  });
+
+  it("shows the quiz phrase without giving the answer away", () => {
+    guide();
+    click(document.querySelector(".big"));
+    expect(overlay()?.querySelector(".tp-staff-jp")).toHaveTextContent(
+      "お会計",
+    );
+    expect(overlay()?.querySelector(".tp-staff-mean")).not.toBeVisible();
+  });
+
+  it("leaves Japanese inside the guide's buttons to the guide", () => {
+    guide();
+    click(document.querySelector(".topic .jp"));
+    expect(overlay()).toBeNull();
+    expect(document.querySelector(".topic .jp")).not.toHaveAttribute(
+      "tabindex",
+    );
+  });
+
+  it("makes each phrase reachable from the keyboard", () => {
+    guide();
+    const phrase = document.querySelector(".card > .jp");
+    expect(phrase).toHaveAttribute("tabindex", "0");
+    expect(phrase).toHaveAttribute("role", "button");
+    expect(document.querySelector("td.j")).not.toHaveAttribute("role");
+    if (phrase) key(phrase, "Enter");
+    expect(overlay()).toBeVisible();
+  });
+
+  it("tells no one when it isn't framed", () => {
+    const { postMessage } = guide({ standalone: true });
+    click(document.querySelector(".card > .jp"));
+    expect(overlay()).toBeVisible();
+    expect(postMessage).not.toHaveBeenCalled();
+  });
+
+  it("is valid script and goes in with its styles", () => {
+    expect(() => new Function(SHOW_TO_STAFF)).not.toThrow();
+    const html = importPhrasebook(GUIDE);
+    expect(html).toContain(`<script>${SHOW_TO_STAFF}</script>`);
+    expect(html).toContain(".tp-staff{position:fixed;inset:0;");
+    expect(html).toContain('.lede::after{content:"Tap any Japanese text');
+    expect(html.indexOf("tp-staff{")).toBeLessThan(html.indexOf("</style>"));
   });
 });
