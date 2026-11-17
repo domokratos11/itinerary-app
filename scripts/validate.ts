@@ -12,11 +12,12 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { z } from "zod";
 
+import { KanjiSetSchema } from "../src/domain/kanji";
 import { TripDataSchema } from "../src/domain/schemas";
 
 export type SchemaRule = { pattern: RegExp; schema: z.ZodType };
 
-const FOLDERS = ["src/test", "src/messages"];
+const FOLDERS = ["src/test", "src/messages", "src/data"];
 
 // The app's text. i18n.test.ts checks both languages have the same keys.
 const MessagesSchema: z.ZodType = z.record(
@@ -28,6 +29,7 @@ const MessagesSchema: z.ZodType = z.record(
 export const SCHEMAS: SchemaRule[] = [
   { pattern: /^src\/test\/fixture-trip\.json$/, schema: TripDataSchema },
   { pattern: /^src\/messages\/(en|es)\.json$/, schema: MessagesSchema },
+  { pattern: /^src\/data\/kanji\.json$/, schema: KanjiSetSchema },
 ];
 
 export function listJsonFiles(dir: string, base = dir): string[] {

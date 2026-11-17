@@ -18,10 +18,11 @@ const KEPT_KEYS = [
   "days-view",
   "quick-expense-category",
   "payment-method",
+  "kanji-size",
 ];
 // Kept too when an update stays within the release (sameRelease): the
 // sign-in and the offline trip are kept then, so these still match them.
-const SESSION_KEYS = ["trip-id", "last-server-sync", "kanji-size"];
+const SESSION_KEYS = ["trip-id", "last-server-sync"];
 const VERSION_KEY = "app-version";
 // The version this tab last reset for. GitHub Pages may keep serving the old
 // page for a few minutes after a deploy, and resetting again wouldn't help.

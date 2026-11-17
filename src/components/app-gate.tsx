@@ -5,6 +5,7 @@ import { LockKeyhole, Plus } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
+import { KanjiScreen } from "@/components/kanji-screen";
 import { LanguageSelect } from "@/components/language-select";
 import { NewTripPanel } from "@/components/new-trip";
 import { SetupWizard } from "@/components/setup-wizard";
@@ -197,8 +198,26 @@ function ShareClosed() {
 }
 
 // The phrasebook's static copy needs no sign-in or trip, so it still opens
-// from the precache here (a plain link: it isn't a Next route).
+// from the precache here (a plain link: it isn't a Next route). The kanji
+// list ships with the app and holds nothing about any trip, so it opens here
+// too, over the gate.
 function OfflineScreen() {
+  const [kanji, setKanji] = useState(false);
+  if (kanji)
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-background px-4 py-6 md:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-md flex-col gap-4 md:max-w-[100rem]">
+          <Button
+            variant="outline"
+            className="self-start"
+            onClick={() => setKanji(false)}
+          >
+            {t("gate.offlineBack")}
+          </Button>
+          <KanjiScreen />
+        </div>
+      </div>
+    );
   return (
     <Screen title={t("gate.offlineTitle")}>
       <p>{t("gate.offlineBody")}</p>
@@ -206,6 +225,9 @@ function OfflineScreen() {
         <a href={`${BASE_PATH}${PHRASEBOOK_GUIDE_PATH}`}>
           {t("gate.offlinePhrasebook")}
         </a>
+      </Button>
+      <Button variant="outline" onClick={() => setKanji(true)}>
+        {t("gate.offlineKanji")}
       </Button>
     </Screen>
   );

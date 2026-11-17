@@ -84,7 +84,9 @@
     "misc": "Miscellaneous",
     "phrasebook": "Phrasebook",
     "hintMisc": "The to-do lists and the Japanese phrasebook",
-    "hintPhrasebook": "Japanese phrases by situation, with audio and practice; works offline"
+    "hintPhrasebook": "Japanese phrases by situation, with audio and practice; works offline",
+    "kanji": "Kanji",
+    "hintKanji": "Twenty kanji per topic, with meaning, readings and where you'll see them; works offline"
   },
   "category": {
     "lights": "Lights",
@@ -132,7 +134,9 @@
     "allTrips": "All itineraries",
     "notSetUp": "Not set up yet",
     "tryAgain": "Try again",
-    "offlinePhrasebook": "Open the Japanese phrasebook"
+    "offlinePhrasebook": "Open the Japanese phrasebook",
+    "offlineKanji": "Open the kanji list",
+    "offlineBack": "Back"
   },
   "auth": {
     "popupBlocked": "The browser blocked the sign-in window. Allow pop-ups for this site and try again.",
@@ -1172,7 +1176,8 @@
     "d20261118": {
       "staySignedIn": "Updates no longer sign you out: you stay signed in and keep the trip on the device.",
       "offlineSafe": "Opening the app without signal right after an update no longer leaves it empty.",
-      "offlineAge": "Offline, the app shows when the trip was last synced, and your account panel checks what works without signal."
+      "offlineAge": "Offline, the app shows when the trip was last synced, and your account panel checks what works without signal.",
+      "kanji": "New Kanji page under Miscellaneous: 20 kanji per phrasebook topic with meaning, readings, an example and where you'll see them, in four sizes."
     }
   },
   "miscPage": {
@@ -1400,5 +1405,42 @@
     "refreshed": "Up to date: {count} records saved on this device.",
     "refreshFailed": "Couldn't refresh. Check the connection and try again.",
     "howItWorks": "The app keeps its pages and the trip on this device and updates them by itself whenever it's open with signal. Online, what you see always comes from the server within moments, so a saved copy never hides newer changes. Offline, you see the last synced copy, and your edits wait here until the connection returns."
+  },
+  "kanji": {
+    "title": "Kanji",
+    "subtitle": "The kanji this trip puts in front of you, by phrasebook topic. Tap one to see it large, with its readings and an example.",
+    "search": "Search kanji",
+    "searchPlaceholder": "Meaning, reading or kanji",
+    "size": "Kanji size",
+    "sizes": {
+      "s": "Small",
+      "m": "Medium",
+      "l": "Large",
+      "xl": "Extra large"
+    },
+    "topic": "Topic",
+    "results": "{count, plural, =0 {No kanji match.} one {# kanji matches.} other {# kanji match.}}",
+    "open": "{char}: {meaning}. Show details",
+    "detailDescription": "Readings, an example as seen in Japan and where you'll meet it.",
+    "on": "On reading",
+    "kun": "Kun reading",
+    "example": "Example",
+    "readsAs": "Here {char} reads",
+    "listen": "Listen",
+    "whereSeen": "Where you'll see it",
+    "sections": {
+      "foundations": "Foundations",
+      "konbini": "Konbini",
+      "airport": "Airport and immigration",
+      "trains": "Trains and transit",
+      "restaurants": "Restaurants and cafes",
+      "hotel": "Hotel",
+      "clothes": "Clothes and shoes",
+      "souvenirs": "Souvenirs and shopping",
+      "sightseeing": "Sightseeing and tickets",
+      "drugstore": "Drugstore and health",
+      "smalltalk": "Small talk and New Year",
+      "trouble": "Trouble and emergencies"
+    }
   }
 }

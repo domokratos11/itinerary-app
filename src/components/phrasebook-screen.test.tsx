@@ -56,15 +56,18 @@ describe("PhrasebookScreen", () => {
     expect(main).not.toHaveClass("md:h-[calc(100svh-3.5rem)]");
     // The same frame, so the guide keeps its place.
     expect(screen.getByTitle("Japanese phrasebook")).toBe(frame);
+    // The Kanji and Numbers buttons hide together.
     expect(
-      screen.getByRole("button", { name: /Numbers, prices and times/ }),
+      screen.getByRole("button", { name: /Numbers, prices and times/ })
+        .parentElement,
     ).toHaveClass("hidden");
 
     post(CLOSED);
     expect(main).not.toHaveClass("fixed");
     expect(main).toHaveClass("md:h-[calc(100svh-3.5rem)]");
     expect(
-      screen.getByRole("button", { name: /Numbers, prices and times/ }),
+      screen.getByRole("button", { name: /Numbers, prices and times/ })
+        .parentElement,
     ).not.toHaveClass("hidden");
   });
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookA,
   CalendarDays,
   Eye,
   LayoutDashboard,
@@ -65,7 +66,7 @@ export const SECTIONS = [
     label: "nav.misc",
     hint: "nav.hintMisc",
     icon: LayoutGrid,
-    match: ["/misc/", "/todos/", "/phrasebook/"],
+    match: ["/misc/", "/todos/", "/phrasebook/", "/kanji/"],
   },
   {
     path: "/settings/",
@@ -102,6 +103,14 @@ export const MISC_ITEMS = [
     label: "nav.phrasebook",
     hint: "nav.hintPhrasebook",
     icon: Languages,
+    viewer: true,
+  },
+  {
+    key: "kanji",
+    path: "/kanji/",
+    label: "nav.kanji",
+    hint: "nav.hintKanji",
+    icon: BookA,
     viewer: true,
   },
 ] as const;

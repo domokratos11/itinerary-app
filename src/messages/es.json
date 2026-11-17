@@ -84,7 +84,9 @@
     "misc": "Varios",
     "phrasebook": "Guía de frases",
     "hintMisc": "Las listas de pendientes y la guía de frases en japonés",
-    "hintPhrasebook": "Frases en japonés por situación, con audio y práctica; funciona sin conexión"
+    "hintPhrasebook": "Frases en japonés por situación, con audio y práctica; funciona sin conexión",
+    "kanji": "Kanji",
+    "hintKanji": "Veinte kanji por tema, con significado, lecturas y dónde los verás; funciona sin conexión"
   },
   "category": {
     "lights": "Iluminaciones",
@@ -132,7 +134,9 @@
     "allTrips": "Todos los itinerarios",
     "notSetUp": "Sin configurar aún",
     "tryAgain": "Intentar de nuevo",
-    "offlinePhrasebook": "Abrir la guía de frases en japonés"
+    "offlinePhrasebook": "Abrir la guía de frases en japonés",
+    "offlineKanji": "Abrir la lista de kanji",
+    "offlineBack": "Volver"
   },
   "auth": {
     "popupBlocked": "El navegador bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.",
@@ -1172,7 +1176,8 @@
     "d20261118": {
       "staySignedIn": "Las actualizaciones ya no cierran tu sesión: sigues conectado y conservas el viaje en el dispositivo.",
       "offlineSafe": "Abrir la app sin señal justo después de una actualización ya no la deja vacía.",
-      "offlineAge": "Sin conexión, la app muestra cuándo se sincronizó el viaje por última vez, y el panel de tu cuenta revisa qué funciona sin señal."
+      "offlineAge": "Sin conexión, la app muestra cuándo se sincronizó el viaje por última vez, y el panel de tu cuenta revisa qué funciona sin señal.",
+      "kanji": "Nueva página de Kanji en Varios: 20 kanji por tema de la guía con significado, lecturas, un ejemplo y dónde los verás, en cuatro tamaños."
     }
   },
   "miscPage": {
@@ -1400,5 +1405,42 @@
     "refreshed": "Al día: {count} registros guardados en este dispositivo.",
     "refreshFailed": "No se pudo actualizar. Revisa la conexión e inténtalo de nuevo.",
     "howItWorks": "La app guarda sus páginas y el viaje en este dispositivo y los actualiza sola siempre que está abierta con señal. Con conexión, lo que ves siempre llega del servidor en unos instantes, así que una copia guardada nunca oculta cambios más nuevos. Sin conexión, ves la última copia sincronizada, y tus cambios esperan aquí hasta que vuelva la conexión."
+  },
+  "kanji": {
+    "title": "Kanji",
+    "subtitle": "Los kanji que este viaje te pondrá delante, por tema de la guía de frases. Toca uno para verlo en grande, con sus lecturas y un ejemplo.",
+    "search": "Buscar kanji",
+    "searchPlaceholder": "Significado, lectura o kanji",
+    "size": "Tamaño de los kanji",
+    "sizes": {
+      "s": "Pequeño",
+      "m": "Mediano",
+      "l": "Grande",
+      "xl": "Muy grande"
+    },
+    "topic": "Tema",
+    "results": "{count, plural, =0 {Ningún kanji coincide.} one {# kanji coincide.} other {# kanji coinciden.}}",
+    "open": "{char}: {meaning}. Ver detalles",
+    "detailDescription": "Lecturas, un ejemplo tal como se ve en Japón y dónde lo encontrarás.",
+    "on": "Lectura on",
+    "kun": "Lectura kun",
+    "example": "Ejemplo",
+    "readsAs": "Aquí {char} se lee",
+    "listen": "Escuchar",
+    "whereSeen": "Dónde lo verás",
+    "sections": {
+      "foundations": "Básicos",
+      "konbini": "Konbini",
+      "airport": "Aeropuerto y migración",
+      "trains": "Trenes y transporte",
+      "restaurants": "Restaurantes y cafeterías",
+      "hotel": "Hotel",
+      "clothes": "Ropa y zapatos",
+      "souvenirs": "Recuerdos y compras",
+      "sightseeing": "Turismo y entradas",
+      "drugstore": "Farmacia y salud",
+      "smalltalk": "Conversación y Año Nuevo",
+      "trouble": "Problemas y emergencias"
+    }
   }
 }
