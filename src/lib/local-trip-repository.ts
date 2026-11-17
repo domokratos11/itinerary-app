@@ -96,6 +96,13 @@ export class LocalTripRepository implements TripRepository {
     };
   }
 
+  async refreshFromServer(tripId: string): Promise<number> {
+    return [...(this.data.get(tripId)?.values() ?? [])].reduce(
+      (sum, records) => sum + records.size,
+      0,
+    );
+  }
+
   async readTrip(tripId: string): Promise<TripData> {
     const lists = TRIP_COLLECTIONS.map(
       (name) => [name, this.list(tripId, name)] as const,

@@ -84,7 +84,11 @@
     "misc": "Varios",
     "phrasebook": "Guía de frases",
     "hintMisc": "Las listas de pendientes y la guía de frases en japonés",
-    "hintPhrasebook": "Frases en japonés por situación, con audio y práctica; funciona sin conexión"
+    "hintPhrasebook": "Frases en japonés por situación, con audio y práctica; funciona sin conexión",
+    "kanji": "Kanji",
+    "hintKanji": "Veinte kanji por tema, con significado, lecturas y dónde los verás; funciona sin conexión",
+    "cityNotes": "Notas de ciudades",
+    "hintCityNotes": "Historia, momentos clave, tradiciones y comida de cada ciudad del viaje"
   },
   "category": {
     "lights": "Iluminaciones",
@@ -132,7 +136,9 @@
     "allTrips": "Todos los itinerarios",
     "notSetUp": "Sin configurar aún",
     "tryAgain": "Intentar de nuevo",
-    "offlinePhrasebook": "Abrir la guía de frases en japonés"
+    "offlinePhrasebook": "Abrir la guía de frases en japonés",
+    "offlineKanji": "Abrir la lista de kanji",
+    "offlineBack": "Volver"
   },
   "auth": {
     "popupBlocked": "El navegador bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.",
@@ -402,11 +408,7 @@
     "clear": "Borrar datos e iniciar sesión de nuevo",
     "confirmTitle": "¿Borrar los datos de este dispositivo?",
     "confirmBody": "Esto cierra tu sesión y quita de este dispositivo la copia del viaje. El viaje sigue seguro en la nube. Los cambios hechos sin conexión que aún no se sincronizan podrían perderse.",
-    "confirmSubmit": "Borrar e iniciar sesión de nuevo",
-    "storageKept": "Copia sin conexión: guardada en este dispositivo.",
-    "storageAtRisk": "Copia sin conexión: el navegador podría borrarla si el dispositivo se queda sin espacio.",
-    "storageAsk": "Pedir que se conserve",
-    "storageRefused": "El navegador aún no aceptó. Agregar la app a la pantalla de inicio suele ayudar."
+    "confirmSubmit": "Borrar e iniciar sesión de nuevo"
   },
   "stays": {
     "privateHint": "Todos los del viaje pueden leer esto. No agregues números de reservación o confirmación.",
@@ -1172,6 +1174,13 @@
       "misc": "Los pendientes pasaron a la nueva sección Varios.",
       "researchNotFound": "Lo que la investigación aceptada no pudo encontrar ahora aparece como no encontrado en vez de faltante, y esos lugares ya no cuentan como pendientes de investigar.",
       "budgetCharts": "El Presupuesto muestra el objetivo de cada categoría frente a su gasto, cuánto suman los objetivos junto al presupuesto y lo que costó cada día del viaje por categoría."
+    },
+    "d20261118": {
+      "staySignedIn": "Las actualizaciones ya no cierran tu sesión: sigues conectado y conservas el viaje en el dispositivo.",
+      "offlineSafe": "Abrir la app sin señal justo después de una actualización ya no la deja vacía.",
+      "offlineAge": "Sin conexión, la app muestra cuándo se sincronizó el viaje por última vez, y el panel de tu cuenta revisa qué funciona sin señal.",
+      "kanji": "Nueva página de Kanji en Varios: 20 kanji por tema de la guía con significado, lecturas, un ejemplo y dónde los verás, en cuatro tamaños.",
+      "cityNotes": "Nuevas Notas de ciudades en Varios: historia, momentos clave, tradiciones y comida de cada ciudad, en ambos idiomas, con opción de hacer preguntas específicas."
     }
   },
   "miscPage": {
@@ -1375,5 +1384,105 @@
     "choose": "Elegir qué copiar",
     "settingsBody": "Mientras este itinerario siga vacío, copia ciudades, hoteles, lugares y más de otro itinerario en el que estés. Ese no cambia.",
     "copiedSummary": "De {name}: {what}"
+  },
+  "offline": {
+    "synced": "Viaje sincronizado por última vez {ago}.",
+    "syncedStale": "Viaje sincronizado por última vez {ago}: los planes podrían estar desactualizados.",
+    "title": "Sin conexión",
+    "pages": "Páginas de la app",
+    "pagesCount": "{cached} de {total} guardadas en este dispositivo.",
+    "pagesNone": "Aún no se han guardado. Abre la app con conexión desde la pantalla de inicio una vez.",
+    "trip": "Viaje, plan y reservas",
+    "tripNever": "Aún no se ha sincronizado en este dispositivo.",
+    "language": "Guía de frases, números y kanji",
+    "languageDetail": "Vienen dentro de la app, así que funcionan sin señal.",
+    "storage": "Copia sin conexión",
+    "storageKept": "Se conserva en este dispositivo.",
+    "storageAtRisk": "El navegador podría borrarla si el dispositivo se queda sin espacio. Agregar la app a la pantalla de inicio suele ayudar.",
+    "needsSignal": "Necesita conexión",
+    "needsSignalDetail": "Mapas y rutas, horarios, valoraciones y fotos de Google, y el clima y el tipo de cambio actualizados.",
+    "check": "Revisar",
+    "refresh": "Revisar y actualizar ahora",
+    "refreshing": "Actualizando…",
+    "refreshNeedsSignal": "Actualizar necesita conexión.",
+    "refreshed": "Al día: {count} registros guardados en este dispositivo.",
+    "refreshFailed": "No se pudo actualizar. Revisa la conexión e inténtalo de nuevo.",
+    "howItWorks": "La app guarda sus páginas y el viaje en este dispositivo y los actualiza sola siempre que está abierta con señal. Con conexión, lo que ves siempre llega del servidor en unos instantes, así que una copia guardada nunca oculta cambios más nuevos. Sin conexión, ves la última copia sincronizada, y tus cambios esperan aquí hasta que vuelva la conexión."
+  },
+  "kanji": {
+    "title": "Kanji",
+    "subtitle": "Los kanji que este viaje te pondrá delante, por tema de la guía de frases. Toca uno para verlo en grande, con sus lecturas y un ejemplo.",
+    "search": "Buscar kanji",
+    "searchPlaceholder": "Significado, lectura o kanji",
+    "size": "Tamaño de los kanji",
+    "sizes": {
+      "s": "Pequeño",
+      "m": "Mediano",
+      "l": "Grande",
+      "xl": "Muy grande"
+    },
+    "topic": "Tema",
+    "results": "{count, plural, =0 {Ningún kanji coincide.} one {# kanji coincide.} other {# kanji coinciden.}}",
+    "open": "{char}: {meaning}. Ver detalles",
+    "detailDescription": "Lecturas, un ejemplo tal como se ve en Japón y dónde lo encontrarás.",
+    "on": "Lectura on",
+    "kun": "Lectura kun",
+    "example": "Ejemplo",
+    "readsAs": "Aquí {char} se lee",
+    "listen": "Escuchar",
+    "whereSeen": "Dónde lo verás",
+    "sections": {
+      "foundations": "Básicos",
+      "konbini": "Konbini",
+      "airport": "Aeropuerto y migración",
+      "trains": "Trenes y transporte",
+      "restaurants": "Restaurantes y cafeterías",
+      "hotel": "Hotel",
+      "clothes": "Ropa y zapatos",
+      "souvenirs": "Recuerdos y compras",
+      "sightseeing": "Turismo y entradas",
+      "drugstore": "Farmacia y salud",
+      "smalltalk": "Conversación y Año Nuevo",
+      "trouble": "Problemas y emergencias"
+    }
+  },
+  "cityNotes": {
+    "title": "Notas de ciudades",
+    "subtitle": "No es una guía de viaje: un breve trasfondo de cada ciudad que visitamos, para saber qué estás viendo.",
+    "noCities": "Aún no hay ciudades. Agrégalas en Ajustes.",
+    "noneYet": "Aún no hay notas.",
+    "noneYetLong": "Aún no hay notas para esta ciudad. Pídelas y aparecerán aquí tras la próxima investigación de ciudades.",
+    "statusRequested": "Solicitado",
+    "statusReady": "Listo",
+    "allCities": "Todas las ciudades",
+    "researchedAt": "Investigado el {when}",
+    "waiting": "Esperando la próxima investigación.",
+    "waitingFor": "Esperando la próxima investigación: «{request}»",
+    "cancel": "Cancelar solicitud",
+    "cancelled": "Solicitud cancelada",
+    "request": "Pedir notas",
+    "requested": "Solicitado. Se investigará en la próxima ejecución.",
+    "saveFailed": "No se pudo guardar la solicitud. Inténtalo de nuevo.",
+    "specifics": "Investigar algo específico",
+    "specificsTitle": "Preguntar sobre {city}",
+    "specificsBody": "Escribe lo que te gustaría saber. La respuesta se agrega a las notas, en ambos idiomas, tras la próxima investigación.",
+    "specificsLabel": "Tu pregunta",
+    "specificsPlaceholder": "Por ejemplo: ¿qué pasó en el castillo en 1945?",
+    "send": "Enviar solicitud",
+    "sectionsLabel": "Secciones",
+    "whereToSee": "Dónde verlo",
+    "onTrip": "En nuestro viaje",
+    "aboutCity": "Sobre {city}: historia y tradiciones",
+    "sections": {
+      "glance": "En resumen",
+      "timeline": "Historia breve",
+      "moments": "Momentos clave",
+      "traditions": "Tradiciones y cultura",
+      "food": "Comida que conocer",
+      "season": "Mientras estemos allí",
+      "glossary": "Palabras que encontrarás",
+      "answers": "Tus preguntas",
+      "sources": "Fuentes"
+    }
   }
 }

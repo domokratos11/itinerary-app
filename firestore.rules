@@ -68,6 +68,19 @@ service cloud.firestore {
         && shortString(d.updatedAt, 30);
     }
 
+    // Notes on a city, keyed by its id. The notes themselves are checked by
+    // the push script's schema; here only their size is bounded.
+    function isCityNotes(d) {
+      return d.keys().hasOnly(['id', 'cityId', 'status', 'request', 'notes', 'requestedAt', 'updatedAt'])
+        && d.keys().hasAll(['id', 'cityId', 'status', 'request', 'notes', 'requestedAt', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0 && d.id == d.cityId
+        && d.status in ['requested', 'ready', 'archived']
+        && optionalString(d.request, 1000)
+        && (d.notes == null || (d.notes is map && d.notes.size() <= 12))
+        && shortString(d.requestedAt, 30)
+        && shortString(d.updatedAt, 30);
+    }
+
     function isProposal(d) {
       return d.keys().hasOnly(['id', 'placeId', 'status', 'fields', 'sources', 'notes', 'requestedAt', 'updatedAt'])
         && d.keys().hasAll(['id', 'placeId', 'status', 'fields', 'sources', 'notes', 'requestedAt', 'updatedAt'])
@@ -506,6 +519,14 @@ service cloud.firestore {
         allow read: if isMember(tripId);
         allow create, update: if isMember(tripId)
           && isDayResearch(request.resource.data) && request.resource.data.id == date;
+        allow delete: if isMember(tripId) && resource.data.status == 'archived';
+      }
+
+      // Background notes on a city. Only archived notes can be deleted.
+      match /cityNotes/{cityId} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isCityNotes(request.resource.data) && request.resource.data.id == cityId;
         allow delete: if isMember(tripId) && resource.data.status == 'archived';
       }
 

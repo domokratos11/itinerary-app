@@ -46,6 +46,21 @@ describe("resetApp", () => {
     expect(replace).toHaveBeenCalledWith(expect.stringContaining("?v=1.0.1"));
   });
 
+  it("keeps the sign-in and the trip for an update within the release", async () => {
+    localStorage.setItem("last-server-sync", "2026-12-20T10:00:00.000Z");
+    await resetApp("1.0.1", { keepSession: true });
+
+    expect(clearSession).not.toHaveBeenCalled();
+    expect(localStorage.getItem("trip-id")).toBe("trip-1");
+    expect(localStorage.getItem("last-server-sync")).toBe(
+      "2026-12-20T10:00:00.000Z",
+    );
+    expect(localStorage.getItem("maps-taps")).toBeNull();
+    expect(localStorage.getItem("locale")).toBe("es");
+    expect(storedVersion()).toBe("1.0.1");
+    expect(replace).toHaveBeenCalledWith(expect.stringContaining("?v=1.0.1"));
+  });
+
   // A browser that never opened the app resets before anything else runs,
   // and must land back on the link rather than on the sign-in screen.
   it("keeps a read-only link and never signs anyone out for it", async () => {

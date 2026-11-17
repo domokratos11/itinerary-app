@@ -973,3 +973,49 @@ describe("day research", () => {
     );
   });
 });
+
+describe("city notes", () => {
+  const PATH = "trips/japan/cityNotes/nagoya";
+  const row = (fields = {}) => ({
+    id: "nagoya",
+    cityId: "nagoya",
+    status: "requested",
+    request: "What is the castle's story?",
+    notes: null,
+    requestedAt: NOW,
+    updatedAt: NOW,
+    ...fields,
+  });
+
+  it("lets members ask about a city, keyed by its id", async () => {
+    await assertSucceeds(setDoc(doc(as(ANA), PATH), row()));
+    await assertSucceeds(getDoc(doc(as(ANA), PATH)));
+    await assertFails(getDoc(doc(as(EVE), PATH)));
+    await assertFails(setDoc(doc(as(EVE), PATH), row()));
+  });
+
+  it("refuses a wrong id, status or extra field", async () => {
+    await assertFails(
+      setDoc(doc(as(ANA), PATH), row({ id: "kyoto", cityId: "kyoto" })),
+    );
+    await assertFails(setDoc(doc(as(ANA), PATH), row({ status: "done" })));
+    await assertFails(setDoc(doc(as(ANA), PATH), row({ admin: true })));
+    await assertFails(setDoc(doc(as(ANA), PATH), row({ notes: "text" })));
+  });
+
+  it("deletes only archived notes", async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, PATH), row());
+      await setDoc(
+        doc(db, "trips/japan/cityNotes/kyoto"),
+        row({ id: "kyoto", cityId: "kyoto", status: "archived" }),
+      );
+    });
+    await assertFails(deleteDoc(doc(as(ANA), PATH)));
+    await assertFails(deleteDoc(doc(as(EVE), "trips/japan/cityNotes/kyoto")));
+    await assertSucceeds(
+      deleteDoc(doc(as(ANA), "trips/japan/cityNotes/kyoto")),
+    );
+  });
+});

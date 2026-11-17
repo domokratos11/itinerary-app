@@ -1,8 +1,14 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 
-import { AppGate } from "@/components/app-gate";
+import { AppGate, OFFLINE_GRACE_MS } from "@/components/app-gate";
 import { signInWithGoogle } from "@/lib/auth";
 import { useAuthStore } from "@/lib/auth-store";
 import { usePlanStore } from "@/lib/plan-store";
@@ -62,6 +68,42 @@ describe("AppGate", () => {
     usePlanStore.getState().reset();
     vi.mocked(signInWithGoogle).mockReset();
     vi.mocked(toast.error).mockReset();
+  });
+
+  describe("offline", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+      useAuthStore.setState({
+        status: "signed-in",
+        user,
+        trips: [trip("t1")],
+        tripId: "t1",
+        tripChosen: true,
+        access: "checking",
+      });
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    // The device's copy usually answers at once: no offline screen flashes.
+    it("opens the trip from the device's copy", () => {
+      useTripStore.setState({ loaded: allLoaded });
+      usePlanStore.setState({ ready: true });
+      renderGate();
+      expect(screen.queryByRole("dialog")).toBeNull();
+      act(() => useAuthStore.setState({ access: "member" }));
+      expect(app()).toBeInTheDocument();
+    });
+
+    it("says it is offline only when no copy answers", () => {
+      renderGate();
+      expect(screen.queryByRole("dialog")).toBeNull();
+      act(() => vi.advanceTimersByTime(OFFLINE_GRACE_MS));
+      expect(screen.getByRole("dialog")).toHaveTextContent("You're offline");
+    });
   });
 
   it("shows nothing of the app while sign-in is still loading", () => {

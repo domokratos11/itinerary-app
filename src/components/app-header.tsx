@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookA,
   CalendarDays,
   Eye,
   LayoutDashboard,
   Languages,
+  Landmark,
   LayoutGrid,
   ListChecks,
   MapPinned,
@@ -65,7 +67,7 @@ export const SECTIONS = [
     label: "nav.misc",
     hint: "nav.hintMisc",
     icon: LayoutGrid,
-    match: ["/misc/", "/todos/", "/phrasebook/"],
+    match: ["/misc/", "/todos/", "/phrasebook/", "/kanji/", "/city-notes/"],
   },
   {
     path: "/settings/",
@@ -102,6 +104,23 @@ export const MISC_ITEMS = [
     label: "nav.phrasebook",
     hint: "nav.hintPhrasebook",
     icon: Languages,
+    viewer: true,
+  },
+  {
+    key: "cityNotes",
+    path: "/city-notes/",
+    label: "nav.cityNotes",
+    hint: "nav.hintCityNotes",
+    icon: Landmark,
+    // A read-only link has no access to the trip's notes.
+    viewer: false,
+  },
+  {
+    key: "kanji",
+    path: "/kanji/",
+    label: "nav.kanji",
+    hint: "nav.hintKanji",
+    icon: BookA,
     viewer: true,
   },
 ] as const;

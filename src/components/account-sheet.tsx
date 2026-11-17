@@ -4,6 +4,7 @@ import { UserRound } from "lucide-react";
 
 import { SignOutButton } from "@/components/app-gate";
 import { LanguageSelect } from "@/components/language-select";
+import { OfflineReadiness } from "@/components/offline-readiness";
 import { AboutSettings } from "@/components/settings-about";
 import { PalettePicker } from "@/components/palette-picker";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -63,6 +64,8 @@ export function AccountSheet() {
             </p>
             <SignOutButton label={t("gate.signOut")} variant="outline" />
           </div>
+          <Separator />
+          <OfflineReadiness />
           <Separator />
           <AboutSettings />
         </SheetBody>

@@ -84,7 +84,11 @@
     "misc": "Miscellaneous",
     "phrasebook": "Phrasebook",
     "hintMisc": "The to-do lists and the Japanese phrasebook",
-    "hintPhrasebook": "Japanese phrases by situation, with audio and practice; works offline"
+    "hintPhrasebook": "Japanese phrases by situation, with audio and practice; works offline",
+    "kanji": "Kanji",
+    "hintKanji": "Twenty kanji per topic, with meaning, readings and where you'll see them; works offline",
+    "cityNotes": "City notes",
+    "hintCityNotes": "History, defining moments, traditions and food of each city on the trip"
   },
   "category": {
     "lights": "Lights",
@@ -132,7 +136,9 @@
     "allTrips": "All itineraries",
     "notSetUp": "Not set up yet",
     "tryAgain": "Try again",
-    "offlinePhrasebook": "Open the Japanese phrasebook"
+    "offlinePhrasebook": "Open the Japanese phrasebook",
+    "offlineKanji": "Open the kanji list",
+    "offlineBack": "Back"
   },
   "auth": {
     "popupBlocked": "The browser blocked the sign-in window. Allow pop-ups for this site and try again.",
@@ -402,11 +408,7 @@
     "clear": "Clear data and sign in again",
     "confirmTitle": "Clear this device's data?",
     "confirmBody": "This signs you out and removes the app's copy of the trip from this device. The trip itself stays safe in the cloud. Changes made offline that haven't synced yet may be lost.",
-    "confirmSubmit": "Clear and sign in again",
-    "storageKept": "Offline copy: kept on this device.",
-    "storageAtRisk": "Offline copy: the browser may clear it if the device runs low on space.",
-    "storageAsk": "Ask to keep it",
-    "storageRefused": "The browser didn't agree yet. Adding the app to the home screen usually helps."
+    "confirmSubmit": "Clear and sign in again"
   },
   "stays": {
     "privateHint": "Everyone on the trip can read this. Don't add booking or confirmation numbers.",
@@ -1172,6 +1174,13 @@
       "misc": "To-dos moved to the new Miscellaneous section.",
       "researchNotFound": "What accepted research couldn't find now shows as not found instead of missing, and those places no longer count as needing research.",
       "budgetCharts": "The Budget shows each category's target against its spending, how the targets add up next to the budget, and what each trip day cost by category."
+    },
+    "d20261118": {
+      "staySignedIn": "Updates no longer sign you out: you stay signed in and keep the trip on the device.",
+      "offlineSafe": "Opening the app without signal right after an update no longer leaves it empty.",
+      "offlineAge": "Offline, the app shows when the trip was last synced, and your account panel checks what works without signal.",
+      "kanji": "New Kanji page under Miscellaneous: 20 kanji per phrasebook topic with meaning, readings, an example and where you'll see them, in four sizes.",
+      "cityNotes": "New City notes under Miscellaneous: history, defining moments, traditions and food for each city, in both languages, with a way to ask specific questions."
     }
   },
   "miscPage": {
@@ -1375,5 +1384,105 @@
     "choose": "Choose what to copy",
     "settingsBody": "While this itinerary is still empty, copy cities, hotels, places and more from another itinerary you're on. That one isn't changed.",
     "copiedSummary": "From {name}: {what}"
+  },
+  "offline": {
+    "synced": "Trip last synced {ago}.",
+    "syncedStale": "Trip last synced {ago}: plans may be out of date.",
+    "title": "Offline",
+    "pages": "App pages",
+    "pagesCount": "{cached} of {total} saved on this device.",
+    "pagesNone": "Not saved yet. Open the app online from the home screen once.",
+    "trip": "Trip, plan and bookings",
+    "tripNever": "Not synced on this device yet.",
+    "language": "Phrasebook, numbers and kanji",
+    "languageDetail": "Built into the app, so they work without signal.",
+    "storage": "Offline copy",
+    "storageKept": "Kept on this device.",
+    "storageAtRisk": "The browser may clear it if the device runs low on space. Adding the app to the home screen usually helps.",
+    "needsSignal": "Needs a connection",
+    "needsSignalDetail": "Maps and routes, Google hours, ratings and photos, and new weather and exchange rates.",
+    "check": "Check",
+    "refresh": "Check and refresh now",
+    "refreshing": "Refreshing…",
+    "refreshNeedsSignal": "Refreshing needs a connection.",
+    "refreshed": "Up to date: {count} records saved on this device.",
+    "refreshFailed": "Couldn't refresh. Check the connection and try again.",
+    "howItWorks": "The app keeps its pages and the trip on this device and updates them by itself whenever it's open with signal. Online, what you see always comes from the server within moments, so a saved copy never hides newer changes. Offline, you see the last synced copy, and your edits wait here until the connection returns."
+  },
+  "kanji": {
+    "title": "Kanji",
+    "subtitle": "The kanji this trip puts in front of you, by phrasebook topic. Tap one to see it large, with its readings and an example.",
+    "search": "Search kanji",
+    "searchPlaceholder": "Meaning, reading or kanji",
+    "size": "Kanji size",
+    "sizes": {
+      "s": "Small",
+      "m": "Medium",
+      "l": "Large",
+      "xl": "Extra large"
+    },
+    "topic": "Topic",
+    "results": "{count, plural, =0 {No kanji match.} one {# kanji matches.} other {# kanji match.}}",
+    "open": "{char}: {meaning}. Show details",
+    "detailDescription": "Readings, an example as seen in Japan and where you'll meet it.",
+    "on": "On reading",
+    "kun": "Kun reading",
+    "example": "Example",
+    "readsAs": "Here {char} reads",
+    "listen": "Listen",
+    "whereSeen": "Where you'll see it",
+    "sections": {
+      "foundations": "Foundations",
+      "konbini": "Konbini",
+      "airport": "Airport and immigration",
+      "trains": "Trains and transit",
+      "restaurants": "Restaurants and cafes",
+      "hotel": "Hotel",
+      "clothes": "Clothes and shoes",
+      "souvenirs": "Souvenirs and shopping",
+      "sightseeing": "Sightseeing and tickets",
+      "drugstore": "Drugstore and health",
+      "smalltalk": "Small talk and New Year",
+      "trouble": "Trouble and emergencies"
+    }
+  },
+  "cityNotes": {
+    "title": "City notes",
+    "subtitle": "Not a travel guide: a short background on each city we visit, so you know what you're looking at.",
+    "noCities": "No cities yet. Add them in Settings.",
+    "noneYet": "No notes yet.",
+    "noneYetLong": "No notes for this city yet. Request them, and they'll appear here after the next city research run.",
+    "statusRequested": "Requested",
+    "statusReady": "Ready",
+    "allCities": "All cities",
+    "researchedAt": "Researched {when}",
+    "waiting": "Waiting for the next research run.",
+    "waitingFor": "Waiting for the next research run: “{request}”",
+    "cancel": "Cancel request",
+    "cancelled": "Request cancelled",
+    "request": "Request notes",
+    "requested": "Requested. It'll be researched in the next run.",
+    "saveFailed": "Couldn't save the request. Try again.",
+    "specifics": "Research specifics",
+    "specificsTitle": "Ask about {city}",
+    "specificsBody": "Write what you'd like to know. The answer is added to the notes, in both languages, after the next research run.",
+    "specificsLabel": "Your question",
+    "specificsPlaceholder": "For example: what happened at the castle in 1945?",
+    "send": "Send request",
+    "sectionsLabel": "Sections",
+    "whereToSee": "Where to see it",
+    "onTrip": "On our trip",
+    "aboutCity": "About {city}: history and traditions",
+    "sections": {
+      "glance": "At a glance",
+      "timeline": "History in brief",
+      "moments": "Defining moments",
+      "traditions": "Traditions and culture",
+      "food": "Food to know",
+      "season": "While we're there",
+      "glossary": "Words you'll meet",
+      "answers": "Your questions",
+      "sources": "Sources"
+    }
   }
 }

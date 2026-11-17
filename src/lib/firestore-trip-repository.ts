@@ -2,7 +2,9 @@ import {
   collection,
   doc,
   getDoc,
+  getDocFromServer,
   getDocs,
+  getDocsFromServer,
   onSnapshot,
   query,
   where,
@@ -39,7 +41,18 @@ import {
   tripDatesOf,
 } from "@/domain/schemas";
 import { getDb } from "@/lib/firebase";
+import { noteServerRead, noteServerState } from "@/lib/last-sync";
 import { setDoc, updateDoc, writeBatch } from "@/lib/tracked-firestore";
+
+// Everything under a trip that the app reads, for refreshFromServer. The
+// activity log is left out: it only grows, and nothing needs it offline.
+const TRIP_SUBCOLLECTIONS = [
+  ...TRIP_COLLECTIONS,
+  "items",
+  "proposals",
+  "dayResearch",
+  "cityNotes",
+] as const;
 
 const SCHEMAS: { [C in TripCollection]: z.ZodType<TripRecordOf[C]> } = {
   cities: CityRecordSchema,
@@ -86,9 +99,13 @@ export class FirestoreTripRepository implements TripRepository {
     tripId: string,
     onAccess: (access: TripAccess) => void,
   ): () => void {
+    // With metadata changes, so the moment the copy starts or stops
+    // matching the server is seen even when no data changed (last-sync).
     return onSnapshot(
       doc(getDb(), "trips", tripId),
+      { includeMetadataChanges: true },
       (snapshot) => {
+        noteServerState(snapshot.metadata.fromCache);
         if (snapshot.exists()) onAccess("member");
         else if (!snapshot.metadata.fromCache) onAccess("missing");
       },
@@ -96,6 +113,21 @@ export class FirestoreTripRepository implements TripRepository {
         if (error.code === "permission-denied") onAccess("denied");
       },
     );
+  }
+
+  async refreshFromServer(tripId: string): Promise<number> {
+    const db = getDb();
+    await getDocFromServer(doc(db, "trips", tripId));
+    const sizes = await Promise.all(
+      TRIP_SUBCOLLECTIONS.map(async (name) => {
+        const snapshot = await getDocsFromServer(
+          collection(db, "trips", tripId, name),
+        );
+        return snapshot.size;
+      }),
+    );
+    noteServerRead();
+    return 1 + sizes.reduce((sum, size) => sum + size, 0);
   }
 
   // The rules allow listing only trips with the user's own email on them,

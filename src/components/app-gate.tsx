@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { LockKeyhole, Plus } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
+import { KanjiScreen } from "@/components/kanji-screen";
 import { LanguageSelect } from "@/components/language-select";
 import { NewTripPanel } from "@/components/new-trip";
 import { SetupWizard } from "@/components/setup-wizard";
@@ -52,6 +53,10 @@ export function AppGate({ children }: { children: ReactNode }) {
   const activeTrip = useActiveTrip();
   // "Finish later" opens the app at once, before the trip list says done.
   const [setupLeft, setSetupLeft] = useState(false);
+  // Offline, the device's copy usually answers within moments: keep the
+  // splash that long instead of flashing the offline screen first.
+  const waited = useWaited(OFFLINE_GRACE_MS);
+  const offlineScreen = waited ? <OfflineScreen /> : <Splash />;
 
   // A read-only link: its own screens, and never the sign-in ones.
   if (viewer !== "off") {
@@ -79,7 +84,7 @@ export function AppGate({ children }: { children: ReactNode }) {
     // trips yet" or the picker would only flash by.
     const choosing = trips !== null && trips.length > 0 && !tripChosen;
     if ((trips === null && !tripsFailed) || choosing)
-      return online ? <Splash /> : <OfflineScreen />;
+      return online ? <Splash /> : offlineScreen;
     // A single trip reaches here after "All itineraries" (or when it arrived
     // after the choice): it is still listed, with "New itinerary".
     if (trips && trips.length > 0) return <TripPicker />;
@@ -101,7 +106,7 @@ export function AppGate({ children }: { children: ReactNode }) {
         <SignOutButton label={t("gate.signOut")} variant="outline" />
       </Screen>
     );
-  if (access === "checking") return online ? <Splash /> : <OfflineScreen />;
+  if (access === "checking") return online ? <Splash /> : offlineScreen;
   if (!tripLoaded) return <Splash />;
   // A new itinerary still being set up. Trips with no `setup` never see it.
   if (activeTrip?.setup === "pending" && !setupLeft)
@@ -113,6 +118,18 @@ export function AppGate({ children }: { children: ReactNode }) {
       />
     );
   return children;
+}
+
+export const OFFLINE_GRACE_MS = 2500;
+
+// True once `ms` have passed since the gate first showed.
+function useWaited(ms: number): boolean {
+  const [waited, setWaited] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setWaited(true), ms);
+    return () => window.clearTimeout(timer);
+  }, [ms]);
+  return waited;
 }
 
 // Shown while the answer is on its way. Says nothing about any trip.
@@ -181,8 +198,26 @@ function ShareClosed() {
 }
 
 // The phrasebook's static copy needs no sign-in or trip, so it still opens
-// from the precache here (a plain link: it isn't a Next route).
+// from the precache here (a plain link: it isn't a Next route). The kanji
+// list ships with the app and holds nothing about any trip, so it opens here
+// too, over the gate.
 function OfflineScreen() {
+  const [kanji, setKanji] = useState(false);
+  if (kanji)
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-background px-4 py-6 md:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-md flex-col gap-4 md:max-w-[100rem]">
+          <Button
+            variant="outline"
+            className="self-start"
+            onClick={() => setKanji(false)}
+          >
+            {t("gate.offlineBack")}
+          </Button>
+          <KanjiScreen />
+        </div>
+      </div>
+    );
   return (
     <Screen title={t("gate.offlineTitle")}>
       <p>{t("gate.offlineBody")}</p>
@@ -190,6 +225,9 @@ function OfflineScreen() {
         <a href={`${BASE_PATH}${PHRASEBOOK_GUIDE_PATH}`}>
           {t("gate.offlinePhrasebook")}
         </a>
+      </Button>
+      <Button variant="outline" onClick={() => setKanji(true)}>
+        {t("gate.offlineKanji")}
       </Button>
     </Screen>
   );

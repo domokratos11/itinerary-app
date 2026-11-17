@@ -2,13 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { Languages } from "lucide-react";
+import Link from "next/link";
+
 import { NumberHelper } from "@/components/number-helper";
+import { Button } from "@/components/ui/button";
 import { BASE_PATH } from "@/lib/base-path";
 import { t } from "@/lib/i18n";
 import {
   PHRASEBOOK_FULLSCREEN_MESSAGE,
   PHRASEBOOK_GUIDE_PATH,
 } from "@/lib/phrasebook";
+import { pageHref } from "@/lib/links";
+import { useTripId } from "@/lib/use-trip-id";
 import { cn } from "@/lib/utils";
 
 // Whether a message is the guide in our own frame saying it shows a phrase
@@ -36,6 +42,7 @@ function fullscreenMessage(
 // number helper sits over its bottom corner.
 export function PhrasebookScreen() {
   const frame = useRef<HTMLIFrameElement>(null);
+  const tripId = useTripId();
   const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
@@ -62,12 +69,20 @@ export function PhrasebookScreen() {
         title={t("phrasebook.frameTitle")}
         className="min-h-0 w-full flex-1 border-0 bg-background"
       />
-      <NumberHelper
+      <div
         className={cn(
-          "absolute right-4 bottom-4 z-10 md:bottom-8",
+          "absolute right-4 bottom-4 z-10 flex gap-2 md:bottom-8",
           fullscreen && "hidden",
         )}
-      />
+      >
+        <Button asChild variant="secondary" className="rounded-full shadow-lg">
+          <Link href={pageHref("/kanji/", tripId)}>
+            <Languages data-icon="inline-start" />
+            {t("nav.kanji")}
+          </Link>
+        </Button>
+        <NumberHelper />
+      </div>
     </main>
   );
 }
