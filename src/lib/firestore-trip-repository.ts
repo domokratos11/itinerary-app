@@ -51,6 +51,7 @@ const TRIP_SUBCOLLECTIONS = [
   "items",
   "proposals",
   "dayResearch",
+  "cityNotes",
 ] as const;
 
 const SCHEMAS: { [C in TripCollection]: z.ZodType<TripRecordOf[C]> } = {

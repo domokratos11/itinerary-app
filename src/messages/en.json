@@ -86,7 +86,9 @@
     "hintMisc": "The to-do lists and the Japanese phrasebook",
     "hintPhrasebook": "Japanese phrases by situation, with audio and practice; works offline",
     "kanji": "Kanji",
-    "hintKanji": "Twenty kanji per topic, with meaning, readings and where you'll see them; works offline"
+    "hintKanji": "Twenty kanji per topic, with meaning, readings and where you'll see them; works offline",
+    "cityNotes": "City notes",
+    "hintCityNotes": "History, defining moments, traditions and food of each city on the trip"
   },
   "category": {
     "lights": "Lights",
@@ -1177,7 +1179,8 @@
       "staySignedIn": "Updates no longer sign you out: you stay signed in and keep the trip on the device.",
       "offlineSafe": "Opening the app without signal right after an update no longer leaves it empty.",
       "offlineAge": "Offline, the app shows when the trip was last synced, and your account panel checks what works without signal.",
-      "kanji": "New Kanji page under Miscellaneous: 20 kanji per phrasebook topic with meaning, readings, an example and where you'll see them, in four sizes."
+      "kanji": "New Kanji page under Miscellaneous: 20 kanji per phrasebook topic with meaning, readings, an example and where you'll see them, in four sizes.",
+      "cityNotes": "New City notes under Miscellaneous: history, defining moments, traditions and food for each city, in both languages, with a way to ask specific questions."
     }
   },
   "miscPage": {
@@ -1441,6 +1444,45 @@
       "drugstore": "Drugstore and health",
       "smalltalk": "Small talk and New Year",
       "trouble": "Trouble and emergencies"
+    }
+  },
+  "cityNotes": {
+    "title": "City notes",
+    "subtitle": "Not a travel guide: a short background on each city we visit, so you know what you're looking at.",
+    "noCities": "No cities yet. Add them in Settings.",
+    "noneYet": "No notes yet.",
+    "noneYetLong": "No notes for this city yet. Request them, and they'll appear here after the next city research run.",
+    "statusRequested": "Requested",
+    "statusReady": "Ready",
+    "allCities": "All cities",
+    "researchedAt": "Researched {when}",
+    "waiting": "Waiting for the next research run.",
+    "waitingFor": "Waiting for the next research run: “{request}”",
+    "cancel": "Cancel request",
+    "cancelled": "Request cancelled",
+    "request": "Request notes",
+    "requested": "Requested. It'll be researched in the next run.",
+    "saveFailed": "Couldn't save the request. Try again.",
+    "specifics": "Research specifics",
+    "specificsTitle": "Ask about {city}",
+    "specificsBody": "Write what you'd like to know. The answer is added to the notes, in both languages, after the next research run.",
+    "specificsLabel": "Your question",
+    "specificsPlaceholder": "For example: what happened at the castle in 1945?",
+    "send": "Send request",
+    "sectionsLabel": "Sections",
+    "whereToSee": "Where to see it",
+    "onTrip": "On our trip",
+    "aboutCity": "About {city}: history and traditions",
+    "sections": {
+      "glance": "At a glance",
+      "timeline": "History in brief",
+      "moments": "Defining moments",
+      "traditions": "Traditions and culture",
+      "food": "Food to know",
+      "season": "While we're there",
+      "glossary": "Words you'll meet",
+      "answers": "Your questions",
+      "sources": "Sources"
     }
   }
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { Language } from "@/domain/user-repository";
+import { bilingual } from "@/domain/bilingual";
 
 // The kanji study list (src/data/kanji.json): twenty per phrasebook topic,
 // chosen for what the trip will put in front of you. Static app content, not
@@ -25,15 +25,7 @@ export type KanjiSectionId = (typeof KANJI_SECTIONS)[number];
 
 export const KANJI_PER_SECTION = 20;
 
-const Bilingual = z
-  .object({ en: z.string().min(1), es: z.string().min(1) })
-  .strict()
-  // A short word can be the same in both ("total", "hospital"); a sentence
-  // that matches is an untranslated copy.
-  .refine(
-    (t) => t.en !== t.es || t.en.length <= 20,
-    "Spanish must be a translation",
-  );
+const Bilingual = bilingual(1000);
 
 const Reading = z
   .object({
@@ -89,11 +81,6 @@ export const KanjiSetSchema = z
 
 export type Kanji = z.infer<typeof KanjiSchema>;
 export type KanjiSection = z.infer<typeof KanjiSetSchema>["sections"][number];
-export type Bilingual = z.infer<typeof Bilingual>;
-
-export function inLanguage(text: Bilingual, language: Language): string {
-  return text[language];
-}
 
 // Romaji with its long-vowel marks removed, so "kuko" finds "kūkō".
 function plain(text: string): string {

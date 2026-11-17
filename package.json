@@ -16,6 +16,8 @@
     "places:reset": "tsx scripts/places-reset.ts",
     "research:pull": "tsx scripts/research-pull.ts",
     "research:push": "tsx scripts/research-push.ts",
+    "city-research:pull": "tsx scripts/city-research-pull.ts",
+    "city-research:push": "tsx scripts/city-research-push.ts",
     "flights:push": "tsx scripts/flights-push.ts",
     "items:clean": "tsx scripts/items-clean.ts",
     "maps:check": "tsx scripts/maps-check.ts",

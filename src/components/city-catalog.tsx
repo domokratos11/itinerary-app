@@ -37,6 +37,7 @@ import {
   type PlaceRecord,
 } from "@/domain/schemas";
 import { t } from "@/lib/i18n";
+import { pageHref } from "@/lib/links";
 import { filterPlaces, type CatalogFilter } from "@/lib/catalog-filter";
 import { CostLine } from "@/components/cost-line";
 import {
@@ -56,7 +57,15 @@ import { Tip } from "@/components/tip";
 import { Button } from "@/components/ui/button";
 import { archiveRecord, saveRecord } from "@/lib/trip-actions";
 import { useReadOnly } from "@/lib/viewer-store";
-import { CalendarDays, ListFilter, Pencil, Plus, X } from "lucide-react";
+import {
+  CalendarDays,
+  Landmark,
+  ListFilter,
+  Pencil,
+  Plus,
+  X,
+} from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 
 type Props = {
@@ -249,6 +258,15 @@ export function CityCatalog({
             total: places.length,
           })}
         </p>
+        {!readOnly && (
+          <Link
+            href={pageHref("/city-notes/", tripId, { id: city.id })}
+            className="flex w-fit items-center gap-1.5 text-sm text-primary underline-offset-2 hover:underline"
+          >
+            <Landmark className="size-4" aria-hidden />
+            {t("cityNotes.aboutCity", { city: city.name })}
+          </Link>
+        )}
         <CostLine places={planned} />
         {!sideBySide && (
           <ToggleGroup

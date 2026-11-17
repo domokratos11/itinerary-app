@@ -20,6 +20,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
       "changelog.d20261118.offlineSafe",
       "changelog.d20261118.offlineAge",
       "changelog.d20261118.kanji",
+      "changelog.d20261118.cityNotes",
     ],
   },
   {

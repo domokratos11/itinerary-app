@@ -15,6 +15,7 @@ export const OFFLINE_PAGES = [
   "/phrasebook/",
   "/phrasebook-guide/",
   "/kanji/",
+  "/city-notes/",
 ] as const;
 
 export type PrecacheStatus = {
