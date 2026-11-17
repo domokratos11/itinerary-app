@@ -77,6 +77,10 @@ export interface TripRepository {
   // parsed as subscribe parses them. For copying from another trip the user
   // is a member of.
   readTrip(tripId: string): Promise<TripData>;
+  // Reads the trip and everything under it again from the server, so the
+  // device's offline copy is current. Resolves with how many documents came
+  // back; rejects without a connection.
+  refreshFromServer(tripId: string): Promise<number>;
   // Creates or replaces one record. To retire one, set `archived`; only
   // Clean up in Settings deletes.
   save<C extends TripCollection>(

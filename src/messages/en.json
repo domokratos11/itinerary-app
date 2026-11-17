@@ -402,11 +402,7 @@
     "clear": "Clear data and sign in again",
     "confirmTitle": "Clear this device's data?",
     "confirmBody": "This signs you out and removes the app's copy of the trip from this device. The trip itself stays safe in the cloud. Changes made offline that haven't synced yet may be lost.",
-    "confirmSubmit": "Clear and sign in again",
-    "storageKept": "Offline copy: kept on this device.",
-    "storageAtRisk": "Offline copy: the browser may clear it if the device runs low on space.",
-    "storageAsk": "Ask to keep it",
-    "storageRefused": "The browser didn't agree yet. Adding the app to the home screen usually helps."
+    "confirmSubmit": "Clear and sign in again"
   },
   "stays": {
     "privateHint": "Everyone on the trip can read this. Don't add booking or confirmation numbers.",
@@ -1172,6 +1168,11 @@
       "misc": "To-dos moved to the new Miscellaneous section.",
       "researchNotFound": "What accepted research couldn't find now shows as not found instead of missing, and those places no longer count as needing research.",
       "budgetCharts": "The Budget shows each category's target against its spending, how the targets add up next to the budget, and what each trip day cost by category."
+    },
+    "d20261118": {
+      "staySignedIn": "Updates no longer sign you out: you stay signed in and keep the trip on the device.",
+      "offlineSafe": "Opening the app without signal right after an update no longer leaves it empty.",
+      "offlineAge": "Offline, the app shows when the trip was last synced, and your account panel checks what works without signal."
     }
   },
   "miscPage": {
@@ -1375,5 +1376,29 @@
     "choose": "Choose what to copy",
     "settingsBody": "While this itinerary is still empty, copy cities, hotels, places and more from another itinerary you're on. That one isn't changed.",
     "copiedSummary": "From {name}: {what}"
+  },
+  "offline": {
+    "synced": "Trip last synced {ago}.",
+    "syncedStale": "Trip last synced {ago}: plans may be out of date.",
+    "title": "Offline",
+    "pages": "App pages",
+    "pagesCount": "{cached} of {total} saved on this device.",
+    "pagesNone": "Not saved yet. Open the app online from the home screen once.",
+    "trip": "Trip, plan and bookings",
+    "tripNever": "Not synced on this device yet.",
+    "language": "Phrasebook, numbers and kanji",
+    "languageDetail": "Built into the app, so they work without signal.",
+    "storage": "Offline copy",
+    "storageKept": "Kept on this device.",
+    "storageAtRisk": "The browser may clear it if the device runs low on space. Adding the app to the home screen usually helps.",
+    "needsSignal": "Needs a connection",
+    "needsSignalDetail": "Maps and routes, Google hours, ratings and photos, and new weather and exchange rates.",
+    "check": "Check",
+    "refresh": "Check and refresh now",
+    "refreshing": "Refreshing…",
+    "refreshNeedsSignal": "Refreshing needs a connection.",
+    "refreshed": "Up to date: {count} records saved on this device.",
+    "refreshFailed": "Couldn't refresh. Check the connection and try again.",
+    "howItWorks": "The app keeps its pages and the trip on this device and updates them by itself whenever it's open with signal. Online, what you see always comes from the server within moments, so a saved copy never hides newer changes. Offline, you see the last synced copy, and your edits wait here until the connection returns."
   }
 }
