@@ -1180,7 +1180,9 @@
       "offlineSafe": "Abrir la app sin señal justo después de una actualización ya no la deja vacía.",
       "offlineAge": "Sin conexión, la app muestra cuándo se sincronizó el viaje por última vez, y el panel de tu cuenta revisa qué funciona sin señal.",
       "kanji": "Nueva página de Kanji en Varios: 20 kanji por tema de la guía con significado, lecturas, un ejemplo y dónde los verás, en cuatro tamaños.",
-      "cityNotes": "Nuevas Notas de ciudades en Varios: historia, momentos clave, tradiciones y comida de cada ciudad, en ambos idiomas, con opción de hacer preguntas específicas."
+      "cityNotes": "Nuevas Notas de ciudades en Varios: historia, momentos clave, tradiciones y comida de cada ciudad, en ambos idiomas, con opción de hacer preguntas específicas.",
+      "budgetHint": "En la configuración del presupuesto, la explicación del objetivo por persona ya no se encima con su título.",
+      "cityNotesMenu": "Las Notas de ciudades resaltan en el menú la sección que estás leyendo, y en el teléfono el menú se queda arriba mientras te desplazas."
     }
   },
   "miscPage": {
