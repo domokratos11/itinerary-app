@@ -313,6 +313,67 @@ describe("users/{uid}", () => {
   });
 });
 
+describe("reservations", () => {
+  const older = {
+    id: "train-1",
+    type: "train",
+    date: "2026-12-20",
+    time: "08:10",
+    from: "Tokyo",
+    to: "Kyoto",
+    note: null,
+    archived: false,
+    updatedAt: NOW,
+  };
+
+  it("keep older bookings without the later fields valid", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(ANA), "trips/japan/reservations/train-1"), older),
+    );
+  });
+
+  it("save a ride with its arrival, train and seat", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(ANA), "trips/japan/reservations/train-2"), {
+        ...older,
+        id: "train-2",
+        endTime: "10:24",
+        trainName: "Nozomi 21",
+        seat: "Car 7, 12A",
+        placeId: null,
+        venue: null,
+        people: null,
+      }),
+    );
+  });
+
+  it("save an entry with its place, times and people, in range", async () => {
+    const path = "trips/japan/reservations/park-1";
+    const entry = {
+      ...older,
+      id: "park-1",
+      type: "park",
+      from: null,
+      to: null,
+      endTime: "16:00",
+      placeId: "shinjuku-gyoen",
+      venue: "Shinjuku Gyoen",
+      people: 2,
+    };
+    await assertSucceeds(setDoc(doc(as(ANA), path), entry));
+    await assertSucceeds(
+      setDoc(doc(as(ANA), path), { ...entry, type: "event" }),
+    );
+    await assertFails(setDoc(doc(as(ANA), path), { ...entry, people: 0 }));
+    await assertFails(setDoc(doc(as(ANA), path), { ...entry, people: 1.5 }));
+    await assertFails(setDoc(doc(as(ANA), path), { ...entry, type: "spa" }));
+    await assertFails(
+      setDoc(doc(as(ANA), path), { ...entry, venue: "x".repeat(101) }),
+    );
+    await assertFails(setDoc(doc(as(EVE), path), entry));
+  });
+});
+
 describe("expenses", () => {
   const expense = {
     id: "e1",

@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { bookingExpense, bookingLabel, linkedExpense } from "./booking-cost";
+import {
+  bookingCosts,
+  bookingDetails,
+  bookingExpense,
+  bookingLabel,
+  bookingPlace,
+  linkedExpense,
+} from "./booking-cost";
 import type { ExpenseRecord, ReservationRecord } from "./schemas";
 
-const tr = (key: string) =>
-  ({ "reservationType.train": "Train", "reservationType.tour": "Tour" })[key] ??
-  key;
+const tr = (key: string, values?: Record<string, unknown>) =>
+  ({
+    "reservationType.train": "Train",
+    "reservationType.tour": "Tour",
+    "reservationType.ticket": "Museum or attraction",
+    "bookings.peopleCount": `${String(values?.count)} people`,
+  })[key] ?? key;
 
 const train: ReservationRecord = {
   id: "train-1",
@@ -15,8 +26,29 @@ const train: ReservationRecord = {
   from: "Tokyo",
   to: "Kyoto",
   note: null,
+  endTime: "11:15",
+  placeId: null,
+  venue: null,
+  people: null,
+  trainName: "Nozomi 21",
+  seat: "Car 7, 12A",
   archived: false,
   updatedAt: "2026-10-01T00:00:00.000Z",
+};
+
+const museum: ReservationRecord = {
+  ...train,
+  id: "museum-1",
+  type: "ticket",
+  time: "10:00",
+  endTime: null,
+  from: null,
+  to: null,
+  trainName: null,
+  seat: null,
+  placeId: "ghibli",
+  venue: "Ghibli Museum",
+  people: 2,
 };
 
 const expense = (fields: Partial<ExpenseRecord>): ExpenseRecord => ({
@@ -48,6 +80,47 @@ describe("bookingLabel", () => {
     expect(bookingLabel({ type: "tour", from: null, to: null }, tr)).toBe(
       "Tour",
     );
+  });
+
+  it("names an entry by its venue", () => {
+    expect(bookingLabel(museum, tr)).toBe(
+      "Museum or attraction · Ghibli Museum",
+    );
+  });
+});
+
+describe("bookingPlace and bookingDetails", () => {
+  it("shows a ride's stations, times, train and seat", () => {
+    expect(bookingPlace(train)).toBe("Tokyo → Kyoto");
+    expect(bookingDetails(train, tr)).toBe(
+      "09:00–11:15 · Nozomi 21 · Car 7, 12A",
+    );
+  });
+
+  it("shows an entry's venue, time and people", () => {
+    expect(bookingPlace(museum)).toBe("Ghibli Museum");
+    expect(bookingDetails(museum, tr)).toBe("10:00 · 2 people");
+  });
+
+  it("falls back to the old from and to of an entry", () => {
+    expect(
+      bookingPlace({ type: "ticket", from: "Ueno", to: null, venue: null }),
+    ).toBe("Ueno");
+  });
+});
+
+describe("bookingCosts", () => {
+  it("returns every live cost of the booking", () => {
+    const costs = bookingCosts(
+      [
+        expense({ id: "a" }),
+        expense({ id: "b" }),
+        expense({ id: "gone", archived: true }),
+        expense({ id: "other", reservationId: "x" }),
+      ],
+      "train-1",
+    );
+    expect(costs.map((e) => e.id)).toEqual(["a", "b"]);
   });
 });
 

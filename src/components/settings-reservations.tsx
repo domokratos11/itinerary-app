@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Archive, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,8 +19,11 @@ import {
   type AmountResult,
 } from "@/domain/amount";
 import {
+  bookingCosts,
+  bookingDetails,
   bookingExpense,
   bookingLabel,
+  bookingPlace,
   linkedExpense,
 } from "@/domain/booking-cost";
 import { categoryForReservation } from "@/domain/budget";
@@ -44,7 +47,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { RESERVATION_TYPES, type ReservationRecord } from "@/domain/schemas";
+import {
+  isRideReservation,
+  NEW_RESERVATION_TYPES,
+  RESERVATION_TYPES,
+  type ReservationRecord,
+} from "@/domain/schemas";
 import { uniqueId } from "@/domain/trip-edit";
 import { t } from "@/lib/i18n";
 import { formatDayLabel } from "@/lib/format-day";
@@ -107,7 +115,9 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
     }
   }
 
+  // A booking's costs go out of the budget with it, and Undo brings both back.
   function archive(r: ReservationRecord) {
+    const costs = bookingCosts(trip.expenses, r.id);
     archiveRecord(
       tripId,
       "reservations",
@@ -117,21 +127,41 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
         day: formatDayLabel(r.date),
       }),
     ).catch(() => toast.error(t("common.refused")));
-    toast(t("bookings.archived"), {
-      action: {
-        label: t("common.undo"),
-        onClick: () =>
-          saveRecord(
-            tripId,
-            "reservations",
-            r,
-            t("activity.restoredBooking", {
-              type: t(`reservationType.${r.type}`).toLocaleLowerCase(),
-              day: formatDayLabel(r.date),
-            }),
-          ).catch(() => toast.error(t("common.refused"))),
+    for (const cost of costs)
+      archiveRecord(
+        tripId,
+        "expenses",
+        cost,
+        t("activity.archivedExpense", { title: cost.title }),
+      ).catch(() => toast.error(t("common.refused")));
+    toast(
+      costs.length > 0
+        ? t("bookings.archivedWithCost")
+        : t("bookings.archived"),
+      {
+        action: {
+          label: t("common.undo"),
+          onClick: () => {
+            saveRecord(
+              tripId,
+              "reservations",
+              r,
+              t("activity.restoredBooking", {
+                type: t(`reservationType.${r.type}`).toLocaleLowerCase(),
+                day: formatDayLabel(r.date),
+              }),
+            ).catch(() => toast.error(t("common.refused")));
+            for (const cost of costs)
+              saveRecord(
+                tripId,
+                "expenses",
+                cost,
+                t("activity.savedExpense", { title: cost.title }),
+              ).catch(() => toast.error(t("common.refused")));
+          },
+        },
       },
-    });
+    );
   }
 
   return (
@@ -147,16 +177,14 @@ export function ReservationsSettings({ tripId }: { tripId: string }) {
                 <Badge variant="outline">
                   {t(`reservationType.${r.type}`)}
                 </Badge>
-                <span className="font-medium">
-                  {formatDayLabel(r.date)}
-                  {r.time && ` · ${r.time}`}
+                <span className="font-medium">{formatDayLabel(r.date)}</span>
+              </span>
+              <span className="mt-1 block">{bookingPlace(r)}</span>
+              {bookingDetails(r, t) && (
+                <span className="block text-muted-foreground">
+                  {bookingDetails(r, t)}
                 </span>
-              </span>
-              <span className="mt-1 block">
-                {r.from && r.to
-                  ? `${r.from} → ${r.to}`
-                  : (r.from ?? r.to ?? "")}
-              </span>
+              )}
               {r.note && (
                 <span className="block text-muted-foreground">{r.note}</span>
               )}
@@ -259,13 +287,28 @@ function ReservationForm({
   onCancel: () => void;
   onSave: (record: ReservationRecord, cost: BookingCost) => void;
 }) {
+  const trip = useTrip();
   const [type, setType] = useState<ReservationType>(
     reservation?.type ?? "train",
   );
   const [date, setDate] = useState(reservation?.date ?? "");
   const [time, setTime] = useState(reservation?.time ?? "");
+  const [endTime, setEndTime] = useState(reservation?.endTime ?? "");
   const [from, setFrom] = useState(reservation?.from ?? "");
   const [to, setTo] = useState(reservation?.to ?? "");
+  const [trainName, setTrainName] = useState(reservation?.trainName ?? "");
+  const [seat, setSeat] = useState(reservation?.seat ?? "");
+  const [placeId, setPlaceId] = useState<string>(
+    reservation?.placeId ?? OTHER_VENUE,
+  );
+  const [venue, setVenue] = useState(
+    reservation?.placeId
+      ? ""
+      : (reservation?.venue ?? reservation?.to ?? reservation?.from ?? ""),
+  );
+  const [people, setPeople] = useState(
+    reservation?.people ? String(reservation.people) : "",
+  );
   const [note, setNote] = useState(reservation?.note ?? "");
   const [amount, setAmount] = useState<AmountEntry>(() =>
     entryFor(cost, Math.round(useUsdRate.getState().rate * 100) / 100),
@@ -276,26 +319,65 @@ function ReservationForm({
   const [method, setMethod] = useState<PaymentMethod>(
     () => cost?.paymentMethod ?? lastPaymentMethod(),
   );
+  const ride = isRideReservation(type);
+  const isDate = /^\d{4}-\d{2}-\d{2}$/.test(date);
+
+  // An entry picks from the places of the city where that night is spent,
+  // keeping the one already chosen even if the date moved.
+  const places = useMemo(() => {
+    const cityId = isDate ? nightStay(date, trip.stays)?.cityId : undefined;
+    return trip.places
+      .filter(
+        (p) =>
+          !p.archived &&
+          ((cityId !== undefined && p.cityId === cityId) ||
+            p.id === reservation?.placeId),
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [date, isDate, trip.stays, trip.places, reservation?.placeId]);
+  const place =
+    placeId === OTHER_VENUE ? null : places.find((p) => p.id === placeId);
+
   const noCost = amount.amount.trim() === "";
   const money = noCost ? null : readAmount(amount);
+  const peopleCount = people.trim() === "" ? null : Number(people);
   const valid =
-    /^\d{4}-\d{2}-\d{2}$/.test(date) &&
-    (time === "" || /^\d{2}:\d{2}$/.test(time)) &&
+    isDate &&
+    [time, endTime].every((v) => v === "" || /^\d{2}:\d{2}$/.test(v)) &&
+    (peopleCount === null ||
+      (Number.isInteger(peopleCount) &&
+        peopleCount >= 1 &&
+        peopleCount <= 20)) &&
     (noCost || money !== null);
 
+  // Only the fields of the chosen kind are kept.
   function build(): ReservationRecord {
+    const text = (v: string) => v.trim() || null;
     return {
       id: reservation?.id ?? uniqueId(`${type}-${date}`, takenIds),
       type,
       date,
       time: time || null,
-      from: from.trim() || null,
-      to: to.trim() || null,
-      note: note.trim() || null,
+      endTime: endTime || null,
+      from: ride ? text(from) : null,
+      to: ride ? text(to) : null,
+      trainName: ride ? text(trainName) : null,
+      seat: ride ? text(seat) : null,
+      placeId: !ride && place ? place.id : null,
+      venue: ride ? null : place ? place.name.slice(0, 100) : text(venue),
+      people: ride ? null : peopleCount,
+      note: text(note),
       archived: false,
       updatedAt: new Date().toISOString(),
     };
   }
+
+  // Older bookings of a kind no longer offered can still be edited as such.
+  const types = (RESERVATION_TYPES as readonly ReservationType[]).filter(
+    (option) =>
+      (NEW_RESERVATION_TYPES as readonly ReservationType[]).includes(option) ||
+      option === reservation?.type,
+  );
 
   return (
     <EditPanel
@@ -308,27 +390,24 @@ function ReservationForm({
         onSave(build(), { amount: money, status, method });
       }}
     >
-      <Field label={t("common.type")} htmlFor="res-type">
-        <Select
-          value={type}
-          onValueChange={(v) => setType(v as ReservationType)}
-        >
-          <SelectTrigger id="res-type" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {/* Flights have their own section; an older one can still be edited. */}
-            {RESERVATION_TYPES.filter(
-              (option) => option !== "flight" || reservation?.type === "flight",
-            ).map((option) => (
-              <SelectItem key={option} value={option}>
-                {t(`reservationType.${option}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
       <div className="grid grid-cols-2 gap-3">
+        <Field label={t("common.type")} htmlFor="res-type">
+          <Select
+            value={type}
+            onValueChange={(v) => setType(v as ReservationType)}
+          >
+            <SelectTrigger id="res-type" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {types.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {t(`reservationType.${option}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
         <Field label={t("common.date")} htmlFor="res-date">
           <Input
             id="res-date"
@@ -338,33 +417,136 @@ function ReservationForm({
             required
           />
         </Field>
-        <Field label={t("bookings.timeOptional")} htmlFor="res-time">
-          <Input
-            id="res-time"
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-          />
-        </Field>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label={t("bookings.from")} htmlFor="res-from">
-          <Input
-            id="res-from"
-            value={from}
-            maxLength={100}
-            onChange={(e) => setFrom(e.target.value)}
-          />
-        </Field>
-        <Field label={t("bookings.to")} htmlFor="res-to">
-          <Input
-            id="res-to"
-            value={to}
-            maxLength={100}
-            onChange={(e) => setTo(e.target.value)}
-          />
-        </Field>
-      </div>
+      {ride ? (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("bookings.from")} htmlFor="res-from">
+              <Input
+                id="res-from"
+                value={from}
+                maxLength={100}
+                placeholder={t("bookings.fromPlaceholder")}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+            </Field>
+            <Field label={t("bookings.to")} htmlFor="res-to">
+              <Input
+                id="res-to"
+                value={to}
+                maxLength={100}
+                placeholder={t("bookings.toPlaceholder")}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("bookings.departure")} htmlFor="res-time">
+              <Input
+                id="res-time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              />
+            </Field>
+            <Field label={t("bookings.arrival")} htmlFor="res-end">
+              <Input
+                id="res-end"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("bookings.trainName")} htmlFor="res-train">
+              <Input
+                id="res-train"
+                value={trainName}
+                maxLength={50}
+                placeholder={t("bookings.trainNamePlaceholder")}
+                onChange={(e) => setTrainName(e.target.value)}
+              />
+            </Field>
+            <Field label={t("bookings.seat")} htmlFor="res-seat">
+              <Input
+                id="res-seat"
+                value={seat}
+                maxLength={30}
+                placeholder={t("bookings.seatPlaceholder")}
+                onChange={(e) => setSeat(e.target.value)}
+              />
+            </Field>
+          </div>
+        </>
+      ) : (
+        <>
+          {places.length > 0 && (
+            <Field
+              label={t("bookings.place")}
+              htmlFor="res-place"
+              hint={t("bookings.placeHint")}
+            >
+              <Select value={placeId} onValueChange={setPlaceId}>
+                <SelectTrigger id="res-place" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {places.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={OTHER_VENUE}>
+                    {t("bookings.otherVenue")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
+          {!place && (
+            <Field label={t("bookings.venue")} htmlFor="res-venue">
+              <Input
+                id="res-venue"
+                value={venue}
+                maxLength={100}
+                placeholder={t("bookings.venuePlaceholder")}
+                onChange={(e) => setVenue(e.target.value)}
+              />
+            </Field>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("bookings.entryTime")} htmlFor="res-time">
+              <Input
+                id="res-time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              />
+            </Field>
+            <Field label={t("bookings.endTime")} htmlFor="res-end">
+              <Input
+                id="res-end"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+            </Field>
+          </div>
+          <Field label={t("bookings.people")} htmlFor="res-people">
+            <Input
+              id="res-people"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={20}
+              value={people}
+              onChange={(e) => setPeople(e.target.value)}
+              className="w-24"
+            />
+          </Field>
+        </>
+      )}
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <Field
           label={t("bookings.cost")}
@@ -405,3 +587,6 @@ function ReservationForm({
     </EditPanel>
   );
 }
+
+// The place Select's choice for a venue typed by hand.
+const OTHER_VENUE = "__other";

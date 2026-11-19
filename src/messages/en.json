@@ -107,8 +107,10 @@
     "flight": "Flight",
     "train": "Train",
     "hotel": "Hotel",
-    "tour": "Tour",
-    "ticket": "Ticket"
+    "tour": "Tour or experience",
+    "ticket": "Museum or attraction",
+    "park": "Park or garden",
+    "event": "Show or event"
   },
   "language": {
     "label": "Language"
@@ -508,7 +510,25 @@
     "cost": "Cost (optional)",
     "costHint": "Saved in the budget as this reservation's expense. Clear it to take it out.",
     "noCost": "No cost yet",
-    "extraCost": "Log another cost for this reservation"
+    "extraCost": "Log another cost for this reservation",
+    "departure": "Departure",
+    "arrival": "Arrival (optional)",
+    "trainName": "Train (optional)",
+    "trainNamePlaceholder": "Nozomi 21",
+    "seat": "Car and seat (optional)",
+    "seatPlaceholder": "Car 7, 12A",
+    "fromPlaceholder": "Tokyo",
+    "toPlaceholder": "Kyoto",
+    "entryTime": "Entry time (optional)",
+    "endTime": "Ends (optional)",
+    "place": "Place",
+    "placeHint": "Places of the city where you sleep that night.",
+    "otherVenue": "Another place (type it)",
+    "venue": "Venue",
+    "venuePlaceholder": "Ghibli Museum",
+    "people": "People (optional)",
+    "peopleCount": "{count, plural, one {# person} other {# people}}",
+    "archivedWithCost": "Reservation archived, and its cost taken out of the budget"
   },
   "holidays": {
     "holiday": "Holiday",
@@ -1183,7 +1203,9 @@
       "cityNotes": "New City notes under Miscellaneous: history, defining moments, traditions and food for each city, in both languages, with a way to ask specific questions.",
       "budgetHint": "In the budget settings, the per-person target hint no longer overlaps its title.",
       "cityNotesMenu": "City notes highlight the section you're reading in the menu, and on phones the menu stays at the top while you scroll.",
-      "kanjiTopics": "On a computer, the Kanji topics are a list on the left instead of a crowded row of tabs."
+      "kanjiTopics": "On a computer, the Kanji topics are a list on the left instead of a crowded row of tabs.",
+      "reservations": "Reservations are for same-day bookings: trains with departure, arrival, train and seat, and museum, park, tour or show entries with a place, times and people.",
+      "reservationArchive": "Archiving a reservation also archives its costs in the budget, and Undo brings both back."
     }
   },
   "miscPage": {

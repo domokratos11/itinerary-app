@@ -119,14 +119,24 @@ service cloud.firestore {
         && isRecord(d);
     }
 
+    // endTime, placeId, venue, people, trainName and seat were added later
+    // and are optional, so older bookings stay valid.
     function isReservation(d) {
-      return d.keys().hasOnly(['id', 'type', 'date', 'time', 'from', 'to', 'note', 'archived', 'updatedAt'])
+      return d.keys().hasOnly(['id', 'type', 'date', 'time', 'from', 'to', 'note', 'endTime', 'placeId', 'venue', 'people', 'trainName', 'seat', 'archived', 'updatedAt'])
         && d.keys().hasAll(['id', 'type', 'date', 'time', 'from', 'to', 'note', 'archived', 'updatedAt'])
         && shortString(d.id, 64) && d.id.size() > 0
-        && d.type in ['flight', 'train', 'hotel', 'tour', 'ticket']
+        && d.type in ['flight', 'train', 'hotel', 'tour', 'ticket', 'park', 'event']
         && d.date is string && d.date.size() == 10
         && (d.time == null || (d.time is string && d.time.size() == 5))
+        && (d.get('endTime', null) == null
+          || (d.endTime is string && d.endTime.size() == 5))
         && optionalString(d.from, 100) && optionalString(d.to, 100)
+        && optionalString(d.get('placeId', null), 64)
+        && optionalString(d.get('venue', null), 100)
+        && (d.get('people', null) == null
+          || (d.people is int && d.people >= 1 && d.people <= 20))
+        && optionalString(d.get('trainName', null), 50)
+        && optionalString(d.get('seat', null), 30)
         && optionalString(d.note, 500)
         && isRecord(d);
     }

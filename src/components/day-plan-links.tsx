@@ -16,6 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { bookingDetails, bookingPlace } from "@/domain/booking-cost";
 import { directionsUrl, legsForDay, placeLocation } from "@/domain/plan";
 import type { PlanItem, Reservation } from "@/domain/schemas";
 import type { Endpoint } from "@/domain/trip";
@@ -40,13 +41,15 @@ export function Reservations({
       {reservations.map((r, i) => (
         <Card key={`${r.type}-${i}`} size="sm">
           <CardContent className="flex flex-col gap-1 text-sm">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{t(`reservationType.${r.type}`)}</Badge>
-              {r.time && <span className="font-medium">{r.time}</span>}
+              <span className="font-medium">{bookingPlace(r)}</span>
             </div>
-            <div>
-              {r.from && r.to ? `${r.from} → ${r.to}` : (r.from ?? r.to ?? "")}
-            </div>
+            {bookingDetails(r, t) && (
+              <div className="text-muted-foreground tabular-nums">
+                {bookingDetails(r, t)}
+              </div>
+            )}
             {r.note && <div className="text-muted-foreground">{r.note}</div>}
           </CardContent>
         </Card>

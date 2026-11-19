@@ -107,8 +107,10 @@
     "flight": "Vuelo",
     "train": "Tren",
     "hotel": "Hotel",
-    "tour": "Tour",
-    "ticket": "Boleto"
+    "tour": "Tour o experiencia",
+    "ticket": "Museo o atracción",
+    "park": "Parque o jardín",
+    "event": "Espectáculo o evento"
   },
   "language": {
     "label": "Idioma"
@@ -508,7 +510,25 @@
     "cost": "Costo (opcional)",
     "costHint": "Se guarda en el presupuesto como el gasto de esta reservación. Bórralo para quitarlo.",
     "noCost": "Sin costo todavía",
-    "extraCost": "Anotar otro gasto de esta reservación"
+    "extraCost": "Anotar otro gasto de esta reservación",
+    "departure": "Salida",
+    "arrival": "Llegada (opcional)",
+    "trainName": "Tren (opcional)",
+    "trainNamePlaceholder": "Nozomi 21",
+    "seat": "Vagón y asiento (opcional)",
+    "seatPlaceholder": "Vagón 7, 12A",
+    "fromPlaceholder": "Tokio",
+    "toPlaceholder": "Kioto",
+    "entryTime": "Hora de entrada (opcional)",
+    "endTime": "Termina (opcional)",
+    "place": "Lugar",
+    "placeHint": "Lugares de la ciudad donde duermes esa noche.",
+    "otherVenue": "Otro lugar (escríbelo)",
+    "venue": "Sitio",
+    "venuePlaceholder": "Museo Ghibli",
+    "people": "Personas (opcional)",
+    "peopleCount": "{count, plural, one {# persona} other {# personas}}",
+    "archivedWithCost": "Reservación archivada, y su costo quitado del presupuesto"
   },
   "holidays": {
     "holiday": "Festivo",
@@ -1183,7 +1203,9 @@
       "cityNotes": "Nuevas Notas de ciudades en Varios: historia, momentos clave, tradiciones y comida de cada ciudad, en ambos idiomas, con opción de hacer preguntas específicas.",
       "budgetHint": "En la configuración del presupuesto, la explicación del objetivo por persona ya no se encima con su título.",
       "cityNotesMenu": "Las Notas de ciudades resaltan en el menú la sección que estás leyendo, y en el teléfono el menú se queda arriba mientras te desplazas.",
-      "kanjiTopics": "En la computadora, los temas de Kanji son una lista a la izquierda en lugar de una fila de pestañas amontonada."
+      "kanjiTopics": "En la computadora, los temas de Kanji son una lista a la izquierda en lugar de una fila de pestañas amontonada.",
+      "reservations": "Las reservaciones son para lo que pasa en un día: trenes con salida, llegada, tren y asiento, y entradas a museos, parques, tours o espectáculos con lugar, horario y personas.",
+      "reservationArchive": "Archivar una reservación también archiva sus gastos en el presupuesto, y Deshacer recupera ambos."
     }
   },
   "miscPage": {

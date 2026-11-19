@@ -46,6 +46,12 @@ const train: ReservationRecord = {
   from: "Tokyo",
   to: "Kyoto",
   note: null,
+  endTime: null,
+  placeId: null,
+  venue: null,
+  people: null,
+  trainName: null,
+  seat: null,
   archived: false,
   updatedAt: "2026-10-01T00:00:00.000Z",
 };
