@@ -14,13 +14,32 @@ export const CATEGORIES = [
 
 export const PRIORITIES = ["must", "want", "maybe"] as const;
 
+// "ticket" is an entry to a museum or attraction. "flight" and "hotel" stay
+// readable for older bookings, but flights and stays have their own
+// sections, so the booking form only offers NEW_RESERVATION_TYPES.
 export const RESERVATION_TYPES = [
   "flight",
   "train",
   "hotel",
   "tour",
   "ticket",
+  "park",
+  "event",
 ] as const;
+
+export const NEW_RESERVATION_TYPES = [
+  "train",
+  "ticket",
+  "park",
+  "tour",
+  "event",
+] as const satisfies readonly (typeof RESERVATION_TYPES)[number][];
+
+// A train ride goes from one station to another; the rest are an entry to
+// one venue on that day.
+export function isRideReservation(type: (typeof RESERVATION_TYPES)[number]) {
+  return type === "train" || type === "flight";
+}
 
 export const PLAN_STATUSES = ["planned", "done", "skipped", "removed"] as const;
 
@@ -99,6 +118,20 @@ export const ReservationSchema = z.object({
   from: z.string().nullable(),
   to: z.string().nullable(),
   note: z.string().nullable(),
+  // Added later: older bookings have none of these, so they default to null.
+  // The arrival time of a ride, or when an entry or show ends.
+  endTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable()
+    .default(null),
+  // The trip's place for an entry, or a typed venue when it isn't one.
+  placeId: z.string().max(64).nullable().default(null),
+  venue: z.string().max(100).nullable().default(null),
+  people: z.number().int().min(1).max(20).nullable().default(null),
+  // A ride's train, e.g. "Nozomi 21", and its car and seat.
+  trainName: z.string().max(50).nullable().default(null),
+  seat: z.string().max(30).nullable().default(null),
 });
 
 export const HOLIDAY_KINDS = ["holiday", "closures"] as const;

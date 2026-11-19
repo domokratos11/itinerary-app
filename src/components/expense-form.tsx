@@ -8,13 +8,6 @@ import { AmountInput } from "@/components/amount-input";
 import { EditPanel, Field } from "@/components/edit-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   EXPENSE_CATEGORIES,
@@ -26,16 +19,19 @@ import {
 } from "@/domain/schemas";
 import { entryFor, readAmount, type AmountEntry } from "@/domain/amount";
 import { categoryForPlace, payerOf } from "@/domain/budget";
+import { QUICK_CATEGORIES } from "@/domain/quick-expense";
 import { nightStay } from "@/domain/trip";
 import { EXPENSE_COLOR } from "@/domain/taxonomy";
 import { useActiveTrip, useAuthStore } from "@/lib/auth-store";
+import { formatDayLabel } from "@/lib/format-day";
 import { t } from "@/lib/i18n";
 import { EXPENSE_ICON } from "@/lib/taxonomy-icons";
 import { todayInTokyo } from "@/lib/tokyo-date";
-import { saveRecord } from "@/lib/trip-actions";
-import { useTrip } from "@/lib/trip-store";
+import { archiveRecord, saveRecord } from "@/lib/trip-actions";
+import { useCitiesById, useTrip } from "@/lib/trip-store";
 import { useUsdRate } from "@/lib/usd-rate";
 import { lastPaymentMethod, rememberPaymentMethod } from "@/lib/payment-method";
+import { cn } from "@/lib/utils";
 
 // What the form starts with when logging a place, booking or hotel.
 export type ExpensePrefill = Partial<
@@ -85,7 +81,37 @@ export function ExpenseCategoryOption({
   );
 }
 
-// Adds or edits one expense. Whole yen only.
+// The categories as big tiles, the ones used on the go first. Flights and
+// bookings come last: they're mostly logged from their own screens.
+const CATEGORY_TILES: ExpenseCategory[] = [
+  ...QUICK_CATEGORIES,
+  ...EXPENSE_CATEGORIES.filter((c) => !QUICK_CATEGORIES.includes(c)),
+];
+
+// The category of the last cost logged, so the next one starts there.
+const LAST_KEY = "quick-expense-category";
+function lastCategory(): ExpenseCategory {
+  try {
+    const saved = localStorage.getItem(LAST_KEY);
+    return EXPENSE_CATEGORIES.find((c) => c === saved) ?? "food";
+  } catch {
+    return "food";
+  }
+}
+function rememberCategory(category: ExpenseCategory) {
+  try {
+    localStorage.setItem(LAST_KEY, category);
+  } catch {
+    // Only a convenience for next time.
+  }
+}
+
+// Adds or edits one expense; the one form for every way of logging a cost
+// (the day's "+ ¥", the budget, a place, a booking or a hotel). Large
+// controls for a phone: the amount, a category tile, who paid and how, then
+// what it was for, the date and whether it's paid. A new cost is paid by the
+// person signed in, on today's date in Tokyo unless it's logged for a day.
+// Whole yen only.
 export function ExpenseForm({
   tripId,
   expense,
@@ -98,9 +124,10 @@ export function ExpenseForm({
   onClose: () => void;
 }) {
   const members = useActiveTrip()?.members ?? [];
-  const stays = useTrip().stays;
+  const trip = useTrip();
+  const citiesById = useCitiesById();
   const me = useAuthStore((s) => s.user?.email?.toLowerCase() ?? null);
-  const startDate = expense?.date ?? prefill.date ?? todayInTokyo();
+  const today = todayInTokyo();
   const [title, setTitle] = useState(expense?.title ?? prefill.title ?? "");
   const { rate } = useUsdRate.getState();
   const [amount, setAmount] = useState<AmountEntry>(() =>
@@ -110,12 +137,14 @@ export function ExpenseForm({
     ),
   );
   const [category, setCategory] = useState<ExpenseCategory>(
-    expense?.category ?? prefill.category ?? "other",
+    () => expense?.category ?? prefill.category ?? lastCategory(),
   );
-  const [date, setDate] = useState(startDate);
-  const [status, setStatus] = useState<ExpenseStatus>(
-    expense?.status ?? (startDate > todayInTokyo() ? "planned" : "paid"),
+  const [date, setDate] = useState(expense?.date ?? prefill.date ?? today);
+  // Follows the date (a future day is planned) until it's picked by hand.
+  const [pickedStatus, setPickedStatus] = useState<ExpenseStatus | null>(
+    expense?.status ?? null,
   );
+  const status = pickedStatus ?? (date > today ? "planned" : "paid");
   // Always a real person: an old expense with no payer opens on the trip's
   // first member, the one it's counted under.
   const [paidBy, setPaidBy] = useState<string | null>(
@@ -128,20 +157,20 @@ export function ExpenseForm({
   const [note, setNote] = useState(expense?.note ?? "");
 
   const money = readAmount(amount);
-  const valid =
-    title.trim() !== "" &&
-    money !== null &&
-    paidBy !== null &&
-    /^\d{4}-\d{2}-\d{2}$/.test(date);
+  const isDate = /^\d{4}-\d{2}-\d{2}$/.test(date);
+  const valid = money !== null && paidBy !== null && isDate;
   const people = [
     ...new Set([...members, ...(me ? [me] : []), ...(paidBy ? [paidBy] : [])]),
   ];
+  const city = isDate
+    ? citiesById.get(nightStay(date, trip.stays)?.cityId ?? "")
+    : undefined;
 
   function save() {
     if (!money) return;
     const record: ExpenseRecord = {
       id: expense?.id ?? crypto.randomUUID(),
-      title: title.trim(),
+      title: (title.trim() || t(`expenseCategory.${category}`)).slice(0, 200),
       ...money,
       category,
       date,
@@ -151,15 +180,18 @@ export function ExpenseForm({
       placeId: expense?.placeId ?? prefill.placeId ?? null,
       reservationId: expense?.reservationId ?? prefill.reservationId ?? null,
       stayId: expense?.stayId ?? prefill.stayId ?? null,
-      // A new cost is put in the city of that night, as a quick entry is.
+      // A new cost is put in the city of that night.
       cityId: expense
         ? expense.cityId
-        : (prefill.cityId ?? nightStay(date, stays)?.cityId ?? null),
+        : (prefill.cityId ?? nightStay(date, trip.stays)?.cityId ?? null),
       note: note.trim() || null,
       archived: false,
       updatedAt: new Date().toISOString(),
     };
-    if (!expense) rememberPaymentMethod(method);
+    if (!expense) {
+      rememberPaymentMethod(method);
+      rememberCategory(category);
+    }
     saveRecord(
       tripId,
       "expenses",
@@ -167,31 +199,110 @@ export function ExpenseForm({
       t("activity.savedExpense", { title: record.title }),
     ).catch(() => toast.error(t("common.refused")));
     onClose();
+    if (!expense)
+      toast(
+        t("quickExpense.saved", {
+          amount: money.amountJPY.toLocaleString("en-US"),
+        }),
+        {
+          action: {
+            label: t("common.undo"),
+            onClick: () =>
+              archiveRecord(
+                tripId,
+                "expenses",
+                record,
+                t("activity.archivedExpense", { title: record.title }),
+              ).catch(() => toast.error(t("common.undoFailed"))),
+          },
+        },
+      );
   }
 
+  const day = isDate ? formatDayLabel(date) : "";
   return (
     <EditPanel
       open
       onOpenChange={(open) => !open && onClose()}
-      title={expense ? t("budget.editExpense") : t("budget.addExpense")}
+      title={expense ? t("budget.editExpense") : t("quickExpense.title")}
+      description={
+        city ? t("quickExpense.whenWhere", { day, city: city.name }) : day
+      }
       canSubmit={valid}
       onSubmit={save}
     >
-      <Field label={t("budget.what")} htmlFor="expense-title">
+      <Field label={t("budget.amount")} htmlFor="expense-amount">
+        <AmountInput
+          id="expense-amount"
+          autoFocus={!expense}
+          large
+          required
+          value={amount}
+          onChange={setAmount}
+        />
+      </Field>
+      <Field label={t("common.category")} htmlFor="expense-category">
+        <ToggleGroup
+          id="expense-category"
+          type="single"
+          variant="outline"
+          value={category}
+          onValueChange={(v) => v && setCategory(v as ExpenseCategory)}
+          className="grid w-full grid-cols-3 gap-1.5"
+        >
+          {CATEGORY_TILES.map((c) => {
+            const Icon = EXPENSE_ICON[c];
+            return (
+              <ToggleGroupItem
+                key={c}
+                value={c}
+                className="flex h-16 flex-col gap-1 rounded-md! border text-xs data-[state=on]:border-primary data-[state=on]:bg-primary/10"
+              >
+                <Icon className="size-5!" style={{ color: EXPENSE_COLOR[c] }} />
+                {t(`expenseCategory.${c}`)}
+              </ToggleGroupItem>
+            );
+          })}
+        </ToggleGroup>
+      </Field>
+      {people.length > 0 && (
+        <Field label={t("budget.paidBy")} htmlFor="expense-paid-by">
+          <ToggleGroup
+            id="expense-paid-by"
+            type="single"
+            variant="outline"
+            value={paidBy ?? ""}
+            onValueChange={(v) => v && setPaidBy(v)}
+            className="grid w-full grid-cols-2 gap-1.5"
+          >
+            {people.map((email) => (
+              <ToggleGroupItem
+                key={email}
+                value={email}
+                className="h-12 min-w-0 rounded-md! border data-[state=on]:border-primary data-[state=on]:bg-primary/10"
+              >
+                <span className="truncate">{personLabel(email)}</span>
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </Field>
+      )}
+      <Field label={t("budget.paidWith")} htmlFor="expense-method">
+        <PaymentToggle
+          id="expense-method"
+          large
+          value={method}
+          onChange={setMethod}
+        />
+      </Field>
+      <Field label={t("quickExpense.what")} htmlFor="expense-title">
         <Input
           id="expense-title"
           value={title}
           maxLength={200}
-          required
+          placeholder={t(`expenseCategory.${category}`)}
+          className="h-12"
           onChange={(e) => setTitle(e.target.value)}
-        />
-      </Field>
-      <Field label={t("budget.amount")} htmlFor="expense-amount">
-        <AmountInput
-          id="expense-amount"
-          value={amount}
-          required
-          onChange={setAmount}
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
@@ -201,54 +312,16 @@ export function ExpenseForm({
             type="date"
             value={date}
             required
+            className="h-12"
             onChange={(e) => setDate(e.target.value)}
           />
         </Field>
         <Field label={t("budget.status")} htmlFor="expense-status">
           <StatusToggle
             id="expense-status"
+            large
             value={status}
-            onChange={setStatus}
-          />
-        </Field>
-      </div>
-      <Field label={t("common.category")} htmlFor="expense-category">
-        <Select
-          value={category}
-          onValueChange={(v) => setCategory(v as ExpenseCategory)}
-        >
-          <SelectTrigger id="expense-category" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {EXPENSE_CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c}>
-                <ExpenseCategoryOption category={c} />
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label={t("budget.paidBy")} htmlFor="expense-paid-by">
-          <Select value={paidBy ?? undefined} onValueChange={setPaidBy}>
-            <SelectTrigger id="expense-paid-by" className="w-full">
-              <SelectValue placeholder={t("budget.pickPayer")} />
-            </SelectTrigger>
-            <SelectContent>
-              {people.map((email) => (
-                <SelectItem key={email} value={email}>
-                  {personLabel(email)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label={t("budget.paidWith")} htmlFor="expense-method">
-          <PaymentToggle
-            id="expense-method"
-            value={method}
-            onChange={setMethod}
+            onChange={setPickedStatus}
           />
         </Field>
       </div>
@@ -257,6 +330,7 @@ export function ExpenseForm({
           id="expense-note"
           value={note}
           maxLength={500}
+          className="h-12"
           onChange={(e) => setNote(e.target.value)}
         />
       </Field>
@@ -269,10 +343,12 @@ export function StatusToggle({
   id,
   value,
   onChange,
+  large = false,
 }: {
   id: string;
   value: ExpenseStatus;
   onChange: (value: ExpenseStatus) => void;
+  large?: boolean;
 }) {
   return (
     <ToggleGroup
@@ -283,10 +359,13 @@ export function StatusToggle({
       onValueChange={(v) => v && onChange(v as ExpenseStatus)}
       className="w-full"
     >
-      <ToggleGroupItem value="paid" className="flex-1">
+      <ToggleGroupItem value="paid" className={cn("flex-1", large && "h-12")}>
         {t("budget.paid")}
       </ToggleGroupItem>
-      <ToggleGroupItem value="planned" className="flex-1">
+      <ToggleGroupItem
+        value="planned"
+        className={cn("flex-1", large && "h-12")}
+      >
         {t("budget.planned")}
       </ToggleGroupItem>
     </ToggleGroup>
@@ -300,10 +379,12 @@ export function PaymentToggle({
   id,
   value,
   onChange,
+  large = false,
 }: {
   id: string;
   value: PaymentMethod;
   onChange: (value: PaymentMethod) => void;
+  large?: boolean;
 }) {
   return (
     <ToggleGroup
@@ -317,7 +398,11 @@ export function PaymentToggle({
       {(["card", "cash"] as const).map((m) => {
         const Icon = PAYMENT_ICON[m];
         return (
-          <ToggleGroupItem key={m} value={m} className="flex-1">
+          <ToggleGroupItem
+            key={m}
+            value={m}
+            className={cn("flex-1", large && "h-12")}
+          >
             <Icon />
             {t(`paymentMethod.${m}`)}
           </ToggleGroupItem>

@@ -4,9 +4,31 @@ import {
   type Category,
   type Place,
   type PlaceRecord,
+  type PlanItem,
   type Priority,
 } from "./schemas";
 import { uniqueId } from "./trip-edit";
+
+// Moving places to another city: only those that aren't a stop on any day
+// move, since a stop would end up on a day of the wrong city. A removed stop
+// doesn't count. The places already in that city are left as they are.
+export function placesToMove(
+  places: PlaceRecord[],
+  items: Pick<PlanItem, "placeId" | "status">[],
+  cityId: string,
+  now: Date,
+): { moved: PlaceRecord[]; planned: PlaceRecord[] } {
+  const onADay = new Set(
+    items.filter((i) => i.status !== "removed").map((i) => i.placeId),
+  );
+  const candidates = places.filter((p) => p.cityId !== cityId);
+  return {
+    moved: candidates
+      .filter((p) => !onADay.has(p.id))
+      .map((p) => ({ ...p, cityId, updatedAt: now.toISOString() })),
+    planned: candidates.filter((p) => onADay.has(p.id)),
+  };
+}
 
 // What the place editor can change. "location" stands for lat and lng.
 export const EDITABLE_FIELDS = [

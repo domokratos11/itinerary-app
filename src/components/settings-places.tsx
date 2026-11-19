@@ -5,6 +5,7 @@ import {
   Archive,
   BadgeCheck,
   CheckCheck,
+  MapPinned,
   Pencil,
   Plus,
   Search,
@@ -13,6 +14,7 @@ import {
 import { toast } from "sonner";
 
 import { AddPlace } from "@/components/add-place";
+import { MovePlaces } from "@/components/move-places";
 import { PlaceEditor } from "@/components/place-editor";
 import { ProposalReview } from "@/components/proposal-review";
 import {
@@ -78,6 +80,7 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
   const [filter, setFilter] = useState<PlaceFilter>("all");
   const [editing, setEditing] = useState<PlaceRecord | null>(null);
   const [adding, setAdding] = useState(false);
+  const [moving, setMoving] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [accepting, setAccepting] = useState<ResearchToAccept[] | null>(null);
@@ -270,6 +273,21 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
               ? t("placeSettings.researchCount", { count: chosen.length })
               : t("placeSettings.research")}
           </Button>
+          {trip.cities.length > 1 && (
+            <Tip label={t("placeSettings.tipMove")}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={chosen.length === 0}
+                onClick={() => setMoving(true)}
+              >
+                <MapPinned />
+                {chosen.length > 0
+                  ? t("placeSettings.moveCount", { count: chosen.length })
+                  : t("placeSettings.move")}
+              </Button>
+            </Tip>
+          )}
           {shownFinished.length > 0 && (
             <Tip label={t("placeSettings.tipAcceptChosen")}>
               <Button size="sm" onClick={() => setAccepting(shownFinished)}>
@@ -355,6 +373,18 @@ export function PlacesSettings({ tripId }: { tripId: string }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {moving && chosen.length > 0 && (
+        <MovePlaces
+          tripId={tripId}
+          places={chosen}
+          fromCityId={cityId}
+          onClose={() => setMoving(false)}
+          onMoved={() => {
+            setMoving(false);
+            setSelected(new Set());
+          }}
+        />
+      )}
       {adding && (
         <AddPlace
           tripId={tripId}

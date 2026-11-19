@@ -296,7 +296,7 @@ export function copyTrip(
             part: "bookings",
             id,
             date,
-            name: r.to ?? r.from,
+            name: r.venue ?? r.to ?? r.from,
             reservationType: r.type,
           });
         return { ...r, id, date, note: null, ...fresh };

@@ -86,7 +86,7 @@
     "hintMisc": "The to-do lists and the Japanese phrasebook",
     "hintPhrasebook": "Japanese phrases by situation, with audio and practice; works offline",
     "kanji": "Kanji",
-    "hintKanji": "Twenty kanji per topic, with meaning, readings and where you'll see them; works offline",
+    "hintKanji": "Forty kanji per topic, with meaning, readings and where you'll see them; works offline",
     "cityNotes": "City notes",
     "hintCityNotes": "History, defining moments, traditions and food of each city on the trip"
   },
@@ -107,8 +107,10 @@
     "flight": "Flight",
     "train": "Train",
     "hotel": "Hotel",
-    "tour": "Tour",
-    "ticket": "Ticket"
+    "tour": "Tour or experience",
+    "ticket": "Museum or attraction",
+    "park": "Park or garden",
+    "event": "Show or event"
   },
   "language": {
     "label": "Language"
@@ -467,7 +469,17 @@
     "acceptBody": "Every researched value goes into its place. You can undo this right after.",
     "acceptCorrections": "Every researched value goes into its place, and {count, plural, one {# of them replaces a value} other {# of them replace values}} already there. To check those first, use Review research on each place. You can undo this right after.",
     "acceptConfirm": "Accept",
-    "acceptedCount": "Accepted research for {count, plural, one {# place} other {# places}}"
+    "acceptedCount": "Accepted research for {count, plural, one {# place} other {# places}}",
+    "move": "Move",
+    "moveCount": "Move {count}",
+    "tipMove": "Move the selected places to another city",
+    "moveTitle": "Move {count, plural, one {# place} other {# places}} to another city",
+    "moveDescription": "They leave {city} and wait to be planned in the city you choose.",
+    "moveTo": "New city",
+    "movePlanned": "{count, plural, one {# place is already on a day and stays in {city}: {names}. Take it off the day first to move it.} other {# places are already on a day and stay in {city}: {names}. Take them off the day first to move them.}}",
+    "moveNone": "Nothing to move: every selected place is already on a day.",
+    "moveConfirm": "{count, plural, one {Move # place} other {Move # places}}",
+    "moved": "{count, plural, one {# place moved} other {# places moved}} to {city}"
   },
   "placeFilter": {
     "all": "All places",
@@ -508,7 +520,25 @@
     "cost": "Cost (optional)",
     "costHint": "Saved in the budget as this reservation's expense. Clear it to take it out.",
     "noCost": "No cost yet",
-    "extraCost": "Log another cost for this reservation"
+    "extraCost": "Log another cost for this reservation",
+    "departure": "Departure",
+    "arrival": "Arrival (optional)",
+    "trainName": "Train (optional)",
+    "trainNamePlaceholder": "Nozomi 21",
+    "seat": "Car and seat (optional)",
+    "seatPlaceholder": "Car 7, 12A",
+    "fromPlaceholder": "Tokyo",
+    "toPlaceholder": "Kyoto",
+    "entryTime": "Entry time (optional)",
+    "endTime": "Ends (optional)",
+    "place": "Place",
+    "placeHint": "Places of the city where you sleep that night.",
+    "otherVenue": "Another place (type it)",
+    "venue": "Venue",
+    "venuePlaceholder": "Ghibli Museum",
+    "people": "People (optional)",
+    "peopleCount": "{count, plural, one {# person} other {# people}}",
+    "archivedWithCost": "Reservation archived, and its cost taken out of the budget"
   },
   "holidays": {
     "holiday": "Holiday",
@@ -624,7 +654,8 @@
     "archivedCash": "archived a cash record of {yen}",
     "changedTripDates": "set the trip dates to {from} – {to}",
     "clearedTripDates": "cleared the trip dates",
-    "copiedItinerary": "copied parts of the itinerary {name}"
+    "copiedItinerary": "copied parts of the itinerary {name}",
+    "movedPlaces": "moved {count, plural, one {# place} other {# places}} to {city}"
   },
   "theme": {
     "light": "Light",
@@ -955,7 +986,6 @@
     "title": "Log a cost",
     "whenWhere": "{day} · {city}",
     "what": "What (optional)",
-    "more": "More details",
     "saved": "Saved ¥{amount}"
   },
   "amount": {
@@ -1180,7 +1210,15 @@
       "offlineSafe": "Opening the app without signal right after an update no longer leaves it empty.",
       "offlineAge": "Offline, the app shows when the trip was last synced, and your account panel checks what works without signal.",
       "kanji": "New Kanji page under Miscellaneous: 20 kanji per phrasebook topic with meaning, readings, an example and where you'll see them, in four sizes.",
-      "cityNotes": "New City notes under Miscellaneous: history, defining moments, traditions and food for each city, in both languages, with a way to ask specific questions."
+      "cityNotes": "New City notes under Miscellaneous: history, defining moments, traditions and food for each city, in both languages, with a way to ask specific questions.",
+      "budgetHint": "In the budget settings, the per-person target hint no longer overlaps its title.",
+      "cityNotesMenu": "City notes highlight the section you're reading in the menu, and on phones the menu stays at the top while you scroll.",
+      "kanjiTopics": "On a computer, the Kanji topics are a list on the left instead of a crowded row of tabs.",
+      "reservations": "Reservations are for same-day bookings: trains with departure, arrival, train and seat, and museum, park, tour or show entries with a place, times and people.",
+      "reservationArchive": "Archiving a reservation also archives its costs in the budget, and Undo brings both back.",
+      "movePlaces": "In Settings → Places you can select places and move them to another city; places already on a day stay where they are.",
+      "oneExpenseForm": "There is one expense form everywhere, the large one from the day page: it now also asks who paid (you, by default), the date (today, by default), whether it's paid and a note.",
+      "kanjiForty": "The Kanji page has 40 kanji per topic, twice as many, and none repeats in another topic."
     }
   },
   "miscPage": {

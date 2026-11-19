@@ -97,7 +97,7 @@ export function EditPanel({
               {description ?? title}
             </DrawerDescription>
           </DrawerHeader>
-          <div className="flex flex-col gap-4 overflow-y-auto px-4">
+          <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-2">
             {children}
           </div>
           <DrawerFooter className="flex-row justify-end pb-[calc(1rem+env(safe-area-inset-bottom))]">
@@ -122,8 +122,10 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={htmlFor}>{label}</Label>
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <Label htmlFor={htmlFor} className="min-w-0 break-words">
+        {label}
+      </Label>
       {children}
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>

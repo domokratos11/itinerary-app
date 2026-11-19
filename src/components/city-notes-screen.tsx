@@ -3,7 +3,7 @@
 import { ArrowLeft, Clock, MessageSquarePlus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +48,9 @@ import { cityNotesRepository } from "@/lib/city-notes-repository-instance";
 import { formatDateRange, formatTokyoDateTime } from "@/lib/format-day";
 import { getLocale, t } from "@/lib/i18n";
 import { pageHref } from "@/lib/links";
+import { cn } from "@/lib/utils";
 import { useTrip } from "@/lib/trip-store";
+import { useActiveSection } from "@/lib/use-active-section";
 import { useCityNotes } from "@/lib/use-city-notes";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTripId } from "@/lib/use-trip-id";
@@ -285,20 +287,7 @@ function CityNotesDetail({
         </p>
       ) : (
         <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[14rem_1fr] lg:items-start lg:gap-8">
-          <nav
-            aria-label={t("cityNotes.sectionsLabel")}
-            className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:sticky lg:top-20 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:px-0"
-          >
-            {shown.map((section) => (
-              <a
-                key={section}
-                href={`#city-${section}`}
-                className="shrink-0 rounded-full border px-3 py-1 text-sm whitespace-nowrap hover:bg-muted lg:rounded-md lg:border-0 lg:px-2"
-              >
-                {t(`cityNotes.sections.${section}`)}
-              </a>
-            ))}
-          </nav>
+          <SectionNav sections={shown} />
           <div className="flex max-w-3xl min-w-0 flex-col gap-8">
             {shown.map((section) => (
               <Section key={section} id={section}>
@@ -344,6 +333,51 @@ function visibleSections(notes: CityNotesContent): CityNoteSection[] {
   });
 }
 
+// The section links: a sticky row of chips under the header on phones, a
+// sticky list on the left from lg. The section being read is highlighted.
+function SectionNav({ sections }: { sections: CityNoteSection[] }) {
+  const ids = useMemo(() => sections.map((s) => `city-${s}`), [sections]);
+  const [active, select] = useActiveSection(ids);
+  const links = useRef(new Map<string, HTMLAnchorElement>());
+
+  useEffect(() => {
+    // Keep the highlighted chip in view in the sideways row on phones.
+    const link = active ? links.current.get(active) : undefined;
+    link?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [active]);
+
+  return (
+    <nav
+      aria-label={t("cityNotes.sectionsLabel")}
+      className="sticky top-14 z-30 -mx-4 flex gap-2 overflow-x-auto bg-background px-4 py-2 lg:top-20 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:bg-transparent lg:px-0 lg:py-0"
+    >
+      {sections.map((section) => {
+        const id = `city-${section}`;
+        const current = id === active;
+        return (
+          <a
+            key={section}
+            ref={(element) => {
+              if (element) links.current.set(id, element);
+              else links.current.delete(id);
+            }}
+            href={`#${id}`}
+            aria-current={current ? "true" : undefined}
+            onClick={() => select(id)}
+            className={cn(
+              "shrink-0 rounded-full border px-3 py-1 text-sm whitespace-nowrap transition-colors hover:bg-muted lg:rounded-md lg:border-0 lg:border-l-2 lg:border-transparent lg:px-2 lg:py-1.5",
+              current &&
+                "border-primary bg-primary/10 font-medium text-primary hover:bg-primary/15 lg:border-primary",
+            )}
+          >
+            {t(`cityNotes.sections.${section}`)}
+          </a>
+        );
+      })}
+    </nav>
+  );
+}
+
 function Section({
   id,
   children,
@@ -355,7 +389,7 @@ function Section({
     <section
       id={`city-${id}`}
       aria-labelledby={`city-${id}-title`}
-      className="flex scroll-mt-20 flex-col gap-3"
+      className="flex scroll-mt-32 flex-col gap-3 lg:scroll-mt-20"
     >
       <h2 id={`city-${id}-title`} className="text-xl font-semibold">
         {t(`cityNotes.sections.${id}`)}

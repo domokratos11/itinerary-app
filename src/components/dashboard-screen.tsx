@@ -44,6 +44,7 @@ import {
   useYenValues,
   Yen,
 } from "@/components/yen";
+import { bookingPlace } from "@/domain/booking-cost";
 import { spendByDay, totalsByPayer } from "@/domain/budget";
 import { flightRoute, nextFlight } from "@/domain/flights";
 import {
@@ -363,9 +364,9 @@ function DashboardContent() {
                     {t(`reservationType.${next.type}`)} ·{" "}
                     {formatDayLabel(next.date)}
                     {next.time && ` · ${next.time}`}
-                    {next.from && next.to && (
+                    {bookingPlace(next) && (
                       <span className="block text-muted-foreground">
-                        {next.from} → {next.to}
+                        {bookingPlace(next)}
                       </span>
                     )}
                   </>

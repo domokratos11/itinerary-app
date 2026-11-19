@@ -340,12 +340,16 @@ export function BudgetForm({
       </div>
       {members.length > 0 && (
         <fieldset className="flex flex-col gap-3">
-          <legend className="text-sm font-medium">
-            {t("budget.memberTargets")}
+          {/* A legend sits outside the fieldset's flex flow, so the gap
+              doesn't reach it; the hint goes inside it instead. */}
+          <legend className="flex flex-col gap-0.5 pb-3">
+            <span className="text-sm font-medium">
+              {t("budget.memberTargets")}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {t("budget.memberTargetsHint")}
+            </span>
           </legend>
-          <p className="-mt-2 text-xs text-muted-foreground">
-            {t("budget.memberTargetsHint")}
-          </p>
           <div className="grid grid-cols-2 gap-3">
             {members.map((m, i) => (
               <Field

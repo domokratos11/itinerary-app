@@ -80,7 +80,8 @@ export function categoryForReservation(
 ): ExpenseCategory {
   if (type === "flight") return "flight";
   if (type === "train") return "transport";
-  if (type === "ticket") return "attractions";
+  if (type === "ticket" || type === "park" || type === "event")
+    return "attractions";
   return "booking";
 }
 

@@ -17,7 +17,7 @@ function hiragana(text: string): string {
 }
 
 describe("the kanji list", () => {
-  it("has twenty kanji for every phrasebook topic, in order", () => {
+  it("has forty kanji for every phrasebook topic, in order", () => {
     expect(set.sections.map((s) => s.id)).toEqual(KANJI_SECTIONS);
     for (const section of set.sections)
       expect(section.kanji).toHaveLength(KANJI_PER_SECTION);
@@ -39,6 +39,14 @@ describe("the kanji list", () => {
     expect(KanjiSetSchema.safeParse(copy).success).toBe(false);
   });
 
+  it("never repeats a kanji in another topic", () => {
+    const chars = set.sections.flatMap((s) => s.kanji.map((k) => k.char));
+    expect(new Set(chars).size).toBe(chars.length);
+    const copy = structuredClone(data);
+    copy.sections[1].kanji[0] = copy.sections[0].kanji[0];
+    expect(KanjiSetSchema.safeParse(copy).success).toBe(false);
+  });
+
   it("refuses an untranslated text", () => {
     const copy = structuredClone(data);
     copy.sections[0].intro.es = copy.sections[0].intro.en;
@@ -48,7 +56,10 @@ describe("the kanji list", () => {
 
 describe("searchKanji", () => {
   it("finds by character, meaning in either language, or romaji", () => {
-    expect(searchKanji(set.sections, "駅")[0].kanji.char).toBe("駅");
+    // 駅 itself, and others whose example has it (駅前).
+    expect(
+      searchKanji(set.sections, "駅").some((r) => r.kanji.char === "駅"),
+    ).toBe(true);
     expect(
       searchKanji(set.sections, "estación").some((r) => r.kanji.char === "駅"),
     ).toBe(true);

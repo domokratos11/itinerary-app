@@ -27,7 +27,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import data from "@/data/kanji.json";
 import {
@@ -97,7 +96,43 @@ function useKanjiSize(): KanjiSize {
   );
 }
 
-// Kanji by phrasebook topic, twenty each, with meaning, readings, an example
+// The topics as a sticky list on the left on desktop, however many there
+// are; the current one is highlighted like the City notes menu.
+function TopicList({
+  value,
+  onChange,
+}: {
+  value: KanjiSectionId;
+  onChange: (id: KanjiSectionId) => void;
+}) {
+  return (
+    <nav
+      aria-label={t("kanji.topic")}
+      className="sticky top-20 flex flex-col gap-1"
+    >
+      {KANJI_SECTIONS.map((id) => {
+        const current = id === value;
+        return (
+          <button
+            key={id}
+            type="button"
+            aria-current={current ? "true" : undefined}
+            onClick={() => onChange(id)}
+            className={cn(
+              "rounded-md border-l-2 border-transparent px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted",
+              current &&
+                "border-primary bg-primary/10 font-medium text-primary hover:bg-primary/15",
+            )}
+          >
+            {t(`kanji.sections.${id}`)}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Kanji by phrasebook topic (KANJI_PER_SECTION each), with meaning, readings, an example
 // as seen in Japan and where it shows up on the trip. A size control enlarges
 // the characters; tapping one shows it full width with its readings and a
 // Listen button. Works offline: the list ships with the app.
@@ -168,78 +203,78 @@ export function KanjiScreen() {
         </ToggleGroup>
       </div>
 
-      {!searching &&
-        (wide ? (
-          <Tabs
-            value={sectionId}
-            onValueChange={(v) => setSectionId(v as KanjiSectionId)}
-          >
-            <TabsList
-              aria-label={t("kanji.topic")}
-              className="h-auto flex-wrap justify-start"
-            >
-              {KANJI_SECTIONS.map((id) => (
-                <TabsTrigger key={id} value={id}>
-                  {t(`kanji.sections.${id}`)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        ) : (
-          <Select
-            value={sectionId}
-            onValueChange={(v) => setSectionId(v as KanjiSectionId)}
-          >
-            <SelectTrigger aria-label={t("kanji.topic")} className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {KANJI_SECTIONS.map((id) => (
-                <SelectItem key={id} value={id}>
-                  {t(`kanji.sections.${id}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ))}
+      {!searching && !wide && (
+        <Select
+          value={sectionId}
+          onValueChange={(v) => setSectionId(v as KanjiSectionId)}
+        >
+          <SelectTrigger aria-label={t("kanji.topic")} className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {KANJI_SECTIONS.map((id) => (
+              <SelectItem key={id} value={id}>
+                {t(`kanji.sections.${id}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
-      <p className="max-w-3xl text-sm text-muted-foreground">
-        {searching
-          ? t("kanji.results", { count: results.length })
-          : section.intro[language]}
-      </p>
+      <div
+        className={cn(
+          "flex flex-col gap-4",
+          wide &&
+            !searching &&
+            "lg:grid lg:grid-cols-[14rem_1fr] lg:items-start lg:gap-8",
+        )}
+      >
+        {wide && !searching && (
+          <TopicList value={sectionId} onChange={setSectionId} />
+        )}
+        <div className="flex min-w-0 flex-col gap-4">
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            {searching
+              ? t("kanji.results", { count: results.length })
+              : section.intro[language]}
+          </p>
 
-      <ul className={cn("grid gap-3", GRID[size])}>
-        {shown.map((kanji) => (
-          <li key={`${kanji.char}-${kanji.example.word}`} className="min-w-0">
-            <button
-              type="button"
-              onClick={() => setOpen(kanji)}
-              aria-label={t("kanji.open", {
-                char: kanji.char,
-                meaning: kanji.meaning[language],
-              })}
-              className="flex h-full w-full flex-col items-center gap-1 rounded-xl border bg-card p-3 text-center transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              <span
-                lang="ja"
-                className={cn("leading-tight font-medium", CHAR[size])}
+          <ul className={cn("grid gap-3", GRID[size])}>
+            {shown.map((kanji) => (
+              <li
+                key={`${kanji.char}-${kanji.example.word}`}
+                className="min-w-0"
               >
-                {kanji.char}
-              </span>
-              <span className="line-clamp-2 text-sm font-medium">
-                {kanji.meaning[language]}
-              </span>
-              {size !== "s" && (
-                <span className="text-xs text-muted-foreground">
-                  <span lang="ja">{kanji.example.word}</span>{" "}
-                  {kanji.example.romaji}
-                </span>
-              )}
-            </button>
-          </li>
-        ))}
-      </ul>
+                <button
+                  type="button"
+                  onClick={() => setOpen(kanji)}
+                  aria-label={t("kanji.open", {
+                    char: kanji.char,
+                    meaning: kanji.meaning[language],
+                  })}
+                  className="flex h-full w-full flex-col items-center gap-1 rounded-xl border bg-card p-3 text-center transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <span
+                    lang="ja"
+                    className={cn("leading-tight font-medium", CHAR[size])}
+                  >
+                    {kanji.char}
+                  </span>
+                  <span className="line-clamp-2 text-sm font-medium">
+                    {kanji.meaning[language]}
+                  </span>
+                  {size !== "s" && (
+                    <span className="text-xs text-muted-foreground">
+                      <span lang="ja">{kanji.example.word}</span>{" "}
+                      {kanji.example.romaji}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
       <KanjiDetail
         kanji={open}

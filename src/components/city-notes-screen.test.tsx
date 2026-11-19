@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CityNotesScreen } from "@/components/city-notes-screen";
@@ -63,6 +69,19 @@ describe("CityNotesScreen", () => {
     expect(
       screen.queryByRole("heading", { name: "Your questions" }),
     ).toBeNull();
+  });
+
+  it("highlights the section that was picked in the menu", async () => {
+    search = new URLSearchParams({ id: "nagoya" });
+    render(<CityNotesScreen repository={await repoWithNagoya()} />);
+    const nav = screen.getByRole("navigation", { name: "Sections" });
+    const links = within(nav).getAllByRole("link");
+    // The first section is current until another one is picked.
+    expect(links[0]).toHaveAttribute("aria-current", "true");
+    const moments = within(nav).getByRole("link", { name: "Defining moments" });
+    fireEvent.click(moments);
+    expect(moments).toHaveAttribute("aria-current", "true");
+    expect(links[0]).not.toHaveAttribute("aria-current");
   });
 
   it("sends a specific question and keeps the notes visible", async () => {
