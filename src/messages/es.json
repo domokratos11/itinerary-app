@@ -469,7 +469,17 @@
     "acceptBody": "Cada valor investigado se guarda en su lugar. Puedes deshacerlo justo después.",
     "acceptCorrections": "Cada valor investigado se guarda en su lugar, y {count, plural, one {# de ellos reemplaza un valor existente} other {# de ellos reemplazan valores existentes}}. Para revisarlos primero, usa Revisar investigación en cada lugar. Puedes deshacerlo justo después.",
     "acceptConfirm": "Aceptar",
-    "acceptedCount": "Investigación aceptada de {count, plural, one {# lugar} other {# lugares}}"
+    "acceptedCount": "Investigación aceptada de {count, plural, one {# lugar} other {# lugares}}",
+    "move": "Mover",
+    "moveCount": "Mover {count}",
+    "tipMove": "Mover los lugares seleccionados a otra ciudad",
+    "moveTitle": "Mover {count, plural, one {# lugar} other {# lugares}} a otra ciudad",
+    "moveDescription": "Salen de {city} y quedan esperando a ser planeados en la ciudad que elijas.",
+    "moveTo": "Ciudad nueva",
+    "movePlanned": "{count, plural, one {# lugar ya está en un día y se queda en {city}: {names}. Quítalo del día primero para moverlo.} other {# lugares ya están en un día y se quedan en {city}: {names}. Quítalos del día primero para moverlos.}}",
+    "moveNone": "No hay nada que mover: todos los lugares seleccionados ya están en un día.",
+    "moveConfirm": "{count, plural, one {Mover # lugar} other {Mover # lugares}}",
+    "moved": "{count, plural, one {# lugar movido} other {# lugares movidos}} a {city}"
   },
   "placeFilter": {
     "all": "Todos los lugares",
@@ -644,7 +654,8 @@
     "archivedCash": "archivó un movimiento de efectivo de {yen}",
     "changedTripDates": "puso las fechas del viaje del {from} al {to}",
     "clearedTripDates": "borró las fechas del viaje",
-    "copiedItinerary": "copió partes del itinerario {name}"
+    "copiedItinerary": "copió partes del itinerario {name}",
+    "movedPlaces": "movió {count, plural, one {# lugar} other {# lugares}} a {city}"
   },
   "theme": {
     "light": "Claro",
@@ -1205,7 +1216,8 @@
       "cityNotesMenu": "Las Notas de ciudades resaltan en el menú la sección que estás leyendo, y en el teléfono el menú se queda arriba mientras te desplazas.",
       "kanjiTopics": "En la computadora, los temas de Kanji son una lista a la izquierda en lugar de una fila de pestañas amontonada.",
       "reservations": "Las reservaciones son para lo que pasa en un día: trenes con salida, llegada, tren y asiento, y entradas a museos, parques, tours o espectáculos con lugar, horario y personas.",
-      "reservationArchive": "Archivar una reservación también archiva sus gastos en el presupuesto, y Deshacer recupera ambos."
+      "reservationArchive": "Archivar una reservación también archiva sus gastos en el presupuesto, y Deshacer recupera ambos.",
+      "movePlaces": "En Configuración → Lugares puedes seleccionar lugares y moverlos a otra ciudad; los que ya están en un día se quedan donde están."
     }
   },
   "miscPage": {

@@ -469,7 +469,17 @@
     "acceptBody": "Every researched value goes into its place. You can undo this right after.",
     "acceptCorrections": "Every researched value goes into its place, and {count, plural, one {# of them replaces a value} other {# of them replace values}} already there. To check those first, use Review research on each place. You can undo this right after.",
     "acceptConfirm": "Accept",
-    "acceptedCount": "Accepted research for {count, plural, one {# place} other {# places}}"
+    "acceptedCount": "Accepted research for {count, plural, one {# place} other {# places}}",
+    "move": "Move",
+    "moveCount": "Move {count}",
+    "tipMove": "Move the selected places to another city",
+    "moveTitle": "Move {count, plural, one {# place} other {# places}} to another city",
+    "moveDescription": "They leave {city} and wait to be planned in the city you choose.",
+    "moveTo": "New city",
+    "movePlanned": "{count, plural, one {# place is already on a day and stays in {city}: {names}. Take it off the day first to move it.} other {# places are already on a day and stay in {city}: {names}. Take them off the day first to move them.}}",
+    "moveNone": "Nothing to move: every selected place is already on a day.",
+    "moveConfirm": "{count, plural, one {Move # place} other {Move # places}}",
+    "moved": "{count, plural, one {# place moved} other {# places moved}} to {city}"
   },
   "placeFilter": {
     "all": "All places",
@@ -644,7 +654,8 @@
     "archivedCash": "archived a cash record of {yen}",
     "changedTripDates": "set the trip dates to {from} – {to}",
     "clearedTripDates": "cleared the trip dates",
-    "copiedItinerary": "copied parts of the itinerary {name}"
+    "copiedItinerary": "copied parts of the itinerary {name}",
+    "movedPlaces": "moved {count, plural, one {# place} other {# places}} to {city}"
   },
   "theme": {
     "light": "Light",
@@ -1205,7 +1216,8 @@
       "cityNotesMenu": "City notes highlight the section you're reading in the menu, and on phones the menu stays at the top while you scroll.",
       "kanjiTopics": "On a computer, the Kanji topics are a list on the left instead of a crowded row of tabs.",
       "reservations": "Reservations are for same-day bookings: trains with departure, arrival, train and seat, and museum, park, tour or show entries with a place, times and people.",
-      "reservationArchive": "Archiving a reservation also archives its costs in the budget, and Undo brings both back."
+      "reservationArchive": "Archiving a reservation also archives its costs in the budget, and Undo brings both back.",
+      "movePlaces": "In Settings → Places you can select places and move them to another city; places already on a day stay where they are."
     }
   },
   "miscPage": {

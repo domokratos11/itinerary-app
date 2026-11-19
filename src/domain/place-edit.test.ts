@@ -10,6 +10,7 @@ import {
   newDraftPlace,
   notFoundFields,
   wasResearched,
+  placesToMove,
   placeToForm,
   validatePlaceForm,
 } from "./place-edit";
@@ -203,5 +204,30 @@ describe("categoryFromGoogleType", () => {
     expect(categoryFromGoogleType("shopping_mall")).toBe("shopping");
     expect(categoryFromGoogleType("museum")).toBe("sight");
     expect(categoryFromGoogleType(null)).toBe("sight");
+  });
+});
+
+describe("placesToMove", () => {
+  const a = testPlace({ id: "a" });
+  const b = testPlace({ id: "b" });
+  const c = testPlace({ id: "c" });
+  const already = testPlace({ id: "d", cityId: "nagoya" });
+
+  it("moves only places that aren't a stop on a day", () => {
+    const { moved, planned } = placesToMove(
+      [a, b, c, already],
+      [
+        { placeId: "b", status: "planned" },
+        { placeId: "c", status: "removed" },
+      ],
+      "nagoya",
+      now,
+    );
+    expect(moved.map((p) => [p.id, p.cityId])).toEqual([
+      ["a", "nagoya"],
+      ["c", "nagoya"],
+    ]);
+    expect(moved[0].updatedAt).toBe(now.toISOString());
+    expect(planned.map((p) => p.id)).toEqual(["b"]);
   });
 });

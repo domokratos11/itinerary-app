@@ -22,6 +22,26 @@ export async function saveRecord<C extends TripCollection>(
     logActivity(tripId, { kind: "settings", targetId: record.id, summary });
 }
 
+// Many records of one collection in one batched write (moving places to
+// another city, or undoing that), with one activity entry for all of them.
+export async function saveRecords<C extends TripCollection>(
+  tripId: string,
+  collection: C,
+  records: TripRecordOf[C][],
+  summary?: string,
+): Promise<void> {
+  if (records.length === 0) return;
+  const store = useTripStore.getState();
+  for (const record of records) store.apply(collection, record);
+  await tripRepository.saveMany(tripId, collection, records);
+  if (summary)
+    logActivity(tripId, {
+      kind: "settings",
+      targetId: records[0].id,
+      summary,
+    });
+}
+
 // Shared by the whole trip; the trip list brings it back to every device.
 export function saveBudget(tripId: string, budget: Budget): Promise<void> {
   return tripRepository.updateTrip(tripId, { budget });
