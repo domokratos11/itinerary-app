@@ -986,7 +986,6 @@
     "title": "Anotar un gasto",
     "whenWhere": "{day} · {city}",
     "what": "Qué (opcional)",
-    "more": "Más detalles",
     "saved": "Guardado ¥{amount}"
   },
   "amount": {
@@ -1217,7 +1216,8 @@
       "kanjiTopics": "En la computadora, los temas de Kanji son una lista a la izquierda en lugar de una fila de pestañas amontonada.",
       "reservations": "Las reservaciones son para lo que pasa en un día: trenes con salida, llegada, tren y asiento, y entradas a museos, parques, tours o espectáculos con lugar, horario y personas.",
       "reservationArchive": "Archivar una reservación también archiva sus gastos en el presupuesto, y Deshacer recupera ambos.",
-      "movePlaces": "En Configuración → Lugares puedes seleccionar lugares y moverlos a otra ciudad; los que ya están en un día se quedan donde están."
+      "movePlaces": "En Configuración → Lugares puedes seleccionar lugares y moverlos a otra ciudad; los que ya están en un día se quedan donde están.",
+      "oneExpenseForm": "Hay un solo formulario de gastos en todas partes, el grande de la página del día: ahora también pregunta quién pagó (tú, por defecto), la fecha (hoy, por defecto), si ya está pagado y una nota."
     }
   },
   "miscPage": {

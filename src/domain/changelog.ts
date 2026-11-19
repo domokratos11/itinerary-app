@@ -16,6 +16,7 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
     version: null,
     date: "2026-11-18",
     items: [
+      "changelog.d20261118.oneExpenseForm",
       "changelog.d20261118.movePlaces",
       "changelog.d20261118.reservations",
       "changelog.d20261118.reservationArchive",
