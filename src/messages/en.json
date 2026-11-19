@@ -1182,7 +1182,8 @@
       "kanji": "New Kanji page under Miscellaneous: 20 kanji per phrasebook topic with meaning, readings, an example and where you'll see them, in four sizes.",
       "cityNotes": "New City notes under Miscellaneous: history, defining moments, traditions and food for each city, in both languages, with a way to ask specific questions.",
       "budgetHint": "In the budget settings, the per-person target hint no longer overlaps its title.",
-      "cityNotesMenu": "City notes highlight the section you're reading in the menu, and on phones the menu stays at the top while you scroll."
+      "cityNotesMenu": "City notes highlight the section you're reading in the menu, and on phones the menu stays at the top while you scroll.",
+      "kanjiTopics": "On a computer, the Kanji topics are a list on the left instead of a crowded row of tabs."
     }
   },
   "miscPage": {

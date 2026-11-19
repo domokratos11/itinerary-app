@@ -44,10 +44,13 @@ describe("KanjiScreen", () => {
     expect(screen.getAllByRole("list")[0].className).toContain("grid-cols-1");
   });
 
-  it("uses tabs for topics on desktop", () => {
+  it("lists the topics on the side on desktop and marks the current one", () => {
     wide = true;
     render(<KanjiScreen />);
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "Hotel" }));
+    const topics = screen.getByRole("navigation", { name: "Topic" });
+    const hotel = within(topics).getByRole("button", { name: "Hotel" });
+    fireEvent.click(hotel);
+    expect(hotel).toHaveAttribute("aria-current", "true");
     expect(screen.getByRole("button", { name: /^湯:/ })).toBeInTheDocument();
   });
 });
