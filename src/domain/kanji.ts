@@ -2,8 +2,8 @@ import { z } from "zod";
 
 import { bilingual } from "@/domain/bilingual";
 
-// The kanji study list (src/data/kanji.json): twenty per phrasebook topic,
-// chosen for what the trip will put in front of you. Static app content, not
+// The kanji study list (src/data/kanji.json): forty per phrasebook topic,
+// chosen for what the trip will put in front of you, none in two topics. Static app content, not
 // trip data, so it ships with the app and works offline. Its texts carry both
 // languages; the schema refuses an entry missing either.
 
@@ -23,7 +23,7 @@ export const KANJI_SECTIONS = [
 ] as const;
 export type KanjiSectionId = (typeof KANJI_SECTIONS)[number];
 
-export const KANJI_PER_SECTION = 20;
+export const KANJI_PER_SECTION = 40;
 
 const Bilingual = bilingual(1000);
 
@@ -75,7 +75,11 @@ export const KanjiSetSchema = z
             "A kanji repeats within a section",
           ),
       )
-      .length(KANJI_SECTIONS.length),
+      .length(KANJI_SECTIONS.length)
+      .refine((sections) => {
+        const chars = sections.flatMap((s) => s.kanji.map((k) => k.char));
+        return new Set(chars).size === chars.length;
+      }, "A kanji repeats in another section"),
   })
   .strict();
 

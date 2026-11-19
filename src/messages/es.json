@@ -86,7 +86,7 @@
     "hintMisc": "Las listas de pendientes y la guía de frases en japonés",
     "hintPhrasebook": "Frases en japonés por situación, con audio y práctica; funciona sin conexión",
     "kanji": "Kanji",
-    "hintKanji": "Veinte kanji por tema, con significado, lecturas y dónde los verás; funciona sin conexión",
+    "hintKanji": "Cuarenta kanji por tema, con significado, lecturas y dónde los verás; funciona sin conexión",
     "cityNotes": "Notas de ciudades",
     "hintCityNotes": "Historia, momentos clave, tradiciones y comida de cada ciudad del viaje"
   },
@@ -1217,7 +1217,8 @@
       "reservations": "Las reservaciones son para lo que pasa en un día: trenes con salida, llegada, tren y asiento, y entradas a museos, parques, tours o espectáculos con lugar, horario y personas.",
       "reservationArchive": "Archivar una reservación también archiva sus gastos en el presupuesto, y Deshacer recupera ambos.",
       "movePlaces": "En Configuración → Lugares puedes seleccionar lugares y moverlos a otra ciudad; los que ya están en un día se quedan donde están.",
-      "oneExpenseForm": "Hay un solo formulario de gastos en todas partes, el grande de la página del día: ahora también pregunta quién pagó (tú, por defecto), la fecha (hoy, por defecto), si ya está pagado y una nota."
+      "oneExpenseForm": "Hay un solo formulario de gastos en todas partes, el grande de la página del día: ahora también pregunta quién pagó (tú, por defecto), la fecha (hoy, por defecto), si ya está pagado y una nota.",
+      "kanjiForty": "La página de Kanji tiene 40 kanji por tema, el doble, y ninguno se repite en otro tema."
     }
   },
   "miscPage": {

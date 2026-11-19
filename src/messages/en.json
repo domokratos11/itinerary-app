@@ -86,7 +86,7 @@
     "hintMisc": "The to-do lists and the Japanese phrasebook",
     "hintPhrasebook": "Japanese phrases by situation, with audio and practice; works offline",
     "kanji": "Kanji",
-    "hintKanji": "Twenty kanji per topic, with meaning, readings and where you'll see them; works offline",
+    "hintKanji": "Forty kanji per topic, with meaning, readings and where you'll see them; works offline",
     "cityNotes": "City notes",
     "hintCityNotes": "History, defining moments, traditions and food of each city on the trip"
   },
@@ -1217,7 +1217,8 @@
       "reservations": "Reservations are for same-day bookings: trains with departure, arrival, train and seat, and museum, park, tour or show entries with a place, times and people.",
       "reservationArchive": "Archiving a reservation also archives its costs in the budget, and Undo brings both back.",
       "movePlaces": "In Settings → Places you can select places and move them to another city; places already on a day stay where they are.",
-      "oneExpenseForm": "There is one expense form everywhere, the large one from the day page: it now also asks who paid (you, by default), the date (today, by default), whether it's paid and a note."
+      "oneExpenseForm": "There is one expense form everywhere, the large one from the day page: it now also asks who paid (you, by default), the date (today, by default), whether it's paid and a note.",
+      "kanjiForty": "The Kanji page has 40 kanji per topic, twice as many, and none repeats in another topic."
     }
   },
   "miscPage": {

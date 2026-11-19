@@ -14,7 +14,7 @@ describe("KanjiScreen", () => {
 
   it("shows the first topic's twenty kanji", () => {
     render(<KanjiScreen />);
-    expect(screen.getAllByRole("listitem")).toHaveLength(20);
+    expect(screen.getAllByRole("listitem")).toHaveLength(40);
     expect(
       screen.getByRole("button", { name: /^円: yen; circle/ }),
     ).toBeInTheDocument();
