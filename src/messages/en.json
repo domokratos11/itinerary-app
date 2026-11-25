@@ -88,7 +88,9 @@
     "kanji": "Kanji",
     "hintKanji": "Forty kanji per topic, with meaning, readings and where you'll see them; works offline",
     "cityNotes": "City notes",
-    "hintCityNotes": "History, defining moments, traditions and food of each city on the trip"
+    "hintCityNotes": "History, defining moments, traditions and food of each city on the trip",
+    "food": "Food",
+    "hintFood": "Where to eat in each city: local specialties, sushi, ramen, street food, cafés and desserts"
   },
   "category": {
     "lights": "Lights",
@@ -866,7 +868,8 @@
     "shares": "Closed share links",
     "sharesNote": "Links that expired or were closed, with their copy of the trip.",
     "cash": "Archived cash records",
-    "todos": "Archived to-dos and lists"
+    "todos": "Archived to-dos and lists",
+    "food": "Archived food spots and categories"
   },
   "flights": {
     "title": "Flights",
@@ -1176,6 +1179,9 @@
     "addedPlace": "Added {name} as a new stop"
   },
   "changelog": {
+    "d20261124": {
+      "food": "New Food page under Miscellaneous: for each city, researched places to eat by category (local specialty, sushi, kaiten sushi, ramen, street food, cafés, desserts), each opening in Google Maps and shown on the map, with your own spots, stars and categories."
+    },
     "title": "What's new",
     "description": "A short summary of what changed in each version.",
     "open": "Open what's new",
@@ -1521,6 +1527,81 @@
       "glossary": "Words you'll meet",
       "answers": "Your questions",
       "sources": "Sources"
+    }
+  },
+  "food": {
+    "title": "Food",
+    "subtitle": "Where to eat in each city, near your hotel and the places you'll visit. Every spot opens in Google Maps.",
+    "noCities": "Add the trip's cities first.",
+    "noneYet": "No spots yet",
+    "spotCount": "{count, plural, one {# spot} other {# spots}}",
+    "allCities": "All cities",
+    "cityTitle": "Food in {city}",
+    "basedAt": "Staying at {hotels}",
+    "addSpot": "Add a spot",
+    "categories": "Categories",
+    "loading": "Loading…",
+    "filterLabel": "Food categories",
+    "starred": "Starred",
+    "all": "All",
+    "noStarred": "No starred spots here.",
+    "noSpots": "No spots yet. Add one, or ask for research in Categories.",
+    "researchWaiting": "Research asked for; it shows here once it's done.",
+    "requested": "Research asked",
+    "searchMaps": "Search {category} in Google Maps",
+    "unpinned": "{unpinned} of {total} spots aren't on the map yet; their links still open Google Maps.",
+    "star": "Star {name}",
+    "unstar": "Unstar {name}",
+    "more": "More for {name}",
+    "showOnMap": "Show on map",
+    "edit": "Edit",
+    "priceLabel": "Price level {level} of 4",
+    "addedByYou": "Added by you",
+    "near": "Near {place}",
+    "tryLabel": "Try:",
+    "saveFailed": "Couldn't save that. Check your connection.",
+    "spotSaved": "Saved {name}",
+    "spotAdded": "Added {name}",
+    "addTitle": "Add a spot",
+    "editTitle": "Edit {name}",
+    "formBody": "Only the name is needed. The Google Maps search finds it; without one, the name and area are searched.",
+    "chooseCategory": "Choose a category",
+    "nameJa": "Name in Japanese",
+    "area": "Area",
+    "areaPlaceholder": "E.g. Morning Market, 2 min from the hotel",
+    "dish": "What to order",
+    "dishPlaceholder": "E.g. Shio ramen",
+    "description": "Description",
+    "tip": "Tip",
+    "price": "Price",
+    "mapsQuery": "Google Maps search",
+    "mapsQueryPlaceholder": "E.g. Ajisai Honten Hakodate",
+    "badUrl": "Use a link that starts with https://",
+    "manageTitle": "Food categories",
+    "manageBody": "The same categories in every city. Rename, reorder or archive them, add your own, or ask for research to fill one.",
+    "moveUp": "Move {name} up",
+    "moveDown": "Move {name} down",
+    "archiveCategory": "Archive {name}",
+    "newName": "New name",
+    "waitingFor": "Research asked: {request}",
+    "researchCancelled": "Research request cancelled",
+    "researchNote": "Note for the research",
+    "researchPlaceholder": "Optional: what to look for, such as vegetarian options or places open on Jan 1",
+    "sendRequest": "Send request",
+    "researchRequested": "Research asked for; it runs outside the app",
+    "askResearch": "Ask for research",
+    "newCategory": "New category",
+    "newCategoryPlaceholder": "E.g. Izakaya",
+    "categoryAdded": "Added {name}",
+    "archivedCategories": "Archived categories",
+    "category": {
+      "specialty": "Local specialty",
+      "sushi": "Sushi",
+      "kaitenSushi": "Kaiten sushi",
+      "ramen": "Ramen",
+      "streetFood": "Street food",
+      "cafe": "Cafés",
+      "dessert": "Desserts"
     }
   }
 }

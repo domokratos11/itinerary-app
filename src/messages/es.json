@@ -88,7 +88,9 @@
     "kanji": "Kanji",
     "hintKanji": "Cuarenta kanji por tema, con significado, lecturas y dónde los verás; funciona sin conexión",
     "cityNotes": "Notas de ciudades",
-    "hintCityNotes": "Historia, momentos clave, tradiciones y comida de cada ciudad del viaje"
+    "hintCityNotes": "Historia, momentos clave, tradiciones y comida de cada ciudad del viaje",
+    "food": "Comida",
+    "hintFood": "Dónde comer en cada ciudad: especialidades locales, sushi, ramen, comida callejera, cafés y postres"
   },
   "category": {
     "lights": "Iluminaciones",
@@ -866,7 +868,8 @@
     "shares": "Enlaces compartidos cerrados",
     "sharesNote": "Enlaces que caducaron o se cerraron, con su copia del viaje.",
     "cash": "Movimientos de efectivo archivados",
-    "todos": "Pendientes y listas archivados"
+    "todos": "Pendientes y listas archivados",
+    "food": "Lugares de comida y categorías archivados"
   },
   "flights": {
     "title": "Vuelos",
@@ -1176,6 +1179,9 @@
     "addedPlace": "Se añadió {name} como parada nueva"
   },
   "changelog": {
+    "d20261124": {
+      "food": "Nueva página Comida en Varios: para cada ciudad, lugares para comer investigados por categoría (especialidad local, sushi, kaiten sushi, ramen, comida callejera, cafés, postres), cada uno se abre en Google Maps y aparece en el mapa, con tus propios lugares, estrellas y categorías."
+    },
     "title": "Novedades",
     "description": "Un resumen breve de lo que cambió en cada versión.",
     "open": "Abrir las novedades",
@@ -1521,6 +1527,81 @@
       "glossary": "Palabras que encontrarás",
       "answers": "Tus preguntas",
       "sources": "Fuentes"
+    }
+  },
+  "food": {
+    "title": "Comida",
+    "subtitle": "Dónde comer en cada ciudad, cerca de tu hotel y de los lugares que visitarás. Cada lugar se abre en Google Maps.",
+    "noCities": "Agrega primero las ciudades del viaje.",
+    "noneYet": "Aún no hay lugares",
+    "spotCount": "{count, plural, one {# lugar} other {# lugares}}",
+    "allCities": "Todas las ciudades",
+    "cityTitle": "Comida en {city}",
+    "basedAt": "Alojamiento: {hotels}",
+    "addSpot": "Agregar lugar",
+    "categories": "Categorías",
+    "loading": "Cargando…",
+    "filterLabel": "Categorías de comida",
+    "starred": "Con estrella",
+    "all": "Todas",
+    "noStarred": "No hay lugares con estrella aquí.",
+    "noSpots": "Aún no hay lugares. Agrega uno o pide investigación en Categorías.",
+    "researchWaiting": "Investigación pedida; aparecerá aquí cuando esté lista.",
+    "requested": "Investigación pedida",
+    "searchMaps": "Buscar {category} en Google Maps",
+    "unpinned": "{unpinned} de {total} lugares aún no están en el mapa; sus enlaces igual abren Google Maps.",
+    "star": "Marcar {name} con estrella",
+    "unstar": "Quitar la estrella a {name}",
+    "more": "Más opciones para {name}",
+    "showOnMap": "Ver en el mapa",
+    "edit": "Editar",
+    "priceLabel": "Nivel de precio {level} de 4",
+    "addedByYou": "Agregado por ti",
+    "near": "Cerca de {place}",
+    "tryLabel": "Pide:",
+    "saveFailed": "No se pudo guardar. Revisa tu conexión.",
+    "spotSaved": "{name} guardado",
+    "spotAdded": "{name} agregado",
+    "addTitle": "Agregar un lugar",
+    "editTitle": "Editar {name}",
+    "formBody": "Solo hace falta el nombre. La búsqueda de Google Maps lo encuentra; sin ella, se buscan el nombre y la zona.",
+    "chooseCategory": "Elige una categoría",
+    "nameJa": "Nombre en japonés",
+    "area": "Zona",
+    "areaPlaceholder": "P. ej. Mercado matutino, a 2 min del hotel",
+    "dish": "Qué pedir",
+    "dishPlaceholder": "P. ej. Ramen de sal (shio)",
+    "description": "Descripción",
+    "tip": "Consejo",
+    "price": "Precio",
+    "mapsQuery": "Búsqueda en Google Maps",
+    "mapsQueryPlaceholder": "P. ej. Ajisai Honten Hakodate",
+    "badUrl": "Usa un enlace que empiece con https://",
+    "manageTitle": "Categorías de comida",
+    "manageBody": "Las mismas categorías en todas las ciudades. Cámbiales el nombre, ordénalas o archívalas, agrega las tuyas o pide investigación para llenar una.",
+    "moveUp": "Subir {name}",
+    "moveDown": "Bajar {name}",
+    "archiveCategory": "Archivar {name}",
+    "newName": "Nuevo nombre",
+    "waitingFor": "Investigación pedida: {request}",
+    "researchCancelled": "Pedido de investigación cancelado",
+    "researchNote": "Nota para la investigación",
+    "researchPlaceholder": "Opcional: qué buscar, como opciones vegetarianas o lugares abiertos el 1 de enero",
+    "sendRequest": "Enviar pedido",
+    "researchRequested": "Investigación pedida; se hace fuera de la app",
+    "askResearch": "Pedir investigación",
+    "newCategory": "Nueva categoría",
+    "newCategoryPlaceholder": "P. ej. Izakaya",
+    "categoryAdded": "{name} agregada",
+    "archivedCategories": "Categorías archivadas",
+    "category": {
+      "specialty": "Especialidad local",
+      "sushi": "Sushi",
+      "kaitenSushi": "Kaiten sushi",
+      "ramen": "Ramen",
+      "streetFood": "Comida callejera",
+      "cafe": "Cafés",
+      "dessert": "Postres"
     }
   }
 }

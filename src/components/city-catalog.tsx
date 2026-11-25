@@ -63,6 +63,7 @@ import {
   ListFilter,
   Pencil,
   Plus,
+  UtensilsCrossed,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -259,13 +260,22 @@ export function CityCatalog({
           })}
         </p>
         {!readOnly && (
-          <Link
-            href={pageHref("/city-notes/", tripId, { id: city.id })}
-            className="flex w-fit items-center gap-1.5 text-sm text-primary underline-offset-2 hover:underline"
-          >
-            <Landmark className="size-4" aria-hidden />
-            {t("cityNotes.aboutCity", { city: city.name })}
-          </Link>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link
+              href={pageHref("/city-notes/", tripId, { id: city.id })}
+              className="flex w-fit items-center gap-1.5 text-sm text-primary underline-offset-2 hover:underline"
+            >
+              <Landmark className="size-4" aria-hidden />
+              {t("cityNotes.aboutCity", { city: city.name })}
+            </Link>
+            <Link
+              href={pageHref("/food/", tripId, { id: city.id })}
+              className="flex w-fit items-center gap-1.5 text-sm text-primary underline-offset-2 hover:underline"
+            >
+              <UtensilsCrossed className="size-4" aria-hidden />
+              {t("food.cityTitle", { city: city.name })}
+            </Link>
+          </div>
         )}
         <CostLine places={planned} />
         {!sideBySide && (

@@ -131,3 +131,31 @@ describe("planEverything", () => {
     expect(planEverything(input({ trip: fixtureTrip })).count).toBe(0);
   });
 });
+
+describe("food cleanup", () => {
+  it("takes archived spots, and archived categories none of whose spots is live", async () => {
+    const { builtInCategory, newCustomCategory } = await import("./food");
+    const spot = (id: string, categoryId: string, archived: boolean) =>
+      ({ id, categoryId, archived }) as never;
+    const ramen = { ...builtInCategory("ramen"), archived: true };
+    const custom = {
+      ...newCustomCategory("Izakaya", [], new Date()),
+      archived: true,
+    };
+    const plan = planCleanup(
+      "food",
+      input({
+        foodCategories: [ramen, custom],
+        foodSpots: [
+          spot("a", "ramen", false),
+          spot("b", "custom-izakaya", true),
+        ],
+      }),
+    );
+    expect(plan).toEqual({
+      remove: { foodSpots: ["b"], foodCategories: ["custom-izakaya"] },
+      count: 2,
+      skipped: 1,
+    });
+  });
+});

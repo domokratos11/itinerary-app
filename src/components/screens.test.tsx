@@ -12,6 +12,7 @@ import { DashboardScreen } from "@/components/dashboard-screen";
 import { SettingsScreen } from "@/components/settings-screen";
 import { TodayCard } from "@/components/today-card";
 import { TodosScreen } from "@/components/todos-screen";
+import { FoodScreen } from "@/components/food-screen";
 import { TripDays } from "@/components/trip-days";
 import { useAuthStore } from "@/lib/auth-store";
 import { setLocale } from "@/lib/i18n";
@@ -63,6 +64,7 @@ const SCREENS: [string, () => ReactNode, string, string][] = [
   ["dashboard", () => <DashboardScreen />, "Dashboard", "Panel"],
   ["budget", () => <BudgetScreen />, "Budget", "Presupuesto"],
   ["todos", () => <TodosScreen />, "To-dos", "Pendientes"],
+  ["food", () => <FoodScreen />, "Food in Nagoya", "Comida en Nagoya"],
   ["settings", () => <SettingsScreen />, "Trip settings", "Ajustes del viaje"],
 ];
 

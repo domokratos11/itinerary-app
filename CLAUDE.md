@@ -55,8 +55,10 @@ A personal trip planner for Japan, Dec 15, 2026 to Jan 12, 2027 (a Wanderlog-lik
 | `TRIP_ID=<id> npm run research:push -- <file>`        | Write research back as proposals to review; never changes a place directly                     |
 | `TRIP_ID=<id> npm run city-research:pull`             | Export cities asked about for City notes (`-- --missing` adds those without notes)             |
 | `TRIP_ID=<id> npm run city-research:push -- <files>`  | Write city research (`docs/city-research.md`) onto City notes                                  |
+| `TRIP_ID=<id> npm run food-research:pull`             | Export cities and food categories short of 3 spots or asked about (`docs/food-research.md`)    |
+| `TRIP_ID=<id> npm run food-research:push -- <files>`  | Add researched food spots; without `--apply` only shows what would change                      |
 | `npm run maps:check`                                  | Check the Google keys and test train routes (`docs/maps-setup.md`)                             |
-| `TRIP_ID=<id> npm run maps:match`                     | Save place IDs and coordinates; reports doubtful matches to confirm                            |
+| `TRIP_ID=<id> npm run maps:match`                     | Save place IDs and coordinates of places, hotels and food spots; reports doubtful matches      |
 | `TRIP_ID=<id> npm run maps:refresh`                   | Refresh Google coordinates before the 30-day limit                                             |
 | `npm run build`                                       | Static export to `out/`                                                                        |
 | `npm run preview`                                     | Serve `out/` like GitHub Pages, at `http://localhost:4173/itinerary-app/`                      |
