@@ -14,7 +14,7 @@ export type ChangelogEntry = {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: "1.0.23",
-    date: "2026-11-24",
+    date: "2026-11-25",
     items: ["changelog.d20261124.food"],
   },
   {
