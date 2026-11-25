@@ -1,5 +1,5 @@
 /**
- * Matches places and hotels to Google: saves each one's place ID and
+ * Matches places, hotels and food spots to Google: saves each one's place ID and
  * coordinates. Run with `TRIP_ID=<id> npm run maps:match`.
  *
  * Options: --limit <n> stops after n matches, --city <id> does one city.
@@ -29,20 +29,23 @@ import {
   type Category,
 } from "../src/domain/schemas";
 import type { LatLng } from "../src/lib/geo";
+import { FoodSpotSchema } from "../src/domain/food";
 import { parseTripId } from "../src/lib/trip-id";
 
 type Target = {
-  collection: "places" | "stays";
+  collection: "places" | "stays" | "foodSpots";
   id: string;
   name: string;
   cityId: string;
   category: Category | null;
+  // What to search for, when it is not the name and city.
+  query?: string;
   known: LatLng | null;
 };
 
 const ReviewFileSchema = z.array(
   z.object({
-    collection: z.enum(["places", "stays"]),
+    collection: z.enum(["places", "stays", "foodSpots"]),
     id: z.string(),
     name: z.string(),
     placeId: z.string().nullable(),
@@ -153,8 +156,18 @@ async function main() {
       return r.success ? [r.data] : [];
     })
     .filter((s) => !s.archived);
+  const foodSpots = (
+    await db.collection(`trips/${tripId}/foodSpots`).get()
+  ).docs
+    .flatMap((d) => {
+      const r = FoodSpotSchema.safeParse(d.data());
+      return r.success ? [r.data] : [];
+    })
+    .filter((s) => !s.archived);
   if (places.length === 0 && stays.length === 0) {
-    console.error("Nothing in this trip yet. Add its cities and stays in the app first.");
+    console.error(
+      "Nothing in this trip yet. Add its cities and stays in the app first.",
+    );
     process.exit(1);
   }
 
@@ -183,11 +196,24 @@ async function main() {
         category: null,
         known: coords(s),
       })),
+    // Food spots are searched as they say. Some are in day-trip towns, so
+    // they get the day-trip distance from the city.
+    ...foodSpots
+      .filter((s) => !s.googlePlaceId)
+      .map((s) => ({
+        collection: "foodSpots" as const,
+        id: s.id,
+        name: s.name,
+        cityId: s.cityId,
+        category: "daytrip" as const,
+        known: coords(s),
+        query: s.mapsQuery,
+      })),
   ]
     .filter((t) => !onlyCity || t.cityId === onlyCity)
     .slice(0, limit);
 
-  console.log(`Matching ${targets.length} places and hotels`);
+  console.log(`Matching ${targets.length} places, hotels and food spots`);
   const found: { target: Target; location: FetchedLocation }[] = [];
   const review: z.infer<typeof ReviewFileSchema> = [];
 
@@ -195,7 +221,10 @@ async function main() {
     const city = (cityNames.get(target.cityId) ?? "").replace(/[()]/g, " ");
     const placeId = await searchPlaceId(
       key,
-      `${target.name}, ${city}, Japan`.replace(/\s+/g, " "),
+      `${target.query ?? `${target.name}, ${city}`}, Japan`.replace(
+        /\s+/g,
+        " ",
+      ),
     );
     await pause();
     const location = placeId ? await fetchLocation(key, placeId) : null;

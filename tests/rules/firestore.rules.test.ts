@@ -638,6 +638,8 @@ describe("clean up", () => {
     "cash",
     "todoLists",
     "todos",
+    "foodCategories",
+    "foodSpots",
   ])("deletes only archived %s, only for members", async (name) => {
     const live = `trips/japan/${name}/live`;
     const retired = `trips/japan/${name}/retired`;
@@ -1077,6 +1079,90 @@ describe("city notes", () => {
     await assertFails(deleteDoc(doc(as(EVE), "trips/japan/cityNotes/kyoto")));
     await assertSucceeds(
       deleteDoc(doc(as(ANA), "trips/japan/cityNotes/kyoto")),
+    );
+  });
+});
+
+describe("food", () => {
+  const CATEGORY = "trips/japan/foodCategories/ramen";
+  const SPOT = "trips/japan/foodSpots/nagoya-sample";
+  const category = (fields = {}) => ({
+    id: "ramen",
+    key: "ramen",
+    name: null,
+    order: 3,
+    request: null,
+    requestedAt: null,
+    archived: false,
+    updatedAt: NOW,
+    ...fields,
+  });
+  const spot = (fields = {}) => ({
+    id: "nagoya-sample",
+    cityId: "nagoya",
+    categoryId: "ramen",
+    name: "Sample Ramen",
+    nameJa: null,
+    area: "Station",
+    near: null,
+    dish: "Miso ramen",
+    description: "Made up.",
+    tip: null,
+    priceLevel: 1,
+    mapsQuery: "Sample Ramen Nagoya",
+    websiteUrl: null,
+    sources: ["https://example.com"],
+    origin: "research",
+    starred: false,
+    archived: false,
+    updatedAt: NOW,
+    ...fields,
+  });
+
+  it("lets members save categories and spots", async () => {
+    await assertSucceeds(setDoc(doc(as(ANA), CATEGORY), category()));
+    await assertSucceeds(
+      setDoc(
+        doc(as(ANA), "trips/japan/foodCategories/custom-izakaya"),
+        category({ id: "custom-izakaya", key: null, name: "Izakaya" }),
+      ),
+    );
+    await assertSucceeds(setDoc(doc(as(ANA), SPOT), spot()));
+    await assertSucceeds(
+      setDoc(
+        doc(as(ANA), SPOT),
+        spot({
+          lat: 35.1,
+          lng: 136.9,
+          googlePlaceId: "ChIJ1",
+          locationFetchedAt: NOW,
+          locationSource: "google",
+        }),
+      ),
+    );
+    await assertSucceeds(getDoc(doc(as(ANA), SPOT)));
+    await assertFails(getDoc(doc(as(EVE), SPOT)));
+    await assertFails(setDoc(doc(as(EVE), SPOT), spot()));
+  });
+
+  it("refuses a bad category", async () => {
+    await assertFails(
+      setDoc(doc(as(ANA), CATEGORY), category({ key: "pizza" })),
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), CATEGORY), category({ key: null, name: null })),
+    );
+    await assertFails(setDoc(doc(as(ANA), CATEGORY), category({ id: "x" })));
+    await assertFails(setDoc(doc(as(ANA), CATEGORY), category({ order: 1.5 })));
+  });
+
+  it("refuses a bad spot or Google data it may not keep", async () => {
+    await assertFails(setDoc(doc(as(ANA), SPOT), spot({ priceLevel: 5 })));
+    await assertFails(setDoc(doc(as(ANA), SPOT), spot({ origin: "ai" })));
+    await assertFails(setDoc(doc(as(ANA), SPOT), spot({ rating: 4.5 })));
+    await assertFails(setDoc(doc(as(ANA), SPOT), spot({ name: "" })));
+    await assertFails(
+      setDoc(doc(as(ANA), SPOT), spot({ description: "x".repeat(601) })),
     );
   });
 });

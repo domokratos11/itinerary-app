@@ -14,6 +14,7 @@ import {
   coordinatesExpired,
   dueForRefresh,
 } from "../src/domain/location";
+import { FoodSpotSchema } from "../src/domain/food";
 import { PlaceRecordSchema, StayRecordSchema } from "../src/domain/schemas";
 import { parseTripId } from "../src/lib/trip-id";
 
@@ -37,6 +38,7 @@ async function main() {
   for (const [name, schema] of [
     ["places", PlaceRecordSchema],
     ["stays", StayRecordSchema],
+    ["foodSpots", FoodSpotSchema],
   ] as const) {
     const records = (await db.collection(`trips/${tripId}/${name}`).get()).docs
       .flatMap((d) => {

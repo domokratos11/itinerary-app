@@ -170,7 +170,7 @@ export const LOCATION_SOURCES = ["google", "manual"] as const;
 // How a place or stay relates to Google. A place ID may be stored for good;
 // coordinates with source "google" for at most 30 days (see domain/location).
 // Fields added after launch default to null, so older documents stay valid.
-const mapFields = {
+export const mapFields = {
   googlePlaceId: z.string().min(1).max(300).nullable().default(null),
   locationFetchedAt: z.iso.datetime().nullable().default(null),
   locationSource: z.enum(LOCATION_SOURCES).nullable().default(null),

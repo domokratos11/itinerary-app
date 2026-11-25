@@ -1,3 +1,4 @@
+import type { FoodCategory, FoodSpot } from "./food";
 import type { DayResearch, PlanItem, Proposal } from "./schemas";
 import type { TripData } from "./trip";
 
@@ -15,12 +16,18 @@ export const CLEANUP_KINDS = [
   "todos",
   "stops",
   "research",
+  "food",
 ] as const;
 
 export type CleanupKind = (typeof CLEANUP_KINDS)[number];
 
 export type CleanupCollection =
-  keyof TripData | "items" | "proposals" | "dayResearch";
+  | keyof TripData
+  | "items"
+  | "proposals"
+  | "dayResearch"
+  | "foodCategories"
+  | "foodSpots";
 
 export type CleanupPlan = {
   // What would go, by collection.
@@ -36,6 +43,9 @@ export type CleanupInput = {
   items: PlanItem[];
   proposals: Proposal[];
   dayResearch?: DayResearch[];
+  // Only the saved rows: built-in categories nobody changed have none.
+  foodCategories?: FoodCategory[];
+  foodSpots?: FoodSpot[];
 };
 
 const finished = (p: Proposal) =>
@@ -51,7 +61,14 @@ function archivedOnly(
 
 export function planCleanup(
   kind: CleanupKind,
-  { trip, items, proposals, dayResearch = [] }: CleanupInput,
+  {
+    trip,
+    items,
+    proposals,
+    dayResearch = [],
+    foodCategories = [],
+    foodSpots = [],
+  }: CleanupInput,
 ): CleanupPlan {
   switch (kind) {
     case "stays":
@@ -133,6 +150,24 @@ export function planCleanup(
         remove: { proposals: ids, dayResearch: days },
         count: ids.length + days.length,
         skipped: 0,
+      };
+    }
+    case "food": {
+      // Archived spots, and archived categories once none of their spots is
+      // live.
+      const spots = foodSpots.filter((s) => s.archived);
+      const used = new Set(
+        foodSpots.filter((s) => !s.archived).map((s) => s.categoryId),
+      );
+      const archived = foodCategories.filter((c) => c.archived);
+      const categories = archived.filter((c) => !used.has(c.id));
+      return {
+        remove: {
+          foodSpots: spots.map((s) => s.id),
+          foodCategories: categories.map((c) => c.id),
+        },
+        count: spots.length + categories.length,
+        skipped: archived.length - categories.length,
       };
     }
   }

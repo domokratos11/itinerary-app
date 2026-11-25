@@ -13,6 +13,7 @@ import {
   ListChecks,
   MapPinned,
   Settings,
+  UtensilsCrossed,
   Wallet,
 } from "lucide-react";
 
@@ -67,7 +68,14 @@ export const SECTIONS = [
     label: "nav.misc",
     hint: "nav.hintMisc",
     icon: LayoutGrid,
-    match: ["/misc/", "/todos/", "/phrasebook/", "/kanji/", "/city-notes/"],
+    match: [
+      "/misc/",
+      "/todos/",
+      "/phrasebook/",
+      "/kanji/",
+      "/city-notes/",
+      "/food/",
+    ],
   },
   {
     path: "/settings/",
@@ -113,6 +121,15 @@ export const MISC_ITEMS = [
     hint: "nav.hintCityNotes",
     icon: Landmark,
     // A read-only link has no access to the trip's notes.
+    viewer: false,
+  },
+  {
+    key: "food",
+    path: "/food/",
+    label: "nav.food",
+    hint: "nav.hintFood",
+    icon: UtensilsCrossed,
+    // Not in a read-only link's copy of the trip.
     viewer: false,
   },
   {

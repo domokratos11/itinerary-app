@@ -16,6 +16,7 @@ import {
   Ticket,
   CalendarOff,
   Route,
+  UtensilsCrossed,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -48,6 +49,7 @@ import { t } from "@/lib/i18n";
 import { usePlanStore } from "@/lib/plan-store";
 import { useTripStore } from "@/lib/trip-store";
 import { useDayResearch } from "@/lib/use-day-research";
+import { useFood } from "@/lib/use-food";
 import { useProposals } from "@/lib/use-proposals";
 import { useShares } from "@/lib/use-shares";
 import { shareStatus } from "@/domain/share";
@@ -64,6 +66,7 @@ const ICONS: Record<CleanupKind, LucideIcon> = {
   todos: ListChecks,
   stops: Route,
   research: Search,
+  food: UtensilsCrossed,
 };
 
 type Pending =
@@ -79,6 +82,8 @@ async function removePlan(tripId: string, plan: CleanupPlan) {
     "items",
     "proposals",
     "dayResearch",
+    "foodSpots",
+    "foodCategories",
     "places",
     "stays",
     "reservations",
@@ -103,6 +108,7 @@ export function CleanupSettings({ tripId }: { tripId: string }) {
   const items = usePlanStore((s) => s.items);
   const proposals = useProposals(tripId);
   const dayResearch = useDayResearch(tripId);
+  const food = useFood(tripId);
   // Read-only links that have expired or were revoked, with their copies.
   const closedShares = useShares(tripId).filter(
     (s) => shareStatus(s, new Date()) !== "active",
@@ -112,8 +118,15 @@ export function CleanupSettings({ tripId }: { tripId: string }) {
   const [working, setWorking] = useState(false);
 
   const input = useMemo(
-    () => ({ trip, items, proposals, dayResearch }),
-    [trip, items, proposals, dayResearch],
+    () => ({
+      trip,
+      items,
+      proposals,
+      dayResearch,
+      foodCategories: food?.categories ?? [],
+      foodSpots: food?.spots ?? [],
+    }),
+    [trip, items, proposals, dayResearch, food],
   );
   const everything = useMemo(() => planEverything(input), [input]);
 

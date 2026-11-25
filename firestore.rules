@@ -81,6 +81,47 @@ service cloud.firestore {
         && shortString(d.updatedAt, 30);
     }
 
+    // A food category for the whole trip: built-in (key) or a member's own
+    // (name). Built-in ones keep their id.
+    function isFoodCategory(d) {
+      return d.keys().hasOnly(['id', 'key', 'name', 'order', 'request', 'requestedAt', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'key', 'name', 'order', 'request', 'requestedAt', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && (d.key == null || d.key in ['specialty', 'sushi', 'kaitenSushi', 'ramen', 'streetFood', 'cafe', 'dessert'])
+        && optionalString(d.name, 60)
+        && (d.key != null || (d.name != null && d.name.size() > 0))
+        && d.order is int && d.order >= 0 && d.order <= 999
+        && optionalString(d.request, 1000)
+        && optionalString(d.requestedAt, 30)
+        && isRecord(d);
+    }
+
+    // Somewhere to eat in a city. Coordinates and the place ID follow the
+    // map fields' rules; nothing else from Google is stored.
+    function isFoodSpot(d) {
+      return d.keys().hasOnly(['id', 'cityId', 'categoryId', 'name', 'nameJa', 'area', 'near', 'dish', 'description', 'tip', 'priceLevel', 'mapsQuery', 'websiteUrl', 'sources', 'origin', 'starred', 'lat', 'lng', 'googlePlaceId', 'locationFetchedAt', 'locationSource', 'archived', 'updatedAt'])
+        && d.keys().hasAll(['id', 'cityId', 'categoryId', 'name', 'nameJa', 'area', 'near', 'dish', 'description', 'tip', 'priceLevel', 'mapsQuery', 'websiteUrl', 'sources', 'origin', 'starred', 'archived', 'updatedAt'])
+        && shortString(d.id, 64) && d.id.size() > 0
+        && shortString(d.cityId, 64) && d.cityId.size() > 0
+        && shortString(d.categoryId, 64) && d.categoryId.size() > 0
+        && shortString(d.name, 120) && d.name.size() > 0
+        && optionalString(d.nameJa, 80)
+        && optionalString(d.area, 120)
+        && optionalString(d.near, 120)
+        && optionalString(d.dish, 120)
+        && shortString(d.description, 600)
+        && optionalString(d.tip, 300)
+        && (d.priceLevel == null || (d.priceLevel is int && d.priceLevel >= 1 && d.priceLevel <= 4))
+        && shortString(d.mapsQuery, 200) && d.mapsQuery.size() > 0
+        && optionalString(d.websiteUrl, 500)
+        && d.sources is list && d.sources.size() <= 10
+        && d.origin in ['research', 'member']
+        && d.starred is bool
+        && optionalNumber(d.get('lat', null)) && optionalNumber(d.get('lng', null))
+        && hasValidMapFields(d)
+        && isRecord(d);
+    }
+
     function isProposal(d) {
       return d.keys().hasOnly(['id', 'placeId', 'status', 'fields', 'sources', 'notes', 'requestedAt', 'updatedAt'])
         && d.keys().hasAll(['id', 'placeId', 'status', 'fields', 'sources', 'notes', 'requestedAt', 'updatedAt'])
@@ -538,6 +579,21 @@ service cloud.firestore {
         allow create, update: if isMember(tripId)
           && isCityNotes(request.resource.data) && request.resource.data.id == cityId;
         allow delete: if isMember(tripId) && resource.data.status == 'archived';
+      }
+
+      // Where to eat. Archived, and only archived ones can be deleted.
+      match /foodCategories/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isFoodCategory(request.resource.data) && request.resource.data.id == id;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
+      }
+
+      match /foodSpots/{id} {
+        allow read: if isMember(tripId);
+        allow create, update: if isMember(tripId)
+          && isFoodSpot(request.resource.data) && request.resource.data.id == id;
+        allow delete: if isMember(tripId) && resource.data.archived == true;
       }
 
       // Links left from the old Queue: they can only be read and cleaned up.
